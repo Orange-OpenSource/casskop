@@ -1,0 +1,36 @@
+apiVersion: "db.orange.com/v1alpha1"
+kind: "CassandraCluster"
+metadata:
+  name: cassandra-e2e
+  labels:
+    cluster: k8s.pic 
+spec:
+  nodesPerRacks: 1
+  baseImage: orangeopensource/cassandra-image
+  version: latest-cqlsh
+  imagePullPolicy: "Always"
+  rollingPartition: 0
+  dataCapacity: "1Gi"
+#  dataStorageClass: "standard"
+  hardAntiAffinity: false
+  deletePVC: false
+  autoPilot: true
+  gcStdout: true
+  autoUpdateSeedList: false
+  resources:         
+    requests:
+      cpu: 500m
+      memory: 1Gi
+#    limits:
+#      cpu: '2'
+#      memory: 1Gi
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+      - name: dc2
+        numTokens: 32
+        nodesPerRacks: 1
+        rack:
+          - name: rack1

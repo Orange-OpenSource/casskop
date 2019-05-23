@@ -1,0 +1,90 @@
+@startuml
+
+left to right direction
+package "CassandraOperator" #orange {
+  [CassandraCluster]
+}
+
+package "Client" #lightblue {
+  [Client-1]
+  [Client-2]
+}
+
+package dc1 #orange{
+
+  node "rack1" {
+    database "cassandra-dc1-r1-0"
+    database "cassandra-dc1-r1-1"
+    database "cassandra-dc1-r1-2"
+  }
+
+  node "rack2" {
+    database "cassandra-dc1-r2-0"
+    database "cassandra-dc1-r2-1"
+    database "cassandra-dc1-r2-2"
+  }
+
+  cloud {
+    [Statefulset-dc1-r1]
+  }
+  cloud {
+    [Service-dc1]
+  }
+  cloud {
+    [Statefulset-dc1-r2]
+  }
+
+}
+
+
+package dc2 #lightgrey{
+
+  node "rack3" {
+    database "cassandra-dc2-r1-0"
+    database "cassandra-dc2-r1-1"
+    database "cassandra-dc2-r1-2"
+  }
+
+
+  cloud {
+    [Statefulset-dc2-r1]
+    [Service-dc2]
+  }
+
+}
+
+[Client-1] --> [Service-dc1] #blue
+[Client-2] --> [Service-dc1] #blue
+
+[Service-dc1] --> [cassandra-dc1-r1-0] #blue
+[Service-dc1] --> [cassandra-dc1-r1-1] #blue
+[Service-dc1] --> [cassandra-dc1-r1-2] #blue
+
+[Service-dc1] --> [cassandra-dc1-r2-0] #blue
+[Service-dc1] --> [cassandra-dc1-r2-1] #blue
+[Service-dc1] --> [cassandra-dc1-r2-2] #blue
+
+
+[CassandraCluster] .-> [Statefulset-dc1-r1]
+[CassandraCluster] .-> [Statefulset-dc1-r2]
+
+[Statefulset-dc1-r1] .-> [cassandra-dc1-r1-0]
+[Statefulset-dc1-r1] .-> [cassandra-dc1-r1-1]
+[Statefulset-dc1-r1] .-> [cassandra-dc1-r1-2]
+
+[Statefulset-dc1-r2] .-> [cassandra-dc1-r2-0]
+[Statefulset-dc1-r2] .-> [cassandra-dc1-r2-1]
+[Statefulset-dc1-r2] .-> [cassandra-dc1-r2-2]
+
+
+[CassandraCluster] .-> [Statefulset-dc2-r1]
+
+
+[Statefulset-dc2-r1] .-> [cassandra-dc2-r1-0]
+[Statefulset-dc2-r1] .-> [cassandra-dc2-r1-1]
+[Statefulset-dc2-r1] .-> [cassandra-dc2-r1-2]
+
+
+
+
+@enduml

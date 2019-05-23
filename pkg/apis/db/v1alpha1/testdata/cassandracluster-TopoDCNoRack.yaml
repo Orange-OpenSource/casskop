@@ -1,0 +1,27 @@
+apiVersion: "db.orange.com/v1alpha1"
+kind: "CassandraCluster"
+metadata:
+  name: cassandra-demo
+  labels:
+    cluster: k8s.pic
+  namespace: ns
+spec:
+  nodesPerRacks: 8
+  baseImage: orangeopensource/cassandra-image
+  version: latest
+  rollingPartition: 0
+  dataCapacity: "3Gi"
+  dataStorageClass: "local-storage"
+  hardAntiAffinity: false
+  deletePVC: true
+  autoPilot: true
+  resources:
+    requests:
+      cpu: '1'
+      memory: 2Gi
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  topology:
+    dc:
+    - name: online

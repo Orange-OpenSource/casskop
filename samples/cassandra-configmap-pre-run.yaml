@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cassandra-configmap-pre-run
+data:
+  pre_run.sh: |-
+    echo "** this is a pre-scrip for run.sh that can be edit with configmap"
+    test "$(hostname)" == 'cassandra-demo-dc1-rack1-0' && echo "do specific action there"
+    test "$(hostname)" == 'cassandra-demo-dc1-rack1-1' && echo "sleep 60" && sleep 60
+    echo "** end of pre_run.sh script, continue with run.sh"
+ 

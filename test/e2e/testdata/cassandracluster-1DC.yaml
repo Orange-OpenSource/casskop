@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jolokia-auth
+type: Opaque
+data:
+  password: TTBucDQ1NXcwcmQ=
+  username: am9sb2tpYS11c2Vy
+---
+apiVersion: "db.orange.com/v1alpha1"
+kind: "CassandraCluster"
+metadata:
+  name: cassandra-e2e
+  labels:
+    cluster: k8s.pic
+spec:
+  nodesPerRacks: 1
+  baseImage: orangeopensource/cassandra-image
+  version: latest-cqlsh
+  imagePullPolicy: "Always"
+  imageJolokiaSecret:
+    name: jolokia-auth
+  rollingPartition: 0
+  dataCapacity: "1Gi"
+#  dataStorageClass: "standard"
+  hardAntiAffinity: false
+  deletePVC: false
+  autoPilot: true
+  autoUpdateSeedList: false
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+#    limits:
+#      cpu: '2'
+#      memory: 1Gi
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+

@@ -1,0 +1,71 @@
+keyspace: bench
+
+keyspace_definition: |
+  CREATE KEYSPACE IF NOT EXISTS bench WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'dc1': '3'};
+
+table: huge_table
+
+table_definition: |
+  CREATE TABLE IF NOT EXISTS bench.huge_table (
+  id blob,
+  sub_id blob,
+  rec_type text,
+  value1 double,
+  value2 double,
+  value3 double,
+  value4 blob,
+  value5 double,
+  value6 blob,
+  time bigint,
+  PRIMARY KEY (sub_id, time)
+  ) WITH CLUSTERING ORDER BY (time DESC)
+    AND bloom_filter_fp_chance = 0.1
+    AND caching = {'keys':'ALL', 'rows_per_partition':'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND dclocal_read_repair_chance = 0.05
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 1555200
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.01
+    AND speculative_retry = '99.0PERCENTILE';
+
+columnspec:
+  - name: id
+    population: seq(1..5b) # 5 Billion potential ids size: fixed(16)
+  - name: rec_type
+    size: uniform(10..20) # rec_type is 10-20 chars 
+    population: uniform(1..10) # there are 10 types of rec_type
+  - name: sub_id
+    size: fixed(16)
+    population: seq(1..5b) # 5 Billion unique machines
+  - name: value1
+    population: gaussian(0..1000) # values range from 0-1000 and follow a gaussian distribution
+  - name: value2
+    population: gaussian(0..1000) # values range from 0-1000 and follow a gaussian distribution
+  - name: value3
+    population: gaussian(0..1000) # values range from 0-1000 and follow a gaussian distribution
+  - name: value4
+    population: gaussian(0..100k) # values range from 0-1000 and follow a gaussian distribution
+  - name: value5
+    population: gaussian(0..1000) # values range from 0-1000 and follow a gaussian distribution
+  - name: value6
+    population: gaussian(0..200) # values range from 0-200 and follow a gaussian distribution
+  - name: time
+    cluster: fixed(100) # 100 values updates per machine 
+    population: seq(0..99)
+
+### Batch Ratio Distribution Specifications ### 
+insert:
+  partitions: fixed(1)
+  # select: fixed(1)/100 # Inserts will be single row 
+  batchtype: UNLOGGED
+
+# A list of queries you wish to run against the schema #
+queries:
+  query_by_sub_id:
+    cql: SELECT sub_id, value1, time FROM huge_table WHERE sub_id = ? and time >= 90 LIMIT 10
+    fields: samerow

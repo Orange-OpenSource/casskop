@@ -1,0 +1,225 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: 2018-09-05T08:57:11Z
+  generation: 14
+  labels:
+    app: cassandracluster
+    cassandracluster: cassandra-demo
+    cassandraclusters.db.orange.com.dc: dc1
+    cassandraclusters.db.orange.com.rack: rack1
+    cluster: k8s.pic
+    dc-rack: dc1-rack1
+  name: cassandra-demo-dc1-rack1
+  namespace: ns
+  ownerReferences:
+  - apiVersion: db.orange.com/v1alpha1
+    controller: true
+    kind: CassandraCluster
+    name: cassandra-demo
+    uid: ad29e479-b0e9-11e8-969d-a0b3cced3ef8
+  resourceVersion: "18600537"
+  selfLink: /apis/apps/v1/namespaces/ns/statefulsets/cassandra-demo-dc1-rack1
+  uid: ad70cd1f-b0e9-11e8-bd6c-a0b3cced1400
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: cassandracluster
+      cassandracluster: cassandra-demo
+      cassandraclusters.db.orange.com.dc: dc1
+      cassandraclusters.db.orange.com.rack: rack1
+      cluster: k8s.pic
+      dc-rack: dc1-rack1
+  serviceName: cassandra-demo-dc1-rack1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cassandracluster
+        cassandracluster: cassandra-demo
+        cassandraclusters.db.orange.com.dc: dc1
+        cassandraclusters.db.orange.com.rack: rack1
+        cluster: k8s.pic
+        dc-rack: dc1-rack1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: location.dfy.orange.com/site
+                operator: In
+                values:
+                - mts
+              - key: location.dfy.orange.com/street
+                operator: In
+                values:
+                - street1
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: cassandracluster
+                  cassandracluster: cassandra-demo
+                  cassandraclusters.db.orange.com.dc: dc1
+                  cassandraclusters.db.orange.com.rack: rack1
+                  cluster: k8s.pic
+                  dc-rack: dc1-rack1
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - env:
+        - name: CASSANDRA_MAX_HEAP
+          value: 512M
+        - name: CASSANDRA_SEEDS
+          value: cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.ns,cassandra-demo-dc1-rack2-0.cassandra-demo-dc1-rack2.ns,cassandra-demo-dc2-rack1-0.cassandra-demo-dc2-rack1.ns
+        - name: CASSANDRA_CLUSTER_NAME
+          value: cassandra-demo
+        - name: CASSANDRA_AUTO_BOOTSTRAP
+          value: "false"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: CASSANDRA_DC
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.labels['cassandraclusters.db.orange.com.dc']
+        - name: CASSANDRA_RACK
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
+        image: orangeopensource/cassandra-image:seed-dev
+        imagePullPolicy: Always
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - echo "[KUBERNETES] - Executing PreStop Hook*************************"
+                > /proc/1/fd/1
+              - sleep 60
+              - echo "[KUBERNETES] - The Pod Is going to be Killed" > /proc/1/fd/1
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - nodetool status
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 20
+        name: cassandra
+        ports:
+        - containerPort: 7000
+          name: intra-node
+          protocol: TCP
+        - containerPort: 7001
+          name: tls-intra-node
+          protocol: TCP
+        - containerPort: 7199
+          name: jmx
+          protocol: TCP
+        - containerPort: 9042
+          name: cql
+          protocol: TCP
+        - containerPort: 1234
+          name: promjmx
+          protocol: TCP
+        - containerPort: 8778
+          name: jolokia
+          protocol: TCP
+        - containerPort: 9160
+          name: thrift
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - /ready-probe.sh
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 40
+          successThreshold: 1
+          timeoutSeconds: 20
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/cassandra
+          name: data
+      dnsPolicy: ClusterFirst
+      imagePullSecret:
+        name: advisedev
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 300
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - metadata:
+      creationTimestamp: null
+      labels:
+        app: cassandracluster
+        cassandracluster: cassandra-demo
+        cassandraclusters.db.orange.com.dc: dc1
+        cassandraclusters.db.orange.com.rack: rack1
+        cluster: k8s.pic
+        dc-rack: dc1-rack1
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 3Gi
+      storageClassName: local-storage
+    status:
+      phase: Pending
+status:
+  collisionCount: 0
+  currentReplicas: 2
+  currentRevision: cassandra-demo-dc1-rack1-6b769bb8cc
+  observedGeneration: 14
+  readyReplicas: 2
+  replicas: 2
+  updateRevision: cassandra-demo-dc1-rack1-6b769bb8cc

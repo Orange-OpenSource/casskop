@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cassandra-k8s-operator
+  labels:
+    app: cassandra-k8s-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cassandra-k8s-operator
+  template:
+    metadata:
+      labels:
+        name: cassandra-k8s-operator
+        app: cassandra-k8s-operator
+    spec:
+      serviceAccountName: cassandra-k8s-operator
+      securityContext:
+        runAsUser: 1000
+      containers:
+        - name: cassandra-k8s-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - cassandra-k8s-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "cassandra-k8s-operator"

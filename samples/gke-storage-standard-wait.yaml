@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    storageclass.beta.kubernetes.io/is-default-class: "true"
+  name: standard-wait
+provisioner: kubernetes.io/gce-pd
+volumeBindingMode: "WaitForFirstConsumer"
+parameters:
+#  type: pd-ssd
+  type: pd-standard
+

@@ -1,0 +1,406 @@
+================================================================================
+
+[Apache 2.0]
+
+================================================================================
+
+Component: [Kubernetes] Copyright © [The Kubernetes Authors] 
+
+License Text URL: [http://www.apache.org/licenses/LICENSE-2.0]
+
+Source Code:[https://github.com/kubernetes/kubernetes]
+
+
+Component: [tools] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/tools/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/tools]
+
+
+Component: [docker/spdystream] Copyright © [???] 
+
+License Text URL: https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/docker/spdystream/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/docker/spdystream]
+
+
+Component: [go-logr/logr] Copyright © [???] 
+
+License Text URL: https://github.com/go-logr/logr/blob/master/LICENSE]
+
+Source Code:[https://github.com/go-logr/logr]
+
+
+Component: [google/gofuzz] Copyright © [???] 
+
+License Text URL: https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/google/gofuzz/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/google/gofuzz]
+
+
+Component: [google/btree] Copyright © [???] 
+
+License Text URL: https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/google/btree/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/google/btree]
+
+
+Component: [kylelemons/godebug] Copyright © [???] 
+
+License Text URL: https://github.com/kylelemons/godebug/blob/master/LICENSE]
+
+Source Code:[https://github.com/kylelemons/godebug]
+
+
+Component: [mattbaird/jsonpatch] Copyright © [???] 
+
+License Text URL: https://github.com/mattbaird/jsonpatch/blob/master/LICENSE]
+
+Source Code:[https://github.com/mattbaird/jsonpatch]
+
+
+Component: [operator-framework/operator-sdk] Copyright © [???] 
+
+License Text URL: https://github.com/operator-framework/operator-sdk/blob/master/LICENSE]
+
+Source Code:[https://github.com/operator-framework/operator-sdk]
+
+
+Component: [spf13/afero] Copyright © [???] 
+
+License Text URL: https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/spf13/afero/LICENSE.txt]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/spf13/afero]
+
+
+================================================================================
+
+[BSD]
+
+
+Component: [Kubernetes apimachinery/thirdparty/golang] Copyright © [The Go Authors] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/third_party/forked/golang/json/fields.go]
+
+Source Code:[https://github.com/kubernetes/kubernetes]
+
+
+Component: [Kubernetes appengine] Copyright © [The Go Authors] 
+
+License Text URL: [https://github.com/golang/appengine/blob/master/cmd/aefix/fix.go]
+
+Source Code:[https://github.com/golang/appengine]
+
+
+Component: [oauth2] Copyright © [The Go Authors  The oauth2 Authors] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/oauth2/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/oauth2]
+
+
+Component: [crypto] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/crypto/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/crypto]
+
+
+Component: [net] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/net/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/net]
+
+
+Component: [sys] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/sys/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/sys]
+
+
+Component: [text] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/text/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/text]
+
+
+Component: [time] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/time/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/time]
+
+
+Component: [tools] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/golang.org/x/tools/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/golang.org/x/tools]
+
+
+Component: [docker/spdystream/spdy] Copyright © [The Go Authors] 
+
+License Text URL: https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/docker/spdystream/spdy/dictionary.go]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/docker/spdystream/spdy]
+
+
+Component: [gogo/protobuf] Copyright © [The Go Authors  + The GoGo Authors] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/gogo/protobuf/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/gogo/protobuf]
+
+
+Component: [golang/protobuf] Copyright © [The Go Authors ] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/golang/protobuf/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/golang/protobuf]
+
+
+Component: [google/uuid] Copyright © [Google Inc.] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/google/uuid/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/google/uuid]
+
+
+Component: [imdario/mergo] Copyright © [Dario Castañé + The Go Authors] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/imdario/mergo/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/imdario/mergo]
+
+
+Component: [pborman/uuid] Copyright © [Google Inc.] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/pborman/uuid/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/pborman/uuid]
+
+
+Component: [petar/GoLLRB] Copyright © [Petar Maymounkov] 
+
+License Text URL: [https://github.com/petar/GoLLRB/blob/master/LICENSE]
+
+Source Code:[https://github.com/petar/GoLLRB]
+
+
+Component: [PuerkitoBio/purell] Copyright © [Martin Angers] 
+
+License Text URL: [https://github.com/PuerkitoBio/purell/blob/master/LICENSE]
+
+Source Code:[https://github.com/PuerkitoBio/purell]
+
+
+Component: [PuerkitoBio/urlesc] Copyright © [The Go Authors] 
+
+License Text URL: [https://github.com/PuerkitoBio/urlesc/blob/master/LICENSE]
+
+Source Code:[https://github.com/PuerkitoBio/urlesc]
+
+
+Component: [rogpeppe/go-internal] Copyright © [The Go Authors] 
+
+License Text URL: [https://github.com/rogpeppe/go-internal/blob/master/LICENSE]
+
+Source Code:[https://github.com/rogpeppe/go-internal]
+
+
+Component: [spf13/pflag] Copyright © [Alex Ogier + The Go Authors] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/spf13/pflag/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/spf13/pflag]
+
+
+
+================================================================================
+
+[ISC]
+
+
+Component: [go-spew] Copyright (c) 2012-2016 Dave Collins] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/davecgh/go-spew/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/davecgh/go-spew]
+
+================================================================================
+
+[MIT]
+
+
+Component: [atomic : Simple wrappers] Copyright © [Uber Technologies, Inc.] 
+
+License Text URL: [https://github.com/uber-go/atomic/blob/master/LICENSE.txt]
+
+Source Code:[https://github.com/uber-go/atomic]
+
+
+Component: [zap : structured, leveled logging in Go] Copyright © [Uber Technologies, Inc.] 
+
+License Text URL: [https://github.com/uber-go/zap/blob/master/LICENSE.txt]
+
+Source Code:[https://github.com/uber-go/zap]
+
+
+Component: [multierr : combining one or more Go errors together] Copyright © [Uber Technologies, Inc.] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/gopkg.in/inf.v0/LICENSE]
+
+Source Code:[https://github.com/uber-go/multierr]
+
+
+Component: [BurntSushu ] Copyright © [TOML authors] 
+
+License Text URL: [https://github.com/BurntSushi/toml/blob/master/COPYING]
+
+Source Code:[https://github.com/BurntSushi/toml]
+
+
+Component: [emicklei/go-restful] Copyright © [Ernest Micklei] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/emicklei/go-restful/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/emicklei/go-restful]
+
+
+Component: [eghodss/yaml] Copyright (c) [Sam Ghods] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/ghodss/yaml/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/ghodss/yaml]
+
+
+Component: [gobuffalo] Copyright (c) [Mark Bates] 
+
+License Text URL: [https://github.com/gobuffalo/buffalo/blob/master/LICENSE.txt]
+
+Source Code:[https://github.com/gobuffalo/buffalo]
+
+
+Component: [gregjones/httpcache] Copyright (c) [Greg Jones] 
+
+License Text URL: [https://github.com/gregjones/httpcache/blob/master/LICENSE.txt]
+
+Source Code:[https://github.com/gregjones/httpcache]
+
+
+Component: [jarcoal/httpmock] Copyright (c) [???] 
+
+License Text URL: [https://github.com/jarcoal/httpmock/blob/v1/LICENSE]
+
+Source Code:[https://github.com/jarcoal/httpmock]
+
+
+Component: [joho/godotenv] Copyright (c) [John Barton] 
+
+License Text URL: [https://github.com/joho/godotenv/blob/master/LICENCE]
+
+Source Code:[https://github.com/joho/godotenv]
+
+
+Component: [json-iterator/go] Copyright (c) [json-iterator] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/json-iterator/go/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/json-iterator/go]
+
+
+Component: [kosorten/go-windwq-terminal-sequences] Copyright (c) [marvin + konsorten GmbH] 
+
+License Text URL: [https://github.com/konsorten/go-windows-terminal-sequences/blob/master/LICENSE]
+
+Source Code:[https://github.com/konsorten/go-windows-terminal-sequences]
+
+
+Component: [mailru/easyjson] Copyright (c) [Mail.Ru Group] 
+
+License Text URL: [https://github.com/mailru/easyjson/blob/master/LICENSE]
+
+Source Code:[https://github.com/mailru/easyjson]
+
+
+Component: [markbates/inflect] Copyright (c) [Chris Farmiloe] 
+
+License Text URL: [https://github.com/markbates/inflect/blob/master/LICENCE]
+
+Source Code:[https://github.com/markbates/inflect]
+
+
+Component: [peterbourgon/diskv] Copyright (c) [Peter Bourgon] 
+
+License Text URL: [https://github.com/peterbourgon/diskv/blob/master/LICENSE]
+
+Source Code:[https://github.com/peterbourgon/diskv]
+
+
+Component: [sirypsen/logrus] Copyright (c) [Simon Eskildsen] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/sirupsen/logrus/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/sirupsen/logrus]
+
+
+Component: [stretchr/testify] Copyright © [Mat Ryer and Tyler Bunnell] 
+
+License Text URL: [https://github.com/stretchr/testify/blob/master/LICENSE]
+
+Source Code:[https://github.com/stretchr/testify]
+
+
+Component: [swarvanusg/go_jolokia] Copyright © [Swarvanu Sengupta] 
+
+License Text URL: [https://github.com/s8sg/go_jolokia/blob/master/LICENSE]
+
+Source Code:[https://github.com/s8sg/go_jolokia]
+
+
+Component: [thoas/go_funk] Copyright © [Florent Messa] 
+
+License Text URL: [https://github.com/thoas/go-funk/blob/master/LICENSE]
+
+Source Code:[https://github.com/thoas/go-funk]
+
+
+================================================================================
+
+[MPL]
+
+
+Component: [hashicorp/golang-lru] Copyright © [ ???] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/hashicorp/golang-lru/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/hashicorp/golang-lru]
+
+
+
+================================================================================
+
+[???]
+
+
+
+Component: [inf v0] Copyright © [ 2012 Péter Surányi. Portions Copyright (c) 2009 The Go Authors.] 
+
+License Text URL: [https://clouddocs.f5.com/products/connectors/k8s-bigip-ctlr/v1.0/ATTRIBUTIONS.html]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/gopkg.in/inf.v0]
+
+
+
+Component: [pmezard/go-difflib] Copyright © [Patrick Mezard] 
+
+License Text URL: [https://github.com/kubernetes/kubernetes/blob/master/vendor/github.com/pmezard/go-difflib/LICENSE]
+
+Source Code:[https://github.com/kubernetes/kubernetes/tree/master/vendor/github.com/pmezard/go-difflib]
+
+
+

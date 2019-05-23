@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+#
+# Copyright 2019 Orange
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# 	You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# 	See the License for the specific language governing permissions and
+# limitations under the License.
+
+import argparse
+import sys
+import json
+from subprocess import check_output, STDOUT, CalledProcessError
+from os.path import basename
+from random import shuffle
+
+def k_apply_with_input(input, error, *args):
+    try:
+        check_output(["kubectl", "apply", "-f", "-"], stderr=STDOUT, input=str.encode(input))
+    except CalledProcessError:
+        die(error)
+
+def k(*args):
+    params = list(args)
+    try:
+        out = check_output(["kubectl"] + params, stderr=STDOUT)
+        result = out.decode("utf-8")
+        if result:
+            if "-o" in " ".join(params):
+                return result
+            return [r.split() for r in result.split("\n")[1:-1]]
+    except CalledProcessError:
+        return []
+
+def die(msg):
+    print(f"{msg}. Have to stop here ...")
+    sys.exit(1)
+
+def pod_is_mandatory(name):
+    if not name or not k('get', 'pod', name):
+        die(f"Pod {name} not found")
+    return name
+
+def get_pods(args):
+    if args.prefix:
+        pods = grep_pods(args.prefix)
+    else:
+        pods = [pod_is_mandatory(args.pod)]
+    if not pods:
+        die("No pods found")
+    return pods
+
+
+def grep_pods(prefix, option=[]):
+    pods = [p[0] for p in k(*(["get", "pods"] + option)) if prefix in p[0]]
+    if not pods:
+        die("No pods with prefix {prefix} found")
+    return pods
+
+def get_namespace():
+    return [p[1] for p in k('config', 'view', '--minify') if "namespace" in p[0]][0]
+
+def set_pod_label(pod, operation, argument=None):
+    print(f"Trigger {operation} on pod {pod}")
+    k("label", "pods", pod, f"operation-name={operation}", "--overwrite")
+    if argument:
+        k("label", "pods", pod, f"operation-argument={argument}", "--overwrite")
+    k("label", "pods", pod, "operation-status=ToDo", "--overwrite")
+
+def available_pod_in_crd(crd):
+    # All running pods in current crd
+    pods = grep_pods(crd, ["--field-selector=status.phase=Running"])
+    # Let's not keep the ascii sort
+    shuffle(pods)
+    crd_content = k("get", "cassandracluster.db.orange.com", crd, "-o", "json")
+    if not crd_content:
+        die(f"crd {crd} not found")
+    crd_content = json.loads(crd_content)["status"]["cassandraRackStatus"]
+    busy_pods = set()
+    for key in [key for key in crd_content.keys() if type(crd_content[key]) is dict and "podLastOperation" in crd_content[key].keys()]:
+        pod_last_op = crd_content[key]["podLastOperation"]
+        if "pods" in pod_last_op:
+            busy_pods.update(set(pod_last_op["pods"]))
+    return next(p for p in pods if p not in busy_pods)
+
+
+class Command(object):
+    def __init__(self):
+        plugin = basename(sys.argv[0])
+        parser = argparse.ArgumentParser(
+            description='Pretends to be git',
+            usage=f"""{plugin} <command> [<args>]
+
+The available commands are:
+   cleanup
+   upgradesstables
+   rebuild
+   remove
+
+For more information you can run {plugin} <command> --help
+""")
+        parser.add_argument('command', help='Subcommand to run')
+        args = parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, args.command):
+            print("Unrecognized command")
+            parser.print_help()
+            exit(1)
+        print(f"Namespace {get_namespace()}")
+
+        getattr(self, args.command)()
+
+    def _simple_operation(self, operation):
+        parser = argparse.ArgumentParser(operation)
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('--pod')
+        group.add_argument('--prefix')
+        args = parser.parse_args(sys.argv[2:])
+        pods = get_pods(args)
+        for pod in pods:
+            set_pod_label(pod, operation)
+
+    def cleanup(self):
+        self._simple_operation(self.cleanup.__name__)
+
+    def upgradesstables(self):
+        self._simple_operation(self.upgradesstables.__name__)
+
+    def remove(self):
+        parser = argparse.ArgumentParser(self.remove.__name__)
+        parser.add_argument('--pod')
+        parser.add_argument('--previous-ip', default="")
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('--from-pod')
+        group.add_argument('--crd')
+        args = parser.parse_args(sys.argv[2:])
+        pod = pod_is_mandatory(args.pod)
+        from_pod = args.from_pod
+
+        if not (args.pod or args.previous_ip):
+            die("At least one option must be used between --pod and --previous-ip")
+
+        if not from_pod:
+            from_pod = available_pod_in_crd(args.crd)
+
+        print(f"Trigger {self.remove.__name__} of pod {pod} from pod {from_pod}")
+        set_pod_label(from_pod, self.remove.__name__, f"{args.pod}_{args.previous_ip}")
+
+    def rebuild(self):
+        parser = argparse.ArgumentParser(self.rebuild.__name__)
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('--pod')
+        group.add_argument('--prefix')
+        parser.add_argument('from_dc', metavar='from-dc')
+        args = parser.parse_args(sys.argv[2:])
+        pods = get_pods(args)
+        for pod in pods:
+            set_pod_label(pod, self.rebuild.__name__, args.from_dc)
+
+    def replace(self):
+        parser = argparse.ArgumentParser(self.replace.__name__)
+        parser.add_argument('--pod', required=True)
+        parser.add_argument('--previous-ip', required=True)
+        args = parser.parse_args(sys.argv[2:])
+        pod = pod_is_mandatory(args.pod)
+        pre_run = f"test \"$(hostname)\" == '{args.pod}' && echo -Dcassandra.replace_address_first_boot={args.previous_ip} >> /etc/cassandra/jvm.options"
+        crds = k("get", "cassandraclusters.db.orange.com")
+        if not crds:
+            die("No crds found")
+        crd = next(c[0] for c in crds if c[0] in args.pod)
+        config_map = k("get", "cassandraclusters.db.orange.com", crd, "--output=jsonpath={.spec.configMapName}")
+        if not config_map:
+            die("No ConfigMap found")
+        result = json.loads(k("get", "configmap", config_map, "-o", "json"))
+        result["data"]["pre_run.sh"] = pre_run
+        print("Update pre-run.sh in ConfigMap {config_map}")
+        k_apply_with_input(json.dumps(result), f"Can't update ConfigMap {config_map}")
+        print(f"Delete pvc data-{args.pod}")
+        k("delete", "pvc", f"data-{args.pod}")
+
+
+if __name__ == '__main__':
+    Command()

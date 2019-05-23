@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cassandra-stress
+spec:
+  containers:
+  - name: cassandra-stress
+    image: "cassandra:3.11.2"
+    imagePullPolicy: "IfNotPresent"
+    command: ["cassandra-stress", "user", "profile=/opt/cassandra-stress/cass_insert_bac.yaml",
+              "ops(insert=3,read1=1)", "-node cassandra-bench-online-rack1-0.cassandra-bench-online-rack1", 
+              "-mode native cql3", "-rate threads=1"]
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 2
+        memory: 4Gi
+    volumeMounts:
+    - name: cassandra-stress-profile-volume
+      mountPath: /opt/cassandra-stress
+  volumes:
+    - name: cassandra-stress-profile-volume
+      configMap:
+        name: cassandra-stress-insert-bac
+  restartPolicy: Never
+  

@@ -1,0 +1,61 @@
+apiVersion: "db.orange.com/v1alpha1"
+kind: "CassandraCluster"
+metadata:
+  name: cassandra-demo
+  labels:
+    cluster: k8s.kaas
+spec:
+  baseImage: orangeopensource/cassandra-image
+  version: 3.11.4-8u212-0.3.1-cqlsh
+  configMapName: cassandra-configmap-v1
+  dataCapacity: "20Gi"
+  dataStorageClass: "standard"
+  #imagepullpolicy: Always
+  imagepullpolicy: IfNotPresent  
+  checkStatefulsetsAreEqual: true
+  hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
+  deletePVC: true
+  autoPilot: false
+  gcStdout: true
+  autoUpdateSeedList: true
+  maxPodUnavailable: 1
+  runAsUser: 1000
+  resources:         
+    requests:
+      cpu: '1'
+      memory: 2Gi
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  topology:
+    dc:
+      - name: dc1
+        nodesPerRacks: 1
+        numTokens: 256
+        rack:
+          - name: rack1
+            labels: 
+              location.physical/rack : "1"
+          - name: rack2
+            labels:
+              location.physical/rack : "2"
+          - name: rack3
+            labels:
+              location.physical/rack : "3"
+      - name: dc2
+        nodesPerRacks: 1
+        numTokens: 256
+        labels:
+          failure-domain.beta.kubernetes.io/region: "europe-west1"
+          failure-domain.beta.kubernetes.io/zone: "europe-west1-b"
+        rack:
+          - name: rack1
+            labels:
+              location.physical/rack : "1"
+          - name: rack2
+            labels:
+              location.physical/rack : "2"
+          - name: rack3
+            labels:
+              location.physical/rack : "3"
+

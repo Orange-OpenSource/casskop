@@ -1,0 +1,101 @@
+@startuml
+object CassandraCluster
+CassandraCluster : TypeMeta
+CassandraCluster : ListMeta
+CassandraCluster : Spec
+CassandraCluster : Status
+
+object CPUAndMem
+CPUAndMem : CPU
+CPUAndMem : Memory
+
+object CassandraResources
+CassandraResources : Requests
+CassandraResources : Limits
+
+object PodPolicy
+PodPolicy : Resources
+
+object CassandraClusterSpec
+CassandraClusterSpec : nodesPerRacks
+CassandraClusterSpec : baseImage
+CassandraClusterSpec : version
+CassandraClusterSpec : runAsUser
+CassandraClusterSpec : resources
+CassandraClusterSpec : hardAntiAffinity
+CassandraClusterSpec : deletePVC
+CassandraClusterSpec : autoPilot
+CassandraClusterSpec : autoUpdateSeedList
+CassandraClusterSpec : gcStdout
+CassandraClusterSpec : maxPodUnavailable
+CassandraClusterSpec : dataCapacity
+CassandraClusterSpec : dataStorageClass
+CassandraClusterSpec : configMapName
+CassandraClusterSpec : imagePullSecret
+CassandraClusterSpec : imageJolokiaSecret
+CassandraClusterSpec : topology
+
+object topology
+topology : DCList
+
+object DCList
+DCList : name
+DCList : labels
+DCList : NodesPerRacks
+DCList : NumTokens
+DCList : RackList
+
+object RackList
+RackList : name
+RackList : labels
+RackList : rollingRestart
+RackList :  rollingPartition
+
+RackList *-- DCList
+DCList *-- topology
+
+topology *-- CassandraClusterSpec
+
+object CassandraClusterStatus
+CassandraClusterStatus : phase
+CassandraClusterStatus : lastClusterAction
+CassandraClusterStatus : lastClusterActionStatus
+CassandraClusterStatus : SeedList
+CassandraClusterStatus : CassandraRackStatusList
+
+
+object CassandraLastAction
+CassandraLastAction : status
+CassandraLastAction : name
+CassandraLastAction : startTime
+CassandraLastAction : endTime
+CassandraLastAction : updateNodes
+
+object PodLastOperation
+PodLastOperation : name
+PodLastOperation : status
+PodLastOperation : startTime
+PodLastOperation : endTime
+PodLastOperation : pods
+PodLastOperation : podsOK
+PodLastOperation : podsKO
+PodLastOperation : OperatorName
+
+
+CassandraClusterSpec *-- CassandraCluster
+CassandraClusterStatus *-- CassandraCluster
+
+object CassandraRackStatusList
+CassandraRackStatusList : DCRackName
+CassandraRackStatusList : CassandraLastAction
+CassandraRackStatusList : PodLastOperation
+
+CassandraRackStatusList *-- CassandraClusterStatus
+CassandraLastAction *-- CassandraRackStatusList
+PodLastOperation *-- CassandraRackStatusList
+
+CPUAndMem  *-- CassandraResources
+CassandraResources *-- CassandraClusterSpec
+
+PodPolicy *-- CassandraClusterSpec
+@enduml

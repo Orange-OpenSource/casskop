@@ -1,0 +1,47 @@
+keyspace: bench
+
+keyspace_definition: |
+  CREATE KEYSPACE IF NOT EXISTS bench WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'dc1': '3'};
+
+table: normal_table
+
+table_definition: |
+  CREATE TABLE IF NOT EXISTS bench.normal_table (
+  id blob,
+  sub_id blob,
+  value double,
+  PRIMARY KEY (sub_id)
+  ) WITH bloom_filter_fp_chance = 0.1
+    AND caching = {'keys':'ALL', 'rows_per_partition':'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND dclocal_read_repair_chance = 0.05
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 1555200
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.01
+    AND speculative_retry = '99.0PERCENTILE';
+
+columnspec:
+  - name: id
+    population: seq(1..100m) # 100 Millions potential ids size: fixed(16)
+  - name: sub_id
+    size: fixed(16)
+    population: seq(1..100m) # 100 Miullions unique machines
+  - name: value
+    population: gaussian(0..1000) # values range from 0-1000 and follow a gaussian distribution
+
+### Batch Ratio Distribution Specifications ### 
+insert:
+  partitions: fixed(1)
+  # select: fixed(1)/100 # Inserts will be single row 
+  batchtype: UNLOGGED
+
+# A list of queries you wish to run against the schema #
+queries:
+  query_by_sub_id:
+    cql: SELECT sub_id, value FROM normal_table WHERE sub_id = ? LIMIT 10
+    fields: samerow

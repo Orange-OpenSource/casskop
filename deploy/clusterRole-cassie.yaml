@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    kubernetes.io/cluster-service: "true"
+  name: psp:cassie
+rules:
+- apiGroups:
+  - policy
+  resourceNames:
+  - cassie
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use

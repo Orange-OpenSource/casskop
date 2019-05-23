@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-cassandra-jmx
+  labels:
+    k8s-apps: cassandra-k8s-jmx
+    prometheus: kube-prometheus
+    component: cassandra
+    app: cassandra
+    release: prometheus
+spec:
+  jobLabel: kube-prometheus-cassandra-k8s-jmx
+  selector:
+    matchLabels:
+      k8s-app: exporter-cassandra-jmx
+  namespaceSelector:
+      matchNames:
+      - cassandra
+      - cassandra-demo
+  endpoints:
+  - port: http-promcassjmx
+    interval: 15s
+    metricRelabelings:
+    - action: replace
+      sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: instance
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: instance
+      action: replace

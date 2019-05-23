@@ -1,0 +1,7 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: example-cassandracluster
+spec:
+  # Add fields here
+  size: 3

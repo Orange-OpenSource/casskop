@@ -1,0 +1,352 @@
+version: 2.1
+
+executors:
+  casskop-build:
+    docker:
+      - image: orangeopensource/casskop-build:v0.7.0
+
+experimental:
+  notify:
+    branches:
+      only:
+        - master
+
+orbs:
+  minikube:
+    executors:
+      vm-classic:
+        machine:
+          image: circleci/classic:201808-01
+          docker_layer_caching: true
+
+    jobs:
+      e2e-orb:
+        working_directory: /home/circleci/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+        parameters:
+          test_name:
+            description: name of the test in e2e code
+            type: string
+            default: toto
+        executor: vm-classic
+
+
+        environment:
+          K8S_VERSION: v1.14.0
+          KUBECONFIG: /home/circleci/.kube/config
+          MINIKUBE_VERSION: v1.0.0
+          MINIKUBE_WANTUPDATENOTIFICATION: false
+          MINIKUBE_WANTREPORTERRORPROMPT: false
+          MINIKUBE_HOME: /home/circleci
+          MINIKUBE_CONFIG: /home/circleci/.minikube
+          CHANGE_MINIKUBE_NONE_USER: true
+          GOPATH: /go
+          DOCKER_LATEST: 1
+          GIN_MODE: release
+
+
+        steps:
+          - run:
+              name: Setup minikube
+              command: |
+                wget -O minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+          - run:
+              name: Start minikube
+              background: true
+              command: |
+                sudo -E minikube start --vm-driver=none --cpus 4 --memory 4096 --kubernetes-version=${K8S_VERSION}
+
+          - run:
+              name: Setup kubectl
+              command: |
+                wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+                mkdir -p ${HOME}/.kube
+                touch ${HOME}/.kube/config
+
+          - checkout
+
+          - attach_workspace:
+              at: ./
+
+          - run:
+              name: Wait for minikube
+              command: |
+                timeout 180s bash \<<EOT
+                  set -o pipefail
+                  function is_ready()
+                  {
+                    kubectl get nodes -o json \
+                      | jq '.items[].status.conditions[] | select(.type=="Ready" and .status=="True")'
+                  }
+                  until is_ready
+                  do
+                    sleep 1
+                  done
+                EOT
+
+          - run:
+              name: Test k8s
+              command: |
+                kubectl get nodes
+                kubectl get pods
+                ls -la
+                ls -la ~/
+
+          - run:
+              name: Operator acceptance test
+#              background: true
+              command: |
+                kubectl create namespace cassandra-e2e
+                make docker-e2e-test-fix-arg <<parameters.test_name>> || {
+                  kubectl -n cassandra-e2e get pods ; 
+                  kubectl -n cassandra-e2e logs -l app=cassandra-k8s-operator --tail=100 | grep -v level=debug ; 
+                kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
+                false;
+                }
+#                echo $? > res
+
+#          - run:
+#              name: Check K8S (debug)
+#              command: |
+#                while [ ! -f res ]; do
+#                  kubectl -n cassandra-e2e get pods ; \
+#                  kubectl -n cassandra-e2e logs -l app=cassandra-k8s-operator --tail=100 | grep -v level=debug
+#                  sleep 60 ; \
+#                done
+#                RES=`cat res`
+#                if [ $RES != 0 ]; then kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; false; fi
+                
+
+
+jobs:
+  is_upstream_master:
+    executor: casskop-build
+    steps:
+    - run: |
+        set -veuo pipefail
+        if [ "${CIRCLE_PROJECT_USERNAME}" != "allamand" ]; then
+          echo "refusing to build fork \"${CIRCLE_PROJECT_USERNAME}\""
+          exit 1
+        fi
+        if [ "${CIRCLE_BRANCH}" != "master" ]; then
+          echo "refusing to build branch \"${CIRCLE_BRANCH}\""
+          exit 1
+        fi
+
+  build:
+    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+    executor: casskop-build
+    steps:
+    - checkout
+
+    - setup_remote_docker
+
+    - restore_cache:
+        keys:
+          - build-{{ .Branch }}-{{ checksum "Gopkg.toml" }}
+          - build-{{ .Branch }}
+          - build
+
+    - run:
+        name: Get Vendor dependency
+        command: make get-deps
+    - run:
+        name: Build Cassandra Operator
+        command: make build
+
+    - persist_to_workspace:
+        root: ./
+        paths:
+          - build/_output
+          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+          - vendor
+
+    - deploy:
+        name: Push image to Docker Hub
+        command: |
+          docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+          make push
+
+
+    - save_cache:
+        name: Save build artefacts in cache
+        key: build-{{ .Branch }}-{{ checksum "Gopkg.toml" }}
+        paths:
+          - build/_output
+          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+          - vendor
+
+  unit-test:
+    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+    executor: casskop-build
+    steps:
+    - checkout
+
+    - attach_workspace:
+        at: ./
+    - run:
+        name: Unit Tests
+        command: make unit-test
+
+    - store_artifacts:
+        path: coverage.html
+
+    - persist_to_workspace:
+        root: ./
+        paths:
+          - coverage.out
+          - test-report.out
+
+  report:
+    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+    executor: casskop-build
+    steps:
+    - checkout
+
+    - attach_workspace:
+        at: ./
+
+    - restore_cache:
+        name: Restore SonarQube Scanner
+        keys:
+          - sonar-scanner-3.3.0.1492-linux
+
+    - run:
+        name: Download SonarQube Scanner (if still necessary)
+        command: |
+          chmod +x .circleci/install_sonar-scanner.sh
+          ./.circleci/install_sonar-scanner.sh
+
+    - run:
+        name: Sonarcloud Scan
+        command: |
+          ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
+          -Dsonar.projectName=CassKop \
+          -Dsonar.projectKey=Orange-OpenSource_cassandra-k8s-operator \
+          -Dsonar.login=${SONAR_TOKEN} \
+          -Dsonar.branch.name=${CIRCLE_BRANCH} \
+          -Dsonar.organization=orange-opensource \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.projectBaseDir=/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator/ \
+          -Dsonar.sources=. \
+          -Dsonar.sources.inclusions="**/**.go" \
+          -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**" \
+          -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
+          -Dsonar.tests=. \
+          -Dsonar.language=go \
+          -Dsonar.sourceEncoding=UTF-8 \
+          -Dsonar.test.inclusions="**/**_test.go" \
+          -Dsonar.test.exclusions="**/vendor/**" \
+          -Dsonar.go.coverage.reportPaths=coverage.out \
+          -Dsonar.go.tests.reportPaths=test-report.out \
+          -Dsonar.coverage.dtdVerification=false \
+          -Dsonar.login=${SONAR_LOGIN} \
+          -Dsonar.log.level=INFO
+          cat -n .scannerwork/report-task.txt
+
+    - save_cache:
+        name: Cache SonarQube Scanner
+        key: sonar-scanner-3.3.0.1492-linux
+        paths:
+          - sonar-scanner-3.3.0.1492-linux
+          - /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator/.sonar
+    - store_test_results:
+        path: reports
+
+
+  e2e-dind2:
+    executor: casskop-build
+    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+    environment:
+      # prevent dind-cluster*.sh from trying to pull the image
+      # during the tests
+      DIND_SKIP_PULL: y
+      KUBE_RSYNC_PORT: 8730
+      STABLE_BRANCH: stable
+      STABLE_SRC_TAG: "v1.12"
+      PRIMARY_BRANCH: master
+      DIND_COMMIT: current
+      DIND_VERSION: v1.12
+      DOWNLOAD_KUBECTL: y
+      KUBECONFIG: /root/.kube/config
+      SKIP_DASHBOARD: true
+
+    steps:
+    - checkout
+
+    - setup_remote_docker
+
+    - run:
+        name: install kubeadm-dind-cluster
+        command: |
+          # Download kubeadm-dind-cluster script and give it executable permissions.
+          wget https://cdn.rawgit.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-${DIND_VERSION}.sh
+          chmod +x dind-cluster-${DIND_VERSION}.sh
+          # Start Kubernetes cluster.
+          SKIP_DASHBOARD=true ./dind-cluster-${DIND_VERSION}.sh up
+          # Add Kubectl directory to the PATH.
+          - export PATH="$HOME/.kubeadm-dind-cluster:$PATH"
+          # Wait for Kubernetes to be up and ready.
+          - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
+
+#    - run:
+#        name: configure local-provisioner
+#        command: |
+#          kubectl create namespace local-provisioner
+#          kubectl config set-context $(kubectl config current-context) --namespace=local-provisioner
+#          tools/configure-dind-local-storage.sh create
+
+    - run:
+        name: Create CassandraCluster CRD
+        command: |
+          kubectl apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+
+    - run:
+        name: Operator acceptance test
+        command:
+          make e2e-test-fix
+
+ 
+
+workflows:
+  version: 2
+
+  master:
+    jobs:
+
+      - build
+
+      - unit-test:
+          requires:
+            - build
+
+      - report:
+          requires:
+            - unit-test
+
+
+      - minikube/e2e-orb:
+          name: e2e-test RollingRestart
+          test_name: RollingRestart
+          requires:
+            - unit-test
+
+      - minikube/e2e-orb:
+          name: e2e-test ScaleUp
+          test_name: ClusterScaleUp
+          requires:
+            - unit-test
+
+      - minikube/e2e-orb:
+          name: e2e-test ScaleDown
+          test_name: ClusterScaleDown
+          requires:
+            - unit-test
+
+      - minikube/e2e-orb:
+          name: e2e-test ScaleDownSimple
+          test_name: ClusterScaleDownSimple
+          requires:
+            - unit-test
+

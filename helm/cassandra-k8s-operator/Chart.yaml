@@ -1,0 +1,13 @@
+apiVersion: v1
+description: A Helm chart for CassKop - the Orange DFY Cassandra Operator
+maintainers:
+  - name: Sébastien Allamand
+    email: sebastien.allamand@orange.com
+name: cassandra-k8s-operator
+sources:
+  - https://github.com/Orange-OpenSource/cassandra-k8s-operator
+version: 0.3.0
+keywords:
+- operator
+- cassandra
+- casskop
