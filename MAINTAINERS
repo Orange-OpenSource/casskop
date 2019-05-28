@@ -1,0 +1,8 @@
+# This is the official list of operator-sdk maintainers.
+#
+# Names should be added to this file like so:
+#     Individual's name <submission email address> (@GITHUB_HANDLE)
+
+Sébastien Allamand <sebastien.allamand@orange.com> (@allamand)
+Cyril Scetbon <cscetbon.ext@orange.com> (@scetbon)
+Jean Armel Luce <jeanarmel.luce@orange.com> (@jal06)
