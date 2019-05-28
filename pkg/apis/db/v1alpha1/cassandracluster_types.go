@@ -117,9 +117,6 @@ func (cc *CassandraCluster) SetDefaults() bool {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
 		cc.Status.SeedList = cc.InitSeedList()
-
-		ccs.CheckStatefulSetsAreEqual = true
-		ccs.GCStdout = true
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -607,10 +604,10 @@ type CassandraClusterSpec struct {
 	// automatically triggers Action
 	//If autoPilot=false, the operator will set labels pod-operation-status=Manual on Pods which won't automatically triggers Action
 	AutoPilot                 bool `json:"autoPilot,omitempty"`
-	CheckStatefulSetsAreEqual bool `json:"checkStatefulsetsAreEqual,omitempty"`
+	CheckStatefulSetsAreEqual bool `json:"checkStatefulsetsAreEqual,omitempty" default:"true"`
 
 	//GCStdout set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default
-	GCStdout bool `json:"gcStdout,omitempty"`
+	GCStdout bool `json:"gcStdout,omitempty" default:"true"`
 
 	//AutoUpdateSeedList defines if the Operator automatically update the SeedList according to new cluster CRD topology
 	//by default a boolean is false
