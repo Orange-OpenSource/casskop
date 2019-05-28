@@ -18,7 +18,7 @@
 # Name of this service/application
 SERVICE_NAME := cassandra-k8s-operator
 
-DOCKER_REPO_BASE := orangeopensource
+DOCKER_REPO_BASE ?= orangeopensource
 #we could want to separate registry for branches
 DOCKER_REPO_BASE_TEST := orangeopensource
 
