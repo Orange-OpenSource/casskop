@@ -2,7 +2,7 @@
 
 # Instruction for development & contributing on CassKop
 
-## CircleCI build Pipeline
+## CircleCI build pipeline
 
 We use CircleCI to build and test the operator code on each commit.
 
@@ -16,6 +16,17 @@ Fisrt you must install the cli, then to install the hook, runs:<
 ```console
 cp tools/pre-commit .git/hooks/pre-commit
 ```
+
+The Pipeline uses some envirenment variables that you need to set-up if you want your fork to build
+
+- DOCKER_REPO_BASE -- name of your docker base reposirory (ex: orangeopensource)
+- DOCKERHUB_PASSWORD
+- DOCKERHUB_USER
+- SONAR_PROJECT
+- SONAR_TOKEN
+
+If not set in CircleCI environment, according steps will be ignored.
+
 
 ## Operator SDK
 
@@ -43,7 +54,7 @@ $ make install
 ```
 
 
-### Initial Setup
+### Initial setup
 
 Checkout the project.
 
@@ -114,7 +125,7 @@ You can run Unit-test for CassKop
 make unit-test
 ```
 
-### Run E2E End to End tests
+### Run e2e end to end tests
 
 CassKop also have several end-to-end tests that can be run using makefile.
 
@@ -136,7 +147,7 @@ you can choose to run only 1 test using the args ex:
 make e2e-test-fix-arg ClusterScaleDown
 ```
 
-### Debug CassKop in remote in a Kubernetes Cluster
+### Debug CassKop in remote in a Kubernetes cluster
 
 CassKop makes some specific calls to the Jolokia API of the CassandraNodes it deploys inside the kubernetes
 cluster. Because of this, it is not possible to fully debug CassKop when launch outside the kubernetes cluster (in

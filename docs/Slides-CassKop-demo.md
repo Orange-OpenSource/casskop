@@ -1,8 +1,8 @@
 media: ./assets
 local: ./assets/kubernetes-operators
 layout: true
-gitlab: https://gitlab.si.francetelecom.fr/dfyarchicloud/slides-presentations-docker
-editpath: /edit/master/Slides-integration-kubernetes-gitlab.md
+gitlab: https://github.com/Orange-OpenSource/cassandra-k8s-operator
+editpath: /edit/master/docs/Slides-CassKop-demo.md
 <!-- /!\ pas de commentaires avant les parametres ci-dessus -->
 <!-- /assets fait partie du viewer global a toutes les pres -->
 <!-- /asset est le rep image en local de cette pres -->
