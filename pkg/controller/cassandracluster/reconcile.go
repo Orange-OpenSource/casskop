@@ -378,11 +378,6 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					}
 				}
 			}
-
-			if err = rcc.ensureCassandraService(cc, dcName, rackName); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraService Error: %v", err)
-			}
-
 			if err = rcc.ensureCassandraDCService(cc, dcName); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraDCService Error: %v", err)
 			}
@@ -391,7 +386,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
 			}
 
-			if err = rcc.ensureCassandraStatefulSet(cc, status, dcRackName, dc, rack); err != nil {
+			if err = rcc.ensureCassandraStatefulSet(cc, status, dcName, dcRackName, dc, rack); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
 			}
 

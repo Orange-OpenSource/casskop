@@ -25,6 +25,13 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
+          readinessProbe:
+            exec:
+              command:
+                - /health
+            failureThreshold: 1
+            initialDelaySeconds: 4
+            periodSeconds: 10
           command:
           - cassandra-k8s-operator
           imagePullPolicy: Always
