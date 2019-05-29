@@ -208,7 +208,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 	return pvc
 }
 
-func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.CassandraClusterStatus, dcRackName string,
+func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcName string, dcRackName string,
 	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) *appsv1.StatefulSet {
 	name := cc.GetName()
 	namespace := cc.Namespace
@@ -250,7 +251,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 			OwnerReferences: ownerRefs,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			ServiceName: name + "-" + dcRackName,
+			ServiceName: name + "-" + dcName,
 			Replicas:    &nodesPerRacks,
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
 				Type: "RollingUpdate",
