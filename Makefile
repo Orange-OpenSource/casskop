@@ -172,7 +172,7 @@ docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
 	docker run --rm -v $(PWD):$(WORKDIR):rw --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
 	echo "Build Cassandra Operator"
-	docker run --rm -v $(PWD):$(WORKDIR):rw --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) --docker-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR):rw --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) --docker-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
