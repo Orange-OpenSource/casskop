@@ -1,6 +1,6 @@
 # CassKop - Cassandra Kubernetes operator
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator)
+[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_cassandra-k8s-operator&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_cassandra-k8s-operator)
 
 ## Project overview
 
@@ -340,3 +340,15 @@ Your namespace need to be listed in the `namespaceSelector` section.
 You can import this [dashboard](samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your Cassandra cluster.
 
 
+# Contributing
+
+See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
+
+# Contacts
+
+You can contact the team with our mailing-list: prj.casskop.support@list.orangeportails.net
+Or on our slack https://casskop.slack.com
+
+# License
+
+CassKop is under Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
