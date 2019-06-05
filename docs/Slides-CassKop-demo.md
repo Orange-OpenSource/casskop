@@ -196,14 +196,14 @@ At this time, CassKop will create as many statefulsets as it is asked to deploy 
     dc:
       - name: dc1
         labels:
-          failure-domain.beta.kubernetes.io/region: "europe-west1"        
+          failure-domain.beta.kubernetes.io/region: "europe-west1""
         rack:
           - name: rack1
             labels:
-              failure-domain.beta.kubernetes.io/zone: "europe-west1-b"            
+              failure-domain.beta.kubernetes.io/zone: "europe-west1-b"
           - name: rack2
             labels:
-              failure-domain.beta.kubernetes.io/zone: "europe-west1-c"            
+              failure-domain.beta.kubernetes.io/zone: "europe-west1-c"
       - name: dc2
         nodesPerRacks: 2
         labels:
@@ -211,7 +211,7 @@ At this time, CassKop will create as many statefulsets as it is asked to deploy 
         rack:
           - name: rack1
             labels:
-              failure-domain.beta.kubernetes.io/zone: "europe-west1-d"                          
+              failure-domain.beta.kubernetes.io/zone: "europe-west1-d"
 ```
 
 The topology section allows to make association between cassandra pods and specific kubernetes nodes.
@@ -370,8 +370,6 @@ kubectl apply -f deploy/clusterRole-cassie.yaml
 
 ---
 
-## Deploy the CRD :
-
 If the CRD don't already exists in the cluster we need to deploy it :
 
 ```console
@@ -381,13 +379,28 @@ k apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
 ## CassKop's operator deployment :
 
 ```console
-$ helm install --name cassandra-demo ./helm/cassandra-k8s-operator
+$ helm install --name casskop ./helm/cassandra-operator
+```
+
+> This deploy the Operator and it's CRD via a helm hook.
+
+### If the cassandracluyster CRD already exists
+
+If the CRD is already deployed this command may return an error :
+```
+Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
+```
+
+in this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
+
+```console
+$ helm install --name casskop ./helm/cassandra-operator --no-hooks
 ```
 
 check operator's logs: 
 
 ```console
-$ k logs -l app=cassandra-k8s-operator --tail=10
+$ k logs -l app=cassandra-operator --tail=10
 ```
 
 ---
@@ -548,7 +561,7 @@ Instantally CassKop update it's status, and will manage 3 ScaleDown sequentially
         phase: Pending
         podLastOperation:
           Name: decommission
-          operatorName: cassandra-demo2-cassandra-k8s-operator-56d48f9d47-cbf5x
+          operatorName: casskop-cassandra-operator-56d48f9d47-cbf5x
           pods:
           - cassandra-demo-dc1-rack1-1
           startTime: 2019-02-28T19:19:45Z
@@ -679,7 +692,7 @@ CassKop will update it's status while performing the operation
         podLastOperation:
           Name: rebuild
           endTime: 2019-02-28T20:19:25Z
-          operatorName: cassandra-demo2-cassandra-k8s-operator-56d48f9d47-cbf5x
+          operatorName: casskop-cassandra-operator-56d48f9d47-cbf5x
           podsOK:
           - cassandra-demo-dc2-rack1-0
           startTime: 2019-02-28T20:19:11Z

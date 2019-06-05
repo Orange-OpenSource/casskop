@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "cassandra-k8s-operator.name" -}}
+{{- define "cassandra-operator.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "cassandra-k8s-operator.fullname" -}}
+{{- define "cassandra-operator.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,7 +27,7 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Return the appropriate apiVersion value to use for the capi-operator managed k8s resources
 */}}
-{{- define "cassandra-k8s-operator.apiVersion" -}}
+{{- define "cassandra-operator.apiVersion" -}}
 {{- printf "%s" "cassandraclusters.db.orange.com/v1alpha1" -}}
 {{- end -}}
 
