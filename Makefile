@@ -54,6 +54,8 @@ BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$
 #Version is for binary, docker image and helm
 VERSION := $(BASEVERSION)-${BRANCH}
 
+HELM_VERSION := $(shell cat helm/cassandra-k8s-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+
 #si branche master, on pousse le tag latest
 ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
@@ -141,17 +143,21 @@ help:
 example_target: ## Description for example target
 	@does something
 
-
 get-baseversion:
 	@echo $(BASEVERSION)
 get-version:
 	@echo $(VERSION)
 
-
 clean:
 	@rm -rf $(OUT_BIN) || true
 	@rm -f apis/cassandracluster/v1alpha1/zz_generated.deepcopy.go || true
 	@rm -rf vendor || true
+
+helm-package:
+	@echo Packaging $(HELM_VERSION)
+	helm package helm/cassandra-k8s-operator
+	mv cassandra-k8s-operator-$(HELM_VERSION).tgz docs/helm
+	helm repo index docs/helm/
 
 # Build cassandra-k8s-operator executable file in local go env
 .PHONY: build
