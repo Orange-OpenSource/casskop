@@ -352,7 +352,7 @@ func (cc *CassandraCluster) GetSeedList(seedListTab *[]string) string {
 
 func (cc *CassandraCluster) addNewSeed(seedList *[]string, dcName string, rackName string, indice int32) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	seed := fmt.Sprintf("%s-%s-%d.%s-%s.%s", cc.Name, dcRackName, indice, cc.Name, dcRackName, cc.Namespace)
+	seed := fmt.Sprintf("%s-%s-%d.%s-%s.%s", cc.Name, dcRackName, indice, cc.Name, dcName, cc.Namespace)
 	*seedList = append(*seedList, seed)
 }
 

@@ -88,11 +88,11 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	var a = []string{"cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns",
-		"cassandra-demo-online-rack1-1.cassandra-demo-online-rack1.ns",
-		"cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns",
-		"cassandra-demo-stats-rack1-0.cassandra-demo-stats-rack1.ns",
-		"cassandra-demo-stats-rack1-1.cassandra-demo-stats-rack1.ns"}
+	var a = []string{"cassandra-demo-online-rack1-0.cassandra-demo-online.ns",
+		"cassandra-demo-online-rack1-1.cassandra-demo-online.ns",
+		"cassandra-demo-online-rack2-0.cassandra-demo-online.ns",
+		"cassandra-demo-stats-rack1-0.cassandra-demo-stats.ns",
+		"cassandra-demo-stats-rack1-1.cassandra-demo-stats.ns"}
 
 	assert.Equal(5, len(cc.Status.SeedList))
 

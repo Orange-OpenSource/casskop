@@ -33,7 +33,7 @@ spec:
       cassandraclusters.db.orange.com.rack: rack1
       cluster: k8s.pic
       dc-rack: dc1-rack1
-  serviceName: cassandra-demo-dc1-rack1
+  serviceName: cassandra-demo-dc1
   template:
     metadata:
       creationTimestamp: null
@@ -76,7 +76,7 @@ spec:
         - name: CASSANDRA_MAX_HEAP
           value: 512M
         - name: CASSANDRA_SEEDS
-          value: cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.ns,cassandra-demo-dc1-rack2-0.cassandra-demo-dc1-rack2.ns,cassandra-demo-dc2-rack1-0.cassandra-demo-dc2-rack1.ns
+          value: cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns,cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns,cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns
         - name: CASSANDRA_CLUSTER_NAME
           value: cassandra-demo
         - name: CASSANDRA_AUTO_BOOTSTRAP

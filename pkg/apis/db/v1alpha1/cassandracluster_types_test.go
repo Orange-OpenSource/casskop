@@ -319,12 +319,12 @@ func TestInitSeedList_2DC(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-online-rack1-1.cassandra-demo-online-rack1.ns", cc.Status.SeedList[1])
-	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.Status.SeedList[2])
-	assert.Equal("cassandra-demo-stats-rack1-0.cassandra-demo-stats-rack1.ns", cc.Status.SeedList[3])
-	assert.Equal("cassandra-demo-stats-rack1-1.cassandra-demo-stats-rack1.ns", cc.Status.SeedList[4])
-	assert.Equal("cassandra-demo-stats-rack2-0.cassandra-demo-stats-rack2.ns", cc.Status.SeedList[5])
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-online-rack1-1.cassandra-demo-online.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.Status.SeedList[2])
+	assert.Equal("cassandra-demo-stats-rack1-0.cassandra-demo-stats.ns", cc.Status.SeedList[3])
+	assert.Equal("cassandra-demo-stats-rack1-1.cassandra-demo-stats.ns", cc.Status.SeedList[4])
+	assert.Equal("cassandra-demo-stats-rack2-0.cassandra-demo-stats.ns", cc.Status.SeedList[5])
 	assert.Equal(6, len(cc.Status.SeedList))
 }
 
@@ -340,9 +340,9 @@ func TestInitSeedList_NoTopo(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-dc1-rack1-0.cassandra-demo-dc1-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-dc1-rack1-1.cassandra-demo-dc1-rack1.ns", cc.Status.SeedList[1])
-	assert.Equal("cassandra-demo-dc1-rack1-2.cassandra-demo-dc1-rack1.ns", cc.Status.SeedList[2])
+	assert.Equal("cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-dc1-rack1-1.cassandra-demo-dc1.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-dc1-rack1-2.cassandra-demo-dc1.ns", cc.Status.SeedList[2])
 	assert.Equal(3, len(cc.Status.SeedList))
 
 }
@@ -360,12 +360,12 @@ func TestInitSeedList_1DC(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-online-rack1-1.cassandra-demo-online-rack1.ns", cc.Status.SeedList[1])
-	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.Status.SeedList[2])
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-online-rack1-1.cassandra-demo-online.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.Status.SeedList[2])
 	assert.Equal(3, len(cc.Status.SeedList))
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns,cassandra-demo-online-rack1-1.cassandra-demo-online-rack1.ns,cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.GetSeedList(&cc.Status.SeedList))
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns,cassandra-demo-online-rack1-1.cassandra-demo-online.ns,cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.GetSeedList(&cc.Status.SeedList))
 
 }
 
@@ -389,15 +389,15 @@ func TestInitSeedList_2DC5R(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.Status.SeedList[1])
-	assert.Equal("cassandra-demo-online-rack3-0.cassandra-demo-online-rack3.ns", cc.Status.SeedList[2])
-	assert.Equal("cassandra-demo-stats-rack1-0.cassandra-demo-stats-rack1.ns", cc.Status.SeedList[3])
-	assert.Equal("cassandra-demo-stats-rack2-0.cassandra-demo-stats-rack2.ns", cc.Status.SeedList[4])
-	assert.Equal("cassandra-demo-stats-rack3-0.cassandra-demo-stats-rack3.ns", cc.Status.SeedList[5])
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-online-rack3-0.cassandra-demo-online.ns", cc.Status.SeedList[2])
+	assert.Equal("cassandra-demo-stats-rack1-0.cassandra-demo-stats.ns", cc.Status.SeedList[3])
+	assert.Equal("cassandra-demo-stats-rack2-0.cassandra-demo-stats.ns", cc.Status.SeedList[4])
+	assert.Equal("cassandra-demo-stats-rack3-0.cassandra-demo-stats.ns", cc.Status.SeedList[5])
 	assert.Equal(6, len(cc.Status.SeedList))
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns,cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns,cassandra-demo-online-rack3-0.cassandra-demo-online-rack3.ns,cassandra-demo-stats-rack1-0.cassandra-demo-stats-rack1.ns,cassandra-demo-stats-rack2-0.cassandra-demo-stats-rack2.ns,cassandra-demo-stats-rack3-0.cassandra-demo-stats-rack3.ns", cc.GetSeedList(&cc.Status.SeedList))
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns,cassandra-demo-online-rack2-0.cassandra-demo-online.ns,cassandra-demo-online-rack3-0.cassandra-demo-online.ns,cassandra-demo-stats-rack1-0.cassandra-demo-stats.ns,cassandra-demo-stats-rack2-0.cassandra-demo-stats.ns,cassandra-demo-stats-rack3-0.cassandra-demo-stats.ns", cc.GetSeedList(&cc.Status.SeedList))
 }
 
 func TestInitSeedList_1DC1R1P(t *testing.T) {
@@ -413,11 +413,11 @@ func TestInitSeedList_1DC1R1P(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.Status.SeedList[1])
 	assert.Equal(2, len(cc.Status.SeedList))
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns,cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.GetSeedList(&cc.Status.SeedList))
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns,cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.GetSeedList(&cc.Status.SeedList))
 }
 
 func TestIsPodInSeedList(t *testing.T) {
@@ -431,16 +431,16 @@ func TestIsPodInSeedList(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns", cc.Status.SeedList[0])
-	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.Status.SeedList[1])
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns", cc.Status.SeedList[0])
+	assert.Equal("cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.Status.SeedList[1])
 	assert.Equal(2, len(cc.Status.SeedList))
 
-	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns,cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns", cc.GetSeedList(&cc.Status.SeedList))
+	assert.Equal("cassandra-demo-online-rack1-0.cassandra-demo-online.ns,cassandra-demo-online-rack2-0.cassandra-demo-online.ns", cc.GetSeedList(&cc.Status.SeedList))
 
-	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack1-0.cassandra-demo-online-rack1.ns"))
-	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack2-0.cassandra-demo-online-rack2.ns"))
+	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack1-0.cassandra-demo-online.ns"))
+	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack2-0.cassandra-demo-online.ns"))
 
-	assert.Equal(false, cc.IsPodInSeedList("cassandra-demo-online-rack3-0.cassandra-demo-online-rack2.ns"))
+	assert.Equal(false, cc.IsPodInSeedList("cassandra-demo-online-rack3-0.cassandra-demo-online.ns"))
 
 }
 
