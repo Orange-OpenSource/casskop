@@ -26,7 +26,7 @@ that :
 
 ## TL;DR - CassKop presentation
 
-We have some slides for a [CassKop demo](https://orange-opensource.github.io/cassandra-k8s-operator/index.html?slides=Slides-CassKop-demo.md#1)
+We have some slides for a [CassKop demo](https://orange-opensource.github.io/cassandra-k8s-operator/slides/index.html?slides=Slides-CassKop-demo.md#1)
 
 
 ## CassKop features
