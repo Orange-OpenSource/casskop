@@ -11,7 +11,7 @@ You can reach developpers directly on slack : https://casskop.slack.com
 ## Getting started
 
 - Fork the repository on GitHub
-- See the [developer guide](documentations/development.md) for build instructions.
+- See the [developer guide](documentation/development.md) for build instructions.
 
 ## Reporting bugs and creating issues
 
