@@ -6,7 +6,7 @@ maintainers:
 name: cassandra-k8s-operator
 sources:
   - https://github.com/Orange-OpenSource/cassandra-k8s-operator
-version: 0.3.0
+version: 0.3.1
 keywords:
 - operator
 - cassandra
