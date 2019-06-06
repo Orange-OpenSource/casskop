@@ -5,12 +5,8 @@ image:
   tag: 0.3.1-master
   pullPolicy: Always
   imagePullSecrets:
-    enabled: true
-    name: advisedev
-
-## Team
-##
-team: devops
+    enabled: false
+#    name:
 
 ## Prometheus-operator resource limits & requests
 ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/

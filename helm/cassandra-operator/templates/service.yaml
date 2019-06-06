@@ -2,17 +2,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "cassandra-k8s-operator.name" . }}-metrics
+  name: {{ template "cassandra-operator.name" . }}-metrics
   labels:
     component: app
     labels:
-      app: {{ template "cassandra-k8s-operator.name" . }}-metrics
+      app: {{ template "cassandra-operator.name" . }}-metrics
       chart: {{ .Chart.Name }}-{{ .Chart.Version }}
       heritage: {{ .Release.Service }}
       release: {{ .Release.Name }}
 spec:
   selector:
-    app: {{ template "cassandra-k8s-operator.name" . }}
+    app: {{ template "cassandra-operator.name" . }}
   ports:
   - name: metrics
     port: 9710

@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "cassandra-k8s-operator.fullname" . }}
+  name: {{ template "cassandra-operator.fullname" . }}
   labels:
-    app: {{ template "cassandra-k8s-operator.name" . }}
+    app: {{ template "cassandra-operator.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     operator: cassandra
@@ -12,12 +12,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      name: {{ template "cassandra-k8s-operator.name" . }}
+      name: {{ template "cassandra-operator.name" . }}
   template:
     metadata:
       labels:
-        name: {{ template "cassandra-k8s-operator.name" . }}
-        app: {{ template "cassandra-k8s-operator.name" . }}
+        name: {{ template "cassandra-operator.name" . }}
+        app: {{ template "cassandra-operator.name" . }}
         operator: cassandra
         release: {{ .Release.Name }}
     spec:
@@ -26,12 +26,12 @@ spec:
         - name: {{ .Values.image.imagePullSecrets.name }}
 {{- end }}
 {{- if .Values.rbacEnable }}
-      serviceAccountName: {{ template "cassandra-k8s-operator.name" . }}
+      serviceAccountName: {{ template "cassandra-operator.name" . }}
 {{- end }}
       securityContext:
         runAsUser: 1000
       containers:
-      - name: {{ template "cassandra-k8s-operator.name" . }}
+      - name: {{ template "cassandra-operator.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         ports:
@@ -58,7 +58,7 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
-            value: "cassandra-k8s-operator"
+            value: "cassandra-operator"
 {{- if .Values.debug }}
           - name: LOG_LEVEL
             value: Debug

@@ -135,26 +135,7 @@ First, we need to create a Kubernetes `namespace` in order to host our operator 
 kubectl create namespace cassandra
 ```
 
-### First deploy the CassandraCluster CRD definition
-
-Before deploying the operator, we need to create the CRD (CassandraCluster Custom Resource Definition).
-
-Deploy RBAC and CassKop custom resource definition
-```
-kubectl apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
-```
-
-Check that CRD is deployed
-
-```
-$ kubectl get crd
-NAME                              AGE
-...
-cassandraclusters.db.orange.com   1h
-...
-```
-
-### With Helm
+### Deploy the Cassandra Operator and it's CRD with Helm
 
 To ease the use of the Cassandra operator, a [Helm](https://helm.sh/) charts has been 
 created
@@ -214,6 +195,16 @@ You can view the CassKop logs using
 $ kubectl logs -f cassandra-cassandra-k8s-operator-78786b9bf-cjggg
 ```
 
+The charts also deploy the cassandracluster CRD we can check that it is deployed:
+
+```
+$ kubectl get crd
+NAME                              AGE
+...
+cassandraclusters.db.orange.com   1h
+...
+```
+
 
 ## Deploy a Cassandra cluster
 
@@ -262,12 +253,19 @@ If the Cassandra operator restarts, it can recover its previous state thanks to 
 `CassandraClusters` which stored directly in Kubernetes, description and state of the Cassandra cluster.
 
 
-## Cleanup
+## Uninstaling the Charts
 
 If you want to delete the operator from your Kubernetes cluster, the operator deployment 
 should be deleted.
 
-Also, the CRD has to be deleted too:
+```
+$ helm delete casskop
+```
+The command removes all the Kubernetes components associated with the chart and deletes the helm release.
+
+> The CRD created by the chart are not removed by default and should be manually cleaned up (if required)
+
+Manually delete the CRD:
 ```
 kubectl delete crd cassandraclusters.dfy.orange.com
 ```
@@ -301,6 +299,8 @@ You can find example [helm value.yaml](samples/prometheus-values.yaml) to config
 $ kubectl create namespace monitoring
 $ helm install --namespace monitoring --name prometheus stable/prometheus-operator
 ```
+
+> If you have problem you can see [troubleshooting](helm/cassandra-operator/readme.md#Troubleshooting) section
 
 #### Add ServiceMonitor for Cassandra
 
