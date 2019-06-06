@@ -223,10 +223,10 @@ jobs:
         command: |
           ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
           -Dsonar.projectName=CassKop \
-          -Dsonar.projectKey=Orange-OpenSource_cassandra-k8s-operator \
+          -Dsonar.projectKey=${SONAR_PROJECT} \
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.branch.name=${CIRCLE_BRANCH} \
-          -Dsonar.organization=orange-opensource \
+          -Dsonar.organization=${SONAR_ORGANISATION} \
           -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.projectBaseDir=/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator/ \
           -Dsonar.sources=. \
