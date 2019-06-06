@@ -25,7 +25,7 @@ DOCKER_REPO_BASE_TEST := orangeopensource
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
 
-BUILD_IMAGE := $(DOCKER_REPO_BASE)/casskop-build
+BUILD_IMAGE := orangeopensource/casskop-build
 
 TELEPRESENCE_REGISTRY:=datawire
 KUBESQUASH_REGISTRY:=
