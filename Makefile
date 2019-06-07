@@ -25,7 +25,7 @@ DOCKER_REPO_BASE_TEST := orangeopensource
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
 
-BUILD_IMAGE := $(DOCKER_REPO_BASE)/casskop-build
+BUILD_IMAGE := orangeopensource/casskop-build
 
 TELEPRESENCE_REGISTRY:=datawire
 KUBESQUASH_REGISTRY:=
@@ -54,7 +54,7 @@ BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$
 #Version is for binary, docker image and helm
 VERSION := $(BASEVERSION)-${BRANCH}
 
-HELM_VERSION := $(shell cat helm/cassandra-k8s-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+HELM_VERSION := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 
 #si branche master, on pousse le tag latest
 ifeq ($(CIRCLE_BRANCH),master)
@@ -155,8 +155,8 @@ clean:
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)
-	helm package helm/cassandra-k8s-operator
-	mv cassandra-k8s-operator-$(HELM_VERSION).tgz docs/helm
+	helm package helm/cassandra-operator
+	mv cassandra-operator-$(HELM_VERSION).tgz docs/helm
 	helm repo index docs/helm/
 
 # Build cassandra-k8s-operator executable file in local go env

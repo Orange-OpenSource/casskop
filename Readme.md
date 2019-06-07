@@ -143,10 +143,19 @@ created
 > We are looking where to store our helm in the future
 
 
+Helm will be available in the official helm/charts/incubator. `helm install --name casskop incubator/cassandra-k8s-operator`
+
+you can also add the CassKop repository from Github 
+
+```console
+helm repo add casskop https://Orange-OpenSource.github.io/cassandra-operator/helm
+```
+
+
 Deploy CassKop:
 
 ```console
-$ helm install --name casskop ./helm/cassandra-k8s-operator                                                                                                                                15:34:24 
+$ helm install --name casskop casskop/cassandra-operator
 NAME:   casskop
 LAST DEPLOYED: Thu May 23 15:34:27 2019
 NAMESPACE: cassandra-demo
@@ -176,6 +185,9 @@ casskop-cassandra-k8s-operator-78786b9bf-cjggg  0/1    ContainerCreating  0
 ```
 
 > You can find more information in the [Cassandra operator Helm readme](helm/cassandra-k8s-operator/readme.md)
+
+> If you have problem you can see [troubleshooting](helm/cassandra-operator/readme.md#Troubleshooting) section
+
 
 
 This creates a Kubernetes Deployment for the operator, with RBAC settings.
@@ -299,8 +311,6 @@ You can find example [helm value.yaml](samples/prometheus-values.yaml) to config
 $ kubectl create namespace monitoring
 $ helm install --namespace monitoring --name prometheus stable/prometheus-operator
 ```
-
-> If you have problem you can see [troubleshooting](helm/cassandra-operator/readme.md#Troubleshooting) section
 
 #### Add ServiceMonitor for Cassandra
 

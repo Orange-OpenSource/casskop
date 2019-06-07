@@ -178,6 +178,21 @@ and let's the magic happened
 ![](images/ide_debug_action.png)
 
 
+# Release the Project
+
+The CassKop operator is released in the helm/charts/incubator see : https://github.com/helm/charts/pull/14414
+
+We also have a helm repository hosted on GitHub pages.
+
+## Release helm charts on GitHub
+
+In order to release the Helm charts on GitHub, we need to generate the package locally
+```
+make helm-package
+```
+
+then add to git the package and make a PR on the repo.
+
 
 # How this repository was initially build
 
