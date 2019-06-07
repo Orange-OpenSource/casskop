@@ -378,8 +378,14 @@ k apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
 
 ## CassKop's operator deployment :
 
+You can also add the CassKop repository from Github 
+
 ```console
-$ helm install --name casskop ./helm/cassandra-operator
+helm repo add casskop https://Orange-OpenSource.github.io/cassandra-operator/helm
+```
+
+```console
+$ helm install --name casskop casskop/cassandra-operator
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
@@ -394,7 +400,7 @@ Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.oran
 in this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
 ```console
-$ helm install --name casskop ./helm/cassandra-operator --no-hooks
+$ helm install --name casskop casskop/cassandra-operator --no-hooks
 ```
 
 check operator's logs: 
