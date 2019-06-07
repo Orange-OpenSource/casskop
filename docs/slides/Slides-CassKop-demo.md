@@ -151,7 +151,7 @@ nodes with different physical location.
 With CassKop, it's all about mapping Cassandra's DC and Racks onto specific labels sets on k8s
 nodes in CRD `spec.topology` section.
 
-For example we could have different k8s node labelling model : 
+For example we could have different k8s node labelling model :
 
 .left-equal-column[
 ![:scale 100%]({{local}}/topology-custom-example.png)
@@ -250,14 +250,14 @@ UN  172.18.68.72   576.93 GiB  32           42.9%             0b0f0b8e-9a2a-4dca
 
 ```console
 kubectl get pods -o wide
-NAME                                     READY     STATUS        RESTARTS   AGE       IP              NODE      
-cassandra-bench-dc1-rack1-0              1/1       Running       0          28d       172.18.68.71    node006   
-cassandra-bench-dc1-rack1-1              1/1       Running       0          28d       172.18.72.243   node009   
-cassandra-bench-dc1-rack2-0              1/1       Running       2          28d       172.18.69.31    node005   
-cassandra-bench-dc1-rack2-1              1/1       Running       0          28d       172.18.64.220   node008   
-cassandra-bench-dc2-rack1-0              1/1       Running       2          28d       172.18.70.68    node007   
-cassandra-bench-dc2-rack1-1              1/1       Running       0          28d       172.18.67.17    node004   
-cassandra-bench-dc2-rack2-0              1/1       Running       1          28d       172.18.68.72    node006   
+NAME                                     READY     STATUS        RESTARTS   AGE       IP              NODE
+cassandra-bench-dc1-rack1-0              1/1       Running       0          28d       172.18.68.71    node006
+cassandra-bench-dc1-rack1-1              1/1       Running       0          28d       172.18.72.243   node009
+cassandra-bench-dc1-rack2-0              1/1       Running       2          28d       172.18.69.31    node005
+cassandra-bench-dc1-rack2-1              1/1       Running       0          28d       172.18.64.220   node008
+cassandra-bench-dc2-rack1-0              1/1       Running       2          28d       172.18.70.68    node007
+cassandra-bench-dc2-rack1-1              1/1       Running       0          28d       172.18.67.17    node004
+cassandra-bench-dc2-rack2-0              1/1       Running       1          28d       172.18.68.72    node006
 cassandra-bench-dc2-rack2-1              1/1       Running       0          28d       172.18.72.245   node009
 ```
 
@@ -362,7 +362,7 @@ The PSP RoleBinding can be retrieved from  the cassandra namespace
 
 ```console
 kubectl apply -f deploy/psp-cassie.yaml
-kubectl apply -f deploy/psp:sa:cassie.yaml
+kubectl apply -f deploy/psp-sa-cassie.yaml
 kubectl apply -f deploy/clusterRole-cassie.yaml
 ```
 
@@ -370,7 +370,11 @@ kubectl apply -f deploy/clusterRole-cassie.yaml
 
 ## CassKop's operator deployment :
 
+<<<<<<< HEAD
 You can deploy CassKop from official helm/charts/incubator repository
+=======
+You can also add the CassKop repository from Github
+>>>>>>> File renamed psp :sa :cassie.yaml'
 
 ```yaml
 $ helm install --name casskop incubator/cassandra-operator
@@ -397,7 +401,11 @@ In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the 
 $ helm install --name casskop casskop/cassandra-operator --no-hooks
 ```
 
+<<<<<<< HEAD
 Check operator's logs: 
+=======
+check operator's logs:
+>>>>>>> File renamed psp :sa :cassie.yaml'
 
 ```console
 $ k logs -l app=cassandra-operator --tail=10
@@ -414,7 +422,7 @@ Then the cassandra cluster :
 
 Depending on your k8s cluster topology you may choose or adapt one of the
 following configurations files to deploy a cluster with a 3 nodes ring in 3
-different racks with anti-affinity 
+different racks with anti-affinity
 - [samples/cassandracluster.yaml (with no labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster.yaml)
 - [samples/cassandracluster-demo.yaml (with basic labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo.yaml)
 - [samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo-gke.yaml)
@@ -521,7 +529,7 @@ for x in `seq 1 3`; do
 done
 ```
 
-We can start a cleanup on all nodes in dc1 with 
+We can start a cleanup on all nodes in dc1 with
 
 ```yaml
 $ kubectl casskop cleanup --prefix cassandra-demo-dc1
@@ -567,7 +575,7 @@ Instantally CassKop update it's status, and will manage 3 ScaleDown sequentially
           - cassandra-demo-dc1-rack1-1
           startTime: 2019-02-28T19:19:45Z
           status: Finalizing
-...          
+...
     lastClusterAction: ScaleDown
     lastClusterActionStatus: ToDo
 ```
@@ -636,7 +644,7 @@ If `autoUpdateSeedList:true` CassKop will ensure that we always have 3 cassandra
 nodes to be in the SeedList in each DCs. If the Topology evolves in a way that the SeedList is changed, then CassKop
 will trigger a rolling update of the cluster to apply the new SeedList.
 
-We can set this parameter to false to disable the compute of the SeedList by CassKop, then you can configure it 
+We can set this parameter to false to disable the compute of the SeedList by CassKop, then you can configure it
 manually in the status section of the CRD:
 
 ```console
@@ -654,10 +662,18 @@ We add replication to the new DC
 
 ```console
 k exec -ti cassandra-demo-dc1-rack1-0 -- cqlsh -u cassandra -p cassandra -e "
+<<<<<<< HEAD
 ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};"
+=======
+ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
+ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
+ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
+ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
+"
+>>>>>>> File renamed psp :sa :cassie.yaml'
 ```
 
 ---
@@ -675,7 +691,7 @@ Trigger rebuild on pod cassandra-demo-dc2-rack3-0
 CassKop will update the labels on pods while performing
 ```console
 for x in `seq 1 3`; do
- echo cassandra-demo-dc2-rack$x; 
+ echo cassandra-demo-dc2-rack$x;
  kubectl label pod cassandra-demo-dc2-rack$x-0 --list | grep operation ; echo ""
 done
 ```
@@ -748,8 +764,8 @@ We need to alter the keyspace to change the RF :
 
 ```console
 k exec -ti cassandra-demo-dc1-rack1-0 -- cqlsh -u cassandra -p cassandra -e "
-ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3}; 
-ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3}; 
+ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3};
+ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3};
 ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3};
 ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3};"
 ```
@@ -873,11 +889,11 @@ The docker image version used for Cassandra is defined in the CRD by `version: 3
 
 Update this value with `version: latest-cqlsh` and apply again the manigest
 
-CassKop start a rolling update of the entire cluster. 
+CassKop start a rolling update of the entire cluster.
 
 > You can control the rolling upgrade on each racks by using the `rollingPartition` parameter
 
-We can see the ongoing action in CassKop's status: 
+We can see the ongoing action in CassKop's status:
 
 ```yaml
     lastClusterAction: UpdateDockerImage
@@ -895,10 +911,10 @@ We set the `rollingRestart: true` in the rack section we want to restart.
 we can do this using the plugin (not yet implemented)
 
 ```console
-$ k CassKop rollingrestart 
+$ k CassKop rollingrestart
 ```
 
-or by addind the key in the racks you want, example for rolling restart of the rack2: 
+or by addind the key in the racks you want, example for rolling restart of the rack2:
 
 ```yaml
 ...
@@ -950,7 +966,7 @@ When a k8s node is done there will be several options for recovery:
 View of the cluster before we make actions:
 
 ```console
-NAME                         READY   STATUS      RESTARTS   AGE     IP             NODE  
+NAME                         READY   STATUS      RESTARTS   AGE     IP             NODE
 cassandra-demo-dc1-rack1-0   1/1     Running     0          2d      172.31.182.7   node004
 cassandra-demo-dc1-rack2-0   1/1     Running     0          2d      172.31.181.9   node005
 cassandra-demo-dc1-rack3-0   1/1     Running     0          2d      172.31.183.9   node006
@@ -982,7 +998,7 @@ UN  172.31.179.23  411.47 GiB  256          65.8%             e96343ba-307b-4d64
 
 ---
 
-# Make a remove node 
+# Make a remove node
 
 ## We drain a node for maintenance
 
@@ -993,8 +1009,8 @@ $ k drain node008 --ignore-daemonsets
 The Cassandra pod on this node becomes pending:
 
 ```console
-NAME                        READY   STATUS      RESTARTS   AGE     IP              NODE   
-cassandra-demo-dc2-rack2-0  0/1     Pending     0          20s     <none>          <none> 
+NAME                        READY   STATUS      RESTARTS   AGE     IP              NODE
+cassandra-demo-dc2-rack2-0  0/1     Pending     0          20s     <none>          <none>
 ```
 
 ## RemoveNode with pod name
@@ -1175,7 +1191,7 @@ $ helm install --namespace monitoring --name prometheus stable/prometheus-operat
 If you don't have ingress you can uses:
 
 
-```console 
+```console
 k proxy
 ```
 
