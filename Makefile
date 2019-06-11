@@ -254,20 +254,21 @@ debug-pod-logs:
 
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
-	echo "execute : cat cassandra-k8s-operator.env" ; \
+	echo "execute : cat cassandra-operator.env" ; \
   sudo mkdir -p /var/run/secrets/kubernetes.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
-	tdep=$(shell kubectl get deployment -l app=cassandra-k8s-operator -o jsonpath='{.items[0].metadata.name}') ; \
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-k8s-operator.env
+	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
+	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env
 
 debug-telepresence-with-alias:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
-	echo "execute : cat cassandra-k8s-operator.env" ; \
+	echo "execute : cat cassandra-operator.env" ; \
   sudo mkdir -p /var/run/secrets/kubernetes.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
-	tdep=$(shell kubectl get deployment -l app=cassandra-k8s-operator -o jsonpath='{.items[0].metadata.name}') ; \
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-k8s-operator.env \
-	--also-proxy 172.18.0.0/16
+	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
+	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env \
+	--also-proxy 10.40.0.0/16
+#	--also-proxy 172.18.0.0/16
 
 
 debug-kubesquash:
