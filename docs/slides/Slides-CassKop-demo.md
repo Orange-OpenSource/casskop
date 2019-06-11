@@ -196,7 +196,7 @@ At this time, CassKop will create as many statefulsets as it is asked to deploy 
     dc:
       - name: dc1
         labels:
-          failure-domain.beta.kubernetes.io/region: "europe-west1""
+          failure-domain.beta.kubernetes.io/region: "europe-west1"        
         rack:
           - name: rack1
             labels:
@@ -366,44 +366,38 @@ kubectl apply -f deploy/psp:sa:cassie.yaml
 kubectl apply -f deploy/clusterRole-cassie.yaml
 ```
 
-
-
 ---
-
-If the CRD don't already exists in the cluster we need to deploy it :
-
-```console
-k apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
-```
 
 ## CassKop's operator deployment :
 
-You can also add the CassKop repository from Github 
+You can deploy CassKop from official helm/charts/incubator repository
 
-```console
-helm repo add casskop https://Orange-OpenSource.github.io/cassandra-operator/helm
+```yaml
+$ helm install --name casskop incubator/cassandra-operator
 ```
 
-```console
-$ helm install --name casskop casskop/cassandra-operator
+Or You can also add the CassKop repository from Github 
+
+```yaml
+helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
+helm install --name casskop casskop/cassandra-operator
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
 
-### If the cassandracluyster CRD already exists
+### If the cassandracluster CRD already exists you may have this error:
 
-If the CRD is already deployed this command may return an error :
-```
+```log
 Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
 ```
 
-in this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
+In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
-```console
+```yaml
 $ helm install --name casskop casskop/cassandra-operator --no-hooks
 ```
 
-check operator's logs: 
+Check operator's logs: 
 
 ```console
 $ k logs -l app=cassandra-operator --tail=10
@@ -430,17 +424,17 @@ different racks with anti-affinity
 > regional cluster with 3 zones but CassKop can adapt to any configuration
 
 ```console
-k patch storageclasses.storage.k8s.io standard —patch 'metadata:\n  annotations:\n     storageclass.beta.kubernetes.io/is-default-class: "false"'
-kubectl apply -f gke-storage-standard-wait.yaml
+k patch storageclasses.storage.k8s.io standard -patch 'metadata:\n  annotations:\n     storageclass.beta.kubernetes.io/is-default-class: "false"'
+kubectl apply -f samples/gke-storage-standard-wait.yaml
 or if you have ssd
-kubectl apply -f gke-storage-ssd-wait.yaml
+kubectl apply -f samples/gke-storage-ssd-wait.yaml
 ```
 
 Example for démo on gke in europe-west (you can adapt the demo file according to
 your cluster):
 ```console
 kubectl apply -f samples/cassandra-configmap-v1.yaml
-kubectl apply -f samples/cassandracluster-demo-gke.yaml
+kubectl apply -f samples/cassandracluster-demo-gke-zone.yaml
 ```
 
 
@@ -520,15 +514,16 @@ We can check the evolution of labels on Pods while the operator execute thems.
 
 ```console
 for x in `seq 1 3`; do
- echo cassandra-demo-dc1-rack$x;
- kubectl label pod cassandra-demo-dc1-rack$x-0 --list | grep operation ; echo ""
- kubectl label pod cassandra-demo-dc1-rack$x-1 --list | grep operation ; echo ""
+ echo cassandra-demo-dc1-rack$x-0;
+ kubectl label pod cassandra-demo-dc1-rack$x-0 --list | grep operation | sort ; echo ""
+ echo cassandra-demo-dc1-rack$x-1; 
+ kubectl label pod cassandra-demo-dc1-rack$x-1 --list | grep operation | sort ; echo ""
 done
 ```
 
 We can start a cleanup on all nodes in dc1 with 
 
-```console
+```yaml
 $ kubectl casskop cleanup --prefix cassandra-demo-dc1
 Namespace cassandra-demo
 Trigger cleanup on pod cassandra-demo-dc1-rack1-0
@@ -604,7 +599,7 @@ CassKop can add at any time a cassandra DC in an existing cluster.
 Uncomment the 2d DC in the Topology section in the example manifest, and apply again the manifest
 
 ```console
-$ k apply -f samples/cassandracluster-kaas-demo2.yaml
+$ k apply -f samples/cassandracluster-demo-gke-zone.yaml
 ```
 
 CassKop va will create the 2d DC and racks, statefulsets, services..
@@ -662,15 +657,14 @@ k exec -ti cassandra-demo-dc1-rack1-0 -- cqlsh -u cassandra -p cassandra -e "
 ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
-ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
-"
+ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};"
 ```
 
 ---
 
 ## Rebuild new DC
 
-```console
+```yaml
 $ k casskop rebuild --prefix cassandra-demo-dc2 dc1
 Namespace cassandra-demo
 Trigger rebuild on pod cassandra-demo-dc2-rack1-0
@@ -781,30 +775,24 @@ configmap.
 
 In this example, we create a new ConfigMap with the modification change we want to apply
 
-```
-compaction_throughput_mb_per_sec: 16
-becomes
-compaction_throughput_mb_per_sec: 0
+```log
+compaction_throughput_mb_per_sec: 16 --> compaction_throughput_mb_per_sec: 0
 
-and
-
-# stream_throughput_outbound_megabits_per_sec: 200
-becomes
-stream_throughput_outbound_megabits_per_sec: 10
+# stream_throughput_outbound_megabits_per_sec: 200 --> stream_throughput_outbound_megabits_per_sec: 10
 ```
 
 [samples/cassandra-configmap-v2.yaml](https://gitlab.si.francetelecom.fr/kubernetes/cassandra-k8s-operator/blob/master/samples/cassandra-configmap-v2.yaml)
 
-```console
+```yaml
 k apply -f samples/cassandra-configmap-v2.yaml
 ```
 
 Now I need to update the cassandracluster with the new configMap name.
 
 replace the line:
-```
+```yaml
 configMapName: cassandra-configmap-v1
-becomes
+with
 configMapName: cassandra-configmap-v2
 ```
 
@@ -831,6 +819,11 @@ We can see the diff in the statefulset objects:
       Items: [
       ],
 ```
+
+```log
+k logs  -l app=cassandra-operator --tail=1000 | grep cassandra-configmap-v2
+```
+
 
 ---
 
@@ -1127,7 +1120,7 @@ installed independantly :
 
 
 ```console
-helm install --namespace cassandra-demo -n cassandra-reaper incubator/cassandra-reaper
+helm install --namespace cassandra-demo --name cassandra-reaper incubator/cassandra-reaper
 ```
 
 Acess to the UI through k Proxy:
