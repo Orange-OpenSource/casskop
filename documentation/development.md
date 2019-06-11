@@ -27,6 +27,11 @@ The Pipeline uses some envirenment variables that you need to set-up if you want
 
 If not set in CircleCI environment, according steps will be ignored.
 
+### CircleCI on PR
+
+When you submit a Pull Request, then CircleCI will trigger build pipeline.
+Since this is pushed from a fork, for security reason the pipeline won't have access to the environment secrets, 
+and not all steps could be executed.
 
 ## Operator SDK
 
