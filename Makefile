@@ -42,7 +42,8 @@ endif
 
 # Branch is used for the docker image version
 ifdef CIRCLE_BRANCH
-	BRANCH := $(CIRCLE_BRANCH)
+	#removing / for fork which lead to docker error
+	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
 else
 	BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 endif
@@ -82,6 +83,10 @@ endif
 
 e2eimage:
 	echo $(E2EIMAGE)
+
+params:
+	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
+	@echo "Version = '$(VERSION)'"
 
 # Shell to use for running scripts
 SHELL := $(shell which bash)

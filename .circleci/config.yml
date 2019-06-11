@@ -93,7 +93,6 @@ orbs:
 
           - run:
               name: Operator acceptance test
-#              background: true
               command: |
                 kubectl create namespace cassandra-e2e
                 make docker-e2e-test-fix-arg <<parameters.test_name>> || {
@@ -102,20 +101,6 @@ orbs:
                 kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
                 false;
                 }
-#                echo $? > res
-
-#          - run:
-#              name: Check K8S (debug)
-#              command: |
-#                while [ ! -f res ]; do
-#                  kubectl -n cassandra-e2e get pods ; \
-#                  kubectl -n cassandra-e2e logs -l app=cassandra-k8s-operator --tail=100 | grep -v level=debug
-#                  sleep 60 ; \
-#                done
-#                RES=`cat res`
-#                if [ $RES != 0 ]; then kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; false; fi
-                
-
 
 jobs:
   is_upstream_master:
@@ -164,9 +149,12 @@ jobs:
     - deploy:
         name: Push image to Docker Hub
         command: |
-          docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
-          make push
-
+          if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
+            echo "Skip doing stuff since it is a PR."
+          else
+            docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+            make push
+          fi
 
     - save_cache:
         name: Save build artefacts in cache
@@ -255,60 +243,6 @@ jobs:
         path: reports
 
 
-  e2e-dind2:
-    executor: casskop-build
-    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
-    environment:
-      # prevent dind-cluster*.sh from trying to pull the image
-      # during the tests
-      DIND_SKIP_PULL: y
-      KUBE_RSYNC_PORT: 8730
-      STABLE_BRANCH: stable
-      STABLE_SRC_TAG: "v1.12"
-      PRIMARY_BRANCH: master
-      DIND_COMMIT: current
-      DIND_VERSION: v1.12
-      DOWNLOAD_KUBECTL: y
-      KUBECONFIG: /root/.kube/config
-      SKIP_DASHBOARD: true
-
-    steps:
-    - checkout
-
-    - setup_remote_docker
-
-    - run:
-        name: install kubeadm-dind-cluster
-        command: |
-          # Download kubeadm-dind-cluster script and give it executable permissions.
-          wget https://cdn.rawgit.com/kubernetes-sigs/kubeadm-dind-cluster/master/fixed/dind-cluster-${DIND_VERSION}.sh
-          chmod +x dind-cluster-${DIND_VERSION}.sh
-          # Start Kubernetes cluster.
-          SKIP_DASHBOARD=true ./dind-cluster-${DIND_VERSION}.sh up
-          # Add Kubectl directory to the PATH.
-          - export PATH="$HOME/.kubeadm-dind-cluster:$PATH"
-          # Wait for Kubernetes to be up and ready.
-          - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
-
-#    - run:
-#        name: configure local-provisioner
-#        command: |
-#          kubectl create namespace local-provisioner
-#          kubectl config set-context $(kubectl config current-context) --namespace=local-provisioner
-#          tools/configure-dind-local-storage.sh create
-
-    - run:
-        name: Create CassandraCluster CRD
-        command: |
-          kubectl apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
-
-    - run:
-        name: Operator acceptance test
-        command:
-          make e2e-test-fix
-
- 
-
 workflows:
   version: 2
 
@@ -324,6 +258,11 @@ workflows:
       - report:
           requires:
             - unit-test
+          filters:
+            branches:
+              # only from canonical repository 
+              # https://stackoverflow.com/a/5334825/358804 
+              only: /^(?!pull\/).*$/
 
 
       - minikube/e2e-orb:
