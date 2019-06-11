@@ -51,10 +51,10 @@ spec:
               failure-domain.beta.kubernetes.io/zone: europe-west1-b
           - name: rack2
             labels:
-              failure-domain.beta.kubernetes.io/zone: europe-west1-c
+              failure-domain.beta.kubernetes.io/zone: europe-west1-b
           - name: rack3
             labels:
-              failure-domain.beta.kubernetes.io/zone: europe-west1-d
+              failure-domain.beta.kubernetes.io/zone: europe-west1-b
 #UNCOMMENT FOR DEMO
 #      - name: dc2
 #        nodesPerRacks: 1
@@ -67,8 +67,8 @@ spec:
 #              failure-domain.beta.kubernetes.io/zone: europe-west1-b
 #          - name: rack2
 #            labels:
-#              failure-domain.beta.kubernetes.io/zone: europe-west1-c
+#              failure-domain.beta.kubernetes.io/zone: europe-west1-b
 #          - name: rack3
 #            labels:
-#              failure-domain.beta.kubernetes.io/zone: europe-west1-d
+#              failure-domain.beta.kubernetes.io/zone: europe-west1-b
 #

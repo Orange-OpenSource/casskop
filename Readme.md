@@ -143,12 +143,15 @@ created
 > We are looking where to store our helm in the future
 
 
-Helm will be available in the official helm/charts/incubator. `helm install --name casskop incubator/cassandra-k8s-operator`
+Helm is available in the official helm/charts/incubator:
+```
+helm install --name casskop incubator/cassandra-operator
+```
 
 you can also add the CassKop repository from Github 
 
 ```console
-helm repo add casskop https://Orange-OpenSource.github.io/cassandra-operator/helm
+helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
 ```
 
 
@@ -198,13 +201,13 @@ named `casskop`, then your pod will have a name similar to :
 ```
 $ kubectl get pod
 NAME                                 READY     STATUS    RESTARTS   AGE
-casskop-cassandra-k8s-operator-78786b9bf-cjggg   1/1       Running   0          1h
+casskop-cassandra-operator-78786b9bf-cjggg   1/1       Running   0          1h
 ```
 
 You can view the CassKop logs using 
 
 ```
-$ kubectl logs -f cassandra-cassandra-k8s-operator-78786b9bf-cjggg
+$ kubectl logs -f cassandra-cassandra-operator-78786b9bf-cjggg
 ```
 
 The charts also deploy the cassandracluster CRD we can check that it is deployed:
@@ -327,7 +330,7 @@ metadata:
     k8s-apps: cassandra-k8s-jmx
     prometheus: kube-prometheus
     component: cassandra
-    release: prometheus    
+    release: prometheus
 spec:
   jobLabel: kube-prometheus-cassandra-k8s-jmx
   selector:
@@ -336,6 +339,7 @@ spec:
   namespaceSelector:
       matchNames:
       - cassandra
+      - cassandra-demo
       - default
   endpoints:
   - port: http-promcassjmx

@@ -43,5 +43,5 @@ insert:
 # A list of queries you wish to run against the schema #
 queries:
   query_by_sub_id:
-    cql: SELECT sub_id, value, time FROM small_table WHERE sub_id = ? and time >= 90 LIMIT 10
+    cql: SELECT sub_id, value FROM small_table WHERE sub_id = ? LIMIT 10
     fields: samerow
