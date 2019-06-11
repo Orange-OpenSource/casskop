@@ -120,14 +120,15 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCl
 		return true
 	}
 
-	if needUpdate, updateStatus := CheckNonAllowedRemoveDC(rcc, cc, status, &oldCRD); needUpdate {
+	var updateStatus string
+	if needUpdate, updateStatus = CheckNonAllowedRemoveDC(rcc, cc, status, &oldCRD); needUpdate {
 		if updateStatus != "" {
 			status.LastClusterAction = updateStatus
 		}
 		return true
 	}
 
-	if needUpdate, updateStatus := rcc.CheckNonAllowedScaleDown(cc, status, &oldCRD); needUpdate {
+	if needUpdate, updateStatus = rcc.CheckNonAllowedScaleDown(cc, status, &oldCRD); needUpdate {
 		if updateStatus != "" {
 			status.LastClusterAction = updateStatus
 		}
