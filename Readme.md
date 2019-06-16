@@ -137,13 +137,19 @@ kubectl create namespace cassandra
 
 ### Deploy the Cassandra Operator and it's CRD with Helm
 
-To ease the use of the Cassandra operator, a [Helm](https://helm.sh/) charts has been 
+To ease the use of the Cassandra operator, a [Helm](https://helm.sh/) chart has been 
 created
 
 > We are looking where to store our helm in the future
 
+Add the Helm incubator repo if you do not already have it:
+
+```
+helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+```
 
 Helm is available in the official helm/charts/incubator:
+
 ```
 helm install --name casskop incubator/cassandra-operator
 ```
