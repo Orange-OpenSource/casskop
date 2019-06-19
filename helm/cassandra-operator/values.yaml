@@ -18,6 +18,9 @@ resources:
     cpu: 1
     memory: 512Mi
 
+## If true, create & deploy the CRD
+##
+createCustomResource: true
 
 ## If true, create & use RBAC resources
 ##
