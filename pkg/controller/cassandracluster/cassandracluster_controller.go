@@ -18,8 +18,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
-
 	"github.com/sirupsen/logrus"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
@@ -106,9 +104,6 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	requeue5 := reconcile.Result{RequeueAfter: 5 * time.Second}
 	requeue := reconcile.Result{Requeue: true}
 	forget := reconcile.Result{}
-
-	//If not yet created, create a kubernetes client
-	k8s.InitClient()
 
 	// Fetch the CassandraCluster instance
 	rcc.cc = &api.CassandraCluster{}
