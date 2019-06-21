@@ -38,6 +38,20 @@ const (
 
 var reEndingNumber = regexp.MustCompile("[0-9]+$")
 
+// allPodContainerReady return true if all container in the Pod are ready
+func AllPodContainerReady(pod *v1.Pod) bool {
+	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0{
+		for _, c := range pod.Status.ContainerStatuses {
+			if c.Ready == false {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+
 func (rcc *ReconcileCassandraCluster) GetPod(namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{
@@ -77,9 +91,6 @@ func GetLastOrFirstPod(podsList *v1.PodList, last bool) (*v1.Pod, error) {
 
 	pod := podsList.Items[idx]
 
-	if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
-		return nil, fmt.Errorf("Pod is not running")
-	}
 	return &pod, nil
 }
 
@@ -109,6 +120,21 @@ func (rcc *ReconcileCassandraCluster) UpdatePodLabel(pod *v1.Pod, label map[stri
 	labels := k8s.MergeLabels(podToUpdate.GetLabels(), label)
 	podToUpdate.SetLabels(labels)
 	return rcc.UpdatePod(podToUpdate)
+}
+
+func (rcc *ReconcileCassandraCluster) isAPodUnschedulable(namespace string, dcName, rackName string) bool {
+	podsList, err := rcc.ListPods(rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, dcName, rackName))
+	nb := len(podsList.Items)
+	if err != nil || nb < 1 {
+		return false
+	}
+	for _, pod := range podsList.Items {
+		if pod.Status.Phase != v1.PodRunning && pod.Status.Conditions != nil &&
+			pod.Status.Conditions[0].Reason == v1.PodReasonUnschedulable{
+			return true
+		}
+	}
+	return false
 }
 
 func (rcc *ReconcileCassandraCluster) ListPods(namespace string, selector map[string]string) (*v1.PodList, error) {

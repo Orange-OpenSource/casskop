@@ -16,6 +16,7 @@ package cassandracluster
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -82,6 +83,9 @@ func TestGetLastOrFirstPod(t *testing.T) {
 	podlist = mkList(mkPod(10, true), mkPod(1, false))
 
 	pod, err = GetLastOrFirstPod(podlist, first)
+	if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
+		err = fmt.Errorf("Pod is not running")
+	}
 	assertPodIsNotRunning(t, err)
 
 	podlist.Items[0].Status = v1.PodStatus{Phase: v1.PodRunning}
@@ -89,9 +93,38 @@ func TestGetLastOrFirstPod(t *testing.T) {
 	podlist.Items[0].DeletionTimestamp = &ts
 
 	pod, err = GetLastOrFirstPod(podlist, first)
+	if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
+		err = fmt.Errorf("Pod is not running")
+	}
 	assertPodIsNotRunning(t, err)
 }
 
+
+func TestAllPodContainerReady(t *testing.T) {
+
+	mkPod := func(id int, containers ...bool) *v1.Pod {
+		containerStatuses := []v1.ContainerStatus{}
+	var i int = 0
+		for _, c := range containers{
+			containerStatus := v1.ContainerStatus{Name: fmt.Sprintf("ns-nm-%02d-%02d", id, i), Ready: c}
+			containerStatuses = append(containerStatuses, containerStatus)
+		}
+
+		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
+			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses:containerStatuses}}
+	}
+
+	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true)))
+	//No container can't be ready
+	assert.Equal(t, false, AllPodContainerReady(mkPod(1, )))
+
+	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true, true)))
+	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true, true, true)))
+
+	assert.Equal(t, false, AllPodContainerReady(mkPod(1, true, false, true)))
+	assert.Equal(t, false, AllPodContainerReady(mkPod(1, true, true, false)))
+
+}
 /*
 ** Here the Kubernetes Client Mock does not help because we uses the SDK
 ** i'll come back here when https://github.com/operator-framework/operator-sdk/issues/284

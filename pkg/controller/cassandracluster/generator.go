@@ -97,6 +97,7 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 				},
 			},
 			Selector: labels,
+			PublishNotReadyAddresses: true,
 		},
 	}
 }

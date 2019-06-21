@@ -428,7 +428,7 @@ different racks with anti-affinity
 - [samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo-gke.yaml)
 
 
-> On GKE I deploy, using dedicated storagecless for ssd local-storage on
+> On GKE I deploy, using a dedicated storagecless for ssd local-storage on
 > regional cluster with 3 zones but CassKop can adapt to any configuration
 
 ```console
@@ -438,7 +438,7 @@ or if you have ssd
 kubectl apply -f samples/gke-storage-ssd-wait.yaml
 ```
 
-Example for démo on gke in europe-west (you can adapt the demo file according to
+Example for demo on gke in europe-west (you can adapt the demo file according to
 your cluster):
 ```console
 kubectl apply -f samples/cassandra-configmap-v1.yaml

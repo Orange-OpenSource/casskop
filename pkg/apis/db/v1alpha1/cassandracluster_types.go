@@ -76,7 +76,8 @@ const (
 	ActionScaleUp           string = "ScaleUp"
 	ActionScaleDown         string = "ScaleDown"
 
-	ActionDeleteDC string = "ActionDeleteDC"
+	ActionDeleteDC   string = "ActionDeleteDC"
+	ActionDeleteRack string = "ActionDeleteRack"
 
 	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
@@ -615,7 +616,7 @@ type CassandraClusterSpec struct {
 
 	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
 
-	//NbMaxConcurrentCleanup int32 `json:"nbMaxConcurrentCleanup,omitempty"`
+	ForceNewOperation bool `json:"forceNewOperation,omitempty"`
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
 	DataCapacity string `json:"dataCapacity,omitempty"`

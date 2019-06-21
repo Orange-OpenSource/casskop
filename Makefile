@@ -105,7 +105,7 @@ COMMIT=$(shell git rev-parse HEAD)
 
 
 # CMDs
-UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out 
+UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out 
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`

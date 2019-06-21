@@ -84,15 +84,12 @@ func randomPodOperationKey() string {
 func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-
+	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var breakResyncloop = false
 	var err error
 
 	// If we ask a ScaleDown, We can't update the Statefulset before the nodetool decommission has finished
-	if status.CassandraRackStatus[dcRackName].CassandraLastAction.Name == api.ActionScaleDown &&
-		(status.CassandraRackStatus[dcRackName].CassandraLastAction.Status == api.StatusToDo ||
-			status.CassandraRackStatus[dcRackName].CassandraLastAction.Status == api.StatusOngoing ||
-			status.CassandraRackStatus[dcRackName].CassandraLastAction.Status == api.StatusContinue) {
+	if rcc.weAreScalingDown(dcRackStatus){
 		//If a Decommission is Ongoing, we want to break the Resyncloop until the Decommission is succeed
 		breakResyncloop, err = rcc.ensureDecommission(cc, dcName, rackName, status)
 		if err != nil {
@@ -329,12 +326,11 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		}
 
 		//LastPod Still Exists
-		if lastPod.Status.ContainerStatuses[0].Ready == false { //TODO: change this test only for cassandra cont
-			if lastPod.DeletionTimestamp != nil {
+		if !AllPodContainerReady(lastPod) && lastPod.DeletionTimestamp != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 					"lastPod": lastPod.Name}).Infof("We already asked Statefulset to scaleDown, waiting..")
 				return breakResyncLoop, nil
-			}
+
 		}
 
 		//Get Cassandra Node Status
@@ -415,6 +411,22 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	lastPod, err := rcc.GetLastPod(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 	if err != nil {
 		return breakResyncLoop, fmt.Errorf("Failed to get last cassandra's pods: %v", err)
+	}
+	//If Pod is unschedulable, we bypass decommission (cassandra is not running)
+	if lastPod.Status.Phase == v1.PodPending &&
+		lastPod.Status.Conditions != nil &&
+		lastPod.Status.Conditions[0].Reason == "Unschedulable"{
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"pod": lastPod.Name}).Warn("ScaleDown detected on a pending Pod. we don't launch decommission")
+		podLastOperation.Status = api.StatusFinalizing
+		podLastOperation.PodsOK = []string{}
+		podLastOperation.Pods = append(list, lastPod.Name)
+		podLastOperation.PodsKO = []string{}
+		status.CassandraRackStatus[dcRackName].CassandraLastAction.Status = api.StatusContinue
+		return continueResyncLoop, nil
+	}
+	if lastPod.Status.Phase != v1.PodRunning || lastPod.DeletionTimestamp != nil {
+		return breakResyncLoop, fmt.Errorf("Pod is not running")
 	}
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pod": lastPod.Name}).Info("ScaleDown detected, we launch decommission")
