@@ -1,6 +1,4 @@
 # Folders
-pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-pkg/apis/db/v1alpha1/zz_generated.defaults.go
 pkg/cassandra/tmp.go
 vendor/
 
