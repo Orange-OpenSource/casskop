@@ -134,6 +134,12 @@ make unit-test
 
 CassKop also have several end-to-end tests that can be run using makefile.
 
+You need to create the namespace `cassandra-e2e` before running the tests.
+
+```
+kubectl create namespace cassandra-e2e
+```
+
 to launch different tests in parallel in different temporary namespaces
 
 ```
