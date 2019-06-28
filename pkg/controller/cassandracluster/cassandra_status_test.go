@@ -17,17 +17,20 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/api/core/v1"
 	//"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"reflect"
+
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	//"k8s.io/client-go/kubernetes/scheme"
 	//"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"strconv"
 	"testing"
+
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/ghodss/yaml"
@@ -119,7 +122,6 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	assert := assert.New(t)
 	rcc, cc := helperInitCluster(t, cassandraClusterFileName)
 
-
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      cc.Name,
@@ -151,12 +153,12 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 
 	dcRackNames := cc.GetDCRackNames()
-	for _, dcRackName := range dcRackNames{
+	for _, dcRackName := range dcRackNames {
 		//Update Statefulset fake status
 		sts := &appsv1.StatefulSet{}
-		err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name+"-"+dcRackName,
+		err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
 			Namespace: cc.Namespace},
-		sts)
+			sts)
 		if err != nil {
 			t.Fatalf("get statefulset: (%v)", err)
 		}
@@ -184,15 +186,15 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					v1.ContainerStatus{
-						Name: "cassandra",
+						Name:  "cassandra",
 						Ready: true,
 					},
 				},
 			},
 		}
 
-		for i := 0; i < int(sts.Status.Replicas); i++{
-			pod.Name = sts.Name+strconv.Itoa(i)
+		for i := 0; i < int(sts.Status.Replicas); i++ {
+			pod.Name = sts.Name + strconv.Itoa(i)
 			err = rcc.CreatePod(pod)
 			if err != nil {
 				t.Fatalf("can't create pod: (%v)", err)
@@ -213,23 +215,21 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning)
 
-	for _, dcRackName := range dcRackNames{
+	for _, dcRackName := range dcRackNames {
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone)
 	}
-			assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial)
-		assert.Equal(cc.Status.LastClusterActionStatus, api.StatusDone)
+	assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial)
+	assert.Equal(cc.Status.LastClusterActionStatus, api.StatusDone)
 
 	return rcc, &req
 }
 
 func TestReconcileCassandraCluster(t *testing.T) {
-	//assert := assert.New(t)
 
 	// Mock request to simulate Reconcile() being called on an event for a
 	// watched resource .
-
 	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
 
 	//WARNING: ListPod with fieldselector is not working on client-side
