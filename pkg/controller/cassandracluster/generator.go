@@ -19,7 +19,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -381,15 +381,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 										FieldRef: &v1.ObjectFieldSelector{
 											APIVersion: "v1",
 											FieldPath:  "metadata.name",
-										},
-									},
-								},
-								v1.EnvVar{
-									Name: "POD_NAMESPACE",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "metadata.namespace",
 										},
 									},
 								},
