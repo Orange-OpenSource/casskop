@@ -46,7 +46,7 @@ Clusterrolebinding "myname-cluster-admin-binding" created
 The default provisioner in GKE does not have the `volumeBindingMode: "WaitForFirstConsumer"` option that can result in
 a bad
 scheduling behaviour.
-I uses files to create storageclass:
+We use one of the following files to create a storage class:
 - samples/gke-storage-standard-wait.yaml
 - samples/gke-storage-ssd-wait.yaml (if you have ssd disks)
 
@@ -98,9 +98,10 @@ If we looked at the pod status we will see this message :
 Warning  FailedScheduling   51s (x17 over 14m)    default-scheduler   0/6 nodes are available: 4 Insufficient cpu, 4 node(s) didn't match node selector.
 ```
 
-Kubernetes can't find any Pod with sufficiant cpu and matching kubernetes nodes labels we asked in the topology section.
+Kubernetes can't find any Pod with sufficient cpu and matching kubernetes nodes labels we asked in the topology section.
 
 To fix this, we can either:
+- reduce memory/cpu limits
 - add more kubernetes nodes that will satisfied our requirements.
 - rollback the scaleUp Operation
 
@@ -143,7 +144,7 @@ INFO[3354] ScaleDown is Done                             cluster=cassandra-demo 
 
 ### Example: can't add new rack in new DC
 
-In this example, I ask to ad a new dc dc2
+In this example, I ask to add dc called dc2
 
 ```
 k get pods

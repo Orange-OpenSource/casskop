@@ -117,7 +117,7 @@ func TestAllPodContainerReady(t *testing.T) {
 
 	assert.Equal(t, true, PodContainersReady(mkPod(1, true)))
 	//No container can't be ready
-	assert.Equal(t, false, PodContainersReady(mkPod(1 )))
+	assert.Equal(t, false, PodContainersReady(mkPod(1)))
 
 	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true)))
 	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true, true)))

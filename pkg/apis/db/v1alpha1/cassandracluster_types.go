@@ -616,7 +616,7 @@ type CassandraClusterSpec struct {
 
 	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
 
-	ForceNewOperation bool `json:"forceNewOperation,omitempty"`
+	ForceNewOperation bool `json:"_forceNewOperation,omitempty"` //Flag to hack CassKop reconcile loop - use with really good Care
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
 	DataCapacity string `json:"dataCapacity,omitempty"`
