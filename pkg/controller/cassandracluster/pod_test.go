@@ -104,9 +104,10 @@ func TestAllPodContainerReady(t *testing.T) {
 
 	mkPod := func(id int, containers ...bool) *v1.Pod {
 		containerStatuses := []v1.ContainerStatus{}
-	var i int = 0
+		var containerIndex = 0
 		for _, c := range containers{
-			containerStatus := v1.ContainerStatus{Name: fmt.Sprintf("ns-nm-%02d-%02d", id, i), Ready: c}
+			containerStatus := v1.ContainerStatus{Name: fmt.Sprintf("ns-nm-%02d-%02d", id, containerIndex), Ready: c}
+			containerIndex++
 			containerStatuses = append(containerStatuses, containerStatus)
 		}
 
@@ -114,15 +115,15 @@ func TestAllPodContainerReady(t *testing.T) {
 			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses:containerStatuses}}
 	}
 
-	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true)))
+	assert.Equal(t, true, PodContainersReady(mkPod(1, true)))
 	//No container can't be ready
-	assert.Equal(t, false, AllPodContainerReady(mkPod(1, )))
+	assert.Equal(t, false, PodContainersReady(mkPod(1 )))
 
-	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true, true)))
-	assert.Equal(t, true, AllPodContainerReady(mkPod(1, true, true, true)))
+	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true)))
+	assert.Equal(t, true, PodContainersReady(mkPod(1, true, true, true)))
 
-	assert.Equal(t, false, AllPodContainerReady(mkPod(1, true, false, true)))
-	assert.Equal(t, false, AllPodContainerReady(mkPod(1, true, true, false)))
+	assert.Equal(t, false, PodContainersReady(mkPod(1, true, false, true)))
+	assert.Equal(t, false, PodContainersReady(mkPod(1, true, true, false)))
 
 }
 /*

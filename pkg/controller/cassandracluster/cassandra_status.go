@@ -77,9 +77,9 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	}
 
 	//If we set up ForceNewOperation in CRD we allow to see mode change even last operation didn't ended correctly
-	var needSpecificChange bool = false
+	needSpecificChange := false
 	if cc.Spec.ForceNewOperation &&
-		rcc.isAPodUnschedulable(cc.Namespace, dcName, rackName){
+		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName){
 		needSpecificChange = true
 	}
 	//Do nothing in Initial phase except if we force it
@@ -297,20 +297,12 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
-		now := metav1.Now()
 		if nodesPerRacks > *storedStatefulSet.Spec.Replicas {
 			lastAction.Name = api.ActionScaleUp
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleUP", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
 		} else {
-			lastAction.Name = api.ActionScaleDown
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
-			status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now
-			status.CassandraRackStatus[dcRackName].PodLastOperation.EndTime = nil
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Pods = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsOK = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsKO = []string{}
+			setDecommissionStatus(status, dcRackName)
 		}
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
@@ -429,18 +421,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 		if nodesPerRacks <=0 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Warn("Aborting Initializing..., start ScaleDown")
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
-			now := metav1.Now()
-			lastAction.StartTime = &now
-			lastAction.Status = api.StatusToDo
-			lastAction.Name = api.ActionScaleDown
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
-			status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now
-			status.CassandraRackStatus[dcRackName].PodLastOperation.EndTime = nil
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Pods = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsOK = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsKO = []string{}
+			setDecommissionStatus(status, dcRackName)
 			return nil
 		}
 
@@ -489,4 +470,21 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 		}
 	}
 	return nil
+}
+
+
+func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string){
+	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
+	now := metav1.Now()
+	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+	lastAction.StartTime = &now
+	lastAction.Status = api.StatusToDo
+	lastAction.Name = api.ActionScaleDown
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
+	status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now
+	status.CassandraRackStatus[dcRackName].PodLastOperation.EndTime = nil
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Pods = []string{}
+	status.CassandraRackStatus[dcRackName].PodLastOperation.PodsOK = []string{}
+	status.CassandraRackStatus[dcRackName].PodLastOperation.PodsKO = []string{}
 }

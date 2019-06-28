@@ -38,8 +38,8 @@ const (
 
 var reEndingNumber = regexp.MustCompile("[0-9]+$")
 
-// allPodContainerReady return true if all container in the Pod are ready
-func AllPodContainerReady(pod *v1.Pod) bool {
+// PodContainersReady returns true if all container in the Pod are ready
+func PodContainersReady(pod *v1.Pod) bool {
 	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0{
 		for _, c := range pod.Status.ContainerStatuses {
 			if c.Ready == false {
@@ -122,10 +122,9 @@ func (rcc *ReconcileCassandraCluster) UpdatePodLabel(pod *v1.Pod, label map[stri
 	return rcc.UpdatePod(podToUpdate)
 }
 
-func (rcc *ReconcileCassandraCluster) isAPodUnschedulable(namespace string, dcName, rackName string) bool {
+func (rcc *ReconcileCassandraCluster) hasUnschedulablePod(namespace string, dcName, rackName string) bool {
 	podsList, err := rcc.ListPods(rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, dcName, rackName))
-	nb := len(podsList.Items)
-	if err != nil || nb < 1 {
+	if err != nil || len(podsList.Items) < 1 {
 		return false
 	}
 	for _, pod := range podsList.Items {

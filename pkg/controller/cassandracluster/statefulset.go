@@ -162,7 +162,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	// if there is existing disruptions on Pods
 	// Or if we are not scaling Down the current statefulset
 	if rcc.thereIsPodDisruption() {
-		if rcc.weAreScalingDown(dcRackStatus) && rcc.thereIsOnly1PodDisruption() {
+		if rcc.weAreScalingDown(dcRackStatus) && rcc.hasOneDisruptedPod() {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
 				"but that may be normal as we are decommissioning")

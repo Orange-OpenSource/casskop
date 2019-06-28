@@ -326,7 +326,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		}
 
 		//LastPod Still Exists
-		if !AllPodContainerReady(lastPod) && lastPod.DeletionTimestamp != nil {
+		if !PodContainersReady(lastPod) && lastPod.DeletionTimestamp != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 					"lastPod": lastPod.Name}).Infof("We already asked Statefulset to scaleDown, waiting..")
 				return breakResyncLoop, nil

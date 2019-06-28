@@ -43,7 +43,8 @@ Clusterrolebinding "myname-cluster-admin-binding" created
 
 ### Pod and volumes can be scheduled in different zones using default provisioned
 
-The default provisioner in GKE don't have the `volumeBindingMode: "WaitForFirstConsumer"` option that can result in bad
+The default provisioner in GKE does not have the `volumeBindingMode: "WaitForFirstConsumer"` option that can result in
+a bad
 scheduling behaviour.
 I uses files to create storageclass:
 - samples/gke-storage-standard-wait.yaml
@@ -52,9 +53,9 @@ I uses files to create storageclass:
 
 ## Operator can't perform the Action
 
-If you ask to ScaleUp or add a new DC, or ask for more ressources, CassKop will ask Kubernetes to schedule as you
+If you ask to scale up or add a new DC, or ask for more resources, CassKop will ask Kubernetes to schedule as you
 requested.
-But sometimes it is not possible to achieve the change because of a lack of ressources (memory/cpus) or because
+But sometimes it is not possible to achieve the change because of a lack of resources (memory/cpus) or because
 constraints can't be satisfied (Kubernetes nodes with specific labels available...)
 
 CassKop make uses of the PodDisruptionBudget to prevent CassKop to make some change on the CassandraCluster that could
@@ -97,7 +98,7 @@ If we looked at the pod status we will see this message :
 Warning  FailedScheduling   51s (x17 over 14m)    default-scheduler   0/6 nodes are available: 4 Insufficient cpu, 4 node(s) didn't match node selector.
 ```
 
-Kubernetes can't find any Pod with sufficiant cpu and matching kubernetes nodes labels we askde in the topology section.
+Kubernetes can't find any Pod with sufficiant cpu and matching kubernetes nodes labels we asked in the topology section.
 
 To fix this, we can either:
 - add more kubernetes nodes that will satisfied our requirements.
@@ -117,9 +118,9 @@ rollback since it has not finished.
 We introduced a new parameter in the CRD to allow such changes when all the pods can't be scheduled:
 - `Spec.forceNewOperation: true`
 
-By adding this parameter in our cluster definition, CassKop will allow to triger a new operation.
+By adding this parameter in our cluster definition, CassKop will allow to trigger a new operation.
 
-> Once CassKop will sheculed the new operation, it will reset the `Spec.forceNewOperation: false` to the default false
+> Once CassKop will scheduled the new operation, it will reset the `Spec.forceNewOperation: false` to the default false
 > value. If you need more operation, you will need to reset the parameter to force another Operation.
 > Keep in mind that CassKop is mean to do only 1 operation at a time.
 
@@ -128,7 +129,8 @@ If this is not already done, you can now rollback the scaleUp updating `nodesPer
 
 ```
 WARN[3348] ScaleDown detected on a pending Pod. we don't launch decommission  cluster=cassandra-demo pod=cassandra-demo-dc1-rack1-1 rack=dc1-rack1
-INFO[3350] Cluster has 1 Pod Disruptedbut that may be normal as we are decommissioning  cluster=cassandra-demo dc-rack=dc1-rack1
+INFO[3350] Cluster has 1 Pod Disrupted but that may be normal as we are decommissioning  cluster=cassandra-demo
+dc-rack=dc1-rack1
 ...
 INFO[3354] [cassandra-demo][dc1-rack1]: StatefulSet(ScaleDown): Replicas Number OK: ready[1] 
 INFO[3354] ScaleDown not yet Completed: Waiting for Pod operation to be Done  cluster=cassandra-demo rack=dc1-rack1
@@ -156,7 +158,7 @@ cassandra-demo-dc2-rack3-0                                        0/1     Pendin
 
 But the last one can't be scheduled because of insufficient cpu on k8s nodes.
 
-We can either add the wanted ressources in the k8s cluster or make a rollback.
+We can either add the wanted resources in the k8s cluster or make a rollback.
 
 #### Solution1: rollback adding the DC
 
@@ -175,7 +177,7 @@ spec.forceNewOperation to true.
 ```
 
 This will allow CassKop to make the scale down. because it will start with the first rack, it will free some space and
-the last pod which was pending will be joining. then it will be decomissioned by casskop.
+the last pod which was pending will be joining. then it will be decommissioned by CassKop.
 
 we can see in CassKop logs when it deal with the rack with unscheduled pods:
 
@@ -183,7 +185,8 @@ we can see in CassKop logs when it deal with the rack with unscheduled pods:
 WARN[0667] Aborting Initializing..., start ScaleDown                      cluster=cassandra-demo rack=dc2-rack3
 INFO[0667] The Operator Waits 20 seconds for the action to start correctly  cluster=cassandra-demo rack=dc2-rack3
 WARN[0667] ScaleDown detected on a pending Pod. we don't launch decommission  cluster=cassandra-demo pod=cassandra-demo-dc2-rack3-0 rack=dc2-rack3
-INFO[0667] Cluster has 1 Pod Disruptedbut that may be normal as we are decommissioning  cluster=cassandra-demodc-rack=dc2-rack3
+INFO[0667] Cluster has 1 Pod Disrupted but that may be normal as we are decommissioning
+cluster=cassandra-demodc-rack=dc2-rack3
 INFO[0667] Template is different:  {...}
 ```
 
@@ -225,4 +228,4 @@ WARN[0347] We asked to remove Rack dc2-rack3 with unschedulable pod  cluster=cas
 INFO[0347] [cassandra-demo]: Delete PVC[data-cassandra-demo-dc2-rack3-0] OK 
 ```
 
-The rack3 (and it's statefulset) has been removed, and the associated (empty) pvc deleted
+The rack3 (and its statefulset) has been removed, and the associated (empty) pvc deleted
