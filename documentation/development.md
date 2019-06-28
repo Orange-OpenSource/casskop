@@ -152,11 +152,22 @@ or sequentially in the namespace `cassandra-e2e`
 make e2e-test-fix
 ```
 
-you can choose to run only 1 test using the args ex:
+**Note**: `make e2e` executes all tests in different, temporary namespaces in parallel. Your k8s cluster will need a lot of resources to handle the many Cassandra nodes that launch in parallel. 
+
+**Note**: `make e2e-test-fix` executes all tests serially in the `cassandra-e2e` namespace and as such does not require as many k8s resources as `make e2e` does, but overall execution will be slower.
+
+You can choose to run only 1 test using the args ex:
 
 ```
 make e2e-test-fix-arg ClusterScaleDown
 ```
+
+**Tip**: When debugging test failures, you can run `kubectl get events --all-namespaces` which produce output like:
+
+`cassandracluster-group-clusterscaledown-1561640024   0s    Warning   FailedScheduling   Pod   0/4 nodes are available: 1 node(s) had taints that the pod didn't tolerate, 3 Insufficient cpu.`
+
+**Tip**: When tests fail, there may be resources that need to be cleaned up. Run `tools/purge_namespaces.sh` to clean resources left over from tests.
+
 
 ### Debug CassKop in remote in a Kubernetes cluster
 
