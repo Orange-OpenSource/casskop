@@ -292,8 +292,6 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	svc := &v1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Service", APIVersion: "v1"}}
 	names := []string{
 		"cassandra-e2e-dc2",
-		"cassandra-e2e-dc2-rack1",
-		"cassandra-e2e-dc2-rack1-exporter-jmx",
 	}
 	for i := range names {
 		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: names[i], Namespace: namespace}, svc)
