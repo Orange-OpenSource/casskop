@@ -166,7 +166,7 @@ make e2e-test-fix-arg ClusterScaleDown
 
 `cassandracluster-group-clusterscaledown-1561640024   0s    Warning   FailedScheduling   Pod   0/4 nodes are available: 1 node(s) had taints that the pod didn't tolerate, 3 Insufficient cpu.`
 
-**Tip**: When tests fail, there may be resources that need to be cleaned up. Run `tools/purge_namespaces.sh` to clean resources left over from tests.
+**Tip**: When tests fail, there may be resources that need to be cleaned up. Run `tools/e2e_test_cleanup.sh` to delete resources left over from tests.
 
 
 ### Debug CassKop in remote in a Kubernetes cluster
