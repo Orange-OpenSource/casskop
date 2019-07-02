@@ -237,3 +237,25 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 	return stdout.String(), stderr.String(), err
 
 }
+
+func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * framework.TestCtx, name, namespace string) {
+	configMapFile := helperLoadBytes(t, name)
+	decode := serializer.NewCodecFactory(f.Scheme).UniversalDeserializer().Decode
+	configMapString := string(configMapFile[:])
+	obj, _, err := decode([]byte(configMapString), nil, nil)
+
+	if err != nil {
+		t.Fatalf("Error decoding ConfigMap: %s", err)
+	}
+
+	switch cm := obj.(type) {
+	case *corev1.ConfigMap:
+		cm.Namespace = namespace
+		if err := f.Client.Create(goctx.TODO(), cm, &framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout,
+			RetryInterval: CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
+			t.Fatalf("Error creating ConfigMap: %v", err)
+		}
+	default:
+		t.Fatalf("Expected a ConfigMap but got a %T", cm)
+	}
+}

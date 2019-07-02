@@ -2,8 +2,10 @@ package e2e
 
 import (
 	goctx "context"
-	"errors"
-	"fmt"
+	v1 "k8s.io/api/apps/v1"
+	"testing"
+	"time"
+
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
@@ -15,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Run all fonctional tests
@@ -234,6 +236,116 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 	}
 }
 
+func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+	CleanupRetryInterval := time.Second * 5
+	CleanupTimeout := time.Second * 20
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatalf("Could not get namespace: %v", err)
+	}
+
+	t.Log("Initializing ConfigMaps")
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1.yaml", namespace)
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2.yaml", namespace)
+
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "jolokia-auth",
+			Namespace: namespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"username": []byte("am9sb2tpYS11c2Vy"),
+			"password": []byte("TTBucDQ1NXcwcmQ="),
+		},
+	}
+
+	if err := f.Client.Create(goctx.TODO(), secret, &framework.CleanupOptions{
+		TestContext:   ctx,
+		Timeout:       CleanupTimeout,
+		RetryInterval: CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("Error Creating secret: %v", err)
+	}
+
+	cluster := &api.CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "configmap-upgrade",
+			Namespace: namespace,
+			Labels:    map[string]string{"cluster": "k8s.pic"},
+		},
+		Spec: api.CassandraClusterSpec{
+			NodesPerRacks:      1,
+			BaseImage:          "orangeopensource/cassandra-image",
+			Version:            "latest-cqlsh",
+			ImagePullPolicy:    "Always",
+			ImageJolokiaSecret: corev1.LocalObjectReference{Name: "jolokia-auth"},
+			DataCapacity:       "1Gi",
+			HardAntiAffinity:   false,
+			DeletePVC:          false,
+			AutoPilot:          false,
+			ConfigMapName:      "cassandra-configmap-v1",
+			AutoUpdateSeedList: false,
+			Resources: api.CassandraResources{
+				Limits: api.CPUAndMem{CPU: "500m", Memory: "1Gi"},
+			},
+			Topology: api.Topology{
+				DC: api.DCSlice{
+					api.DC{
+						Name: "dc1",
+						Rack: api.RackSlice{
+							api.Rack{
+								Name: "rack1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Log("Creating cluster")
+	if err := f.Client.Create(goctx.TODO(), cluster, nil); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("Error Creating CassandraCluster: %v", err)
+	}
+
+	cluster = getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
+
+	statefulSet := getStatefulSet(cluster.Name + "-dc1-rack1", namespace, f, t)
+	t.Logf("StatefulSet Current Revision: %s", statefulSet.Status.CurrentRevision)
+
+	cluster.Spec.ConfigMapName = "cassandra-config-map-v2.yaml"
+
+	if err := f.Client.Update(goctx.TODO(), cluster); err != nil {
+		t.Fatalf("Could not update CassandraCluster: %v", err)
+	}
+
+	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, statefulSet.Name, 1,
+		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		t.Fatalf("Waiting for StatefulSet %s failed: %v", statefulSet.Name, err)
+	}
+
+	if err := mye2eutil.WaitForStatusDone(t, f, namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		t.Fatalf("WaitForStatusDone got an error: %v", err)
+	}
+
+	updatedStatefulSet := getStatefulSet(statefulSet.Name, namespace, f, t)
+
+	assert.NotEqual(t, updatedStatefulSet.Status.CurrentRevision, statefulSet.Status.CurrentRevision,
+		"Expected StatefulSet.Status.CurrentRevision to be updated")
+
+	updatedCluster := getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
+
+	assert.Equal(t, cluster.Spec.ConfigMapName, updatedCluster.Spec.ConfigMapName)
+}
+
 func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
 	return f.KubeClient.CoreV1().Services(namespace).List(options)
 }
@@ -266,4 +378,20 @@ func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, erro
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("Failed to find service port: %s", name))
+}
+
+func getStatefulSet(name string, namespace string, f *framework.Framework, t *testing.T) *v1.StatefulSet {
+	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+	if err != nil {
+		t.Fatalf("Failed to get StatefulSet %s: %v", name, err)
+	}
+	return statefulSet
+}
+
+func getCassandraCluster(name string, namespace string, f *framework.Framework, t *testing.T) *api.CassandraCluster {
+	cluster := &api.CassandraCluster{}
+	if err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster); err != nil {
+		t.Fatalf("Failed to get CassandraCluster %s: %v", name, err)
+	}
+	return cluster
 }
