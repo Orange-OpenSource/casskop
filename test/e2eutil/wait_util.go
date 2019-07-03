@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -140,6 +141,45 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 	return nil
 }
 
+func WaitForStatefulsetLogging(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
+	retryInterval, timeout time.Duration) error {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(name,
+			metav1.GetOptions{IncludeUninitialized: true})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logrus.WithField("statefulset", statefulset).Debug("Waiting for availability of statefulset")
+				t.Logf("Waiting for availability of %s statefulset\n", name)
+				return false, nil
+			}
+			return false, err
+		}
+
+
+		if int(statefulset.Status.ReadyReplicas) == replicas {
+			return true, nil
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"ObservedGeneration": statefulset.Status.ObservedGeneration,
+			"Replicas": statefulset.Status.Replicas,
+			"ReadyReplicas": statefulset.Status.ReadyReplicas,
+			"CurrentReplicas": statefulset.Status.CurrentReplicas,
+			"CurrentRevision": statefulset.Status.CurrentRevision,
+			"UpdateRevision": statefulset.Status.UpdateRevision,
+		}).Debug("StatefulSet status update")
+
+		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name, statefulset.Status.ReadyReplicas,
+			replicas)
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("Statefulset available (%d/%d)\n", replicas, replicas)
+	return nil
+}
+
 func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name string,
 	retryInterval, timeout time.Duration) error {
 
@@ -171,6 +211,9 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 		t.Logf("Waiting for full Operator %s to finish Action of %s=%s\n", name,
 			cc2.Status.LastClusterAction,
 			cc2.Status.LastClusterActionStatus)
+
+		logrus.Debugf("LastClusterActionStatus = %s\n", cc2.Status.LastClusterActionStatus)
+
 		return false, nil
 	})
 	if err != nil {
@@ -238,8 +281,8 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 
 }
 
-func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * framework.TestCtx, name, namespace string) {
-	configMapFile := helperLoadBytes(t, name)
+func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * framework.TestCtx, configMapName, namespace string) {
+	configMapFile := helperLoadBytes(t, configMapName + ".yaml")
 	decode := serializer.NewCodecFactory(f.Scheme).UniversalDeserializer().Decode
 	configMapString := string(configMapFile[:])
 	obj, _, err := decode([]byte(configMapString), nil, nil)
@@ -250,6 +293,7 @@ func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * fr
 
 	switch cm := obj.(type) {
 	case *corev1.ConfigMap:
+		cm.Name = configMapName
 		cm.Namespace = namespace
 		if err := f.Client.Create(goctx.TODO(), cm, &framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout,
 			RetryInterval: CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
