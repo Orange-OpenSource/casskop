@@ -3,6 +3,7 @@ package e2e
 import (
 	goctx "context"
 	v1 "k8s.io/api/apps/v1"
+	"os"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Run all fonctional tests
@@ -33,6 +35,14 @@ func TestCassandraCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
+
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+		DisableColors: false,
+	})
+	logrus.SetReportCaller(true)
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	// run subtests
 	t.Run("group", func(t *testing.T) {
@@ -240,13 +250,14 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 	CleanupRetryInterval := time.Second * 5
 	CleanupTimeout := time.Second * 20
 	namespace, err := ctx.GetNamespace()
-	if err != nil {
+	if err != nil{
 		t.Fatalf("Could not get namespace: %v", err)
 	}
 
 	t.Log("Initializing ConfigMaps")
-	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1.yaml", namespace)
-	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2.yaml", namespace)
+	logrus.Debug("Initializing ConfigMaps")
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1", namespace)
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2", namespace)
 
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -316,18 +327,22 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 
+	if err := mye2eutil.WaitForStatusDone(t, f, namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		t.Fatalf("WaitForStatusDone got an error: %v", err)
+	}
+
 	cluster = getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
 
 	statefulSet := getStatefulSet(cluster.Name + "-dc1-rack1", namespace, f, t)
 	t.Logf("StatefulSet Current Revision: %s", statefulSet.Status.CurrentRevision)
 
-	cluster.Spec.ConfigMapName = "cassandra-config-map-v2.yaml"
+	cluster.Spec.ConfigMapName = "cassandra-configmap-v2"
 
 	if err := f.Client.Update(goctx.TODO(), cluster); err != nil {
 		t.Fatalf("Could not update CassandraCluster: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, statefulSet.Name, 1,
+	if err := mye2eutil.WaitForStatefulsetLogging(t, f.KubeClient, namespace, statefulSet.Name, 1,
 		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatalf("Waiting for StatefulSet %s failed: %v", statefulSet.Name, err)
 	}
