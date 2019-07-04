@@ -323,7 +323,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 			}
 			hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debugf("The Operator will ask node %s", hostName)
-			jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 				cc.Spec.ImageJolokiaSecret, cc.Namespace)
 			var keyspacesWithData []string
 			if err == nil {

@@ -335,7 +335,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 
 		//Get Cassandra Node Status
 		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
-		jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 			cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 		if err != nil {
@@ -451,7 +451,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name}).Debug("Node decommission starts")
-		jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 			cc.Spec.ImageJolokiaSecret, cc.Namespace)
 		if err != nil {
 			return
@@ -610,7 +610,7 @@ func (rcc *ReconcileCassandraCluster) monitorOperation(hostName string, cc *api.
 	for {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": pod.Name, "host": hostName, "operation": operationName}).Info("Checking if operation is still running on node")
-		jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 			cc.Spec.ImageJolokiaSecret, cc.Namespace)
 		if err == nil {
 			operationIsRunning, err := podOperationMap[operationName].Monitor(jolokiaClient)
@@ -644,7 +644,7 @@ func (rcc *ReconcileCassandraCluster) runUpgradeSSTables(hostName string, cc *ap
 	// Add the operatorName to the last pod operation in case the operator pod is replaced
 	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 	rcc.updateCassandraStatus(cc, status)
-	jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err == nil {
 		err = jolokiaClient.NodeUpgradeSSTables(0)
@@ -678,7 +678,7 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 	// Add the operatorName to the last pod operation in case the operator pod is replaced
 	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 	rcc.updateCassandraStatus(cc, status)
-	jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err == nil {
 		err = jolokiaClient.NodeRebuild(rebuildFrom)
@@ -745,7 +745,7 @@ func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.Cassand
 		}
 	}
 
-	jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	if err == nil {
 		var hostIDMap map[string]string
@@ -857,7 +857,7 @@ func (rcc *ReconcileCassandraCluster) runCleanup(hostName string, cc *api.Cassan
 	// Add the operatorName to the last pod operation in case the operator pod is replaced
 	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 	rcc.updateCassandraStatus(cc, status)
-	jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	if err == nil {

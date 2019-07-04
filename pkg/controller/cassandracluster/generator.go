@@ -322,8 +322,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          cassandraJolokiaName,
-									ContainerPort: cassandraJolokia,
+									Name:          JolokiaPortName,
+									ContainerPort: JolokiaPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{

@@ -29,27 +29,20 @@ import (
 
 const (
 	//max 15 char for port names
-	cassandraPort     = 9042
-	cassandraPortName = "cql"
-
-	cassandraIntraNodePort = 7000
-	cassandraIntraNodeName = "intra-node"
-
-	cassandraIntraNodeTLSPort = 7001
-	cassandraIntraNodeTLSName = "intra-node-tls"
-
-	cassandraJMX     = 7199
-	cassandraJMXName = "jmx-port"
-
-	cassandraJolokia     = 8778
-	cassandraJolokiaName = "jolokia"
-
-	cassandraThrift     = 9160
-	cassandraThriftName = "thrift"
-
-	exporterPort     = 9121
-	exporterPortName = "http-metrics"
-
+	cassandraPort                = 9042
+	cassandraPortName            = "cql"
+	cassandraIntraNodePort       = 7000
+	cassandraIntraNodeName       = "intra-node"
+	cassandraIntraNodeTLSPort    = 7001
+	cassandraIntraNodeTLSName    = "intra-node-tls"
+	cassandraJMX                 = 7199
+	cassandraJMXName             = "jmx-port"
+	JolokiaPort                  = 8778
+	JolokiaPortName              = "jolokia"
+	cassandraThrift              = 9160
+	cassandraThriftName          = "thrift"
+	exporterPort                 = 9121
+	exporterPortName             = "http-metrics"
 	exporterCassandraJmxPort     = 1234
 	exporterCassandraJmxPortName = "promjmx"
 )
