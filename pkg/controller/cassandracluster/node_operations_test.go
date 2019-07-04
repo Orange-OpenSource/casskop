@@ -70,7 +70,7 @@ func TestNodeCleanupKeyspace(t *testing.T) {
               "value": 0,
               "timestamp": 1528848808,
 	      "status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	err := jolokiaClient.NodeCleanupKeyspaces([]string{"demo"})
 	if err != nil {
@@ -109,7 +109,7 @@ func TestNodeCleanup(t *testing.T) {
 			return httpmock.NewStringResponse(200, fmt.Sprintf(response, keyspace)), nil
 		},
 	)
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	err := jolokiaClient.NodeCleanup()
 	if err != nil {
@@ -153,7 +153,7 @@ func TestNodeUpgradeSSTables(t *testing.T) {
 			return httpmock.NewStringResponse(200, fmt.Sprintf(response, keyspace)), nil
 		},
 	)
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	err := jolokiaClient.NodeUpgradeSSTables(0)
 	if err != nil {
@@ -176,7 +176,7 @@ func TestNodeRebuild(t *testing.T) {
 						   "value": null,
 					  	   "timestamp": 1528848808,
 						   "status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	err := jolokiaClient.NodeRebuild("dc1")
 	if err != nil {
@@ -239,7 +239,7 @@ func TestHasStreamingSessions(t *testing.T) {
                     "status": 200}`), nil
 		},
 	)
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	isRebuilding, err := jolokiaClient.hasStreamingSessions()
 	if err != nil {
@@ -306,7 +306,7 @@ func TestHasCleanupCompactions(t *testing.T) {
                     "status": 200}`), nil
 		},
 	)
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	isCleaningUp, err := jolokiaClient.hasCleanupCompactions()
 	if err != nil {
@@ -391,7 +391,7 @@ func TestReplicateData(t *testing.T) {
 		},
 	)
 
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	keyspacesWithData, err := jolokiaClient.HasDataInDC("dc2")
 
@@ -440,7 +440,7 @@ func TestNodeOperationMode(t *testing.T) {
 			"value": "NORMAL",
 			"timestamp": 1528850319,
 			"status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	operationMode, err := jolokiaClient.NodeOperationMode()
 	if err != nil {
@@ -462,7 +462,7 @@ func TestLeavingNodes(t *testing.T) {
 			"value": ["127.0.0.1"],
 			"timestamp": 1528850319,
 			"status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	leavingNodes, err := jolokiaClient.leavingNodes()
 	if err != nil {
@@ -484,7 +484,7 @@ func TestHostIDMap(t *testing.T) {
 			"value": {"10.244.3.20": "ac0b9f2b-1eb4-40ca-bc6e-68b37575f019"},
 			"timestamp": 1528850319,
 			"status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
+	jolokiaClient, _ := NewJolokiaClient(host, cassandraJolokia, nil,
 		v1.LocalObjectReference{}, "ns")
 	hostIDMap, err := jolokiaClient.hostIDMap()
 	if err != nil {
