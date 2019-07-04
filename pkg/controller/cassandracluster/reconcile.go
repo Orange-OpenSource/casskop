@@ -323,7 +323,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 			}
 			hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debugf("The Operator will ask node %s", hostName)
-			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
+			jolokiaClient, err := NewJolokiaClient(hostName, cassandraJolokia, rcc,
 				cc.Spec.ImageJolokiaSecret, cc.Namespace)
 			var keyspacesWithData []string
 			if err == nil {
@@ -429,6 +429,12 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 
 			if err = rcc.ensureCassandraStatefulSet(cc, status, dcName, dcRackName, dc, rack); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
+			}
+
+			if cc.Spec.UnlockNextOperation {
+				//If we enter specific change we remove _unlockNextOperation from Spec
+				cc.Spec.UnlockNextOperation = false
+				needUpdate = true
 			}
 
 			//If the Phase is not running Then we won't check on Next Racks so we return

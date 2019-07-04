@@ -117,11 +117,17 @@ In order to rollback the operation, we need to revert the change on the `nodesPe
 Because CassKop is actually performing another action on the cluster (ScaleUp) we can't scheduled a new operation to
 rollback since it has not finished.
 We introduced a new parameter in the CRD to allow such changes when all the pods can't be scheduled:
-- `Spec.forceNewOperation: true`
+- `Spec._unlockNextOperation: true`
+
+_**Warning:** This is not a regular parameter and it must be used with very good care!!._
+
+<aside class="warning">
+This is not a regular parameter and it must be used with very good care!!
+</aside>
 
 By adding this parameter in our cluster definition, CassKop will allow to trigger a new operation.
 
-> Once CassKop will scheduled the new operation, it will reset the `Spec.forceNewOperation: false` to the default false
+> Once CassKop will scheduled the new operation, it will reset the `Spec._unlockNextOperation: false` to the default false
 > value. If you need more operation, you will need to reset the parameter to force another Operation.
 > Keep in mind that CassKop is mean to do only 1 operation at a time.
 
@@ -167,11 +173,11 @@ To rollback the add of the new DC, we first need to scale down to 0 for the node
 We need to allow disruption as we do in previous section.
 
 then We first need to ask the dc2 to scaleDown to 0 because it has already add 2 racks, and we add the
-spec.forceNewOperation to true.
+spec._unlockNextOperation to true.
 
 ```
 ...
-  forceNewOperation: true
+  _unlockNextOperation: true
   ...
     name: dc2
     nodesPerRacks: 0

@@ -24,9 +24,9 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 
-	"github.com/sirupsen/logrus"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -166,6 +166,10 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
 				"but that may be normal as we are decommissioning")
+		} else if rcc.cc.Spec.UnlockNextOperation {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+				"dc-rack": dcRackName}).Warn("Cluster has 1 Pod Disrupted" +
+				"but we have unlock the next operation")
 		} else {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has Disruption on Pods, " +

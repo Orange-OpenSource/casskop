@@ -76,9 +76,9 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		return nil
 	}
 
-	//If we set up ForceNewOperation in CRD we allow to see mode change even last operation didn't ended correctly
+	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
 	needSpecificChange := false
-	if cc.Spec.ForceNewOperation &&
+	if cc.Spec.UnlockNextOperation &&
 		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName){
 		needSpecificChange = true
 	}
@@ -98,18 +98,12 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
-    // Meanwhile we allow to check for new changes if ForceNewOperatioon has been set (to recover from problems)
+    // Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
 	if needSpecificChange ||
 		(!rcc.thereIsPodDisruption() &&
 		  lastAction.Status != api.StatusOngoing &&
 		  lastAction.Status != api.StatusToDo &&
 		  lastAction.Status != api.StatusFinalizing){
-
-		if cc.Spec.ForceNewOperation{
-			//If we enter specific change we reset the MaxPodUnavailable to 1 to allow only 1 specific change at a time
-			cc.Spec.ForceNewOperation = false
-			needUpdate = true
-		}
 
 		// Update Status if ConfigMap Has Changed
 		if UpdateStatusIfconfigMapHasChanged(cc, dcRackName, storedStatefulSet, status) {
