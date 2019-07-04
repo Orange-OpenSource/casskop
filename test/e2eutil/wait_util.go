@@ -156,7 +156,7 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 
-		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e", Namespace: namespace}, cc2)
+		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s CassandraCluster\n", name)
