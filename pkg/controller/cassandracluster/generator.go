@@ -96,16 +96,6 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 					Protocol: v1.ProtocolTCP,
 					Name:     cassandraPortName,
 				},
-				v1.ServicePort{
-					Port:     cassandraThrift,
-					Protocol: v1.ProtocolTCP,
-					Name:     cassandraThriftName,
-				},
-				v1.ServicePort{
-					Port:     exporterPort,
-					Protocol: v1.ProtocolTCP,
-					Name:     exporterPortName,
-				},
 			},
 			Selector: labels,
 			PublishNotReadyAddresses: true,
@@ -324,11 +314,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 								v1.ContainerPort{
 									Name:          JolokiaPortName,
 									ContainerPort: JolokiaPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          cassandraThriftName,
-									ContainerPort: cassandraThrift,
 									Protocol:      v1.ProtocolTCP,
 								},
 							},

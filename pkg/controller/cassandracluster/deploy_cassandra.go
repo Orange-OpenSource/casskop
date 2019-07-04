@@ -35,14 +35,10 @@ const (
 	cassandraIntraNodeName       = "intra-node"
 	cassandraIntraNodeTLSPort    = 7001
 	cassandraIntraNodeTLSName    = "intra-node-tls"
-	cassandraJMX                 = 7199
+	cassandraJMX                 = 7199 //used for nodetool+istio
 	cassandraJMXName             = "jmx-port"
 	JolokiaPort                  = 8778
 	JolokiaPortName              = "jolokia"
-	cassandraThrift              = 9160
-	cassandraThriftName          = "thrift"
-	exporterPort                 = 9121
-	exporterPortName             = "http-metrics"
 	exporterCassandraJmxPort     = 1234
 	exporterCassandraJmxPortName = "promjmx"
 )
