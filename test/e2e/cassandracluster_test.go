@@ -2,6 +2,7 @@ package e2e
 
 import (
 	goctx "context"
+	"fmt"
 	v1 "k8s.io/api/apps/v1"
 	"os"
 	"testing"
@@ -19,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Run all fonctional tests
@@ -36,13 +37,13 @@ func TestCassandraCluster(t *testing.T) {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
 
-	logrus.SetFormatter(&logrus.TextFormatter{
+	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 		DisableColors: false,
 	})
-	logrus.SetReportCaller(true)
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.DebugLevel)
+	log.SetReportCaller(true)
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.DebugLevel)
 
 	// run subtests
 	t.Run("group", func(t *testing.T) {
@@ -168,94 +169,22 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	clusterName := "cassandra-e2e"
 	kind := "CassandraCluster"
 
-	logrus.Debugf("Creating cluster")
-	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-2DC.yaml", namespace)
-
-	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
-		t.Fatalf("Error Creating CassandraCluster: %v", err)
-	}
-
-	waitForClusterToBeReady(cluster, f, t)
-
-	cluster = getCassandraCluster(clusterName, namespace, f, t)
-
-	services, err := listServices(namespace, metav1.ListOptions{
-		LabelSelector: labels.FormatLabels(map[string]string{
-			"app": "cassandracluster",
-			"cassandracluster": cluster.Name,
-		}),
-	}, f)
-	if err != nil {
-		t.Errorf("Error listing services: %v", err)
-	}
-	assert.Equal(t, 2, len(services.Items))
-
-	var clusterService, monitoringService v1.Service
-	if val, ok := services.Items[0].Labels["k8s-app"]; ok {
-		assert.Equal(t, "exporter-cassandra-jmx", val)
-		clusterService = services.Items[0]
-		monitoringService = services.Items[1]
-	} else if val, ok := services.Items[1].Labels["k8s-app"]; ok {
-		assert.Equal(t, "exporter-cassandra-jmx", val)
-		clusterService = services.Items[0]
-		monitoringService = services.Items[1]
-	} else {
-		t.Errorf("Failed to find monitoring service. Found: %v", services.Items[0])
-	}
-
-	assert.Equal(t, 1, len(clusterService.ObjectMeta.OwnerReferences))
-	assert.Equal(t, kind, clusterService.ObjectMeta.OwnerReferences[0].Kind)
-	assert.Equal(t, cluster.Name, clusterService.ObjectMeta.OwnerReferences[0].Name)
-	assert.True(t, *clusterService.ObjectMeta.OwnerReferences[0].Controller)
-	assert.Equal(t, 4, len(clusterService.Spec.Ports))
-
-	assertServiceExposesPort(t, &clusterService, "cql", 9042)
-	assertServiceExposesPort(t, &clusterService, "intra-node", 7000)
-	assertServiceExposesPort(t, &clusterService, "intra-node-tls", 7001)
-	assertServiceExposesPort(t, &clusterService, "jmx-port", 7199)
-
-	assert.Equal(t, 1, len(monitoringService.ObjectMeta.OwnerReferences))
-	assert.Equal(t, kind, monitoringService.ObjectMeta.OwnerReferences[0].Kind)
-	assert.Equal(t, cluster.Name, monitoringService.ObjectMeta.OwnerReferences[0].Name)
-	assert.True(t, *monitoringService.ObjectMeta.OwnerReferences[0].Controller)
-	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
-
-	assertServiceExposesPort(t, &monitoringService, "promjmx", 1234)
-}
-
-func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) {
-	for _, dc := range cluster.Spec.Topology.DC {
-		for _, rack := range dc.Rack {
-			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
-			logrus.Debugf("Waiting for StatefulSet %s", name)
-			if err := mye2eutil.WaitForStatefulset(
-				t,
-				f.KubeClient,
-				cluster.Namespace,
-				name,
-				int(cluster.Spec.NodesPerRacks),
-				mye2eutil.RetryInterval,
-				mye2eutil.Timeout); err != nil {
-				t.Fatalf("Waiting for StatefulSet %s failed: %v", name, err)
-			}
-		}
-	}
-
-	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
-		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
+	return &framework.CleanupOptions {
+		TestContext: ctx,
+		Timeout: CleanupTimeout,
+		RetryInterval: CleanupRetryInterval,
 	}
 }
 
 func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	CleanupRetryInterval := time.Second * 5
-	CleanupTimeout := time.Second * 20
+	//CleanupRetryInterval := time.Second * 5
+	//CleanupTimeout := time.Second * 20
 	namespace, err := ctx.GetNamespace()
 	if err != nil{
 		t.Fatalf("Could not get namespace: %v", err)
 	}
 
-	t.Log("Initializing ConfigMaps")
-	logrus.Debug("Initializing ConfigMaps")
+	log.Debug("Initializing ConfigMaps")
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1", namespace)
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2", namespace)
 
@@ -275,10 +204,7 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 		},
 	}
 
-	if err := f.Client.Create(goctx.TODO(), secret, &framework.CleanupOptions{
-		TestContext:   ctx,
-		Timeout:       CleanupTimeout,
-		RetryInterval: CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
+	if err := f.Client.Create(goctx.TODO(), secret, CleanupWithRetry(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating secret: %v", err)
 	}
 
@@ -293,7 +219,7 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 			Labels:    map[string]string{"cluster": "k8s.pic"},
 		},
 		Spec: api.CassandraClusterSpec{
-			NodesPerRacks:      1,
+			NodesPerRacks:      2,
 			BaseImage:          "orangeopensource/cassandra-image",
 			Version:            "latest-cqlsh",
 			ImagePullPolicy:    "Always",
@@ -315,6 +241,9 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 							api.Rack{
 								Name: "rack1",
 							},
+							api.Rack{
+								Name: "rack2",
+							},
 						},
 					},
 				},
@@ -322,39 +251,39 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 		},
 	}
 
-	t.Log("Creating cluster")
-	if err := f.Client.Create(goctx.TODO(), cluster, nil); err != nil && !apierrors.IsAlreadyExists(err) {
+	log.Debugf("Creating cluster")
+	if err := f.Client.Create(goctx.TODO(), cluster, CleanupWithRetry(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatusDone(t, f, namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
-		t.Fatalf("WaitForStatusDone got an error: %v", err)
-	}
+	waitForClusterToBeReady(cluster, f, t)
 
 	cluster = getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
-
-	statefulSet := getStatefulSet(cluster.Name + "-dc1-rack1", namespace, f, t)
-	t.Logf("StatefulSet Current Revision: %s", statefulSet.Status.CurrentRevision)
+	statefulSets := getStatefulSets(cluster, f, t)
 
 	cluster.Spec.ConfigMapName = "cassandra-configmap-v2"
 
+	log.Debugf("Updating cluster.Spec.ConfigMapName to %s", cluster.Spec.ConfigMapName)
 	if err := f.Client.Update(goctx.TODO(), cluster); err != nil {
 		t.Fatalf("Could not update CassandraCluster: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatefulsetLogging(t, f.KubeClient, namespace, statefulSet.Name, 1,
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
-		t.Fatalf("Waiting for StatefulSet %s failed: %v", statefulSet.Name, err)
+	waitForClusterToBeReady(cluster, f, t)
+	var newCurrentRevision string
+	updatedStatefulSets := getStatefulSets(cluster, f, t)
+
+	for i, updatedStatefulSet := range updatedStatefulSets {
+		if newCurrentRevision == "" {
+			newCurrentRevision = updatedStatefulSet.Status.CurrentRevision
+		} else {
+			if updatedStatefulSet.Status.CurrentRevision != newCurrentRevision {
+				t.Fatalf("Expected CurrentRevion to be the same for all StatefulSets. Expected %s but found %s",
+					newCurrentRevision, updatedStatefulSet.Status.CurrentRevision)
+			}
+			assert.NotEqual(t, updatedStatefulSet.Status.CurrentRevision, statefulSets[i].Status.CurrentRevision,
+				"Expected StatefulSet.Status.CurrentRevision to be updated")
+		}
 	}
-
-	if err := mye2eutil.WaitForStatusDone(t, f, namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
-		t.Fatalf("WaitForStatusDone got an error: %v", err)
-	}
-
-	updatedStatefulSet := getStatefulSet(statefulSet.Name, namespace, f, t)
-
-	assert.NotEqual(t, updatedStatefulSet.Status.CurrentRevision, statefulSet.Status.CurrentRevision,
-		"Expected StatefulSet.Status.CurrentRevision to be updated")
 
 	updatedCluster := getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
 
@@ -403,10 +332,45 @@ func getStatefulSet(name string, namespace string, f *framework.Framework, t *te
 	return statefulSet
 }
 
+func getStatefulSets(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) []*v1.StatefulSet {
+	statefulSets := make([]*v1.StatefulSet, 6)
+	for _, dc := range cluster.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
+			statefulSet := getStatefulSet(name, cluster.Namespace, f, t)
+			statefulSets = append(statefulSets, statefulSet)
+		}
+	}
+	return statefulSets
+}
+
 func getCassandraCluster(name string, namespace string, f *framework.Framework, t *testing.T) *api.CassandraCluster {
 	cluster := &api.CassandraCluster{}
 	if err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster); err != nil {
 		t.Fatalf("Failed to get CassandraCluster %s: %v", name, err)
 	}
 	return cluster
+}
+
+func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) {
+	for _, dc := range cluster.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
+			log.Debugf("Waiting for StatefulSet %s", name)
+			if err := mye2eutil.WaitForStatefulset(
+				t,
+				f.KubeClient,
+				cluster.Namespace,
+				name,
+				int(cluster.Spec.NodesPerRacks),
+				mye2eutil.RetryInterval,
+				mye2eutil.Timeout); err != nil {
+				t.Fatalf("Waiting for StatefulSet %s failed: %v", name, err)
+			}
+		}
+	}
+
+	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
+	}
 }
