@@ -40,7 +40,7 @@ var reEndingNumber = regexp.MustCompile("[0-9]+$")
 
 // PodContainersReady returns true if all container in the Pod are ready
 func PodContainersReady(pod *v1.Pod) bool {
-	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0{
+	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0 {
 		for _, c := range pod.Status.ContainerStatuses {
 			if c.Ready == false {
 				return false
@@ -50,7 +50,6 @@ func PodContainersReady(pod *v1.Pod) bool {
 	}
 	return false
 }
-
 
 func (rcc *ReconcileCassandraCluster) GetPod(namespace, name string) (*v1.Pod, error) {
 
@@ -122,15 +121,31 @@ func (rcc *ReconcileCassandraCluster) UpdatePodLabel(pod *v1.Pod, label map[stri
 	return rcc.UpdatePod(podToUpdate)
 }
 
+//hasUnschedulablePod goal is to detect if Pods are unschedulable
+// - for lake of resources cpu/memory
+// - with bad docker image (imagepullbackoff)
+// - or else to add
 func (rcc *ReconcileCassandraCluster) hasUnschedulablePod(namespace string, dcName, rackName string) bool {
 	podsList, err := rcc.ListPods(rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, dcName, rackName))
 	if err != nil || len(podsList.Items) < 1 {
 		return false
 	}
 	for _, pod := range podsList.Items {
-		if pod.Status.Phase != v1.PodRunning && pod.Status.Conditions != nil &&
-			pod.Status.Conditions[0].Reason == v1.PodReasonUnschedulable{
-			return true
+		if pod.Status.Phase != v1.PodRunning && pod.Status.Conditions != nil {
+			for _, cs := range pod.Status.ContainerStatuses {
+				if cs.Ready == false &&
+					cs.State.Waiting != nil && cs.State.Waiting.Reason == "ImagePullBackOff" {
+					//TODO: delete Pod in this case so that it can be scheduled again
+					return true
+				}
+			}
+			for _, cond := range pod.Status.Conditions {
+				if (cond.Reason == v1.PodReasonUnschedulable) ||
+					//ImagepullbackPolicy..
+					(cond.Type == v1.PodReady && cond.Status == v1.ConditionFalse && cond.Reason == "ContainersNotReady") {
+					return true
+				}
+			}
 		}
 	}
 	return false
