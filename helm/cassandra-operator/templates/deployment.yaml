@@ -34,11 +34,6 @@ spec:
       - name: {{ template "cassandra-operator.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-{{- if .Values.metricService }}
-        ports:
-        - containerPort: 9710
-          name: metrics
-{{- end }}
         command:
         - cassandra-k8s-operator
         readinessProbe:

@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/sirupsen/logrus"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
-	"k8s.io/api/core/v1"
+	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -137,7 +137,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCl
 
 	//What if we ask to changes Pod ressources ?
 	// It is authorized, but the operator needs to detect it to prevent multiple statefulsets updates in the same time
-	// the operator must handle thoses update sequentially, so we flag each dcrackname with this information
+	// the operator must handle thoses updates sequentially, so we flag each dcrackname with this information
 	if !reflect.DeepEqual(cc.Spec.Resources, oldCRD.Spec.Resources) {
 		logrus.Infof("[%s]: We ask to Change Pod Resources from %v to %v", cc.Name, oldCRD.Spec.Resources, cc.Spec.Resources)
 
@@ -163,8 +163,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCl
 	return false
 }
 
-//Implements Checks to see if the Operator will accept or refused the CRD Changed
-//Return true imply that we want to update the status
+//CheckNonAllowedRemoveDC checks to see if the Operator accepts or refuses the CRD changes
 func CheckNonAllowedRemoveDC(rcc *ReconcileCassandraCluster, cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, oldCRD *api.CassandraCluster) (bool, string) {
 	//Check if we ask to remove DC/Rack and If we are allow to do it
@@ -501,7 +500,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 }
 
 //FlipCassandraClusterUpdateSeedListStatus checks if all racks has the status UpdateSeedList=To-do
-//Then it update to UpdateSeedList=Ongoing to start the operation
+//It then sets UpdateSeedList to Ongoing to start the operation
 func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
 
 	//if global status is not yet  "Configuring", we skip this one
@@ -533,7 +532,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 			}
 		}
 
-		//If all racks are in "configuring" state, we update all in to-do state so the operator can start actions
+		//If all racks are in "configuring" state, we set all status to ToDo to trigger the operator actions
 		if setOperationOngoing {
 			for dc := 0; dc < cc.GetDCSize(); dc++ {
 				dcName := cc.GetDCName(dc)

@@ -444,6 +444,29 @@ func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	return nodesPerRacks
 }
 
+
+//GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
+func (cc *CassandraCluster) GetDCRackNames() []string {
+	dcsize := cc.GetDCSize()
+
+	var dcRackNames = []string{}
+	if dcsize < 1 {
+		return dcRackNames
+	}
+	for dc := 0; dc < dcsize; dc++ {
+		dcName := cc.GetDCName(dc)
+		racksize := cc.GetRackSize(dc)
+		if racksize < 1 {
+			return dcRackNames
+		}
+		for rack := 0; rack < racksize; rack++ {
+			rackName := cc.GetRackName(dc, rack)
+			dcRackNames = append(dcRackNames, cc.GetDCRackName(dcName, rackName))
+		}
+	}
+	return dcRackNames
+}
+
 //GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
 func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()
