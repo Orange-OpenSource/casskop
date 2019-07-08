@@ -119,11 +119,8 @@ rollback since it has not finished.
 We introduced a new parameter in the CRD to allow such changes when all the pods can't be scheduled:
 - `Spec._unlockNextOperation: true`
 
-_**Warning:** This is not a regular parameter and it must be used with very good care!!._
+> _**:triangular_flag_on_post: Warning** This is not a regular parameter and it must be used with very good care!!._
 
-<aside class="warning">
-This is not a regular parameter and it must be used with very good care!!
-</aside>
 
 By adding this parameter in our cluster definition, CassKop will allow to trigger a new operation.
 
