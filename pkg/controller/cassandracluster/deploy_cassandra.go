@@ -43,27 +43,14 @@ const (
 	exporterCassandraJmxPortName = "promjmx"
 )
 
-func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCluster, dcName, rackName string) error {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
-	selector := k8s.LabelsForCassandraDCRack(cc, dcName, rackName)
-	svc := generateCassandraService(cc, dcRackName, selector, nil)
+func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCluster) error {
+	selector := k8s.LabelsForCassandra(cc)
+	svc := generateCassandraService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
 	err := rcc.client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service (%v)", err)
-	}
-	return nil
-}
-
-func (rcc *ReconcileCassandraCluster) ensureCassandraDCService(cc *api.CassandraCluster, dcName string) error {
-	selector := k8s.LabelsForCassandraDC(cc, dcName)
-	svc := generateCassandraService(cc, dcName, selector, nil)
-
-	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.client.Create(context.TODO(), svc)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return fmt.Errorf("failed to create cassandra DC service (%v)", err)
 	}
 	return nil
 }

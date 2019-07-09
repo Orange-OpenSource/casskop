@@ -57,7 +57,7 @@ const (
 	readinessHealthCheckPeriod   int32 = 10
 )
 
-func generateCassandraService(cc *api.CassandraCluster, dcName string, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 
 	//	labels = util.MergeLabels(labels, generateLabels(cassandraRoleName, cc.Name))
 
@@ -67,7 +67,7 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            cc.GetName() + "-" + dcName,
+			Name:            cc.GetName(),
 			Namespace:       cc.GetNamespace(),
 			Labels:          labels,
 			OwnerReferences: ownerRefs,
