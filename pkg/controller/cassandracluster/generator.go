@@ -103,7 +103,7 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 	}
 }
 
-func generateCassandraExporterService(cc *api.CassandraCluster, dcRackName string, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraExporterService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 	name := cc.GetName()
 	namespace := cc.Namespace
 
@@ -115,7 +115,7 @@ func generateCassandraExporterService(cc *api.CassandraCluster, dcRackName strin
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s-exporter-jmx", name, dcRackName),
+			Name:            fmt.Sprintf("%s-exporter-jmx", name),
 			Namespace:       namespace,
 			Labels:          mlabels,
 			OwnerReferences: ownerRefs,

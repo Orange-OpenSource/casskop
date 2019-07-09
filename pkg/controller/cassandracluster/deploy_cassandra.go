@@ -57,8 +57,8 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCl
 
 func (rcc *ReconcileCassandraCluster) ensureCassandraServiceMonitoring(cc *api.CassandraCluster,
 	dcName string) error {
-	selector := k8s.LabelsForCassandraDC(cc, dcName)
-	svc := generateCassandraExporterService(cc, dcName, selector, nil)
+	selector := k8s.LabelsForCassandra(cc)
+	svc := generateCassandraExporterService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
 	err := rcc.client.Create(context.TODO(), svc)
