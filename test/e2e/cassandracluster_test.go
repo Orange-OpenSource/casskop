@@ -2,7 +2,9 @@ package e2e
 
 import (
 	goctx "context"
+	"fmt"
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/stretchr/testify/assert"
@@ -11,6 +13,9 @@ import (
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
+	log "github.com/sirupsen/logrus"
 )
 
 // Run all fonctional tests
@@ -33,6 +38,7 @@ func TestCassandraCluster(t *testing.T) {
 		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownSimpleTest))
 		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
+		t.Run("InitMultiDCCluster", CassandraClusterTest(cassandraClusterInitMultiDCTest))
 	})
 
 }
@@ -41,7 +47,7 @@ func CassandraClusterTest(code func(t *testing.T, f *framework.Framework,
 	ctx *framework.TestCtx)) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx, f := mye2eutil.HelperInitOperator(t)
-		defer ctx.Cleanup()
+		//defer ctx.Cleanup()
 		code(t, f, ctx)
 	}
 
@@ -143,4 +149,125 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 	}
 
 	assert.Equal(t, false, cc.Spec.Topology.DC[0].Rack[0].RollingRestart)
+}
+
+func cassandraClusterInitMultiDCTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+	namespace, err := ctx.GetNamespace()
+	if err != nil{
+		t.Fatalf("Could not get namespace: %v", err)
+	}
+
+	cluster := &api.CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "multidc-cluster",
+			Namespace: namespace,
+			Labels:    map[string]string{"cluster": "k8s.pic"},
+		},
+		Spec: api.CassandraClusterSpec{
+			BaseImage: "orangeopensource/cassandra-image",
+			NodesPerRacks: 2,
+			HardAntiAffinity: false,
+			DeletePVC: true,
+			Resources: api.CassandraResources{
+				Limits: api.CPUAndMem{
+					CPU: "500m",
+					Memory: "1Gi",
+				},
+			},
+			Topology: api.Topology{
+				DC: api.DCSlice{
+					api.DC{
+						Name: "dc1",
+						Rack: api.RackSlice{
+							api.Rack{
+								Name: "rack1",
+							},
+							api.Rack{
+								Name: "rack2",
+							},
+						},
+					},
+					api.DC{
+						Name: "dc2",
+						Rack: api.RackSlice{
+							api.Rack{
+								Name: "rack1",
+							},
+							api.Rack{
+								Name: "rack2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+
+
+	log.Debugf("Creating cluster")
+	if err := f.Client.Create(goctx.TODO(), cluster, cleanupOptions(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("Error Creating CassandraCluster: %v", err)
+	}
+
+	waitForClusterToBeReady(cluster, f, t)
+
+	services, err := f.KubeClient.CoreV1().Services(namespace).List(metav1.ListOptions{
+		LabelSelector: labels.FormatLabels(map[string]string{
+			"app": "cassandracluster",
+			"cassandracluster": cluster.Name,
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Error listing services: %v", err)
+	}
+	assert.Equal(t, 2, len(services.Items))
+
+	// TODO add verification of services as well as statefulsets, etc.
+}
+
+func cleanupOptions(ctx *framework.TestCtx) *framework.CleanupOptions {
+	return NoCleanup()
+}
+
+func NoCleanup() *framework.CleanupOptions {
+	return &framework.CleanupOptions{}
+}
+
+func CleanupWithRetry(ctx *framework.TestCtx) *framework.CleanupOptions {
+	CleanupRetryInterval := time.Second * 5
+	CleanupTimeout := time.Second * 20
+
+	return &framework.CleanupOptions {
+		TestContext: ctx,
+		Timeout: CleanupTimeout,
+		RetryInterval: CleanupRetryInterval,
+	}
+}
+
+func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) {
+	for _, dc := range cluster.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
+			log.Debugf("Waiting for StatefulSet %s", name)
+			if err := mye2eutil.WaitForStatefulset(
+				t,
+				f.KubeClient,
+				cluster.Namespace,
+				name,
+				int(cluster.Spec.NodesPerRacks),
+				mye2eutil.RetryInterval,
+				mye2eutil.Timeout); err != nil {
+				t.Fatalf("Waiting for StatefulSet %s failed: %v", name, err)
+			}
+		}
+	}
+
+	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
+	}
 }
