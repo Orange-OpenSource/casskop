@@ -40,7 +40,7 @@ func TestCassandraCluster(t *testing.T) {
 		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownSimpleTest))
 		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
-		t.Run("InitMultiDCCluster", CassandraClusterTest(cassandraClusterServiceTest))
+		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
 	})
 
 }
