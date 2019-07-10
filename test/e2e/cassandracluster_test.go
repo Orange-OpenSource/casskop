@@ -2,7 +2,9 @@ package e2e
 
 import (
 	goctx "context"
+	"errors"
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
 
@@ -38,7 +40,7 @@ func TestCassandraCluster(t *testing.T) {
 		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownSimpleTest))
 		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
-		t.Run("InitMultiDCCluster", CassandraClusterTest(cassandraClusterInitMultiDCTest))
+		t.Run("InitMultiDCCluster", CassandraClusterTest(cassandraClusterServiceTest))
 	})
 
 }
@@ -47,7 +49,7 @@ func CassandraClusterTest(code func(t *testing.T, f *framework.Framework,
 	ctx *framework.TestCtx)) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx, f := mye2eutil.HelperInitOperator(t)
-		//defer ctx.Cleanup()
+		defer ctx.Cleanup()
 		code(t, f, ctx)
 	}
 
@@ -151,26 +153,28 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 	assert.Equal(t, false, cc.Spec.Topology.DC[0].Rack[0].RollingRestart)
 }
 
-func cassandraClusterInitMultiDCTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
 	namespace, err := ctx.GetNamespace()
 	if err != nil{
 		t.Fatalf("Could not get namespace: %v", err)
 	}
 
+	kind := "CassandraCluster"
+	apiVersion := "db.orange.com/v1alpha1"
+
 	cluster := &api.CassandraCluster{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraCluster",
-			APIVersion: "db.orange.com/v1alpha1",
+			Kind:       kind,
+			APIVersion: apiVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "multidc-cluster",
+			Name:      "service-test",
 			Namespace: namespace,
 			Labels:    map[string]string{"cluster": "k8s.pic"},
 		},
 		Spec: api.CassandraClusterSpec{
 			BaseImage: "orangeopensource/cassandra-image",
-			NodesPerRacks: 2,
-			HardAntiAffinity: false,
+			NodesPerRacks: 1,
 			DeletePVC: true,
 			Resources: api.CassandraResources{
 				Limits: api.CPUAndMem{
@@ -186,9 +190,6 @@ func cassandraClusterInitMultiDCTest(t *testing.T, f *framework.Framework, ctx *
 							api.Rack{
 								Name: "rack1",
 							},
-							api.Rack{
-								Name: "rack2",
-							},
 						},
 					},
 					api.DC{
@@ -197,9 +198,6 @@ func cassandraClusterInitMultiDCTest(t *testing.T, f *framework.Framework, ctx *
 							api.Rack{
 								Name: "rack1",
 							},
-							api.Rack{
-								Name: "rack2",
-							},
 						},
 					},
 				},
@@ -207,31 +205,56 @@ func cassandraClusterInitMultiDCTest(t *testing.T, f *framework.Framework, ctx *
 		},
 	}
 
-
-
 	log.Debugf("Creating cluster")
-	if err := f.Client.Create(goctx.TODO(), cluster, cleanupOptions(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
+	if err := f.Client.Create(goctx.TODO(), cluster, NoCleanup()); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 
 	waitForClusterToBeReady(cluster, f, t)
 
-	services, err := f.KubeClient.CoreV1().Services(namespace).List(metav1.ListOptions{
+	cluster = getCassandraCluster("service-test", "cassandra-e2e", f, t)
+
+	services, err := listServices(namespace, metav1.ListOptions{
 		LabelSelector: labels.FormatLabels(map[string]string{
 			"app": "cassandracluster",
 			"cassandracluster": cluster.Name,
 		}),
-	})
+	}, f)
 	if err != nil {
-		t.Fatalf("Error listing services: %v", err)
+		t.Errorf("Error listing services: %v", err)
 	}
 	assert.Equal(t, 2, len(services.Items))
 
-	// TODO add verification of services as well as statefulsets, etc.
-}
+	var clusterService, monitoringService v1.Service
+	if val, ok := services.Items[0].Labels["k8s-app"]; ok {
+		assert.Equal(t, "exporter-cassandra-jmx", val)
+		clusterService = services.Items[0]
+		monitoringService = services.Items[1]
+	} else if val, ok := services.Items[1].Labels["k8s-app"]; ok {
+		assert.Equal(t, "exporter-cassandra-jmx", val)
+		clusterService = services.Items[0]
+		monitoringService = services.Items[1]
+	} else {
+		t.Errorf("Failed to find monitoring service. Found: %v", services.Items[0])
+	}
 
-func cleanupOptions(ctx *framework.TestCtx) *framework.CleanupOptions {
-	return NoCleanup()
+	assert.Equal(t, 1, len(clusterService.ObjectMeta.OwnerReferences))
+	assert.Equal(t, kind, clusterService.ObjectMeta.OwnerReferences[0].Kind)
+	assert.Equal(t, cluster.Name, clusterService.ObjectMeta.OwnerReferences[0].Name)
+	assert.True(t, *clusterService.ObjectMeta.OwnerReferences[0].Controller)
+	assert.Equal(t, 3, len(clusterService.Spec.Ports))
+
+	assertServiceExposesPort(t, &clusterService, "cassandra-port", 9042)
+	assertServiceExposesPort(t, &clusterService, "cassandra-thrift", 9160)
+	assertServiceExposesPort(t, &clusterService, "http-metrics", 9121)
+
+	assert.Equal(t, 1, len(monitoringService.ObjectMeta.OwnerReferences))
+	assert.Equal(t, kind, monitoringService.ObjectMeta.OwnerReferences[0].Kind)
+	assert.Equal(t, cluster.Name, monitoringService.ObjectMeta.OwnerReferences[0].Name)
+	assert.True(t, *monitoringService.ObjectMeta.OwnerReferences[0].Controller)
+	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
+
+	assertServiceExposesPort(t, &monitoringService, "http-promcassjmx", 1234)
 }
 
 func NoCleanup() *framework.CleanupOptions {
@@ -270,4 +293,38 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
 	}
+}
+
+func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
+	return f.KubeClient.CoreV1().Services(namespace).List(options)
+}
+
+func getCassandraCluster(name string, namespace string, f *framework.Framework, t *testing.T) *api.CassandraCluster {
+	cluster := &api.CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+	}
+	if err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster); err != nil {
+		t.Fatalf("Failed to get CassandraCluster %s: %v", name, err)
+	}
+	return cluster
+}
+
+func assertServiceExposesPort(t *testing.T, svc *v1.Service, portName string, port int32) {
+	if svcPort, err := findServicePort(portName, svc.Spec.Ports); err == nil {
+		assert.Equal(t, port, svcPort.Port)
+	} else {
+		assert.Fail(t, fmt.Sprintf("Failed to find service port: %s", portName))
+	}
+}
+
+func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, error) {
+	for _, port := range ports {
+		if port.Name == name {
+			return &port, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("Failed to find service port: %s", name))
 }
