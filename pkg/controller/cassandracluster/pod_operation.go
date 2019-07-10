@@ -337,7 +337,6 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 			}
 		}
 
-		//Get Cassandra Node Status
 		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
 		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 			cc.Spec.ImageJolokiaSecret, cc.Namespace)
@@ -419,6 +418,29 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pod": lastPod.Name}).Info("ScaleDown detected, we launch decommission")
 
+	//Ensure node is not leaving or absent from the ring
+	hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
+		cc.Spec.ImageJolokiaSecret, cc.Namespace)
+
+	if err != nil {
+		return breakResyncLoop, err
+	}
+
+	operationMode, err := jolokiaClient.NodeOperationMode()
+
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"hostName": hostName, "err": err}).Error("Jolokia call failed")
+		return breakResyncLoop, err
+	}
+
+	if operationMode == "DECOMMISSIONED" || operationMode == "" || operationMode == "LEAVING" {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"pod": lastPod.Name}).Info("Node is leaving or has already been decommissioned")
+		return breakResyncLoop, nil
+	}
+
 	err = rcc.UpdatePodLabel(lastPod, map[string]string{
 		"operation-status": api.StatusOngoing,
 		"operation-start":  k8s.LabelTime(),
@@ -436,15 +458,9 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 		"pod": lastPod.Name}).Debug("Decommissioning cassandra node")
 
 	go func() {
-		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name}).Debug("Node decommission starts")
-		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-			cc.Spec.ImageJolokiaSecret, cc.Namespace)
-		if err != nil {
-			return
-		}
-		err = jolokiaClient.NodeDecommision()
+		err = jolokiaClient.NodeDecommission()
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name}).Debug("Node decommission ended")
 		if err != nil {
@@ -460,7 +476,6 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, lastPod *v1.Pod) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var list []string
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	pvcName := "data-" + podLastOperation.Pods[0]
@@ -483,11 +498,11 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 	}
 
 	podLastOperation.Status = api.StatusDone
-	podLastOperation.PodsOK = append(list, lastPod.Name)
+	podLastOperation.PodsOK = []string{lastPod.Name}
 	now := metav1.Now()
 	podLastOperation.EndTime = &now
 	podLastOperation.Pods = []string{}
-	//Important, We must break loop if multipleScaleDown has been hasked
+	//Important, We must break loop if multipleScaleDown has been asked
 	return breakResyncLoop, nil
 }
 

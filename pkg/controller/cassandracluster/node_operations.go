@@ -227,8 +227,8 @@ func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 	return nil
 }
 
-/*NodeDecommision decommissions a node using a jolokia client and returns any error*/
-func (jolokiaClient *JolokiaClient) NodeDecommision() error {
+/*NodeDecommission decommissions a node using a jolokia client and returns any error*/
+func (jolokiaClient *JolokiaClient) NodeDecommission() error {
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"decommission", []interface{}{}, ""))
 	if err != nil {
