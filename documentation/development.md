@@ -122,6 +122,21 @@ LOG_LEVEL=Debug
 OPERATOR_NAME=ide
 ```
 
+#### Run the Operator Locally with the Go Binary
+This method can be used to run the operator locally outside of the cluster. This method may be preferred during development as it facilitates faster deployment and testing.
+
+Set the name of the operator in an environment variable
+
+```
+$ export OPERATOR_NAME=cassandra-operator
+```
+
+Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`
+
+```
+$ operator-sdk up local --namespace=default
+```
+
 ### Run unit-tests
 
 You can run Unit-test for CassKop
