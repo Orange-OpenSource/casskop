@@ -141,7 +141,7 @@ func (rcc *ReconcileCassandraCluster) hasUnschedulablePod(namespace string, dcNa
 			}
 			for _, cond := range pod.Status.Conditions {
 				if (cond.Reason == v1.PodReasonUnschedulable) ||
-					//ImagepullbackPolicy..
+					//try catch non ready pods
 					(cond.Type == v1.PodReady && cond.Status == v1.ConditionFalse && cond.Reason == "ContainersNotReady") {
 					return true
 				}

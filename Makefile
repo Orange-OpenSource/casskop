@@ -437,25 +437,12 @@ cassandra-stress:
 	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
 	while k get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml
-
-cassandra-stress-medium:
-	kubectl delete configmap cassandra-stress-medium || true
-	kubectl create configmap cassandra-stress-medium --from-file=tests/cassandra-stress/medium_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-medium.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-medium.yaml
-
-cassandra-stress-normal:
-	kubectl delete configmap cassandra-stress-normal || true
-	kubectl create configmap cassandra-stress-normal --from-file=tests/cassandra-stress/normal_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-normal.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-normal.yaml
-
-cassandra-stress-huge:
-	kubectl delete configmap cassandra-stress-huge || true
-	kubectl create configmap cassandra-stress-huge --from-file=tests/cassandra-stress/huge_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-huge.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-huge.yaml
+	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+ifdef CASSANDRA_IMAGE
+	echo "using Cassandra_IMAGE=$(CASSANDRA_IMAGE)"
+	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+endif
+ifdef CASSANDRA_NODE
+	sed -i -e 's/cassandra-demo-dc1.cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+endif
+	k apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml

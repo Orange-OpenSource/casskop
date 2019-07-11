@@ -124,7 +124,7 @@ We introduced a new parameter in the CRD to allow such changes when all the pods
 
 By adding this parameter in our cluster definition, CassKop will allow to trigger a new operation.
 
-> Once CassKop will scheduled the new operation, it will reset the `Spec._unlockNextOperation: false` to the default false
+> Once CassKop has scheduled the new operation, it will reset this parameter to the default `false` value.
 > value. If you need more operation, you will need to reset the parameter to force another Operation.
 > Keep in mind that CassKop is mean to do only 1 operation at a time.
 
@@ -223,7 +223,7 @@ pods deployed in the Rack. If this is not the case, then you will need to proces
         name: rack3
 ```
 
-let's remove the rack3 of dc2.
+let's remove the rack3 from dc2.
 
 the operator will log :
 
