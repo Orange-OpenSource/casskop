@@ -437,7 +437,7 @@ cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
 	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
-	while k get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
+	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
 	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra_IMAGE=$(CASSANDRA_IMAGE)"
@@ -446,4 +446,4 @@ endif
 ifdef CASSANDRA_NODE
 	sed -i -e 's/cassandra-demo-dc1.cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
-	k apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
