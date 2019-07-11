@@ -23,7 +23,6 @@ spec:
   imagepullpolicy: IfNotPresent
   imageJolokiaSecret:
     name: jolokia-auth
-  checkStatefulsetsAreEqual: true
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false

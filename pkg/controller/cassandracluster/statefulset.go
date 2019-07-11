@@ -222,7 +222,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	//Except for RollingRestart we check If Statefulset has changed
-	if rcc.cc.Spec.CheckStatefulSetsAreEqual &&
+	if !rcc.cc.Spec.NoCheckStsAreEqual &&
 		statefulSetsAreEqual(rcc.storedStatefulSet.DeepCopy(), statefulSet.DeepCopy()) {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": dcRackName}).Debug("Statefulsets Are Equal: No Update")
@@ -236,7 +236,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		dcRackStatus.CassandraLastAction.EndTime = nil
 	}
 
-	if rcc.cc.Spec.CheckStatefulSetsAreEqual &&
+	if !rcc.cc.Spec.NoCheckStsAreEqual &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusDone {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": statefulSet.Labels["dc-rack"]}).Debug("Start Updating Statefulset")

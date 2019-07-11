@@ -120,7 +120,6 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		if cc.Status.SeedList == nil{
 			cc.Status.SeedList = cc.InitSeedList()
 		}
-
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -630,8 +629,8 @@ type CassandraClusterSpec struct {
 	//If autoPilot=true, the operator will set labels pod-operation-status=To-Do on Pods which allows him to
 	// automatically triggers Action
 	//If autoPilot=false, the operator will set labels pod-operation-status=Manual on Pods which won't automatically triggers Action
-	AutoPilot                 bool `json:"autoPilot,omitempty"`
-	CheckStatefulSetsAreEqual bool `json:"checkStatefulsetsAreEqual,omitempty" default:"true"`
+	AutoPilot          bool `json:"autoPilot,omitempty"`
+	NoCheckStsAreEqual bool `json:"noCheckStsAreEqual,omitempty"`
 
 	//GCStdout set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default
 	GCStdout bool `json:"gcStdout,omitempty" default:"true"`

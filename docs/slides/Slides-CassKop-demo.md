@@ -119,7 +119,6 @@ spec:
   configMapName: cassandra-configmap-v1
   dataCapacity: "3Gi"
   imagepullpolicy: IfNotPresent
-  checkStatefulsetsAreEqual: true
   hardAntiAffinity: true
   deletePVC: true
   autoPilot: false
