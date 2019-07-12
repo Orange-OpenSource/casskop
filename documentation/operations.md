@@ -63,7 +63,7 @@ CassKop :
 - `spec.hardAntiAffinity`
 - `spec.rollingPartition`
 - `spec.maxPodUnavailable`
-- `checkStatefulsetsAreEqual`
+- `noCheckStsAreEqual`
 
 CassKop manages rolling updates for each statefulset in the cluster. Then each statefulset is making the rolling
 updated of it's pod according to the `partition` defined for each statefulset in

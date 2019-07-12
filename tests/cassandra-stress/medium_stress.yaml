@@ -1,7 +1,7 @@
 keyspace: bench
 
 keyspace_definition: |
-  CREATE KEYSPACE IF NOT EXISTS bench WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'dc1': '3'};
+  CREATE KEYSPACE IF NOT EXISTS bench WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'dc1': '3', 'dc2': '3'};
 
 table: medium_table
 

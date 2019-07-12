@@ -24,9 +24,9 @@ import (
 
 	"github.com/kylelemons/godebug/pretty"
 
-	"github.com/sirupsen/logrus"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -96,14 +96,17 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
 		if statefulSet.ResourceVersion != newSts.ResourceVersion {
-			logrus.WithFields(logrus.Fields{"statefulset": statefulSet.Name}).Info("Statefulset has new revision, we continue")
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(
+				"Statefulset has new revision, we continue")
 			return true, nil
 		}
-		logrus.WithFields(logrus.Fields{"statefulset": statefulSet.Name}).Info("Waiting for new version of statefulset")
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(
+			"Waiting for new version of statefulset")
 		return false, nil
 	})
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"statefulset": statefulSet.Name}).Info("Error Waiting for sts change")
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(
+			"Error Waiting for sts change")
 	}
 	return nil
 }
@@ -159,12 +162,16 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	// if there is existing disruptions on Pods
 	// Or if we are not scaling Down the current statefulset
 	if rcc.thereIsPodDisruption() {
-		if rcc.weAreScalingDown(dcRackStatus) && rcc.thereIsOnly1PodDisruption() {
-			logrus.WithFields(logrus.Fields{"cluster": statefulSet.Name,
+		if rcc.weAreScalingDown(dcRackStatus) && rcc.hasOneDisruptedPod() {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
 				"but that may be normal as we are decommissioning")
+		} else if rcc.cc.Spec.UnlockNextOperation {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+				"dc-rack": dcRackName}).Warn("Cluster has 1 Pod Disrupted" +
+				"but we have unlock the next operation")
 		} else {
-			logrus.WithFields(logrus.Fields{"cluster": statefulSet.Name,
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has Disruption on Pods, " +
 				"we wait before applying any change to statefulset")
 			return nil
@@ -180,7 +187,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	//and change the status to Finalizing (it start a RollingUpdate)
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
-		logrus.WithFields(logrus.Fields{"cluster": statefulSet.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
 		dcRackStatus.CassandraLastAction.StartTime = &now
 	} else {
@@ -215,9 +222,9 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	//Except for RollingRestart we check If Statefulset has changed
-	if rcc.cc.Spec.CheckStatefulSetsAreEqual &&
+	if !rcc.cc.Spec.NoCheckStsAreEqual &&
 		statefulSetsAreEqual(rcc.storedStatefulSet.DeepCopy(), statefulSet.DeepCopy()) {
-		logrus.WithFields(logrus.Fields{"cluster": statefulSet.Name,
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": dcRackName}).Debug("Statefulsets Are Equal: No Update")
 		return nil
 	}
@@ -229,9 +236,9 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		dcRackStatus.CassandraLastAction.EndTime = nil
 	}
 
-	if rcc.cc.Spec.CheckStatefulSetsAreEqual &&
+	if !rcc.cc.Spec.NoCheckStsAreEqual &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusDone {
-		logrus.WithFields(logrus.Fields{"cluster": statefulSet.Labels["cassandracluster"],
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": statefulSet.Labels["dc-rack"]}).Debug("Start Updating Statefulset")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
 		dcRackStatus.CassandraLastAction.Name = api.ActionUpdateStatefulSet
@@ -253,7 +260,7 @@ func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 	return []string{}
 }
 
-func isStatefulSetReady(storedStatefulSet *appsv1.StatefulSet) bool {
+func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool {
 	if storedStatefulSet.Status.Replicas != *storedStatefulSet.Spec.Replicas ||
 		storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
 		return true

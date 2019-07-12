@@ -76,21 +76,34 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		return nil
 	}
 
-	//Do nothing in Initial phase
+	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
+	needSpecificChange := false
+	if cc.Spec.UnlockNextOperation &&
+		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName){
+		needSpecificChange = true
+	}
+	//Do nothing in Initial phase except if we force it
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial {
+		if !needSpecificChange {
 		return nil
+		}
+		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
 	}
 
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
 	// Do not check for new action if there is one ongoing or planed
-	//Check to discover new changes are not done if action.status is Ongoing or To Do (a change is already performing)
-	//action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
+	// Check to discover new changes are not done if action.status is Ongoing or ToDo/Finalizing
+	// (a change is already performing)
+	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
-	if !rcc.thereIsPodDisruption() &&
-		lastAction.Status != api.StatusOngoing &&
-		lastAction.Status != api.StatusToDo &&
-		lastAction.Status != api.StatusFinalizing {
+	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
+    // Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
+	if needSpecificChange ||
+		(!rcc.thereIsPodDisruption() &&
+		  lastAction.Status != api.StatusOngoing &&
+		  lastAction.Status != api.StatusToDo &&
+		  lastAction.Status != api.StatusFinalizing){
 
 		// Update Status if ConfigMap Has Changed
 		if UpdateStatusIfconfigMapHasChanged(cc, dcRackName, storedStatefulSet, status) {
@@ -278,20 +291,12 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
-		now := metav1.Now()
 		if nodesPerRacks > *storedStatefulSet.Spec.Replicas {
 			lastAction.Name = api.ActionScaleUp
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleUP", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
 		} else {
-			lastAction.Name = api.ActionScaleDown
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
-			status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now
-			status.CassandraRackStatus[dcRackName].PodLastOperation.EndTime = nil
-			status.CassandraRackStatus[dcRackName].PodLastOperation.Pods = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsOK = []string{}
-			status.CassandraRackStatus[dcRackName].PodLastOperation.PodsKO = []string{}
+			setDecommissionStatus(status, dcRackName)
 		}
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
@@ -405,13 +410,21 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial {
 
+		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
+		if nodesPerRacks <=0 {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				"rack": dcRackName}).Warn("Aborting Initializing..., start ScaleDown")
+			setDecommissionStatus(status, dcRackName)
+			return nil
+		}
+
 		//Do we have reach requested number of replicas ?
-		if isStatefulSetReady(storedStatefulSet) {
+		if isStatefulSetNotReady(storedStatefulSet) {
 			logrus.Infof("[%s][%s]: Initializing StatefulSet: Replicas Number Not OK: %d on %d, ready[%d]",
 				cc.Name, dcRackName, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
 				storedStatefulSet.Status.ReadyReplicas)
 		} else {
-
 			//If yes, just check that lastPod is running
 			podsList, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 			nb := len(podsList.Items)
@@ -439,7 +452,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 	} else {
 
 		//We are no more in Initializing state
-		if isStatefulSetReady(storedStatefulSet) {
+		if isStatefulSetNotReady(storedStatefulSet) {
 			logrus.Infof("[%s][%s]: StatefulSet(%s) Replicas Number Not OK: %d on %d, ready[%d]", cc.Name,
 				dcRackName, lastAction.Name, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
 				storedStatefulSet.Status.ReadyReplicas)
@@ -451,4 +464,21 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 		}
 	}
 	return nil
+}
+
+
+func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string){
+	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
+	now := metav1.Now()
+	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+	lastAction.StartTime = &now
+	lastAction.Status = api.StatusToDo
+	lastAction.Name = api.ActionScaleDown
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
+	status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now
+	status.CassandraRackStatus[dcRackName].PodLastOperation.EndTime = nil
+	status.CassandraRackStatus[dcRackName].PodLastOperation.Pods = []string{}
+	status.CassandraRackStatus[dcRackName].PodLastOperation.PodsOK = []string{}
+	status.CassandraRackStatus[dcRackName].PodLastOperation.PodsKO = []string{}
 }

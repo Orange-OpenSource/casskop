@@ -31,6 +31,7 @@ TELEPRESENCE_REGISTRY:=datawire
 KUBESQUASH_REGISTRY:=
 
 MINIKUBE_CONFIG ?= ~/.minikube
+MINIKUBE_CONFIG_MOUNT ?= /home/circleci/.minikube
 
 # Repository url for this project
 #in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
@@ -67,7 +68,7 @@ ifdef CIRCLE_BRANCH
   ifeq ($(CIRCLE_BRANCH),master)
 	  E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):$(VERSION)
   else
-	  E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(CI_COMMIT_REF_SLUG)
+	  E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(VERSION)
   endif
 else
   ifdef CIRCLE_TAG
@@ -105,7 +106,7 @@ COMMIT=$(shell git rev-parse HEAD)
 
 
 # CMDs
-UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out 
+UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out 
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
@@ -370,7 +371,7 @@ e2e:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 docker-e2e:
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 e2e-scaleup:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleUp$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -397,7 +398,7 @@ endif
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 docker-e2e-test-fix:
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e '
+	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e '
 
 #execute Test filter based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
@@ -410,8 +411,8 @@ docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' && echo 0 > res || echo 1 > res
-
+#	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' && echo 0 > res || echo 1 > res
+	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 .PHONY: e2e-test-fix
 e2e-test-fix-scale-down:
@@ -436,26 +437,13 @@ cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
 	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
-	while k get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml
-
-cassandra-stress-medium:
-	kubectl delete configmap cassandra-stress-medium || true
-	kubectl create configmap cassandra-stress-medium --from-file=tests/cassandra-stress/medium_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-medium.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-medium.yaml
-
-cassandra-stress-normal:
-	kubectl delete configmap cassandra-stress-normal || true
-	kubectl create configmap cassandra-stress-normal --from-file=tests/cassandra-stress/normal_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-normal.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-normal.yaml
-
-cassandra-stress-huge:
-	kubectl delete configmap cassandra-stress-huge || true
-	kubectl create configmap cassandra-stress-huge --from-file=tests/cassandra-stress/huge_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-huge.yaml --wait=false || true
-	sleep 2
-	kubectl apply -f tests/cassandra-stress/cassandra-stress-huge.yaml
+	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
+	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+ifdef CASSANDRA_IMAGE
+	echo "using Cassandra_IMAGE=$(CASSANDRA_IMAGE)"
+	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+endif
+ifdef CASSANDRA_NODE
+	sed -i -e 's/cassandra-demo-dc1.cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+endif
+	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml

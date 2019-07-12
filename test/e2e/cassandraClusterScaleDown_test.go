@@ -196,6 +196,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 			t.Logf("Error exec change keyspace %s = %v", keyspaces[i], err)
 		}
 	}
+	time.Sleep(2 * time.Second)
 
 	t.Logf("2. Ask Scale Down to 0 but this will be refused")
 	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e", Namespace: namespace}, cc)
@@ -232,6 +233,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 			t.Logf("Error exec change keyspace %s = %v", keyspaces[i], err)
 		}
 	}
+	time.Sleep(2 * time.Second)
 
 	/*----
 	 */

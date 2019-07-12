@@ -98,19 +98,25 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCl
 
 	//Global scaleDown to 0 is forbidden
 	if cc.Spec.NodesPerRacks == 0 {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the changed on NodesPerRack=0 restore to OldValue[%d]", oldCRD.Spec.NodesPerRacks)
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+			Warningf("The Operator has refused the changed on NodesPerRack=0 restore to OldValue[%d]",
+				oldCRD.Spec.NodesPerRacks)
 		cc.Spec.NodesPerRacks = oldCRD.Spec.NodesPerRacks
 		needUpdate = true
 	}
 	//DataCapacity change is forbidden
 	if cc.Spec.DataCapacity != oldCRD.Spec.DataCapacity {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the changed on DataCapacity from [%s] to NewValue[%s]", oldCRD.Spec.DataCapacity, cc.Spec.DataCapacity)
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+			Warningf("The Operator has refused the changed on DataCapacity from [%s] to NewValue[%s]",
+				oldCRD.Spec.DataCapacity, cc.Spec.DataCapacity)
 		cc.Spec.DataCapacity = oldCRD.Spec.DataCapacity
 		needUpdate = true
 	}
 	//DataStorage
 	if cc.Spec.DataStorageClass != oldCRD.Spec.DataStorageClass {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the changed on DataStorageClass from [%s] to NewValue[%s]", oldCRD.Spec.DataStorageClass, cc.Spec.DataStorageClass)
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+			Warningf("The Operator has refused the changed on DataStorageClass from [%s] to NewValue[%s]",
+				oldCRD.Spec.DataStorageClass, cc.Spec.DataStorageClass)
 		cc.Spec.DataStorageClass = oldCRD.Spec.DataStorageClass
 		needUpdate = true
 	}
@@ -172,16 +178,68 @@ func CheckNonAllowedRemoveDC(rcc *ReconcileCassandraCluster, cc *api.CassandraCl
 		dcsize := cc.GetDCSize()
 		olddcsize := oldCRD.GetDCSize()
 		if dcsize < olddcsize-1 {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the Topology changed. You can only remove 1 DC at a time, "+
-				"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+				"The Operator has refused the Topology changed. You can only remove 1 DC at a time, "+
+					"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
 			cc.Spec.Topology = oldCRD.Spec.Topology
 			return true, api.ActionCorrectCRDConfig
 		}
 
 		//If we ask to remove only a rack, then it is not authorized
 		if dcsize == olddcsize {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the Topology changed. You can only remove an entire DC, "+
-				"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
+
+			//We need to check if the rack was existing or not
+
+			dcRackNameToDeleteList := cc.FixCassandraRackList(status)
+			if len(dcRackNameToDeleteList) > 0 {
+
+				if len(dcRackNameToDeleteList) > 1 {
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+						"The Operator has refused the Topology changed. "+
+							"You can only remove 1 rack if it is completely unshedulable, restored to %v",
+						oldCRD.Spec.Topology)
+					cc.Spec.Topology = oldCRD.Spec.Topology
+					return true, api.ActionCorrectCRDConfig
+				}
+				for _, dcRackNameToDelete := range dcRackNameToDeleteList {
+
+					dcName, rackName := cc.GetDCAndRackFromDCRackName(dcRackNameToDelete)
+
+					listPod, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+					if err != nil {
+						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+							"The Operator has refused the Topology changed. "+
+								"We can't get associated pod in rack Rack: %v restored to %v", cc.Spec.Topology,
+							oldCRD.Spec.Topology)
+						cc.Spec.Topology = oldCRD.Spec.Topology
+						return true, api.ActionCorrectCRDConfig
+					}
+					if len(listPod.Items) > 1 {
+						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warning(
+							"The Operator has refused the Topology changed. Too many pods in the Statefulset")
+						cc.Spec.Topology = oldCRD.Spec.Topology
+						return true, api.ActionCorrectCRDConfig
+					}
+					if len(listPod.Items) > 0 && listPod.Items[0].Status.Conditions != nil &&
+						listPod.Items[0].Status.Conditions[0].Reason == "Unschedulable" {
+						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+							"We asked to remove Rack %s with unschedulable pod", dcRackNameToDelete)
+						err = rcc.DeleteStatefulSet(cc.Namespace, cc.Name+"-"+dcRackNameToDelete)
+						if err != nil && !apierrors.IsNotFound(err) {
+							logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warning(
+								"The Operator has refused the Topology changed. We can't delete statefulset")
+							cc.Spec.Topology = oldCRD.Spec.Topology
+							return true, api.ActionCorrectCRDConfig
+						}
+						rcc.DeletePVCs(cc, dcName, rackName)
+						return true, api.ActionDeleteRack
+					}
+				}
+
+			}
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+				Warningf("The Operator has refused the Topology changed. You can only remove an entire DC, "+
+					"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
 			cc.Spec.Topology = oldCRD.Spec.Topology
 			return true, api.ActionCorrectCRDConfig
 		}
@@ -194,16 +252,18 @@ func CheckNonAllowedRemoveDC(rcc *ReconcileCassandraCluster, cc *api.CassandraCl
 
 		//if dc not found it's ok to remove
 		if found && nbNodes > 0 {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the Topology changed. "+
-				"You must scale down the dc %s to 0 before deleting the dc", dcName)
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+				Warningf("The Operator has refused the Topology changed. "+
+					"You must scale down the dc %s to 0 before deleting the dc", dcName)
 			cc.Spec.Topology = oldCRD.Spec.Topology
 			return true, api.ActionCorrectCRDConfig
 		}
 
 		if cc.Status.LastClusterAction == api.ActionScaleDown &&
 			cc.Status.LastClusterActionStatus != api.StatusDone {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the Topology changed. "+
-				"You must wait to the end of ScaleDown to 0 before deleting the dc %s", dcName)
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+				Warningf("The Operator has refused the Topology changed. "+
+					"You must wait to the end of ScaleDown to 0 before deleting the dc %s", dcName)
 			cc.Spec.Topology = oldCRD.Spec.Topology
 			return true, api.ActionCorrectCRDConfig
 
@@ -230,7 +290,8 @@ func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
 
 			err := rcc.DeleteStatefulSet(cc.Namespace, cc.Name+"-"+dcRackNameToDelete)
 			if err != nil && !apierrors.IsNotFound(err) {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf("Can't Delete Statefulset: %v", err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf(
+					"Can't Delete Statefulset: %v", err)
 			}
 			names := []string{
 				cc.Name + "-" + cc.GetDCFromDCRackName(dcRackNameToDelete),                   //name-dc
@@ -240,7 +301,8 @@ func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
 			for i := range names {
 				err = rcc.DeleteService(cc.Namespace, names[i])
 				if err != nil && !apierrors.IsNotFound(err) {
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf("Can't Delete Service: %v", err)
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackNameToDelete}).Warnf(
+						"Can't Delete Service: %v", err)
 				}
 			}
 
@@ -266,8 +328,9 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 		podsList, err := rcc.ListPods(cc.Namespace, selector)
 		if err != nil || len(podsList.Items) < 1 {
 			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the ScaleDown (no pod found). "+
-					"topology %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+					"The Operator has refused the ScaleDown (no pod found). "+
+						"topology %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
 				cc.Spec.Topology = oldCRD.Spec.Topology
 				return true, api.ActionCorrectCRDConfig
 			}
@@ -289,16 +352,19 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 				keyspacesWithData, err = jolokiaClient.HasDataInDC(dcName)
 			}
 			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the ScaleDown (HasDataInDC failed %s). ", err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+					"The Operator has refused the ScaleDown (HasDataInDC failed %s). ", err)
 				cc.Spec.Topology = oldCRD.Spec.Topology
 				return true, api.ActionCorrectCRDConfig
 			}
 			if len(keyspacesWithData) != 0 {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("The Operator has refused the ScaleDown. Keyspaces still having data %v", keyspacesWithData)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+					"The Operator has refused the ScaleDown. Keyspaces still having data %v", keyspacesWithData)
 				cc.Spec.Topology = oldCRD.Spec.Topology
 				return true, api.ActionCorrectCRDConfig
 			}
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("Cassandra has no more replicated data on dc %s, we can scale Down to 0", dcName)
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+				"Cassandra has no more replicated data on dc %s, we can scale Down to 0", dcName)
 			return false, ""
 		}
 	}
@@ -322,7 +388,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 
 			//If we have added a dc/rack in the CRD, we add it to the Status
 			if _, ok := status.CassandraRackStatus[dcRackName]; !ok {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("the DC(%s) and Rack(%s) does not exist, initialize it in status", dcName, rackName)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("the DC(%s) and Rack(%s) does not exist, "+
+					"initialize it in status", dcName, rackName)
 				cc.InitCassandraRackinStatus(status, dcName, rackName)
 				//Return will stop operator reconcile loop until next one
 				//used here to write CassandraClusterStatus properly
@@ -338,7 +405,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			Name := cc.Name + "-" + dcRackName
 			storedStatefulSet, err := rcc.GetStatefulSet(cc.Namespace, Name)
 			if err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Infof("failed to get cassandra's statefulset (%s) %v", Name, err)
 			} else {
 
 				//Update CassandraClusterPhase
@@ -371,23 +439,33 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 						}
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"LastActionName":   dcRackStatus.CassandraLastAction.Name,
-							"LastActionStatus": dcRackStatus.CassandraLastAction.Status}).Warning("Should Not see this message ;)" +
-							" Waiting Rack to be running before continuing, we loop on Next Rack, maybe we don't want that")
+							"LastActionStatus": dcRackStatus.CassandraLastAction.Status}).Warning(
+							"Should Not see this message ;)" +
+								" Waiting Rack to be running before continuing, we loop on Next Rack, maybe we don't want that")
 						continue
 
 					}
 				}
 			}
 			if err = rcc.ensureCassandraDCService(cc, dcName); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraDCService Error: %v", err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Errorf("ensureCassandraDCService Error: %v", err)
 			}
 
 			if err = rcc.ensureCassandraServiceMonitoring(cc, dcName); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Errorf("ensureCassandraServiceMonitoring Error: %v", err)
 			}
 
 			if err = rcc.ensureCassandraStatefulSet(cc, status, dcName, dcRackName, dc, rack); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
+			}
+
+			if cc.Spec.UnlockNextOperation {
+				//If we enter specific change we remove _unlockNextOperation from Spec
+				cc.Spec.UnlockNextOperation = false
+				needUpdate = true
 			}
 
 			//If the Phase is not running Then we won't check on Next Racks so we return
@@ -395,7 +473,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			if dcRackStatus.Phase != api.ClusterPhaseRunning ||
 				(dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 					dcRackStatus.CassandraLastAction.Status == api.StatusFinalizing) {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Infof("Waiting Rack to be running before continuing, " +
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Infof("Waiting Rack to be running before continuing, " +
 					"we break ReconcileRack after updated statefulset")
 				return nil
 			}
@@ -436,7 +515,8 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 
 				if _, ok := cc.Status.CassandraRackStatus[dcRackName]; !ok ||
 					cc.Status.CassandraRackStatus[dcRackName].Phase != dcRackStatus.Phase {
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Infof("Update Rack Status: %s", dcRackStatus.Phase)
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+						"dc-rack": dcRackName}).Infof("Update Rack Status: %s", dcRackStatus.Phase)
 				}
 				return
 			}
@@ -496,7 +576,8 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 					dcRackName := cc.GetDCRackName(dcName, rackName)
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Infof("Update Rack Status UpdateSeedList=ToDo")
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+						"dc-rack": dcRackName}).Infof("Update Rack Status UpdateSeedList=ToDo")
 					dcRackStatus.CassandraLastAction.Name = api.ActionUpdateSeedList
 					dcRackStatus.CassandraLastAction.Status = api.StatusToDo
 				}
