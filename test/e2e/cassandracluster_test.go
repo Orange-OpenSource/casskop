@@ -19,8 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // Run all fonctional tests
@@ -177,8 +175,6 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 }
 
 func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	//CleanupRetryInterval := time.Second * 5
-	//CleanupTimeout := time.Second * 20
 	namespace, err := ctx.GetNamespace()
 	if err != nil{
 		t.Fatalf("Could not get namespace: %v", err)
@@ -187,26 +183,6 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 	log.Debug("Initializing ConfigMaps")
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1", namespace)
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2", namespace)
-
-	secret := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "jolokia-auth",
-			Namespace: namespace,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte("am9sb2tpYS11c2Vy"),
-			"password": []byte("TTBucDQ1NXcwcmQ="),
-		},
-	}
-
-	if err := f.Client.Create(goctx.TODO(), secret, CleanupWithRetry(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
-		t.Fatalf("Error Creating secret: %v", err)
-	}
 
 	cluster := &api.CassandraCluster{
 		TypeMeta: metav1.TypeMeta{
@@ -223,15 +199,10 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 			BaseImage:          "orangeopensource/cassandra-image",
 			Version:            "latest-cqlsh",
 			ImagePullPolicy:    "Always",
-			ImageJolokiaSecret: corev1.LocalObjectReference{Name: "jolokia-auth"},
-			DataCapacity:       "1Gi",
-			HardAntiAffinity:   false,
-			DeletePVC:          false,
-			AutoPilot:          false,
+			DataCapacity:       "500m",
 			ConfigMapName:      "cassandra-configmap-v1",
-			AutoUpdateSeedList: false,
 			Resources: api.CassandraResources{
-				Limits: api.CPUAndMem{CPU: "500m", Memory: "1Gi"},
+				Limits: api.CPUAndMem{CPU: "500m", Memory: "500mi"},
 			},
 			Topology: api.Topology{
 				DC: api.DCSlice{
