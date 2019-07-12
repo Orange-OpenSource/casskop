@@ -34,7 +34,11 @@ func (rcc *ReconcileCassandraCluster) thereIsPodDisruption() bool {
 	return rcc.storedPdb.Status.PodDisruptionsAllowed == 0
 }
 
-func (rcc *ReconcileCassandraCluster) thereIsOnly1PodDisruption() bool {
+func (rcc *ReconcileCassandraCluster) allowMoreThan1PodDisruption() bool {
+	return rcc.storedPdb.Spec.MaxUnavailable.IntVal > 1
+}
+
+func (rcc *ReconcileCassandraCluster) hasOneDisruptedPod() bool {
 	return (rcc.storedPdb.Status.DesiredHealthy+rcc.storedPdb.Spec.MaxUnavailable.IntVal)-rcc.storedPdb.Status.CurrentHealthy > 0
 }
 

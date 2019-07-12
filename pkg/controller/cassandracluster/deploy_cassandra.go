@@ -28,18 +28,19 @@ import (
 )
 
 const (
-	cassandraPort     = 9042
-	cassandraPortName = "cassandra-port"
-
-	cassandraThrift     = 9160
-	cassandraThriftName = "cassandra-thrift"
-)
-
-const (
-	exporterPort                 = 9121
-	exporterPortName             = "http-metrics"
+	//max 15 char for port names
+	cassandraPort                = 9042
+	cassandraPortName            = "cql"
+	cassandraIntraNodePort       = 7000
+	cassandraIntraNodeName       = "intra-node"
+	cassandraIntraNodeTLSPort    = 7001
+	cassandraIntraNodeTLSName    = "intra-node-tls"
+	cassandraJMX                 = 7199 //used for nodetool+istio
+	cassandraJMXName             = "jmx-port"
+	JolokiaPort                  = 8778
+	JolokiaPortName              = "jolokia"
 	exporterCassandraJmxPort     = 1234
-	exporterCassandraJmxPortName = "http-promcassjmx"
+	exporterCassandraJmxPortName = "promjmx"
 )
 
 func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCluster, dcName, rackName string) error {

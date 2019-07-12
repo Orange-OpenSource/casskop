@@ -11,7 +11,6 @@ spec:
   imagePullPolicy: "Always"
   rollingPartition: 0
   dataCapacity: "1Gi"
-#  dataStorageClass: "standard"
   hardAntiAffinity: false
   deletePVC: false
   autoPilot: true

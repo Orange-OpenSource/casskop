@@ -44,10 +44,6 @@ const (
 	cassandraContainerName = "cassandra"
 	defaultJvmMaxHeap      = "2048M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
-	JolokiaPort            = 8778
-	ThriftPort             = 9160
-	CqlPort                = 9042
-	JmxPort                = 7199
 
 	passwordAuthenticator = "PasswordAuthenticator"
 	passwordAuthorizer    = "CassandraAuthorizer"
@@ -81,22 +77,28 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 			ClusterIP: v1.ClusterIPNone,
 			Ports: []v1.ServicePort{
 				v1.ServicePort{
+					Port:     cassandraIntraNodePort,
+					Protocol: v1.ProtocolTCP,
+					Name:     cassandraIntraNodeName,
+				},
+				v1.ServicePort{
+					Port:     cassandraIntraNodeTLSPort,
+					Protocol: v1.ProtocolTCP,
+					Name:     cassandraIntraNodeTLSName,
+				},
+				v1.ServicePort{
+					Port:     cassandraJMX,
+					Protocol: v1.ProtocolTCP,
+					Name:     cassandraJMXName,
+				},
+				v1.ServicePort{
 					Port:     cassandraPort,
 					Protocol: v1.ProtocolTCP,
 					Name:     cassandraPortName,
 				},
-				v1.ServicePort{
-					Port:     cassandraThrift,
-					Protocol: v1.ProtocolTCP,
-					Name:     cassandraThriftName,
-				},
-				v1.ServicePort{
-					Port:     exporterPort,
-					Protocol: v1.ProtocolTCP,
-					Name:     exporterPortName,
-				},
 			},
 			Selector: labels,
+			PublishNotReadyAddresses: true,
 		},
 	}
 }
@@ -285,38 +287,33 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 							ImagePullPolicy: cc.Spec.ImagePullPolicy,
 							Ports: []v1.ContainerPort{
 								v1.ContainerPort{
-									Name:          "intra-node",
-									ContainerPort: 7000,
+									Name:          cassandraIntraNodeName,
+									ContainerPort: cassandraIntraNodePort,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          "tls-intra-node",
-									ContainerPort: 7001,
+									Name:          cassandraIntraNodeTLSName,
+									ContainerPort: cassandraIntraNodeTLSPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          "jmx",
-									ContainerPort: JmxPort,
+									Name:          cassandraJMXName,
+									ContainerPort: cassandraJMX,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          "cql",
-									ContainerPort: CqlPort,
+									Name:          cassandraPortName,
+									ContainerPort: cassandraPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          "promjmx",
-									ContainerPort: 1234,
+									Name:          exporterCassandraJmxPortName,
+									ContainerPort: exporterCassandraJmxPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 								v1.ContainerPort{
-									Name:          "jolokia",
+									Name:          JolokiaPortName,
 									ContainerPort: JolokiaPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          "thrift",
-									ContainerPort: ThriftPort,
 									Protocol:      v1.ProtocolTCP,
 								},
 							},

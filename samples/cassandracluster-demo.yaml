@@ -12,7 +12,6 @@ spec:
   dataStorageClass: "standard"
   #imagepullpolicy: Always
   imagepullpolicy: IfNotPresent  
-  checkStatefulsetsAreEqual: true
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false

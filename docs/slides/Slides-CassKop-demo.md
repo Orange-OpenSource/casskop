@@ -119,7 +119,6 @@ spec:
   configMapName: cassandra-configmap-v1
   dataCapacity: "3Gi"
   imagepullpolicy: IfNotPresent
-  checkStatefulsetsAreEqual: true
   hardAntiAffinity: true
   deletePVC: true
   autoPilot: false
@@ -361,20 +360,16 @@ namespace with the use of thoses capabilities:
 The PSP RoleBinding can be retrieved from  the cassandra namespace
 
 ```console
-kubectl apply -f deploy/psp-cassie.yaml
-kubectl apply -f deploy/psp-sa-cassie.yaml
-kubectl apply -f deploy/clusterRole-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/psp-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/psp-sa-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/clusterRole-cassie.yaml
 ```
 
 ---
 
 ## CassKop's operator deployment :
 
-<<<<<<< HEAD
 You can deploy CassKop from official helm/charts/incubator repository
-=======
-You can also add the CassKop repository from Github
->>>>>>> File renamed psp :sa :cassie.yaml'
 
 ```yaml
 $ helm install --name casskop incubator/cassandra-operator
@@ -401,11 +396,7 @@ In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the 
 $ helm install --name casskop casskop/cassandra-operator --no-hooks
 ```
 
-<<<<<<< HEAD
 Check operator's logs: 
-=======
-check operator's logs:
->>>>>>> File renamed psp :sa :cassie.yaml'
 
 ```console
 $ k logs -l app=cassandra-operator --tail=10
@@ -428,7 +419,7 @@ different racks with anti-affinity
 - [samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo-gke.yaml)
 
 
-> On GKE I deploy, using dedicated storagecless for ssd local-storage on
+> On GKE I deploy, using a dedicated storagecless for ssd local-storage on
 > regional cluster with 3 zones but CassKop can adapt to any configuration
 
 ```console
@@ -438,7 +429,7 @@ or if you have ssd
 kubectl apply -f samples/gke-storage-ssd-wait.yaml
 ```
 
-Example for démo on gke in europe-west (you can adapt the demo file according to
+Example for demo on gke in europe-west (you can adapt the demo file according to
 your cluster):
 ```console
 kubectl apply -f samples/cassandra-configmap-v1.yaml
@@ -662,18 +653,11 @@ We add replication to the new DC
 
 ```console
 k exec -ti cassandra-demo-dc1-rack1-0 -- cqlsh -u cassandra -p cassandra -e "
-<<<<<<< HEAD
 ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
 ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3}; 
-ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};"
-=======
-ALTER KEYSPACE bench WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
-ALTER KEYSPACE system_auth WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
-ALTER KEYSPACE system_distributed WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
 ALTER KEYSPACE system_traces WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'dc1' : 3, 'dc2': 3};
 "
->>>>>>> File renamed psp :sa :cassie.yaml'
 ```
 
 ---

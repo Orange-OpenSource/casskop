@@ -76,7 +76,8 @@ const (
 	ActionScaleUp           string = "ScaleUp"
 	ActionScaleDown         string = "ScaleDown"
 
-	ActionDeleteDC string = "ActionDeleteDC"
+	ActionDeleteDC   string = "ActionDeleteDC"
+	ActionDeleteRack string = "ActionDeleteRack"
 
 	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
@@ -116,7 +117,9 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
-		cc.Status.SeedList = cc.InitSeedList()
+		if cc.Status.SeedList == nil{
+			cc.Status.SeedList = cc.InitSeedList()
+		}
 		changed = true
 	}
 	if ccs.MaxPodUnavailable == 0 {
@@ -626,8 +629,8 @@ type CassandraClusterSpec struct {
 	//If autoPilot=true, the operator will set labels pod-operation-status=To-Do on Pods which allows him to
 	// automatically triggers Action
 	//If autoPilot=false, the operator will set labels pod-operation-status=Manual on Pods which won't automatically triggers Action
-	AutoPilot                 bool `json:"autoPilot,omitempty"`
-	CheckStatefulSetsAreEqual bool `json:"checkStatefulsetsAreEqual,omitempty" default:"true"`
+	AutoPilot          bool `json:"autoPilot,omitempty"`
+	NoCheckStsAreEqual bool `json:"noCheckStsAreEqual,omitempty"`
 
 	//GCStdout set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default
 	GCStdout bool `json:"gcStdout,omitempty" default:"true"`
@@ -637,6 +640,9 @@ type CassandraClusterSpec struct {
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
 
 	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
+
+	//Very special Flag to hack CassKop reconcile loop - use with really good Care
+	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
 	DataCapacity string `json:"dataCapacity,omitempty"`
