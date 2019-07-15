@@ -149,13 +149,13 @@ This section provides an instructions for running the operator Helm charts with 
 Build the image from the current branch.
 
 ```
-$ export DOCKER_REPO_BASE=jsanda
+$ export DOCKER_REPO_BASE=orangeopensource
 $ make docker-build
 ```
 Push the image to docker hub (or to whichever repo you want to use)
 
 ```
-$ docker push jsanda/cassandra-k8s-operator:0.3.1-local-dev-helm
+$ docker push $DOCKER_REPO_BASE/cassandra-k8s-operator:0.3.1-local-dev-helm
 ```
 **Note:** In this example we are pushing to docker hub.
 
