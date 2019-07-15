@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
-	log "github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 )
 
 // Run all fonctional tests
@@ -205,7 +205,7 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 		},
 	}
 
-	log.Debugf("Creating cluster")
+	logrus.Debugf("Creating cluster")
 	if err := f.Client.Create(goctx.TODO(), cluster, NoCleanup()); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
@@ -276,7 +276,7 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 	for _, dc := range cluster.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
 			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
-			log.Debugf("Waiting for StatefulSet %s", name)
+			logrus.Debugf("Waiting for StatefulSet %s", name)
 			if err := mye2eutil.WaitForStatefulset(
 				t,
 				f.KubeClient,
