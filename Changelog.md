@@ -2,6 +2,10 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.3.2
+
+- Released version
+
 ## 0.3.1
 
 - GitHub open source version
