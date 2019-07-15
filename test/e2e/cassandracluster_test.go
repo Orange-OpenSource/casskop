@@ -245,8 +245,10 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.Equal(t, 3, len(clusterService.Spec.Ports))
 
 	assertServiceExposesPort(t, &clusterService, "cassandra-port", 9042)
-	assertServiceExposesPort(t, &clusterService, "cassandra-thrift", 9160)
 	assertServiceExposesPort(t, &clusterService, "http-metrics", 9121)
+	assertServiceExposesPort(t, &clusterService, "intra-node", 7000)
+	assertServiceExposesPort(t, &clusterService, "intra-node-tls", 7001)
+	assertServiceExposesPort(t, &clusterService, "jmx-port", 7199)
 
 	assert.Equal(t, 1, len(monitoringService.ObjectMeta.OwnerReferences))
 	assert.Equal(t, kind, monitoringService.ObjectMeta.OwnerReferences[0].Kind)
