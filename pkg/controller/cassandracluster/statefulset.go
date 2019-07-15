@@ -95,6 +95,9 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	//Check that the new revision of statefulset has been taken into account
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
+		if err != nil && !apierrors.IsNotFound(err){
+			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
+		}
 		if statefulSet.ResourceVersion != newSts.ResourceVersion {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(
 				"Statefulset has new revision, we continue")
