@@ -103,19 +103,6 @@ orbs:
                 }
 
 jobs:
-  is_upstream_master:
-    executor: casskop-build
-    steps:
-    - run: |
-        set -veuo pipefail
-        if [ "${CIRCLE_PROJECT_USERNAME}" != "allamand" ]; then
-          echo "refusing to build fork \"${CIRCLE_PROJECT_USERNAME}\""
-          exit 1
-        fi
-        if [ "${CIRCLE_BRANCH}" != "master" ]; then
-          echo "refusing to build branch \"${CIRCLE_BRANCH}\""
-          exit 1
-        fi
 
   build:
     working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -150,7 +137,9 @@ jobs:
         name: Push image to Docker Hub
         command: |
           if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
-            echo "Skip doing stuff since it is a PR."
+            echo "This is a PR, we push also to same hub for now."
+            docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+            make push
           else
             docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
             make push
@@ -164,6 +153,7 @@ jobs:
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
+
 
   unit-test:
     working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -185,6 +175,7 @@ jobs:
         paths:
           - coverage.out
           - test-report.out
+
 
   report:
     working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -249,43 +240,58 @@ workflows:
   master:
     jobs:
 
-      - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
 
       - unit-test:
           requires:
             - build
+          filters:
+            tags:
+              only: /.*/
 
       - report:
           requires:
             - unit-test
           filters:
             branches:
-              # only from canonical repository 
-              # https://stackoverflow.com/a/5334825/358804 
-              only: /^(?!pull\/).*$/
-
+              # report sonar only from canonical repository 
+              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804 
 
       - minikube/e2e-orb:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
             - unit-test
+          filters:
+            tags:
+              only: /.*/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
             - unit-test
+          filters:
+            tags:
+              only: /.*/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
             - unit-test
+          filters:
+            tags:
+              only: /.*/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
             - unit-test
-
+          filters:
+            tags:
+              only: /.*/
