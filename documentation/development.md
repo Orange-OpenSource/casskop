@@ -131,11 +131,17 @@ Set the name of the operator in an environment variable
 $ export OPERATOR_NAME=cassandra-operator
 ```
 
-Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`
+Deploy the CRD
 
 ```
-$ operator-sdk up local --namespace=default
+$ kubectl apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
 ```
+
+```
+$ make run
+```
+
+This will run the operator in the `default` namespace using the default Kubernetes config file at `$HOME/.kube/config`.
 
 ### Run unit-tests
 
