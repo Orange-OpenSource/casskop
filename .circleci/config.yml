@@ -137,9 +137,7 @@ jobs:
         name: Push image to Docker Hub
         command: |
           if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
-            echo "This is a PR, we push also to same hub for now."
-            docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
-            make push
+            echo "This is a PR, we don't push to Hub."
           else
             docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
             make push
@@ -268,6 +266,9 @@ workflows:
           filters:
             tags:
               only: /.*/
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleUp
@@ -277,6 +278,9 @@ workflows:
           filters:
             tags:
               only: /.*/
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDown
@@ -286,6 +290,9 @@ workflows:
           filters:
             tags:
               only: /.*/
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDownSimple
@@ -295,3 +302,6 @@ workflows:
           filters:
             tags:
               only: /.*/
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
