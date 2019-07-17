@@ -155,7 +155,7 @@ $ make docker-build
 Push the image to docker hub (or to whichever repo you want to use)
 
 ```
-$ docker push $DOCKER_REPO_BASE/cassandra-k8s-operator:0.3.1-local-dev-helm
+$ docker push orangeopensource/cassandra-k8s-operator:0.3.1-local-dev-helm
 ```
 **Note:** In this example we are pushing to docker hub.
 
@@ -165,7 +165,7 @@ Install the Helm chart.
 
 ```
 $ helm install ./helm/cassandra-operator \
-    --set-string image.repository=jsanda/cassandra-k8s-operator,image.tag=0.3.1-local-dev-helm \
+    --set-string image.repository=orangeopensource/cassandra-k8s-operator,image.tag=0.3.1-local-dev-helm \
     --name local-dev-helm
 ```
 
