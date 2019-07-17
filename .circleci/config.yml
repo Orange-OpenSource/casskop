@@ -318,3 +318,15 @@ workflows:
             branches:
               # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
               ignore: /pull\/[0-9]+/
+
+      - minikube/e2e-orb:
+          name: e2e-test UpdateConfigMap
+          test_name: UpdateConfigMap
+          requires:
+            - unit-test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
