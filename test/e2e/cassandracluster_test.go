@@ -242,10 +242,9 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.Equal(t, kind, clusterService.ObjectMeta.OwnerReferences[0].Kind)
 	assert.Equal(t, cluster.Name, clusterService.ObjectMeta.OwnerReferences[0].Name)
 	assert.True(t, *clusterService.ObjectMeta.OwnerReferences[0].Controller)
-	assert.Equal(t, 3, len(clusterService.Spec.Ports))
+	assert.Equal(t, 4, len(clusterService.Spec.Ports))
 
-	assertServiceExposesPort(t, &clusterService, "cassandra-port", 9042)
-	assertServiceExposesPort(t, &clusterService, "http-metrics", 9121)
+	assertServiceExposesPort(t, &clusterService, "cql", 9042)
 	assertServiceExposesPort(t, &clusterService, "intra-node", 7000)
 	assertServiceExposesPort(t, &clusterService, "intra-node-tls", 7001)
 	assertServiceExposesPort(t, &clusterService, "jmx-port", 7199)
@@ -256,7 +255,7 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.True(t, *monitoringService.ObjectMeta.OwnerReferences[0].Controller)
 	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
 
-	assertServiceExposesPort(t, &monitoringService, "http-promcassjmx", 1234)
+	assertServiceExposesPort(t, &monitoringService, "promjmx", 1234)
 }
 
 func NoCleanup() *framework.CleanupOptions {
