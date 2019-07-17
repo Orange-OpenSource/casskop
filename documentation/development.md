@@ -122,6 +122,27 @@ LOG_LEVEL=Debug
 OPERATOR_NAME=ide
 ```
 
+#### Run the Operator Locally with the Go Binary
+This method can be used to run the operator locally outside of the cluster. This method may be preferred during development as it facilitates faster deployment and testing.
+
+Set the name of the operator in an environment variable
+
+```
+$ export OPERATOR_NAME=cassandra-operator
+```
+
+Deploy the CRD
+
+```
+$ kubectl apply -f deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+```
+
+```
+$ make run
+```
+
+This will run the operator in the `default` namespace using the default Kubernetes config file at `$HOME/.kube/config`.
+
 ### Run unit-tests
 
 You can run Unit-test for CassKop
