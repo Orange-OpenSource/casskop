@@ -1064,7 +1064,7 @@ spec:
       - cassandra
       - cassandra-demo
   endpoints:
-  - port: http-promcassjmx
+  - port: promjmx
     interval: 15s
 ```
 
