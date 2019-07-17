@@ -20,7 +20,7 @@ SERVICE_NAME := cassandra-k8s-operator
 
 DOCKER_REPO_BASE ?= orangeopensource
 #we could want to separate registry for branches
-DOCKER_REPO_BASE_TEST := orangeopensource
+DOCKER_REPO_BASE_TEST ?= orangeopensource
 
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
