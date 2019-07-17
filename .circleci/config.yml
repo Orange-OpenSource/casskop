@@ -95,10 +95,11 @@ orbs:
               name: Operator acceptance test
               command: |
                 kubectl create namespace cassandra-e2e
+                ./tools/circleci-get-logs.sh&
                 make docker-e2e-test-fix-arg <<parameters.test_name>> || {
-                  kubectl -n cassandra-e2e get pods ; 
-                  kubectl -n cassandra-e2e logs -l app=cassandra-k8s-operator --tail=100 | grep -v level=debug ; 
                 kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
+                echo "Show Operator logs:"
+                cat operator.log
                 false;
                 }
 
