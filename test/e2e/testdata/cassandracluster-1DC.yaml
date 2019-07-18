@@ -22,7 +22,6 @@ spec:
     name: jolokia-auth
   rollingPartition: 0
   dataCapacity: "1Gi"
-#  dataStorageClass: "standard"
   hardAntiAffinity: false
   deletePVC: false
   autoPilot: true
@@ -31,9 +30,9 @@ spec:
     requests:
       cpu: 500m
       memory: 1Gi
-#    limits:
-#      cpu: '2'
-#      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
   topology:
     dc:
       - name: dc1
