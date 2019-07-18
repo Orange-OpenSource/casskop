@@ -290,7 +290,7 @@ func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterSt
 }
 
 // Initialisation of the Cassandra SeedList
-// We want 3 sides nodes for each DC
+// We want 3 seed nodes for each DC
 func (cc *CassandraCluster) InitSeedList() []string {
 
 	var dcName, rackName string
@@ -359,7 +359,7 @@ func (cc *CassandraCluster) GetSeedList(seedListTab *[]string) string {
 
 func (cc *CassandraCluster) addNewSeed(seedList *[]string, dcName string, rackName string, indice int32) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	seed := fmt.Sprintf("%s-%s-%d.%s-%s.%s", cc.Name, dcRackName, indice, cc.Name, dcName, cc.Namespace)
+	seed := fmt.Sprintf("%s-%s-%d.%s.%s", cc.Name, dcRackName, indice, cc.Name, cc.Namespace)
 	*seedList = append(*seedList, seed)
 }
 

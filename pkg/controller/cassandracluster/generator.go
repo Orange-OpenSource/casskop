@@ -253,7 +253,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 			OwnerReferences: ownerRefs,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			ServiceName: name + "-" + dcName,
+			ServiceName: name,
 			Replicas:    &nodesPerRacks,
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
 				Type: "RollingUpdate",
