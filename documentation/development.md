@@ -69,8 +69,64 @@ $ cd $GOPATH/src/gitlab.si.francetelecom.fr/kubernetes/
 $ git clone https://github.com/Orange-OpenSource/cassandra-k8s-operator.git
 $ cd cassandra-k8s-operator
 ```
-### Build CassKop
 
+### Local kubernetes setup
+
+We use [dind](https://github.com/kubernetes-sigs/kubeadm-dind-cluster) in order to run a local kubernetes cluster with the version we chose. We think it deserves some words as it's pretty useful and simple to use to test one version or another
+
+#### Install
+
+The following requires kubens to be present. On MacOs it can be installed using brew :
+
+```
+brew install kubectx
+```
+
+The installation of dind is then done with :
+
+```sh
+$ wget https://github.com/kubernetes-sigs/kubeadm-dind-cluster/releases/download/v0.2.0/dind-cluster-v1.14.sh -O /usr/local/bin/dind-cluster.sh
+$ chmod u+x /usr/local/bin/dind-cluster.sh
+```
+
+#### Setup
+
+The following actions should be run only to create a new kubernetes cluster or after a clean. Otherwise, if a snapshot has been taken no need to reinstall the setup requirements. See [following chapter](#take-a-snapshot).
+
+```sh
+$ dind-cluster.sh up
+$ samples/dind/setup-requirements.sh
+```
+
+It creates namespace cassandra-e2e by default. If a different namespace is needed it can be specified on the setup-requirements call
+
+```sh
+$ samples/dind/setup-requirements.sh other-namespace
+```
+
+It's better to wait for all pods to be running by continously checking their status
+
+```sh
+$ kubectl get pod --all-namespaces -w
+```
+
+#### Take a snapshot
+
+To avoid having to rebuild the cluster and do the setup again, take a snapshot of the dind cluster. This way everytime it's back up, the snapshot is restored and it restarts from the snapshot point in time.
+
+```sh
+$ dind-cluster.sh snapshot
+```
+
+If the cluster is cleaned, snapshots are lost cause they are stored in the containers used for master/nodes. But the cluster can be taken down and when it's restarted the snapshot is restored.
+
+```sh
+$ dind-cluster.sh down
+# Later on
+$ dind-cluster.sh up
+```
+
+### Build CassKop
 
 #### Using your local environment
 
