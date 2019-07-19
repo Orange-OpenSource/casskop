@@ -284,6 +284,7 @@ debug-kubesquash:
 # Run the development environment (in local go env) in the background using local ~/.kube/config
 .PHONY: run
 run:
+	export POD_NAME=cassandra-k8s-operator; \
 	operator-sdk up local
 
 
