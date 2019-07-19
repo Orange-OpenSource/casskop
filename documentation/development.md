@@ -199,6 +199,43 @@ $ make run
 
 This will run the operator in the `default` namespace using the default Kubernetes config file at `$HOME/.kube/config`.
 
+#### Deploy using the Helm Charts
+This section provides an instructions for running the operator Helm charts with an image that is built from the local branch.
+
+Build the image from the current branch.
+
+```
+$ export DOCKER_REPO_BASE=orangeopensource
+$ make docker-build
+```
+Push the image to docker hub (or to whichever repo you want to use)
+
+```
+$ docker push orangeopensource/cassandra-k8s-operator:0.3.1-local-dev-helm
+```
+**Note:** In this example we are pushing to docker hub.
+
+**Note:** The image tag is a combination of the version as defined in `verion/version.go` and the branch name.
+
+Install the Helm chart.
+
+```
+$ helm install ./helm/cassandra-operator \
+    --set-string image.repository=orangeopensource/cassandra-k8s-operator,image.tag=0.3.1-local-dev-helm \
+    --name local-dev-helm
+```
+
+**Note:** The `image.repository` and `image.tag` template variables have to match the names from the image that we pushed in the previous step.
+
+**Note:** We set the chart name to the branch, but it can be anything.
+
+Lastly, verify that the operator is running.
+
+```
+$ kubectl get pods
+NAME                                                READY   STATUS    RESTARTS   AGE
+local-dev-helm-cassandra-operator-8946b89dc-4cfs9   1/1     Running   0          7m45s
+```
 ### Run unit-tests
 
 You can run Unit-test for CassKop
