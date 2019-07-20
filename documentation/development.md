@@ -199,6 +199,8 @@ $ make run
 
 This will run the operator in the `default` namespace using the default Kubernetes config file at `$HOME/.kube/config`.
 
+**Note:** JMX operations cannot be executed on Cassandra nodes when running the operator locally. This is because the operator makes JMX calls over HTTP using jolokia and when running locally the operator is on a different network than the Cassandra cluster.
+
 #### Deploy using the Helm Charts
 This section provides an instructions for running the operator Helm charts with an image that is built from the local branch.
 
