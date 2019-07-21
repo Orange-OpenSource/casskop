@@ -125,6 +125,10 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	if ccs.MaxPodUnavailable == 0 {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 	}
+	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
+		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests;
+		changed = true
+	}
 
 	return changed
 }

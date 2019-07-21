@@ -23,6 +23,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func helperLoadBytes(t *testing.T, name string) []byte {
@@ -457,3 +458,45 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	assert.Equal(result, string(lastAppliedConfiguration))
 
 }
+
+func TestSetDefaults(t *testing.T) {
+	assert := assert.New(t)
+
+	cluster := CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "defaults-test",
+			Namespace: "default",
+			Labels:    map[string]string{"cluster": "k8s.pic"},
+		},
+		Spec: CassandraClusterSpec{
+			Resources: CassandraResources{
+				Requests: CPUAndMem{
+					CPU: "500m",
+					Memory: "1Gi",
+				},
+			},
+			Topology: Topology{
+				DC: DCSlice{
+					DC{
+						Name: "dc1",
+						Rack: RackSlice{
+							Rack{
+								Name: "rack1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cluster.SetDefaults()
+
+	assert.Equal("orangeopensource/cassandra-image", cluster.Spec.BaseImage)
+	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
+}
+
