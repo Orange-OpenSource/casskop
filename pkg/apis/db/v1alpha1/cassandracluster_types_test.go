@@ -470,7 +470,6 @@ func TestSetDefaults(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "defaults-test",
 			Namespace: "default",
-			Labels:    map[string]string{"cluster": "k8s.pic"},
 		},
 		Spec: CassandraClusterSpec{
 			Resources: CassandraResources{
@@ -479,24 +478,20 @@ func TestSetDefaults(t *testing.T) {
 					Memory: "1Gi",
 				},
 			},
-			Topology: Topology{
-				DC: DCSlice{
-					DC{
-						Name: "dc1",
-						Rack: RackSlice{
-							Rack{
-								Name: "rack1",
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 
-	cluster.SetDefaults()
+	assert.True(cluster.SetDefaults())
 
-	assert.Equal("orangeopensource/cassandra-image", cluster.Spec.BaseImage)
+	assert.Equal(int32(1), cluster.Spec.NodesPerRacks)
+	assert.Equal(defaultBaseImage, cluster.Spec.BaseImage)
 	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
+	assert.Equal(defaultImagePullPolicy, cluster.Spec.ImagePullPolicy)
+	assert.Equal(defaultVersion, cluster.Spec.Version)
+	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
+	assert.Equal(ClusterPhaseInitial, cluster.Status.Phase)
+	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
+	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test-dc1.default"}, cluster.Status.SeedList)
+
 }
 
