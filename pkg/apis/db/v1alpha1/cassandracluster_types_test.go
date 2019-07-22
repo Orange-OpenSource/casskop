@@ -23,6 +23,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func helperLoadBytes(t *testing.T, name string) []byte {
@@ -457,3 +458,40 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	assert.Equal(result, string(lastAppliedConfiguration))
 
 }
+
+func TestSetDefaults(t *testing.T) {
+	assert := assert.New(t)
+
+	cluster := CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "defaults-test",
+			Namespace: "default",
+		},
+		Spec: CassandraClusterSpec{
+			Resources: CassandraResources{
+				Requests: CPUAndMem{
+					CPU: "500m",
+					Memory: "1Gi",
+				},
+			},
+		},
+	}
+
+	assert.True(cluster.SetDefaults())
+
+	assert.Equal(int32(1), cluster.Spec.NodesPerRacks)
+	assert.Equal(defaultBaseImage, cluster.Spec.BaseImage)
+	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
+	assert.Equal(defaultImagePullPolicy, cluster.Spec.ImagePullPolicy)
+	assert.Equal(defaultVersion, cluster.Spec.Version)
+	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
+	assert.Equal(ClusterPhaseInitial, cluster.Status.Phase)
+	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
+	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test-dc1.default"}, cluster.Status.SeedList)
+
+}
+
