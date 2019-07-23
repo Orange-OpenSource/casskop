@@ -491,7 +491,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
 	assert.Equal(ClusterPhaseInitial, cluster.Status.Phase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
-	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test-dc1.default"}, cluster.Status.SeedList)
+	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)
 
 }
 
