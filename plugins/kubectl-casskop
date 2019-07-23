@@ -20,9 +20,11 @@ import json
 from subprocess import check_output, STDOUT, CalledProcessError
 from os.path import basename
 from random import shuffle
+from itertools import groupby
 
 PAUSE_LABELS_OP = ["ToDo", "Paused"]
 NO_PODS_FOUND = "No pods found for operation"
+NO_ONGOING_OP = "--selector=operation-status notin (Ongoing, Finalizing)"
 
 def k_apply_with_input(input, error, *args):
     try:
@@ -56,13 +58,21 @@ def get_pods(args, option=[]):
         pods = grep_pods(args.prefix, option)
     else:
         pods = grep_pods(pod_is_mandatory(args.pod),
-                         option + [f"--field-selector=metadata.name=args.pod"])
+                         option + [f"--field-selector=metadata.name={args.pod}"])
     if not pods:
         die(NO_PODS_FOUND)
     return pods
 
 def grep_pods(prefix, option=[]):
-    pods = [p[0] for p in k(*(["get", "pods"] + option)) if prefix in p[0]]
+    # We only look for running pods
+    opt = option + ["--field-selector=status.phase=Running"]
+    # Pods having an operation with the provided status or with no ongoing operation
+    if not any(['operation-status' in o for o in option]):
+        opt.append(NO_ONGOING_OP)
+    grp = []
+    for key, g in groupby(sorted(opt), lambda x:x[:x.index('=')+1]):
+        grp.append(key + ','.join([opt[len(key):] for opt in g]))
+    pods = [p[0] for p in k(*(["get", "pods"] + grp)) if prefix in p[0]]
     if not pods:
         die(NO_PODS_FOUND)
     return pods
@@ -79,8 +89,7 @@ def set_pod_label(pod, operation, status="ToDo", argument=None):
 
 # Returns one running pod in the crd
 def available_pod_in_crd(crd):
-    # All running pods in current crd
-    pods = grep_pods(crd, ["--field-selector=status.phase=Running"])
+    pods = grep_pods(crd)
     crd_content = k("get", "cassandracluster.db.orange.com", crd, "-o", "json")
     if not crd_content:
         die(f"crd {crd} not found")
@@ -149,8 +158,7 @@ For more information you can run {plugin} <command> --help
         operation = args.operation
         args = self._parse_operation_options(args.operation, argv_index=3)
         old_status, new_status = pause and PAUSE_LABELS_OP or reversed(PAUSE_LABELS_OP)
-        pods = get_pods(args, [f"--selector=operation-name={operation}",
-                               f"--selector=operation-status={old_status}"])
+        pods = get_pods(args, [f"--selector=operation-name={operation},operation-status={old_status}"])
         for pod in pods:
             set_pod_label(pod, operation, status=new_status)
 
