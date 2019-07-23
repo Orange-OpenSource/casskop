@@ -57,7 +57,7 @@ const (
 	readinessHealthCheckPeriod   int32 = 10
 )
 
-func generateCassandraService(cc *api.CassandraCluster, dcName string, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 
 	//	labels = util.MergeLabels(labels, generateLabels(cassandraRoleName, cc.Name))
 
@@ -67,7 +67,7 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            cc.GetName() + "-" + dcName,
+			Name:            cc.GetName(),
 			Namespace:       cc.GetNamespace(),
 			Labels:          labels,
 			OwnerReferences: ownerRefs,
@@ -103,7 +103,7 @@ func generateCassandraService(cc *api.CassandraCluster, dcName string, labels ma
 	}
 }
 
-func generateCassandraExporterService(cc *api.CassandraCluster, dcRackName string, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraExporterService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 	name := cc.GetName()
 	namespace := cc.Namespace
 
@@ -115,7 +115,7 @@ func generateCassandraExporterService(cc *api.CassandraCluster, dcRackName strin
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s-exporter-jmx", name, dcRackName),
+			Name:            fmt.Sprintf("%s-exporter-jmx", name),
 			Namespace:       namespace,
 			Labels:          mlabels,
 			OwnerReferences: ownerRefs,
@@ -253,7 +253,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 			OwnerReferences: ownerRefs,
 		},
 		Spec: appsv1.StatefulSetSpec{
-			ServiceName: name + "-" + dcName,
+			ServiceName: name,
 			Replicas:    &nodesPerRacks,
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
 				Type: "RollingUpdate",

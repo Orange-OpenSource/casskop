@@ -447,9 +447,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					}
 				}
 			}
-			if err = rcc.ensureCassandraDCService(cc, dcName); err != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Errorf("ensureCassandraDCService Error: %v", err)
+			if err = rcc.ensureCassandraService(cc); err != nil {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraService Error: %v", err)
 			}
 
 			if err = rcc.ensureCassandraServiceMonitoring(cc, dcName); err != nil {
