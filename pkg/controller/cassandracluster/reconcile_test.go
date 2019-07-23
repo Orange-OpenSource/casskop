@@ -105,9 +105,9 @@ func TestFlipCassandraClusterUpdateSeedListStatus_ScaleDC2(t *testing.T) {
 	cc.Status.SeedList = cc.InitSeedList()
 
 	var a = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
 	}
 
 	assert.Equal(3, len(cc.Status.SeedList))
@@ -119,10 +119,10 @@ func TestFlipCassandraClusterUpdateSeedListStatus_ScaleDC2(t *testing.T) {
 	status := cc.Status.DeepCopy()
 
 	var b = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
-		"cassandra-demo-dc2-rack1-1.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 
 	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
@@ -175,9 +175,9 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDC1(t *testing.T) {
 	//1. Init
 	cc.Status.SeedList = cc.InitSeedList()
 	var a = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
 	}
 	assert.Equal(true, reflect.DeepEqual(a, cc.Status.SeedList))
 
@@ -189,10 +189,10 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDC1(t *testing.T) {
 
 	//Add pod of dc1-rack1 at the end of existing seedlist
 	var b = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
-		"cassandra-demo-dc1-rack1-1.cassandra-demo-dc1.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
 	}
 
 	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
@@ -235,9 +235,9 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
 	//1. Init
 	cc.Status.SeedList = cc.InitSeedList()
 	var a = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
 	}
 	assert.Equal(true, reflect.DeepEqual(a, cc.Status.SeedList))
 
@@ -250,11 +250,11 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
 
 	//Add pod of dc1-rack1 at the end of existing seedlist
 	var b = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
-		"cassandra-demo-dc1-rack1-1.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-1.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
@@ -279,7 +279,7 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
-	assert.Equal(true, reflect.DeepEqual(b, status.SeedList))
+	assert.Equal(true, reflect.DeepEqual(b, status.SeedList), "Status: %v", status.SeedList)
 
 	//3. Simulate the Update of SeedList
 	dc1rack1sts.Spec.Template.Spec.Containers[0].Env[1].Value = cc.GetSeedList(&b)
@@ -289,10 +289,10 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
 
 	//expecetd : remove element (dc1-rack1-1) in middle of seedlist
 	var c = []string{
-		"cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns",
-		"cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns",
-		"cassandra-demo-dc2-rack1-1.cassandra-demo-dc2.ns",
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
