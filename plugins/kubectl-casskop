@@ -20,6 +20,11 @@ import json
 from subprocess import check_output, STDOUT, CalledProcessError
 from os.path import basename
 from random import shuffle
+from itertools import groupby
+
+PAUSE_LABELS_OP = ["ToDo", "Paused"]
+NO_PODS_FOUND = "No pods found for operation"
+NO_ONGOING_OP = "--selector=operation-status notin (Ongoing, Finalizing)"
 
 def k_apply_with_input(input, error, *args):
     try:
@@ -44,50 +49,59 @@ def die(msg):
     sys.exit(1)
 
 def pod_is_mandatory(name):
-    if not name or not k('get', 'pod', name):
+    if not name:
         die(f"Pod {name} not found")
     return name
 
-def get_pods(args):
+def get_pods(args, option=[]):
     if args.prefix:
-        pods = grep_pods(args.prefix)
+        pods = grep_pods(args.prefix, option)
     else:
-        pods = [pod_is_mandatory(args.pod)]
+        pods = grep_pods(pod_is_mandatory(args.pod),
+                         option + [f"--field-selector=metadata.name={args.pod}"])
     if not pods:
-        die("No pods found")
+        die(NO_PODS_FOUND)
     return pods
 
-
 def grep_pods(prefix, option=[]):
-    pods = [p[0] for p in k(*(["get", "pods"] + option)) if prefix in p[0]]
+    # We only look for running pods
+    opt = option + ["--field-selector=status.phase=Running"]
+    # Pods having an operation with the provided status or with no ongoing operation
+    if not any(['operation-status' in o for o in option]):
+        opt.append(NO_ONGOING_OP)
+    grp = []
+    for key, g in groupby(sorted(opt), lambda x:x[:x.index('=')+1]):
+        grp.append(key + ','.join([opt[len(key):] for opt in g]))
+    pods = [p[0] for p in k(*(["get", "pods"] + grp)) if prefix in p[0]]
     if not pods:
-        die("No pods with prefix {prefix} found")
+        die(NO_PODS_FOUND)
     return pods
 
 def get_namespace():
     return [p[1] for p in k('config', 'view', '--minify') if "namespace" in p[0]][0]
 
-def set_pod_label(pod, operation, argument=None):
-    print(f"Trigger {operation} on pod {pod}")
-    k("label", "pods", pod, f"operation-name={operation}", "--overwrite")
+def set_pod_label(pod, operation, status="ToDo", argument=None):
+    print(f"Set status of operation {operation} on pod {pod} to {status}")
+    labels = [f"operation-name={operation}", f"operation-status={status}"]
     if argument:
-        k("label", "pods", pod, f"operation-argument={argument}", "--overwrite")
-    k("label", "pods", pod, "operation-status=ToDo", "--overwrite")
+        labels.append(f"operation-argument={argument}")
+    k("label", "pods", pod, *labels, "--overwrite")
 
+# Returns one running pod in the crd
 def available_pod_in_crd(crd):
-    # All running pods in current crd
-    pods = grep_pods(crd, ["--field-selector=status.phase=Running"])
-    # Let's not keep the ascii sort
-    shuffle(pods)
+    pods = grep_pods(crd)
     crd_content = k("get", "cassandracluster.db.orange.com", crd, "-o", "json")
     if not crd_content:
         die(f"crd {crd} not found")
     crd_content = json.loads(crd_content)["status"]["cassandraRackStatus"]
     busy_pods = set()
-    for key in [key for key in crd_content.keys() if type(crd_content[key]) is dict and "podLastOperation" in crd_content[key].keys()]:
+    for key in [k for k in crd_content.keys()
+                if type(crd_content[k]) is dict and "podLastOperation" in crd_content[k].keys()]:
         pod_last_op = crd_content[key]["podLastOperation"]
         if "pods" in pod_last_op:
             busy_pods.update(set(pod_last_op["pods"]))
+    # Let's not keep the default ascii sort
+    shuffle(busy_pods)
     return next(p for p in pods if p not in busy_pods)
 
 
@@ -95,7 +109,7 @@ class Command(object):
     def __init__(self):
         plugin = basename(sys.argv[0])
         parser = argparse.ArgumentParser(
-            description='Pretends to be git',
+            description='Kubernetes plugin used to trigger operations',
             usage=f"""{plugin} <command> [<args>]
 
 The available commands are:
@@ -103,28 +117,56 @@ The available commands are:
    upgradesstables
    rebuild
    remove
+   pause
+   unpause
 
 For more information you can run {plugin} <command> --help
 """)
         parser.add_argument('command', help='Subcommand to run')
         args = parser.parse_args(sys.argv[1:2])
-        if not hasattr(self, args.command):
-            print("Unrecognized command")
-            parser.print_help()
-            exit(1)
+        self._command_must_exist(args.command, parser)
         print(f"Namespace {get_namespace()}")
 
+        # Call function corresponding to the command passed
         getattr(self, args.command)()
 
-    def _simple_operation(self, operation):
+    def _command_must_exist(self, operation, parser):
+        if not hasattr(self, operation):
+            print(f"Unrecognized operation {operation}")
+            parser.print_help()
+            exit(1)
+
+    def _parse_operation_options(self, operation, argv_index=2):
         parser = argparse.ArgumentParser(operation)
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument('--pod')
         group.add_argument('--prefix')
-        args = parser.parse_args(sys.argv[2:])
+        return parser.parse_args(sys.argv[argv_index:])
+
+    def _simple_operation(self, operation):
+        args = self._parse_operation_options(operation)
         pods = get_pods(args)
         for pod in pods:
             set_pod_label(pod, operation)
+
+    def _pause_operation(self, pause):
+        # We expect a supported operation to be passed
+        parser = argparse.ArgumentParser("pause")
+        parser.add_argument('operation', help=f'Operation to {"un" if not pause else ""}pause')
+        args = parser.parse_args(sys.argv[2:3])
+        self._command_must_exist(args.operation, parser)
+        operation = args.operation
+        args = self._parse_operation_options(args.operation, argv_index=3)
+        old_status, new_status = pause and PAUSE_LABELS_OP or reversed(PAUSE_LABELS_OP)
+        pods = get_pods(args, [f"--selector=operation-name={operation},operation-status={old_status}"])
+        for pod in pods:
+            set_pod_label(pod, operation, status=new_status)
+
+    def pause(self):
+        self._pause_operation(True)
+
+    def unpause(self):
+        self._pause_operation(False)
 
     def cleanup(self):
         self._simple_operation(self.cleanup.__name__)
