@@ -4,20 +4,18 @@ import (
 	goctx "context"
 	"errors"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
-	"testing"
-	"time"
-
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/stretchr/testify/assert"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	logrus "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/types"
+	"testing"
 )
 
 // Run all fonctional tests
@@ -155,64 +153,19 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 
 func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
 	namespace, err := ctx.GetNamespace()
-	if err != nil{
-		t.Fatalf("Could not get namespace: %v", err)
-	}
-
+	clusterName := "cassandra-e2e"
 	kind := "CassandraCluster"
-	apiVersion := "db.orange.com/v1alpha1"
-
-	cluster := &api.CassandraCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       kind,
-			APIVersion: apiVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "service-test",
-			Namespace: namespace,
-			Labels:    map[string]string{"cluster": "k8s.pic"},
-		},
-		Spec: api.CassandraClusterSpec{
-			BaseImage: "orangeopensource/cassandra-image",
-			NodesPerRacks: 1,
-			DeletePVC: true,
-			Resources: api.CassandraResources{
-				Limits: api.CPUAndMem{
-					CPU: "500m",
-					Memory: "1Gi",
-				},
-			},
-			Topology: api.Topology{
-				DC: api.DCSlice{
-					api.DC{
-						Name: "dc1",
-						Rack: api.RackSlice{
-							api.Rack{
-								Name: "rack1",
-							},
-						},
-					},
-					api.DC{
-						Name: "dc2",
-						Rack: api.RackSlice{
-							api.Rack{
-								Name: "rack1",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
 
 	logrus.Debugf("Creating cluster")
-	if err := f.Client.Create(goctx.TODO(), cluster, NoCleanup()); err != nil && !apierrors.IsAlreadyExists(err) {
+	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-2DC.yaml", namespace)
+
+	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 
 	waitForClusterToBeReady(cluster, f, t)
 
-	cluster = getCassandraCluster("service-test", "cassandra-e2e", f, t)
+	cluster = getCassandraCluster(clusterName, namespace, f, t)
 
 	services, err := listServices(namespace, metav1.ListOptions{
 		LabelSelector: labels.FormatLabels(map[string]string{
@@ -256,21 +209,6 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
 
 	assertServiceExposesPort(t, &monitoringService, "promjmx", 1234)
-}
-
-func NoCleanup() *framework.CleanupOptions {
-	return &framework.CleanupOptions{}
-}
-
-func CleanupWithRetry(ctx *framework.TestCtx) *framework.CleanupOptions {
-	CleanupRetryInterval := time.Second * 5
-	CleanupTimeout := time.Second * 20
-
-	return &framework.CleanupOptions {
-		TestContext: ctx,
-		Timeout: CleanupTimeout,
-		RetryInterval: CleanupRetryInterval,
-	}
 }
 
 func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) {
