@@ -2,10 +2,10 @@ apiVersion: v1
 entries:
   cassandra-operator:
   - apiVersion: v1
-    appVersion: 0.3.1-master
-    created: 2019-06-25T15:06:19.91185+02:00
+    appVersion: 0.3.2-master
+    created: 2019-07-23T12:32:11.119061+02:00
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
-    digest: 988085142082d29ab5a9bdfacb4d88841cf810a8ebb2a73573ee14f5b3ed2ef5
+    digest: 99082c6f1bbeedeaf1cc26de6deec7d0c722146ee7476d8bc885a8825ae43c0b
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
     keywords:
     - operator
@@ -26,7 +26,7 @@ entries:
     version: 0.3.2
   - apiVersion: v1
     appVersion: 0.3.1-mater
-    created: 2019-06-25T15:06:19.91142+02:00
+    created: 2019-07-23T12:32:11.11845+02:00
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: d4eb5ebe3de38e2d75184f3734e3f88ef9e82ebb88bc4beb44544f7b5b69702f
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -47,4 +47,4 @@ entries:
     urls:
     - cassandra-operator-0.3.1.tgz
     version: 0.3.1
-generated: 2019-06-25T15:06:19.910037+02:00
+generated: 2019-07-23T12:32:11.117542+02:00

@@ -1113,7 +1113,7 @@ that it can retrieve all datas from the previous dead Pod
 
 
 
-# Make reapairs with Cassandra Reaper
+# Make repairs with Cassandra Reaper
 
 We currently delegates the repairs to the Cassandra Reaper tool which must be
 installed independantly :

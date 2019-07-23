@@ -46,7 +46,11 @@ ifdef CIRCLE_BRANCH
 	#removing / for fork which lead to docker error
 	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
 else
-	BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+  ifdef CIRCLE_TAG
+		BRANCH := $(CIRCLE_BRANCH)
+	else
+		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+	endif
 endif
 
 
