@@ -47,12 +47,11 @@ ifdef CIRCLE_BRANCH
 	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
 else
   ifdef CIRCLE_TAG
-		BRANCH := $(CIRCLE_BRANCH)
+		BRANCH := $(CIRCLE_TAG)
 	else
 		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 	endif
 endif
-
 
 #Operator version is managed in go file
 #BaseVersion is for dev docker image tag
