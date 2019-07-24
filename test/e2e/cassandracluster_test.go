@@ -3,11 +3,6 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
-	v1 "k8s.io/api/apps/v1"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
@@ -19,6 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"os"
+	"testing"
 )
 
 // Run all fonctional tests
@@ -35,13 +32,13 @@ func TestCassandraCluster(t *testing.T) {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
 
-	log.SetFormatter(&log.TextFormatter{
+	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 		DisableColors: false,
 	})
-	log.SetReportCaller(true)
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
+	logrus.SetReportCaller(true)
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	// run subtests
 	t.Run("group", func(t *testing.T) {
@@ -180,50 +177,17 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 		t.Fatalf("Could not get namespace: %v", err)
 	}
 
-	log.Debug("Initializing ConfigMaps")
+	logrus.Debug("Initializing ConfigMaps")
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1", namespace)
 	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2", namespace)
 
-	cluster := &api.CassandraCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraCluster",
-			APIVersion: "db.orange.com/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "configmap-upgrade",
-			Namespace: namespace,
-			Labels:    map[string]string{"cluster": "k8s.pic"},
-		},
-		Spec: api.CassandraClusterSpec{
-			NodesPerRacks:      2,
-			BaseImage:          "orangeopensource/cassandra-image",
-			Version:            "latest-cqlsh",
-			ImagePullPolicy:    "Always",
-			DataCapacity:       "500m",
-			ConfigMapName:      "cassandra-configmap-v1",
-			Resources: api.CassandraResources{
-				Limits: api.CPUAndMem{CPU: "500m", Memory: "500mi"},
-			},
-			Topology: api.Topology{
-				DC: api.DCSlice{
-					api.DC{
-						Name: "dc1",
-						Rack: api.RackSlice{
-							api.Rack{
-								Name: "rack1",
-							},
-							api.Rack{
-								Name: "rack2",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC.yaml", namespace)
 
-	log.Debugf("Creating cluster")
-	if err := f.Client.Create(goctx.TODO(), cluster, CleanupWithRetry(ctx)); err != nil && !apierrors.IsAlreadyExists(err) {
+	logrus.Debugf("Creating cluster")
+	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{
+		TestContext: ctx,
+		Timeout:       mye2eutil.CleanupTimeout,
+		RetryInterval: mye2eutil.CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 
@@ -234,7 +198,7 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 
 	cluster.Spec.ConfigMapName = "cassandra-configmap-v2"
 
-	log.Debugf("Updating cluster.Spec.ConfigMapName to %s", cluster.Spec.ConfigMapName)
+	logrus.Debugf("Updating cluster.Spec.ConfigMapName to %s", cluster.Spec.ConfigMapName)
 	if err := f.Client.Update(goctx.TODO(), cluster); err != nil {
 		t.Fatalf("Could not update CassandraCluster: %v", err)
 	}
@@ -242,6 +206,7 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 	waitForClusterToBeReady(cluster, f, t)
 	var newCurrentRevision string
 	updatedStatefulSets := getStatefulSets(cluster, f, t)
+	logrus.Infof("Updated Stateful Sets: %v\n", updatedStatefulSets)
 
 	for i, updatedStatefulSet := range updatedStatefulSets {
 		if newCurrentRevision == "" {
@@ -304,7 +269,7 @@ func getStatefulSet(name string, namespace string, f *framework.Framework, t *te
 }
 
 func getStatefulSets(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) []*v1.StatefulSet {
-	statefulSets := make([]*v1.StatefulSet, 6)
+	var statefulSets []*v1.StatefulSet
 	for _, dc := range cluster.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
 			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
@@ -327,7 +292,7 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 	for _, dc := range cluster.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
 			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
-			log.Debugf("Waiting for StatefulSet %s", name)
+			logrus.Debugf("Waiting for StatefulSet %s", name)
 			if err := mye2eutil.WaitForStatefulset(
 				t,
 				f.KubeClient,
