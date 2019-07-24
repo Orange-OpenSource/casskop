@@ -11,10 +11,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"os"
 	"testing"
 )
 
@@ -32,6 +34,14 @@ func TestCassandraCluster(t *testing.T) {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
 
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+		DisableColors: false,
+	})
+	logrus.SetReportCaller(true)
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
+
 	// run subtests
 	t.Run("group", func(t *testing.T) {
 		t.Run("ClusterScaleUp", CassandraClusterTest(cassandraClusterScaleUpDC1Test))
@@ -39,6 +49,7 @@ func TestCassandraCluster(t *testing.T) {
 		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
 		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
+		t.Run("UpdateConfigMap", CassandraClusterTest(cassandraClusterUpdateConfigMapTest))
 	})
 
 }
@@ -211,6 +222,110 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assertServiceExposesPort(t, &monitoringService, "promjmx", 1234)
 }
 
+func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+	namespace, err := ctx.GetNamespace()
+	if err != nil{
+		t.Fatalf("Could not get namespace: %v", err)
+	}
+
+	logrus.Debug("Initializing ConfigMaps")
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v1", namespace)
+	mye2eutil.HelperInitCassandraConfigMap(t, f, ctx, "cassandra-configmap-v2", namespace)
+
+	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC.yaml", namespace)
+
+	logrus.Debugf("Creating cluster")
+	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{
+		TestContext: ctx,
+		Timeout:       mye2eutil.CleanupTimeout,
+		RetryInterval: mye2eutil.CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("Error Creating CassandraCluster: %v", err)
+	}
+
+	waitForClusterToBeReady(cluster, f, t)
+
+	cluster = getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
+	statefulSets := getStatefulSets(cluster, f, t)
+
+	cluster.Spec.ConfigMapName = "cassandra-configmap-v2"
+
+	logrus.Debugf("Updating cluster.Spec.ConfigMapName to %s", cluster.Spec.ConfigMapName)
+	if err := f.Client.Update(goctx.TODO(), cluster); err != nil {
+		t.Fatalf("Could not update CassandraCluster: %v", err)
+	}
+
+	waitForClusterToBeReady(cluster, f, t)
+	var newCurrentRevision string
+	updatedStatefulSets := getStatefulSets(cluster, f, t)
+	logrus.Infof("Updated Stateful Sets: %v\n", updatedStatefulSets)
+
+	for i, updatedStatefulSet := range updatedStatefulSets {
+		if newCurrentRevision == "" {
+			newCurrentRevision = updatedStatefulSet.Status.CurrentRevision
+		} else {
+			if updatedStatefulSet.Status.CurrentRevision != newCurrentRevision {
+				t.Fatalf("Expected CurrentRevion to be the same for all StatefulSets. Expected %s but found %s",
+					newCurrentRevision, updatedStatefulSet.Status.CurrentRevision)
+			}
+			assert.NotEqual(t, updatedStatefulSet.Status.CurrentRevision, statefulSets[i].Status.CurrentRevision,
+				"Expected StatefulSet.Status.CurrentRevision to be updated")
+		}
+	}
+
+	updatedCluster := getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
+
+	assert.Equal(t, cluster.Spec.ConfigMapName, updatedCluster.Spec.ConfigMapName)
+}
+
+func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
+	return f.KubeClient.CoreV1().Services(namespace).List(options)
+}
+
+func assertServiceExposesPort(t *testing.T, svc *v1.Service, portName string, port int32) {
+	if svcPort, err := findServicePort(portName, svc.Spec.Ports); err == nil {
+		assert.Equal(t, port, svcPort.Port)
+	} else {
+		assert.Fail(t, fmt.Sprintf("Failed to find service port: %s", portName))
+	}
+}
+
+func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, error) {
+	for _, port := range ports {
+		if port.Name == name {
+			return &port, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("Failed to find service port: %s", name))
+}
+
+func getStatefulSet(name string, namespace string, f *framework.Framework, t *testing.T) *appsv1.StatefulSet {
+	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+	if err != nil {
+		t.Fatalf("Failed to get StatefulSet %s: %v", name, err)
+	}
+	return statefulSet
+}
+
+func getStatefulSets(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) []*appsv1.StatefulSet {
+	var statefulSets []*appsv1.StatefulSet
+	for _, dc := range cluster.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			name := fmt.Sprintf("%s-%s-%s", cluster.Name, dc.Name, rack.Name)
+			statefulSet := getStatefulSet(name, cluster.Namespace, f, t)
+			statefulSets = append(statefulSets, statefulSet)
+		}
+	}
+	return statefulSets
+}
+
+func getCassandraCluster(name string, namespace string, f *framework.Framework, t *testing.T) *api.CassandraCluster {
+	cluster := &api.CassandraCluster{}
+	if err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster); err != nil {
+		t.Fatalf("Failed to get CassandraCluster %s: %v", name, err)
+	}
+	return cluster
+}
+
 func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framework, t *testing.T) {
 	for _, dc := range cluster.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
@@ -232,38 +347,4 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
 	}
-}
-
-func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
-	return f.KubeClient.CoreV1().Services(namespace).List(options)
-}
-
-func getCassandraCluster(name string, namespace string, f *framework.Framework, t *testing.T) *api.CassandraCluster {
-	cluster := &api.CassandraCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraCluster",
-			APIVersion: "db.orange.com/v1alpha1",
-		},
-	}
-	if err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster); err != nil {
-		t.Fatalf("Failed to get CassandraCluster %s: %v", name, err)
-	}
-	return cluster
-}
-
-func assertServiceExposesPort(t *testing.T, svc *v1.Service, portName string, port int32) {
-	if svcPort, err := findServicePort(portName, svc.Spec.Ports); err == nil {
-		assert.Equal(t, port, svcPort.Port)
-	} else {
-		assert.Fail(t, fmt.Sprintf("Failed to find service port: %s", portName))
-	}
-}
-
-func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, error) {
-	for _, port := range ports {
-		if port.Name == name {
-			return &port, nil
-		}
-	}
-	return nil, errors.New(fmt.Sprintf("Failed to find service port: %s", name))
 }
