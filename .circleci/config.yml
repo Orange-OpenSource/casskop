@@ -209,7 +209,7 @@ jobs:
           -Dsonar.projectBaseDir=/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator/ \
           -Dsonar.sources=. \
           -Dsonar.sources.inclusions="**/**.go" \
-          -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**" \
+          -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
           -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
           -Dsonar.tests=. \
           -Dsonar.language=go \
