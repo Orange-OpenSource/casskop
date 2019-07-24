@@ -78,7 +78,7 @@ def grep_pods(prefix, option=[]):
     return pods
 
 def get_namespace():
-    return [p[1] for p in k('config', 'view', '--minify') if "namespace" in p[0]][0]
+    return k('config', 'view', '--minify', '--output', 'jsonpath={..namespace}') or 'default'
 
 def set_pod_label(pod, operation, status="ToDo", argument=None):
     print(f"Set status of operation {operation} on pod {pod} to {status}")
