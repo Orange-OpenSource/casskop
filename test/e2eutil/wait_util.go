@@ -20,8 +20,8 @@ import (
 
 	goctx "context"
 
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -171,6 +171,7 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 		t.Logf("Waiting for full Operator %s to finish Action of %s=%s\n", name,
 			cc2.Status.LastClusterAction,
 			cc2.Status.LastClusterActionStatus)
+
 		return false, nil
 	})
 	if err != nil {
@@ -236,4 +237,27 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 
 	return stdout.String(), stderr.String(), err
 
+}
+
+func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * framework.TestCtx, configMapName, namespace string) {
+	configMapFile := helperLoadBytes(t, configMapName + ".yaml")
+	decode := serializer.NewCodecFactory(f.Scheme).UniversalDeserializer().Decode
+	configMapString := string(configMapFile[:])
+	obj, _, err := decode([]byte(configMapString), nil, nil)
+
+	if err != nil {
+		t.Fatalf("Error decoding ConfigMap: %s", err)
+	}
+
+	switch cm := obj.(type) {
+	case *corev1.ConfigMap:
+		cm.Name = configMapName
+		cm.Namespace = namespace
+		if err := f.Client.Create(goctx.TODO(), cm, &framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout,
+			RetryInterval: CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
+			t.Fatalf("Error creating ConfigMap: %v", err)
+		}
+	default:
+		t.Fatalf("Expected a ConfigMap but got a %T", cm)
+	}
 }
