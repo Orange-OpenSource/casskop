@@ -2,7 +2,7 @@
 ##
 image:
   repository: orangeopensource/cassandra-k8s-operator
-  tag: 0.3.1-master
+  tag: v0.3.2-release
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
