@@ -57,7 +57,12 @@ endif
 #BaseVersion is for dev docker image tag
 BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$2}')
 #Version is for binary, docker image and helm
-VERSION := $(BASEVERSION)-${BRANCH}
+
+ifdef CIRCLE_TAG
+	VERSION := ${BRANCH}
+else
+	VERSION := $(BASEVERSION)-${BRANCH}
+endif
 
 HELM_VERSION := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 
