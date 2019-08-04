@@ -14,7 +14,6 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      required: ["spec"]
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -180,12 +179,6 @@ spec:
             version:
               description: Version of Cassandra to be deployed.
               type: string
-          required:
-          - baseImage
-          - version
-          - imagepullpolicy
-          - runAsUser
-          - maxPodUnavailable
           type: object
         status:
           properties:

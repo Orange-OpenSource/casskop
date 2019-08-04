@@ -604,16 +604,16 @@ type CassandraClusterSpec struct {
 	NodesPerRacks int32 `json:"nodesPerRacks,omitempty"`
 
 	// Base image to use for a Cassandra deployment.
-	BaseImage string `json:"baseImage"`
+	BaseImage string `json:"baseImage,omitempty"`
 
 	// Version of Cassandra to be deployed.
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 
 	//ImagePullPolicy define the pull poicy for C* docker image
-	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
+	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
-	RunAsUser *int64 `json:"runAsUser"`
+	RunAsUser *int64 `json:"runAsUser,omitempty"`
 
 	// Pod defines the policy for pods owned by cassandra operator.
 	// This field cannot be updated once the CR is created.
@@ -643,7 +643,7 @@ type CassandraClusterSpec struct {
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
 
-	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
+	MaxPodUnavailable int32 `json:"maxPodUnavailable,omitempty"` //Number of MasPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
