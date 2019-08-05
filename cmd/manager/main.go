@@ -196,7 +196,6 @@ func main() {
 	servicePorts := []v1.ServicePort{
 		{Name: "metricsPort", TargetPort: intstr.FromInt(int(metricsPort))},
 	}
-	//_, err = metrics.CreateMetricsService(ctx, cfg, metricsPort)
 	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		logrus.Info(err.Error())
