@@ -190,7 +190,7 @@ endif
 
 # Run a shell into the development docker image
 .PHONY: docker-build
-docker-build: docker-get-deps ## Build the Operator and it's Docker Image
+docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
 	docker run --rm -v $(PWD):$(WORKDIR) --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
 	echo "Build Cassandra Operator"
