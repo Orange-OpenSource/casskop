@@ -25,7 +25,9 @@ DOCKER_REPO_BASE_TEST ?= orangeopensource
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
 
-BUILD_IMAGE := orangeopensource/casskop-build
+#BUILD_IMAGE ?= orangeopensource/casskop-build
+# This is just for debugging on CircleCI
+BUILD_IMAGE ?= gcr.io/cassandra-k8s/casskop-build
 
 TELEPRESENCE_REGISTRY:=datawire
 KUBESQUASH_REGISTRY:=
