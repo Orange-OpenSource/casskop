@@ -3,7 +3,8 @@ version: 2.1
 executors:
   casskop-build:
     docker:
-      - image: orangeopensource/casskop-build:v0.7.0
+#      - image: orangeopensource/casskop-build:v0.7.0
+      - image: gcr.io/cassandra-k8s/casskop-build:v0.9.0
 
 experimental:
   notify:
