@@ -121,6 +121,9 @@ jobs:
           - build
 
     - run:
+        name: Clean cache
+        command: make clean
+    - run:
         name: Get Vendor dependency
         command: make force-get-deps
     - run:
