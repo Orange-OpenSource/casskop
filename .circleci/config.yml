@@ -122,7 +122,7 @@ jobs:
 
     - run:
         name: Get Vendor dependency
-        command: make get-deps
+        command: make force-get-deps
     - run:
         name: Build Cassandra Operator
         command: make build
