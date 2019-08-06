@@ -97,7 +97,6 @@ RUN mkdir -p $GOPATH/src/github.com/operator-framework \
     && go get -u github.com/operator-framework/operator-sdk || true \
     && cd $GOPATH/src/github.com/operator-framework/operator-sdk \
     && git checkout $OPERATOR_SDK_VERSION \
-    && make dep \
     && make install \
     && make clean && rm -rf vendor && rm -rf .git \
     && go clean \
