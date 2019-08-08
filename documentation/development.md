@@ -120,6 +120,15 @@ Before using that newly created cluster, it's better to wait for all pods to be 
 $ kubectl get pod --all-namespaces -w
 ```
 
+#### Pause/Unpause the cluster
+
+In order to kinda freeze the cluster because you need to do something else on your laptop, you can use those two aliases. Just put them in your ~/.bashrc or ~/.zshrc :
+
+```sh
+alias kpause='kind get nodes|xargs docker pause'
+alias kunpause='kind get nodes|xargs docker unpause'
+```
+
 ### Build CassKop
 
 #### Using your local environment
