@@ -282,7 +282,6 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
 	namespace, _ := ctx.GetNamespace()
 	clusterName := "cassandra-e2e"
-	//kind := "CassandraCluster"
 
 	logrus.Debugf("Creating cluster")
 
@@ -301,7 +300,7 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			{
 				Key:      "statefulset.kubernetes.io/pod-name",
 				Operator: metav1.LabelSelectorOpIn,
-				Values:   []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack1-1"},
+				Values:   []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack2-1"},
 			},
 		},
 	}
@@ -329,12 +328,43 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			t.Fatalf("pod update failed: %s", err)
 		}
 	}
+	
+	checkCleanupExecuted := func(rack string, node int, cc *api.CassandraCluster) (bool, error) {
+		dcRack := "dc1-" + rack
+		nodeName := fmt.Sprintf("%s-%s-%d", clusterName, dcRack, node)
 
-	conditionFunc := func(cc *api.CassandraCluster) (bool, error) {
-		return false, nil
+		dcRackStatus, found :=cc.Status.CassandraRackStatus[dcRack]
+		if !found {
+			return false, nil
+		}
+		if len(dcRackStatus.PodLastOperation.PodsOK) == 0 {
+			// The operation has not completed yet
+			return false, nil
+		}
+		if len(dcRackStatus.PodLastOperation.PodsOK) > 1 {
+			// We only scheduled cleanup on one C* node in each rack, so PodsOK should have a length of 1.
+			return false, fmt.Errorf("expected cleanup to run on one pod it ran on %d. dcRackStatus.PodLastOperation (+%v)",
+				len(dcRackStatus.PodLastOperation.PodsOK), dcRackStatus.PodLastOperation)
+		}
+		if dcRackStatus.PodLastOperation.PodsOK[0] != nodeName {
+			// Make sure the operation executed against the expected node
+			return false, fmt.Errorf("expected cleanup to run on %s but it ran on %s", nodeName,
+				dcRackStatus.PodLastOperation.PodsOK[0])
+		}
+
+		return true, nil
 	}
 
-	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 30 * time.Second, conditionFunc)
+	conditionFunc := func(cc *api.CassandraCluster) (bool, error) {
+		executed, err := checkCleanupExecuted("rack1", 0, cc)
+		if !executed || err != nil {
+			return executed, err
+		}
+
+		return checkCleanupExecuted("rack2", 1, cc)
+	}
+
+	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, conditionFunc)
 	if err != nil {
 		t.Fatalf("WaitForStatusChange failed: %s", err)
 	}
