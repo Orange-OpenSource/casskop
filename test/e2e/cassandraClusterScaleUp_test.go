@@ -1,15 +1,13 @@
 package e2e
 
 import (
+	goctx "context"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	goctx "context"
-
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -93,6 +91,10 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 	//locale dc-rack state is OK: Because AutoUpdateSeedList is false we stay on ScaleUp=Done status
 	assert.Equal(t, api.ActionScaleUp, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
+	// check podLastOperation
+	assert.Equal(t, api.OperationCleanup, cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.Name)
+	assert.Equal(t, []string(nil), cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.Pods)
+	assert.ElementsMatch(t, []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack1-1"}, cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.PodsOK)
 	//global cluster state is OK
 	assert.Equal(t, api.ActionScaleUp, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
