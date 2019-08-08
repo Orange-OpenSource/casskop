@@ -10,14 +10,15 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"os"
 	"testing"
+	"time"
 )
 
 // Run all fonctional tests
@@ -50,6 +51,7 @@ func TestCassandraCluster(t *testing.T) {
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
 		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
 		t.Run("UpdateConfigMap", CassandraClusterTest(cassandraClusterUpdateConfigMapTest))
+		t.Run("ExecuteCleanup", CassandraClusterTest(cassandraClusterCleanupTest))
 	})
 
 }
@@ -275,6 +277,67 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 	updatedCluster := getCassandraCluster(cluster.Name, cluster.Namespace, f, t)
 
 	assert.Equal(t, cluster.Spec.ConfigMapName, updatedCluster.Spec.ConfigMapName)
+}
+
+func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+	namespace, _ := ctx.GetNamespace()
+	clusterName := "cassandra-e2e"
+	//kind := "CassandraCluster"
+
+	logrus.Debugf("Creating cluster")
+
+	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC-no-autopilot.yaml", namespace)
+
+	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("Error Creating CassandraCluster: %v", err)
+	}
+
+	waitForClusterToBeReady(cluster, f, t)
+
+	cluster = getCassandraCluster(clusterName, namespace, f, t)
+
+	selector := metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{
+			{
+				Key:      "statefulset.kubernetes.io/pod-name",
+				Operator: metav1.LabelSelectorOpIn,
+				Values:   []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack1-1"},
+			},
+		},
+	}
+	opts := metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&selector),
+	}
+
+	pods := &v1.PodList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+	}
+
+	pods, err := f.KubeClient.CoreV1().Pods(namespace).List(opts)
+	if err != nil {
+		t.Fatalf("Failed to list pods: %s", err)
+	}
+	assert.Equal(t, 2, len(pods.Items))
+
+	for _, pod := range pods.Items {
+		pod.Labels["operation-name"] = "cleanup"
+		pod.Labels["operation-status"] = "ToDo"
+		if err := f.Client.Update(goctx.TODO(), &pod); err != nil {
+			t.Fatalf("pod update failed: %s", err)
+		}
+	}
+
+	conditionFunc := func(cc *api.CassandraCluster) (bool, error) {
+		return false, nil
+	}
+
+	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 30 * time.Second, conditionFunc)
+	if err != nil {
+		t.Fatalf("WaitForStatusChange failed: %s", err)
+	}
 }
 
 func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
