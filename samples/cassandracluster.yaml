@@ -7,29 +7,29 @@ metadata:
 spec:
   baseImage: orangeopensource/cassandra-image
   version: 3.11.4-8u212-0.3.2-release-cqlsh
-  configMapName: cassandra-configmap-v1
-  dataCapacity: "20Gi"
+  #configMapName: cassandra-configmap-v1
+  dataCapacity: "10Gi"
 #  dataStorageClass: "local-storage"
   imagepullpolicy: IfNotPresent  
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
-  autoPilot: false
-  gcStdout: true
+  autoPilot: true
+  gcStdout: false
   autoUpdateSeedList: false
   maxPodUnavailable: 1
   runAsUser: 1000
   resources:         
     requests:
       cpu: '1'
-      memory: 2Gi
+      memory: '500Mi'
     limits:
       cpu: '1'
-      memory: 2Gi
+      memory: '500Mi'
   topology:
     dc:
       - name: dc1
-        nodesPerRacks: 1
+        nodesPerRacks: 2
         rack:
           - name: rack1
-          - name: rack2
-          - name: rack3
+          #- name: rack2
+          #- name: rack3
