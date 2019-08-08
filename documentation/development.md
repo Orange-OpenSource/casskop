@@ -72,7 +72,7 @@ $ cd cassandra-k8s-operator
 
 ### Local kubernetes setup
 
-We use [dind](https://github.com/kubernetes-sigs/kubeadm-dind-cluster) in order to run a local kubernetes cluster with the version we chose. We think it deserves some words as it's pretty useful and simple to use to test one version or another
+We use [kind](https://kind.sigs.k8s.io) in order to run a local kubernetes cluster with the version we chose. We think it deserves some words as it's pretty useful and simple to use to test one version or another
 
 #### Install
 
@@ -82,48 +82,42 @@ The following requires kubens to be present. On MacOs it can be installed using 
 brew install kubectx
 ```
 
-The installation of dind is then done with :
+The installation of kind is then done with (outside of the cassandra operator folder if you want it to run fast) :
 
 ```sh
-$ wget https://github.com/kubernetes-sigs/kubeadm-dind-cluster/releases/download/v0.2.0/dind-cluster-v1.14.sh -O /usr/local/bin/dind-cluster.sh
-$ chmod u+x /usr/local/bin/dind-cluster.sh
+$ GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0
 ```
 
 #### Setup
 
-The following actions should be run only to create a new kubernetes cluster or after a clean. Otherwise, if a snapshot has been taken no need to reinstall the setup requirements. See [following chapter](#take-a-snapshot).
+The following actions should be run only to create a new kubernetes cluster.
 
 ```sh
-$ dind-cluster.sh up
-$ samples/dind/setup-requirements.sh
+$ samples/kind/create-kind-cluster.sh
+```
+
+or if you want to enable network policies
+
+```sh
+$ samples/kind/create-kind-cluster-network-policies.sh
 ```
 
 It creates namespace cassandra-e2e by default. If a different namespace is needed it can be specified on the setup-requirements call
 
 ```sh
-$ samples/dind/setup-requirements.sh other-namespace
+$ samples/kind/setup-requirements.sh other-namespace
 ```
 
-It's better to wait for all pods to be running by continously checking their status
+To interact with the cluster you then need to use the generated kubeconfig file :
+
+```sh
+$ export KUBECONFIG=$(kind get kubeconfig-path --name=kind)
+```
+
+Before using that newly created cluster, it's better to wait for all pods to be running by continously checking their status :
 
 ```sh
 $ kubectl get pod --all-namespaces -w
-```
-
-#### Take a snapshot
-
-To avoid having to rebuild the cluster and do the setup again, take a snapshot of the dind cluster. This way everytime it's back up, the snapshot is restored and it restarts from the snapshot point in time.
-
-```sh
-$ dind-cluster.sh snapshot
-```
-
-If the cluster is cleaned, snapshots are lost cause they are stored in the containers used for master/nodes. But the cluster can be taken down and when it's restarted the snapshot is restored.
-
-```sh
-$ dind-cluster.sh down
-# Later on
-$ dind-cluster.sh up
 ```
 
 ### Build CassKop
