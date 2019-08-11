@@ -1,129 +1,88 @@
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: default-deny
-# spec:
-#   podSelector: {}
-#   policyTypes:
-#   - Ingress
-#   - Egress
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: cassandra-intra-nodes
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: cassandracluster
-#   ingress:
-#     - from:
-#       - namespaceSelector:
-#           matchLabels:
-#             app: cassandra-e2e
-#         podSelector:
-#           matchLabels:
-#             app: cassandracluster
-#       - namespaceSelector:
-#           matchLabels:
-#             app: cassandra-e2e
-#         podSelector:
-#           matchLabels:
-#             app: cassandra-stress
-#     - ports:
-#         - protocol: TCP
-#           port: 7000
-#         - protocol: TCP
-#           port: 7001
-#         - protocol: TCP
-#           port: 9042
-#   egress:
-#   - ports:
-#     - protocol: TCP
-#       port: 7000
-#     - protocol: TCP
-#       port: 7001
-#     - protocol: TCP
-#       port: 9042
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: cassandra-stress-egress
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: cassandra-stress
-#   egress:
-#   - ports:
-#     - protocol: TCP
-#       port: 9042
-# ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: casskop-egress-jolokia
+  name: dns-allowed
+spec:
+  podSelector: {}
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: casskop-apiserver
 spec:
   podSelector:
     matchLabels:
       app: cassandra-operator
   egress:
   - ports:
-    - port: 8778
-      protocol: TCP
-      
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: cassandra-ingress-jolokia-from-casskop
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: cassandracluster
-#   ingress:
-#     - from:
-#       # - namespaceSelector:
-#       #     matchLabels:
-#       #       app: cassandra
-#       #   podSelector:
-#       #     matchLabels:
-#       #       app: cassandra-operator
-#       - podSelector:
-#         namespaceSelector:
-#     - ports:
-#         - port: 8778
-#           protocol: TCP
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: cassandra-ingress-cqlsh-from-toolbox
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: cassandracluster
-#   ingress:
-#     - from:
-#       - namespaceSelector:
-#           matchLabels:
-#             app: cassandra-e2e
-#         podSelector:
-#           matchLabels:
-#             app: toolbox
-#     - ports:
-#         - protocol: TCP
-#           port: 9042
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: toolbox-egress-cqlsh
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: toolbox
-#   egress:
-#   - ports:
-#     - protocol: TCP
-#       port: 9042
+    - protocol: TCP
+      port: 6443
+  - to:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+    - namespaceSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cassandra-intra-nodes
+spec:
+  podSelector: &podselector_nodes
+    matchLabels:
+      app: cassandracluster
+  ingress:
+  - ports: &intranodes_ports
+    - protocol: TCP
+      port: 7000
+    - protocol: TCP
+      port: 7001
+  - from:
+    - podSelector: *podselector_nodes
+  egress:
+  - ports: *intranodes_ports
+  - to:
+    - podSelector: *podselector_nodes
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: casskop-jolokia-nodes
+spec:
+  podSelector:
+    matchLabels:
+      app: cassandracluster
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 8778
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cassandra-operator
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: toolbox-cqlsh-nodes
+spec:
+  podSelector:
+    matchLabels:
+      app: cassandracluster
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 9042
+  - from:
+    - podSelector:
+        matchLabels:
+          app: toolbox
+    - podSelector:
+        matchLabels:
+          app: cassandra-stress
