@@ -129,6 +129,10 @@ alias kpause='kind get nodes|xargs docker pause'
 alias kunpause='kind get nodes|xargs docker unpause'
 ```
 
+#### Delete cluster
+
+The simple command `kind delete cluster` takes care of it.
+
 ### Build CassKop
 
 #### Using your local environment
