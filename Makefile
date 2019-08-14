@@ -120,7 +120,6 @@ UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=t
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-GET_DEPS_CMD := dep ensure -v
 MOCKS_CMD := go generate ./mocks
 
 # environment dirs
@@ -167,7 +166,6 @@ get-version:
 clean:
 	@rm -rf $(OUT_BIN) || true
 	@rm -f apis/cassandracluster/v1alpha1/zz_generated.deepcopy.go || true
-	@rm -rf vendor || true
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)
@@ -198,30 +196,6 @@ docker-build: ## Build the Operator and it's Docker Image
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
-
-
-
-.PHONY: docker-get-deps
-docker-get-deps:
-	echo "Get Dependencies"
-	docker run --rm -v $(PWD):$(WORKDIR) --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(GET_DEPS_CMD)'
-
-.PHONY: get-deps
-get-deps:
-	@echo "Get Dependencies"
-	@if [ -d "vendor" ]; then \
-	  echo "vendor already exists, do Nothing of 'make force-get-deps' to force"; \
-	else \
-	  $(GET_DEPS_CMD); \
-	fi
-
-.PHONY: force-get-deps
-force-get-deps:
-	@echo "Get Dependencies"
-	$(GET_DEPS_CMD)
-
-
-
 
 # Build the docker development environment
 .PHONY: build-ci-image
@@ -337,6 +311,7 @@ unit-test:
 docker-go-lint:
 	docker run -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(GO_LINT_CMD)'
 
+# golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
 .PHONY: go-lint
 go-lint:
 	$(GO_LINT_CMD)
