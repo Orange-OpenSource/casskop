@@ -108,7 +108,7 @@ orbs:
 jobs:
 
   build:
-    working_directory: /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+    working_directory: /cassandra-k8s-operator
     executor: casskop-build
     steps:
     - checkout
