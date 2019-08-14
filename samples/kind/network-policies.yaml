@@ -86,3 +86,21 @@ spec:
     - podSelector:
         matchLabels:
           app: cassandra-stress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-jmx-nodes
+spec:
+  podSelector:
+    matchLabels:
+      app: cassandracluster
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 1234
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app: prometheus
