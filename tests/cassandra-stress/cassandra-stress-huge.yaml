@@ -25,7 +25,7 @@ spec:
       capabilities:
         add: ["IPC_LOCK"]
     command: ["/bin/sh"]
-    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/huge_stress.yaml ops(insert=10,query_by_sub_id=10) duration=90m cl=one -node cassandra-demo-dc1.cassandra-demo -mode native cql3 user=bench password=monbench -rate threads=50 -pop seq=0..50m -graph file=/tmp/stress-huge1.html' && echo END && while true ; do sleep 60; done"]
+    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/huge_stress.yaml ops(insert=10,query_by_sub_id=10) duration=90m cl=one -node cassandra-demo -mode native cql3 user=bench password=monbench -rate threads=50 -pop seq=0..50m -graph file=/tmp/stress-huge1.html' && echo END && while true ; do sleep 60; done"]
     resources:
       limits:
         cpu: "8"

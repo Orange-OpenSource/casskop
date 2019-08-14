@@ -420,7 +420,6 @@ docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-#	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' && echo 0 > res || echo 1 > res
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 .PHONY: e2e-test-fix
@@ -452,15 +451,19 @@ ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
 	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
+
 ifdef CASSANDRA_NODE
-	sed -i -e 's/cassandra-demo-dc1.cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
-endif
-ifdef CLUSTER_NAME
+	sed -i -e 's/cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+else
+  ifneq ($(and $(CLUSTER_NAME),$(DC),$(RACK)),)
+	sed -i -e 's/cassandra-demo/$(CLUSTER_NAME)-$(DC)-$(RACK)-0.$(CLUSTER_NAME)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+  endif
+
+  ifdef CLUSTER_NAME
 	sed -i -e 's/cassandra-demo/$(CLUSTER_NAME)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+  endif
 endif
-ifdef DC
-	sed -i -e 's/dc1/$(DC)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
-endif
+
 ifdef CONSISTENCY_LEVEL
 	sed -i -e 's/cl=one/cl=$(CONSISTENCY_LEVEL)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
