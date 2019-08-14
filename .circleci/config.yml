@@ -41,6 +41,7 @@ orbs:
           MINIKUBE_CONFIG: /home/circleci/.minikube
           CHANGE_MINIKUBE_NONE_USER: true
           GOPATH: /go
+          GO111MODULE: on
           DOCKER_LATEST: 1
           GIN_MODE: release
 
@@ -116,16 +117,9 @@ jobs:
 
     - restore_cache:
         keys:
-          - build-{{ .Branch }}-{{ checksum "Gopkg.toml" }}
           - build-{{ .Branch }}
           - build
 
-    - run:
-        name: Clean cache
-        command: make clean
-    - run:
-        name: Get Vendor dependency
-        command: make force-get-deps
     - run:
         name: Build Cassandra Operator
         command: make build
@@ -136,7 +130,6 @@ jobs:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
 
     - deploy:
         name: Push image to Docker Hub
@@ -150,12 +143,11 @@ jobs:
 
     - save_cache:
         name: Save build artefacts in cache
-        key: build-{{ .Branch }}-{{ checksum "Gopkg.toml" }}
+        key: build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
 
 
   unit-test:
