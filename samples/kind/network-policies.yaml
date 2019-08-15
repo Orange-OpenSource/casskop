@@ -70,7 +70,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: cassie-client-nodes
+  name: native-from-clients
 spec:
   podSelector:
     matchLabels:
@@ -81,11 +81,33 @@ spec:
       port: 9042
   - from:
     - podSelector:
-        matchLabels:
-          app: toolbox
+        matchExpressions:
+          - key: app
+            operator: In
+            values:
+              - cassandra-stress
+              - toolbox
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: native-client-nodes
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - cassandra-stress
+          - toolbox
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 9042
+  - to:
     - podSelector:
         matchLabels:
-          app: cassandra-stress
+          component: cassandracluster
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
