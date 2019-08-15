@@ -441,12 +441,18 @@ ifeq (cassandra-stress,$(firstword $(MAKECMDGOALS)))
   $(eval $(STRESS_TYPE):;@:)
 endif
 
+REPLICATION_FACTOR ?= 1
+DC ?= dc1
+
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
-	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml
+	cp tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/
+	echo Using replication factor $(REPLICATION_FACTOR) with DC $(DC) in cassandra-stress profile file
+	sed -i -e "s/'dc1': '3'/'$(DC)': '$(REPLICATION_FACTOR)'/" /tmp/$(STRESS_TYPE)_stress.yaml
+	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=/tmp/$(STRESS_TYPE)_stress.yaml
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
 	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
-	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
 	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
