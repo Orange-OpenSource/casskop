@@ -1,3 +1,21 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: kube-system
 ---
 # Source: provisioner/templates/provisioner.yaml
 apiVersion: v1
@@ -8,8 +26,8 @@ metadata:
 data:
   storageClassMap: |
     local-storage:
-       hostDir: /dind/local-storage/
-       mountDir: /dind/local-storage/
+       hostDir: /kind/local-storage/
+       mountDir: /kind/local-storage/
        blockCleanerCommand:
          - "/scripts/shred.sh"
          - "2"
@@ -55,7 +73,7 @@ spec:
               readOnly: true
             - mountPath: /dev
               name: provisioner-dev
-            - mountPath: /dind/local-storage/
+            - mountPath: /kind/local-storage/
               name: local-storage
               mountPropagation: "HostToContainer"
       volumes:
@@ -67,7 +85,7 @@ spec:
             path: /dev
         - name: local-storage
           hostPath:
-            path: /dind/local-storage/
+            path: /kind/local-storage/
 
 ---
 # Source: provisioner/templates/provisioner-service-account.yaml
