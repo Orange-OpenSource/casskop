@@ -4,7 +4,7 @@ kind: Pod
 metadata:
   name: cassandra-stress-normal
   labels:
-    app: cassandra-stress-normal
+    app: cassandra-stress
 spec:
   restartPolicy: Never
   volumes:
