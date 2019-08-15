@@ -4,7 +4,7 @@ kind: Pod
 metadata:
   name: cassandra-stress-small
   labels:
-    app: cassandra-stress-small
+    app: cassandra-stress
 spec:
   restartPolicy: Never
   volumes:
