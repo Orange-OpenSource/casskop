@@ -443,6 +443,8 @@ endif
 
 REPLICATION_FACTOR ?= 1
 DC ?= dc1
+USERNAME =? cassandra
+PASSWORD =? cassandra
 
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
@@ -453,6 +455,7 @@ cassandra-stress:
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
 	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
 	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/
+	sed -i -e 's/user=[a-zA-Z]* password=[a-zA-Z]*/user=$(USERNAME) password=$(PASSWORD)/' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
 	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
