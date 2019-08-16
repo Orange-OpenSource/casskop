@@ -161,21 +161,22 @@ func (rcc *ReconcileCassandraCluster) ListPods(namespace string, selector map[st
 		//
 		// See https://github.com/kubernetes-sigs/controller-runtime/issues/168
 		// https://github.com/operator-framework/operator-sdk/blob/00ef545399db0e4b8fe4474188a342369874162a/test/test-framework/pkg/controller/memcached/memcached_controller.go#L157
-		Raw: &metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				//Kind:       "CassandraCluster",
-				//APIVersion: api.SchemeGroupVersion.String(),
-				Kind:       "Pod",
-				APIVersion: "v1",
-			},
-		},
+		//Raw: &metav1.ListOptions{
+		//	TypeMeta: metav1.TypeMeta{
+		//		Kind:       "CassandraCluster",
+		//		APIVersion: api.SchemeGroupVersion.String(),
+		//		//Kind:       "PodList",
+		//		//APIVersion: "v1",
+		//	},
+		//},
 	}
-	pl := &v1.PodList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-	}
+	pl := &v1.PodList{}
+	//pl := &v1.PodList{
+	//	TypeMeta: metav1.TypeMeta{
+	//		Kind:       "Pod",
+	//		APIVersion: "v1",
+	//	},
+	//}
 	return pl, rcc.client.List(context.TODO(), opt, pl)
 }
 
