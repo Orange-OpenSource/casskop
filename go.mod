@@ -3,9 +3,7 @@ module github.com/Orange-OpenSource/cassandra-k8s-operator
 go 1.12
 
 require (
-	// cloud.google.com/go v0.41.0 // indirect
 	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
-	github.com/coreos/etcd v3.3.10+incompatible
 	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
 	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -36,11 +34,9 @@ require (
 	google.golang.org/genproto v0.0.0-20190701230453-710ae3a149df // indirect
 	google.golang.org/grpc v1.22.0 // indirect
 	k8s.io/api v0.0.0-20190612125737-db0771252981
-	k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/klog v0.3.3 // indirect
-	k8s.io/kube-state-metrics v1.6.0
 	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde // indirect
 )

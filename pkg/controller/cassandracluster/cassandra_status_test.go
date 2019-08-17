@@ -217,7 +217,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			}
 		}
 	}
-	dcRackNames := cc.GetDCRackNames()
+
 	//Check creation Statuses
 	err = rcc.client.Get(context.TODO(), req.NamespacedName, cc)
 	if err != nil {
@@ -225,7 +225,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning)
 
-	for _, dcRackName := range dcRackNames {
+	for _, dcRackName := range cc.GetDCRackNames() {
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning,
 			"dc-rack: %s", dcRackName)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial,
