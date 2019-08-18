@@ -128,7 +128,7 @@ APP_DIR := build/Dockerfile
 
 OPERATOR_SDK_VERSION=v0.9.0
 # workdir
-WORKDIR := /home/circleci/cassandra-k8s-operator
+WORKDIR := /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
 #WORKDIR := $(PWD)
 
 UNAME_S := $(shell uname -s)
