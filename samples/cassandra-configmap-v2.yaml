@@ -835,7 +835,7 @@ data:
     # of the snitch, which will be assumed to be on your classpath.
     endpoint_snitch: SimpleSnitch
     
-    dynamic_snitch: false
+    dynamic_snitch: true
     # controls how often to perform the more expensive part of host score
     # calculation
     dynamic_snitch_update_interval_in_ms: 100
