@@ -420,7 +420,6 @@ docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-#	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' && echo 0 > res || echo 1 > res
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 .PHONY: e2e-test-fix
@@ -442,17 +441,39 @@ ifeq (cassandra-stress,$(firstword $(MAKECMDGOALS)))
   $(eval $(STRESS_TYPE):;@:)
 endif
 
+REPLICATION_FACTOR ?= 1
+DC ?= dc1
+USERNAME =? cassandra
+PASSWORD =? cassandra
+
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
-	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml
+	cp tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/
+	echo Using replication factor $(REPLICATION_FACTOR) with DC $(DC) in cassandra-stress profile file
+	sed -i -e "s/'dc1': '3'/'$(DC)': '$(REPLICATION_FACTOR)'/" /tmp/$(STRESS_TYPE)_stress.yaml
+	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=/tmp/$(STRESS_TYPE)_stress.yaml
 	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
 	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
-	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/
+	sed -i -e 's/user=[a-zA-Z]* password=[a-zA-Z]*/user=$(USERNAME) password=$(PASSWORD)/' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
-	echo "using Cassandra_IMAGE=$(CASSANDRA_IMAGE)"
+	echo "using Cassandra image $(CASSANDRA_IMAGE)"
 	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
+
 ifdef CASSANDRA_NODE
-	sed -i -e 's/cassandra-demo-dc1.cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	sed -i -e 's/cassandra-demo/$(CASSANDRA_NODE)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+else
+  ifneq ($(and $(CLUSTER_NAME),$(DC),$(RACK)),)
+	sed -i -e 's/cassandra-demo/$(CLUSTER_NAME)-$(DC)-$(RACK)-0.$(CLUSTER_NAME)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+  endif
+
+  ifdef CLUSTER_NAME
+	sed -i -e 's/cassandra-demo/$(CLUSTER_NAME)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+  endif
+endif
+
+ifdef CONSISTENCY_LEVEL
+	sed -i -e 's/cl=one/cl=$(CONSISTENCY_LEVEL)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml

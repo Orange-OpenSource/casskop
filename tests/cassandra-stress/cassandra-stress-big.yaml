@@ -4,7 +4,7 @@ kind: Pod
 metadata:
   name: cassandra-stress-big
   labels:
-    app: cassandra-stress-big
+    app: cassandra-stress
 spec:
   restartPolicy: Never
   volumes:
@@ -25,7 +25,7 @@ spec:
       capabilities:
         add: ["IPC_LOCK"]
     command: ["/bin/sh"]
-    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/big_stress.yaml ops(insert=10,query_by_sub_id=8) duration=120m cl=one -node cassandra-demo-dc1.cassandra-demo -mode native cql3 user=bench password=monbench -rate threads=60 -pop seq=0..100M -tokenrange -graph file=/tmp/stress-big.html' && echo END && while true ; do sleep 60; done"]
+    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/big_stress.yaml ops(insert=10,query_by_sub_id=8) duration=120m cl=one -node cassandra-demo -mode native cql3 user=bench password=monbench -rate threads=60 -pop seq=0..100M -tokenrange -graph file=/tmp/stress-big.html' && echo END && while true ; do sleep 60; done"]
     resources:
       limits:
         cpu: "8"
