@@ -98,12 +98,17 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
-    // Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
+	// Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
 	if needSpecificChange ||
 		(!rcc.thereIsPodDisruption() &&
 		  lastAction.Status != api.StatusOngoing &&
 		  lastAction.Status != api.StatusToDo &&
 		  lastAction.Status != api.StatusFinalizing){
+
+		//Update Status if Pod is not Ready
+		if UpdateStatusIfStatefulSetStatusHasChanged(cc, dcRackName, storedStatefulSet, status) {
+			return nil
+		}
 
 		// Update Status if ConfigMap Has Changed
 		if UpdateStatusIfconfigMapHasChanged(cc, dcRackName, storedStatefulSet, status) {
@@ -181,6 +186,20 @@ func UpdateStatusIfUpdateResources(cc *api.CassandraCluster, dcRackName string, 
 	}
 }
 */
+
+//UpdateStatusIfStatefulSetStatusHasChanged updates CassandraCluster Action Status if any pod is not Ready
+func UpdateStatusIfStatefulSetStatusHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+
+	if isStatefulSetNotReady(storedStatefulSet) {
+		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+		lastAction.Status = api.StatusOngoing
+		lastAction.Name = api.ActionRecoverStatefulSet
+		lastAction.StartTime = nil
+		lastAction.EndTime = nil
+		return true
+	}
+	return false
+}
 
 //UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
 // - a new configmapName in the CRD
@@ -336,6 +355,23 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		switch lastAction.Name {
+
+		case api.ActionRecoverStatefulSet:
+
+			if !isStatefulSetNotReady(storedStatefulSet) {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("Statefulset is Ready")
+				lastAction.Status = api.StatusDone
+				lastAction.EndTime = &now
+				labels := map[string]string{"operation-name": api.OperationCleanup}
+				if cc.Spec.AutoPilot {
+					labels["operation-status"] = api.StatusToDo
+				} else {
+					labels["operation-status"] = api.StatusManual
+				}
+				rcc.addPodOperationLabels(cc, dcName, rackName, labels)
+				return true
+			}
+			return false
 
 		case api.ActionScaleUp:
 

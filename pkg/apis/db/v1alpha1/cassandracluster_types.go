@@ -79,7 +79,8 @@ const (
 	ActionDeleteDC   string = "ActionDeleteDC"
 	ActionDeleteRack string = "ActionDeleteRack"
 
-	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
+	ActionRecoverStatefulSet string = "RecoverStatefulset"
+	ActionCorrectCRDConfig   string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
 	//List of Pods Operations
 	OperationUpgradeSSTables string = "upgradesstables"
