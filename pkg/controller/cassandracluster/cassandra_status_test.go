@@ -204,23 +204,20 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 
 			for i := 0; i < int(sts.Status.Replicas); i++ {
 				pod.Name = sts.Name + strconv.Itoa(i)
-				err = rcc.CreatePod(pod)
-				if err != nil {
+				if err = rcc.CreatePod(pod); err != nil {
 					t.Fatalf("can't create pod: (%v)", err)
 				}
 			}
 
 			//We recall Reconcile to update Next rack
-			res, err = rcc.Reconcile(req)
-			if err != nil {
+			if res, err = rcc.Reconcile(req); err != nil {
 				t.Fatalf("reconcile: (%v)", err)
 			}
 		}
 	}
 
 	//Check creation Statuses
-	err = rcc.client.Get(context.TODO(), req.NamespacedName, cc)
-	if err != nil {
+	if err = rcc.client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning)
