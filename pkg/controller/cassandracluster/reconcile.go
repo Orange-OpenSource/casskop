@@ -74,10 +74,10 @@ func (rcc *ReconcileCassandraCluster) CheckDeletePVC(cc *api.CassandraCluster) e
 	return nil
 }
 
-// CheckNonAllowedChanged - checks if there are some changes on CRD that are not allowed on statefulset
+// CheckNonAllowedChanges - checks if there are some changes on CRD that are not allowed on statefulset
 // If a non Allowed Changed is Find we won't Update associated kubernetes objects, but we will put back the old value
 // and Patch the CRD with correct values
-func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCluster,
+func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) bool {
 	var oldCRD api.CassandraCluster
 	if cc.Annotations[api.AnnotationLastApplied] == "" {
@@ -127,7 +127,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanged(cc *api.CassandraCl
 	}
 
 	var updateStatus string
-	if needUpdate, updateStatus = CheckNonAllowedRemoveDC(rcc, cc, status, &oldCRD); needUpdate {
+	if needUpdate, updateStatus = CheckNonAllowedDCChanges(rcc, cc, status, &oldCRD); needUpdate {
 		if updateStatus != "" {
 			status.LastClusterAction = updateStatus
 		}
