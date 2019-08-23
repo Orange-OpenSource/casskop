@@ -29,10 +29,10 @@ spec:
   resources:
     requests:
       cpu: 500m
-      memory: '500Mi'
+      memory: 1Gi
     limits:
       cpu: 500m
-      memory: '500Mi'
+      memory: 1Gi
   topology:
     dc:
       - name: dc1
