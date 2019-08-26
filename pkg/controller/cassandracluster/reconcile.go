@@ -211,12 +211,12 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 	noPaths := len(paths) == 0
 	includeFilters := [][]string{}
 	excludeFilters := [][]string{}
-	for _, p := range paths {
-		if match := regexPath.FindStringSubmatch(p); len(match) > 0 {
+	for _, path := range paths {
+		if match := regexPath.FindStringSubmatch(path); len(match) > 0 {
 			excludeFilters = append(excludeFilters, generatePaths(match[1]))
 			continue
 		}
-		includeFilters = append(includeFilters, generatePaths(p))
+		includeFilters = append(includeFilters, generatePaths(path))
 	}
 	idx := "-1"
 	includedFiltersFound := map[string]bool{}
