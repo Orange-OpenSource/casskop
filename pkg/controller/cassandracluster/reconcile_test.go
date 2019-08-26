@@ -91,7 +91,7 @@ func helperGetStatefulset(t *testing.T, dcRackName string) *appsv1.StatefulSet {
 	return &sts
 }
 
-func TestFlipCassandraClusterUpdateSeedListStatus_ScaleDC2(t *testing.T) {
+func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert := assert.New(t)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
@@ -163,10 +163,9 @@ func TestFlipCassandraClusterUpdateSeedListStatus_ScaleDC2(t *testing.T) {
 
 	assert.Equal(4, len(status.SeedList))
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList))
-
 }
 
-func TestFlipCassandraClusterUpdateSeedListStatus_scaleDC1(t *testing.T) {
+func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	assert := assert.New(t)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
@@ -221,10 +220,9 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDC1(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList))
-
 }
 
-func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
+func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert := assert.New(t)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
@@ -316,11 +314,10 @@ func TestFlipCassandraClusterUpdateSeedListStatus_scaleDown(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
 	assert.Equal(true, reflect.DeepEqual(c, status.SeedList))
-
 }
 
 //mock example https://github.com/operator-framework/operator-sdk/blob/e74dd322b291b111f78702cf71e5ac843a0c8912/doc/user/unit-testing.md
-func TestCheckNonAllowedChanges_NodesTo0(t *testing.T) {
+func TestCheckNonAllowedChangesNodesTo0(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
@@ -336,10 +333,9 @@ func TestCheckNonAllowedChanges_NodesTo0(t *testing.T) {
 	res = rcc.CheckNonAllowedChanges(cc, status)
 	assert.Equal(true, res)
 	assert.Equal(int32(1), cc.Spec.NodesPerRacks)
-
 }
 
-func TestCheckNonAllowedChanges_Mix1(t *testing.T) {
+func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	assert := assert.New(t)
 	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	status := cc.Status.DeepCopy()
@@ -363,10 +359,9 @@ func TestCheckNonAllowedChanges_Mix1(t *testing.T) {
 
 	//Allow Change
 	assert.Equal(false, cc.Spec.AutoPilot)
-
 }
 
-func TestCheckNonAllowedChanges_ResourcesIsAllowedButNeedAttention(t *testing.T) {
+func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
@@ -393,28 +388,25 @@ func TestCheckNonAllowedChanges_ResourcesIsAllowedButNeedAttention(t *testing.T)
 	dcRackName = "dc2-rack1"
 	assert.Equal(api.ActionUpdateResources, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus[dcRackName].CassandraLastAction.Status)
-
 }
 
-//Remove 2 dc is not allowed
-func TestCheckNonAllowedChanges_Remove2DC(t *testing.T) {
+func TestCheckNonAllowedChangesRemove2DC(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 
-	//Remove 1 rack/dc at specified index
 	cc.Spec.Topology.DC.Remove(2)
 	cc.Spec.Topology.DC.Remove(1)
 
+	// We can't remove more than one DC at once
 	res := rcc.CheckNonAllowedChanges(cc, status)
 	assert.Equal(true, res)
-
 }
 
 //Updating racks is not allowed
-func TestCheckNonAllowedChanges_UpdateRack(t *testing.T) {
+func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
@@ -448,11 +440,10 @@ func TestCheckNonAllowedChanges_UpdateRack(t *testing.T) {
 
 	//Topology must have been restored
 	assert.Equal(4, cc.GetDCRackSize())
-
 }
 
 //remove only a rack is not allowed
-func TestCheckNonAllowedChanges_RemoveDCNot0(t *testing.T) {
+func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
@@ -474,10 +465,9 @@ func TestCheckNonAllowedChanges_RemoveDCNot0(t *testing.T) {
 
 	//Topology must have been restored
 	assert.Equal(4, cc.GetDCRackSize())
-
 }
 
-func TestCheckNonAllowedChanges_RemoveDC(t *testing.T) {
+func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	assert := assert.New(t)
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
 
@@ -511,10 +501,10 @@ func TestCheckNonAllowedChanges_RemoveDC(t *testing.T) {
 	assert.Equal(3, len(status.CassandraRackStatus))
 }
 
-// TestCheckNonAllowedChanges_ScaleDown test that operator won't allowed a Scale Down to 0 if there are Pods in dc and
+// TestCheckNonAllowedChangesScaleDown test that operator won't allowed a Scale Down to 0 if there are Pods in dc and
 // still has datas replicated
 //Uses K8s fake client, & Jolokia Mock
-func TestCheckNonAllowedChanges_ScaleDown(t *testing.T) {
+func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
