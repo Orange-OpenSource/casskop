@@ -465,24 +465,28 @@ func TestCheckNonAllowedChanges_RemoveDCNot0(t *testing.T) {
 func TestCheckNonAllowedChanges_RemoveDC(t *testing.T) {
 	assert := assert.New(t)
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+
 	//Simulate old spec with nodes at 0
 	var nb int32
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nb
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
+
+	//Initial Topology
+	assert.Equal(3, cc.GetDCSize())
 	assert.Equal(4, cc.GetDCRackSize())
 	assert.Equal(4, len(status.CassandraRackStatus))
 
-	//Remove 1 rack/dc at specified index
+	//Remove a dc at specified index
 	cc.Spec.Topology.DC.Remove(1)
 
 	res := rcc.CheckNonAllowedChanges(cc, status)
 
-	//Change not allowed because dc still has nodes
+	//Change allowed because dc has no nodes
 	assert.Equal(true, res)
 
-	//Topology must have been restored
+	//Topology must have been updated
 	assert.Equal(2, cc.GetDCSize())
 
 	//Topology must have been restored
@@ -490,7 +494,6 @@ func TestCheckNonAllowedChanges_RemoveDC(t *testing.T) {
 
 	//Check that status is updated
 	assert.Equal(3, len(status.CassandraRackStatus))
-
 }
 
 // TestCheckNonAllowedChanges_ScaleDown test that operator won't allowed a Scale Down to 0 if there are Pods in dc and
@@ -584,7 +587,6 @@ func TestCheckNonAllowedChanges_ScaleDown(t *testing.T) {
 	//We have restore nodesperrack
 	assert.Equal(int32(1), *cc.Spec.Topology.DC[1].NodesPerRacks)
 
-	//--Step 3
 	//Changes replicated keyspaces (remove demo1 and demo2 which still have replicated datas
 	//allKeyspaces is a global test variable
 	allKeyspaces = []string{"system", "system_auth", "system_schema", "something", "else"}
