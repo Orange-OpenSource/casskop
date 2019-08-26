@@ -300,7 +300,7 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			{
 				Key:      "statefulset.kubernetes.io/pod-name",
 				Operator: metav1.LabelSelectorOpIn,
-				Values:   []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack2-1"},
+				Values:   []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack2-0"},
 			},
 		},
 	}
@@ -328,45 +328,107 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			t.Fatalf("pod update failed: %s", err)
 		}
 	}
-	
+
 	checkCleanupExecuted := func(rack string, node int, cc *api.CassandraCluster) (bool, error) {
 		dcRack := "dc1-" + rack
 		nodeName := fmt.Sprintf("%s-%s-%d", clusterName, dcRack, node)
 
-		dcRackStatus, found :=cc.Status.CassandraRackStatus[dcRack]
+		//dcRackStatus, found :=cc.Status.CassandraRackStatus[dcRack]
+		_, found :=cc.Status.CassandraRackStatus[dcRack]
 		if !found {
+			return false, fmt.Errorf("Did not find rack status for %s", rack)
+		}
+
+		// Commenting out status checks for now due to https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/98
+		//
+		//if len(dcRackStatus.PodLastOperation.PodsOK) == 0 {
+		//	// The operation has not completed yet
+		//	return false, fmt.Errorf("The cleanup operation has not yet finished for %s", nodeName)
+		//}
+		//
+		//if len(dcRackStatus.PodLastOperation.PodsOK) > 1 {
+		//	// We only scheduled cleanup on one C* node in each rack, so PodsOK should have a length of 1.
+		//	return false, fmt.Errorf("expected cleanup to run on one pod it ran on %d. dcRackStatus.PodLastOperation (+%v)",
+		//		len(dcRackStatus.PodLastOperation.PodsOK), dcRackStatus.PodLastOperation)
+		//}
+		//if dcRackStatus.PodLastOperation.PodsOK[0] != nodeName {
+		//	// Make sure the operation executed against the expected node
+		//	return false, fmt.Errorf("expected cleanup to run on %s but it ran on %s", nodeName,
+		//		dcRackStatus.PodLastOperation.PodsOK[0])
+		//}
+
+		pod, err := f.KubeClient.CoreV1().Pods(namespace).Get(nodeName, metav1.GetOptions{})
+		if err != nil {
+			t.Logf("Failed to get pod %s: %s", nodeName, err)
 			return false, nil
 		}
-		if len(dcRackStatus.PodLastOperation.PodsOK) == 0 {
-			// The operation has not completed yet
+
+		val, exists := pod.Labels["operation-name"]
+		if !exists {
+			t.Logf("Expected to find label operation-name on %s", nodeName)
 			return false, nil
 		}
-		if len(dcRackStatus.PodLastOperation.PodsOK) > 1 {
-			// We only scheduled cleanup on one C* node in each rack, so PodsOK should have a length of 1.
-			return false, fmt.Errorf("expected cleanup to run on one pod it ran on %d. dcRackStatus.PodLastOperation (+%v)",
-				len(dcRackStatus.PodLastOperation.PodsOK), dcRackStatus.PodLastOperation)
+		if val != "cleanup" {
+			t.Logf("Expected to find label operation-name=cleanup on %s but found operation-name=%s",
+				nodeName, val)
+			return false, nil
 		}
-		if dcRackStatus.PodLastOperation.PodsOK[0] != nodeName {
-			// Make sure the operation executed against the expected node
-			return false, fmt.Errorf("expected cleanup to run on %s but it ran on %s", nodeName,
-				dcRackStatus.PodLastOperation.PodsOK[0])
+
+		val, exists = pod.Labels["operation-status"]
+		if !exists {
+			t.Logf("Expected to find label operation-status on %s", nodeName)
+			return false, nil
 		}
+		if val != "Done" {
+			t.Logf("Expected to find label operation-status=Done on %s but found operation-status=%s",
+				nodeName, val)
+			return false, nil
+		}
+
+		val, exists = pod.Labels["operation-start"]
+		if !exists {
+			t.Logf("Expected to find label operation-start on %s", nodeName)
+			return false, nil
+		}
+
+
+		val, exists = pod.Labels["operation-end"]
+		if !exists {
+			t.Logf("Expected to find label operation-end on %s", nodeName)
+			return false, nil
+		}
+
+		// TODO parse start/end times and verify end > start
 
 		return true, nil
 	}
 
-	conditionFunc := func(cc *api.CassandraCluster) (bool, error) {
-		executed, err := checkCleanupExecuted("rack1", 0, cc)
-		if !executed || err != nil {
-			return executed, err
+	conditionFunc := func(cc *api.CassandraCluster, rack string, node int) (bool, error) {
+		executed, err := checkCleanupExecuted(rack, node, cc)
+		if err != nil {
+			logrus.Infof("cleanup check failed: %s\n", err)
 		}
-
-		return checkCleanupExecuted("rack2", 1, cc)
+		return executed, err
 	}
 
-	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, conditionFunc)
+	checkRack1 := func(cc *api.CassandraCluster) (bool, error) {
+		return conditionFunc(cc, "rack1", 0)
+	}
+
+	checkRack2 := func(cc *api.CassandraCluster) (bool, error) {
+		return conditionFunc(cc, "rack2", 0)
+	}
+
+	logrus.Infof("Wait for cleanup to finish in rack1\n")
+	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack1)
 	if err != nil {
-		t.Fatalf("WaitForStatusChange failed: %s", err)
+		t.Errorf("WaitForStatusChange failed: %s", err)
+	}
+
+	logrus.Infof("Wait for cleanup to finish in rack2\n")
+	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack2)
+	if err != nil {
+		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
 }
 

@@ -14,7 +14,7 @@ metadata:
   labels:
     cluster: k8s.pic
 spec:
-  nodesPerRacks: 2
+  nodesPerRacks: 1
   baseImage: orangeopensource/cassandra-image
   version: latest-cqlsh
   imagePullPolicy: "IfNotPresent"
