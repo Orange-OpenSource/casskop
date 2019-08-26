@@ -263,79 +263,17 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 		return true, api.ActionCorrectCRDConfig
 	}
 
+	if cc.GetDCSize() < oldCRD.GetDCSize()-1 {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
+			"The Operator has refused the Topology change. You can only remove 1 DC at a time, "+
+				"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
+		return true, api.ActionCorrectCRDConfig
+
+	}
+
 	if cc.GetDCRackSize() < oldCRD.GetDCRackSize() {
-		dcsize := cc.GetDCSize()
-		olddcsize := oldCRD.GetDCSize()
 
-		switch {
-		case dcsize < olddcsize-1:
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
-				"The Operator has refused the Topology change. You can only remove 1 DC at a time, "+
-					"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
-			return true, api.ActionCorrectCRDConfig
-		case dcsize == olddcsize:
-			dcRackNameToDeleteList := cc.FixCassandraRackList(status)
-			if len(dcRackNameToDeleteList) > 0 {
-
-				if len(dcRackNameToDeleteList) > 1 {
-					logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
-						"The Operator has refused the Topology change. "+
-							"You can only remove 1 rack if it is completely unshedulable, restored to %v",
-						oldCRD.Spec.Topology)
-					return true, api.ActionCorrectCRDConfig
-				}
-				for _, dcRackNameToDelete := range dcRackNameToDeleteList {
-
-					dcName, rackName := cc.GetDCAndRackFromDCRackName(dcRackNameToDelete)
-
-					listPod, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
-					if err != nil {
-						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
-							"The Operator has refused the Topology change. "+
-								"We can't get associated pod in rack Rack: %v restored to %v", cc.Spec.Topology,
-							oldCRD.Spec.Topology)
-						return true, api.ActionCorrectCRDConfig
-					}
-					if len(listPod.Items) > 1 {
-						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warning(
-							"The Operator has refused the Topology change. Too many pods in the Statefulset")
-						return true, api.ActionCorrectCRDConfig
-					}
-					if len(listPod.Items) > 0 && listPod.Items[0].Status.Conditions != nil &&
-						listPod.Items[0].Status.Conditions[0].Reason == "Unschedulable" {
-						logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
-							"We asked to remove Rack %s with unschedulable pod", dcRackNameToDelete)
-						err = rcc.DeleteStatefulSet(cc.Namespace, cc.Name+"-"+dcRackNameToDelete)
-						if err != nil && !apierrors.IsNotFound(err) {
-							logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warning(
-								"The Operator has refused the Topology change. We can't delete statefulset")
-							return true, api.ActionCorrectCRDConfig
-						}
-						rcc.DeletePVCs(cc, dcName, rackName)
-						return false, api.ActionDeleteRack
-					}
-				}
-
-			}
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
-				Warningf("The Operator has refused the Topology change. You can only remove an entire DC, "+
-					"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
-			return true, api.ActionCorrectCRDConfig
-
-		}
-
-		//Here we have asked to remove a DC. Check that the nbNodesPerRack is 0 else refuse the modification
-		//Which DC we need to remove ?
 		dcName := cc.GetRemovedDCName(oldCRD)
-		//We need to check how many nodes were in the old CRD (before the user delete it)
-		found, nbNodes := oldCRD.GetDCNodesPerRacksFromName(dcName)
-
-		if found && nbNodes > 0 {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
-				Warningf("The Operator has refused the Topology change. "+
-					"You must scale down the dc %s to 0 before deleting the dc", dcName)
-			return true, api.ActionCorrectCRDConfig
-		}
 
 		if cc.Status.LastClusterAction == api.ActionScaleDown &&
 			cc.Status.LastClusterActionStatus != api.StatusDone {
@@ -346,9 +284,17 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 
 		}
 
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("We asked to remove dc %s", dcName)
-		//We apply this change to the Cluster status
+		//We need to check how many nodes were in the old CRD (before the user delete it)
+		if found, nbNodes := oldCRD.GetDCNodesPerRacksFromName(dcName); found && nbNodes > 0 {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
+				Warningf("The Operator has refused the Topology change. "+
+					"You must scale down the dc %s to 0 before deleting the dc", dcName)
+			return true, api.ActionCorrectCRDConfig
+		}
 
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("Removing dc %s", dcName)
+
+		//We apply this change to the Cluster status
 		return rcc.deleteDCObjects(cc, status, oldCRD)
 	}
 
