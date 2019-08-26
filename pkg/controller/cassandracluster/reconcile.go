@@ -184,15 +184,17 @@ func generatePaths(s string) []string {
 	return strings.Split(s, ".")
 }
 
-func lookForFilter(filter, path []string, filtersFound *map[string]bool) {
-	if 2*len(filter)+1 == len(path) {
-		currentPath := path[0]
-		for i := 2; i < len(path)-1; i += 2 {
-			currentPath += "." + path[i]
-		}
-		if currentPath == strings.Join(filter, ".") {
-			if _, ok := (*filtersFound)[currentPath]; !ok {
-				(*filtersFound)[currentPath] = true
+func lookForFilter(path []string, filtersRule [][]string, filtersFound *map[string]bool) {
+	for _, filter := range filtersRule {
+		if 2*len(filter)+1 == len(path) {
+			currentPath := path[0]
+			for i := 2; i < len(path)-1; i += 2 {
+				currentPath += "." + path[i]
+			}
+			if currentPath == strings.Join(filter, ".") {
+				if _, ok := (*filtersFound)[currentPath]; !ok {
+					(*filtersFound)[currentPath] = true
+				}
 			}
 		}
 	}
@@ -232,13 +234,10 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 
 			}
 			// We look for all matching filters
-			for _, filter := range includeFilters {
-				lookForFilter(filter, cl.Path, &includedFiltersFound)
-			}
+			lookForFilter(cl.Path, includeFilters, &includedFiltersFound)
+
 			// We look for all excluding filters
-			for _, filter := range excludeFilters {
-				lookForFilter(filter, cl.Path, &excludedFiltersFound)
-			}
+			lookForFilter(cl.Path, excludeFilters, &excludedFiltersFound)
 
 			if len(includedFiltersFound) == len(includeFilters) && len(excludedFiltersFound) == 0 {
 				return true
