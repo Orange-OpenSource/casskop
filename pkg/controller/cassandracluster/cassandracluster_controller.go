@@ -142,7 +142,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	//We Update Status at the end
 	defer rcc.updateCassandraStatus(cc, status)
 
-	//If non allowed changes on CRD, we exit until an operator fix the CRD
+	//If non allowed changes on CRD, we return here
 	if rcc.CheckNonAllowedChanges(cc, status) {
 		return requeue30, nil
 	}

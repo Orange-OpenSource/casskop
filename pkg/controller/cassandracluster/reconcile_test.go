@@ -30,11 +30,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/ghodss/yaml"
-	"github.com/stretchr/testify/assert"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	"github.com/ghodss/yaml"
+	"github.com/r3labs/diff"
+	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -610,4 +611,26 @@ func TestInitClusterWithDeletePVC(t *testing.T) {
 	cc.Spec.DeletePVC = false
 	updateDeletePvcStrategy(cc)
 	assert.Equal([]string{}, cc.Finalizers)
+}
+
+func TestHasChange(t *testing.T) {
+	assert := assert.New(t)
+	changelog := []diff.Change{
+		{Type: diff.DELETE, Path: []string{"DC", "1", "Rack", "2", "Name"}},
+		{Type: diff.DELETE, Path: []string{"DC", "1", "Rack", "2", "RollingRestart"}},
+		{Type: diff.DELETE, Path: []string{"DC", "1", "Rack", "2", "RollingPartition"}},
+		{Type: diff.UPDATE, Path: []string{"DC", "2", "Name"}},
+		{Type: diff.UPDATE, Path: []string{"DC", "2", "Rack", "2", "Name"}},
+		{Type: diff.UPDATE, Path: []string{"DC", "2", "Rack", "2", "RollingRestart"}},
+		{Type: diff.UPDATE, Path: []string{"DC", "2", "Rack", "2", "RollingPartition"}},
+	}
+
+	assert.False(hasChange(changelog, diff.DELETE, "DC"))
+	assert.True(hasChange(changelog, diff.DELETE))
+	assert.False(hasChange(changelog, diff.DELETE, "DC", "DC.Rack"))
+	assert.True(hasChange(changelog, diff.DELETE, "-DC", "DC.Rack"))
+	assert.True(hasChange(changelog, diff.UPDATE, "DC", "DC.Rack"))
+	assert.True(hasChange(changelog, diff.UPDATE, "DC"))
+	assert.False(hasChange(changelog, diff.UPDATE, "-DC", "DC.Rack"))
+	assert.False(hasChange(changelog, diff.CREATE))
 }
