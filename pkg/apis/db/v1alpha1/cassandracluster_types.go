@@ -117,7 +117,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
-		if cc.Status.SeedList == nil{
+		if cc.Status.SeedList == nil {
 			cc.Status.SeedList = cc.InitSeedList()
 		}
 		changed = true
@@ -126,7 +126,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 	}
 	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
-		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests;
+		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
 		changed = true
 	}
 
@@ -196,7 +196,7 @@ func (cc *CassandraCluster) getDCNumTokensPerRacksFromIndex(dc int) int32 {
 	return *storeDC.NumTokens
 }
 
-//GetRAckSize return the numbers of the Rack in the DCat indice dc
+//GetRackSize return the numbers of the Rack in the DC at indice dc
 func (cc *CassandraCluster) GetRackSize(dc int) int {
 	if dc >= cc.GetDCSize() {
 		return 0
@@ -446,7 +446,6 @@ func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
 	return nodesPerRacks
 }
-
 
 //GetDCNodesPerRacksFromDCRackName send NodesPerRack used for the given dcRackName
 func (cc *CassandraCluster) GetDCRackNames() []string {
