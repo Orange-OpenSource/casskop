@@ -220,7 +220,7 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 	includedFiltersFound := map[string]bool{}
 	excludedFiltersFound := map[string]bool{}
 	for _, cl := range changelog {
-		if cl.Type == changeType {
+		if cl.Type == changeType && cl.Path[2] != "NodesPerRacks" {
 			if noPaths {
 				return true
 			}
