@@ -413,8 +413,8 @@ func TestCheckNonAllowedChanges_Remove2DC(t *testing.T) {
 
 }
 
-//remove only a rack is not allowed
-func TestCheckNonAllowedChanges_RemoveRack(t *testing.T) {
+//Updating racks is not allowed
+func TestCheckNonAllowedChanges_UpdateRack(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
@@ -426,6 +426,21 @@ func TestCheckNonAllowedChanges_RemoveRack(t *testing.T) {
 	cc.Spec.Topology.DC[0].Rack.Remove(1)
 
 	res := rcc.CheckNonAllowedChanges(cc, status)
+	assert.Equal(true, res)
+
+	//Topology must have been restored
+	assert.Equal(3, cc.GetDCSize())
+
+	//Topology must have been restored
+	assert.Equal(4, cc.GetDCRackSize())
+
+	needUpdate = false
+
+	//Remove 1 rack/dc at specified index
+	cc.Spec.Topology.DC[0].Rack = append(cc.Spec.Topology.DC[0].Rack, api.Rack{Name: "ForbiddenRack"})
+
+	res = rcc.CheckNonAllowedChanges(cc, status)
+
 	assert.Equal(true, res)
 
 	//Topology must have been restored
@@ -446,12 +461,12 @@ func TestCheckNonAllowedChanges_RemoveDCNot0(t *testing.T) {
 	rcc.updateCassandraStatus(cc, status)
 	assert.Equal(4, cc.GetDCRackSize())
 
-	//Remove 1 rack/dc at specified index
+	//Remove DC at specified index
 	cc.Spec.Topology.DC.Remove(1)
 
 	res := rcc.CheckNonAllowedChanges(cc, status)
 
-	//Change not allowed because dc still has nodes
+	//Change not allowed because DC still has nodes
 	assert.Equal(true, res)
 
 	//Topology must have been restored
@@ -581,7 +596,7 @@ func TestCheckNonAllowedChanges_ScaleDown(t *testing.T) {
 
 	res := rcc.CheckNonAllowedChanges(cc, status)
 	rcc.updateCassandraStatus(cc, status)
-	//Change not allowed because dc still has nodes
+	//Change not allowed because DC still has nodes
 	assert.Equal(true, res)
 
 	//We have restore nodesperrack
@@ -599,7 +614,6 @@ func TestCheckNonAllowedChanges_ScaleDown(t *testing.T) {
 
 	//Nodes Per Rack is still 0
 	assert.Equal(int32(0), *cc.Spec.Topology.DC[1].NodesPerRacks)
-
 }
 
 func TestInitClusterWithDeletePVC(t *testing.T) {
