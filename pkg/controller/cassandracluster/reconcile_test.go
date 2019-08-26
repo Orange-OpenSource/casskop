@@ -441,7 +441,6 @@ func TestCheckNonAllowedChanges_RemoveDCNot0(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
-	//Simulate old spec with nodes at 0
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
@@ -587,8 +586,8 @@ func TestCheckNonAllowedChanges_ScaleDown(t *testing.T) {
 
 	//--Step 3
 	//Changes replicated keyspaces (remove demo1 and demo2 which still have replicated datas
-	//all Keyspace is global test var
-	allKeyspaces = []string{"system", "system_auth", "system_schema", "truc", "muche"}
+	//allKeyspaces is a global test variable
+	allKeyspaces = []string{"system", "system_auth", "system_schema", "something", "else"}
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nb
 
 	res = rcc.CheckNonAllowedChanges(cc, status)
