@@ -512,6 +512,14 @@ func TestCheckNonAllowedChanged_ScaleDown(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cassandra-demo-dc2-rack1-0",
 			Namespace: "ns",
+			Labels: map[string]string{
+				"app": "cassandracluster",
+				"cassandracluster": "cassandra-demo",
+				"cassandraclusters.db.orange.com.dc": "dc2",
+				"cassandraclusters.db.orange.com.rack": "rack1",
+				"cluster": "k8s.pic",
+				"dc-rack": "dc2-rack1",
+			},
 		},
 	}
 	pod.Status.Phase = v1.PodRunning

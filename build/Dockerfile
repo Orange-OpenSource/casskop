@@ -1,7 +1,7 @@
 FROM golang:1.11 as build
 
-ADD . /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
-WORKDIR /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+ADD . cassandra-k8s-operator
+WORKDIR cassandra-k8s-operator
 #
 RUN useradd -u 1000 cassandra-k8s-operator
 RUN go get ./tools/health

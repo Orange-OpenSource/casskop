@@ -25,7 +25,7 @@ DOCKER_REPO_BASE_TEST ?= orangeopensource
 # Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
 
-BUILD_IMAGE := orangeopensource/casskop-build
+BUILD_IMAGE ?= orangeopensource/casskop-build
 
 TELEPRESENCE_REGISTRY:=datawire
 KUBESQUASH_REGISTRY:=
@@ -118,17 +118,15 @@ UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=t
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-GET_DEPS_CMD := dep ensure -v
 MOCKS_CMD := go generate ./mocks
 
 # environment dirs
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.7.0
+OPERATOR_SDK_VERSION=v0.9.0
 # workdir
-WORKDIR := /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
-#WORKDIR := $(PWD)
+WORKDIR := /go/cassandra-k8s-operator
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -165,7 +163,6 @@ get-version:
 clean:
 	@rm -rf $(OUT_BIN) || true
 	@rm -f apis/cassandracluster/v1alpha1/zz_generated.deepcopy.go || true
-	@rm -rf vendor || true
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)
@@ -180,7 +177,7 @@ build:
 	operator-sdk version
 	operator-sdk generate k8s
 	echo "Build Cassandra Operator"
-	operator-sdk build $(REPOSITORY):$(VERSION) --docker-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
@@ -190,36 +187,12 @@ endif
 .PHONY: docker-build
 docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
-	docker run --rm -v $(PWD):$(WORKDIR) --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
+	docker run --rm -v $(PWD):$(WORKDIR) --env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
 	echo "Build Cassandra Operator"
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) --docker-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) --env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
-
-
-
-.PHONY: docker-get-deps
-docker-get-deps:
-	echo "Get Dependencies"
-	docker run --rm -v $(PWD):$(WORKDIR) --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(GET_DEPS_CMD)'
-
-.PHONY: get-deps
-get-deps:
-	@echo "Get Dependencies"
-	@if [ -d "vendor" ]; then \
-	  echo "vendor already exists, do Nothing of 'make force-get-deps' to force"; \
-	else \
-	  $(GET_DEPS_CMD); \
-	fi
-
-.PHONY: force-get-deps
-force-get-deps:
-	@echo "Get Dependencies"
-	$(GET_DEPS_CMD)
-
-
-
 
 # Build the docker development environment
 .PHONY: build-ci-image
@@ -257,7 +230,7 @@ circleci-validate:
 # Run a shell into the development docker image
 .PHONY: shell
 shell: docker-dev-build
-	docker run -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
+	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
 
 
 debug-port-forward:
@@ -322,7 +295,7 @@ release: tag image publish
 # Test stuff in dev
 .PHONY: docker-unit-test
 docker-unit-test:
-	docker run --rm -v $(PWD):$(WORKDIR) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
+	docker run  --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
 
 .PHONY: unit-test
 unit-test:
@@ -333,8 +306,9 @@ unit-test:
 
 .PHONY: docker-go-lint
 docker-go-lint:
-	docker run -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(GO_LINT_CMD)'
+	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(GO_LINT_CMD)'
 
+# golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
 .PHONY: go-lint
 go-lint:
 	$(GO_LINT_CMD)
@@ -342,7 +316,7 @@ go-lint:
 
 .PHONY: mocks
 mocks: 
-	docker run -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(MOCKS_CMD)'
+	docker run --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(MOCKS_CMD)'
 
 .PHONY: deps-development
 # Test if the dependencies we need to run this Makefile are installed
@@ -380,7 +354,7 @@ e2e:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 docker-e2e:
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 e2e-scaleup:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleUp$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -407,7 +381,7 @@ endif
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 docker-e2e-test-fix:
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e '
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e '
 
 #execute Test filter based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
@@ -420,7 +394,7 @@ docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	docker run --rm --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 .PHONY: e2e-test-fix
 e2e-test-fix-scale-down:

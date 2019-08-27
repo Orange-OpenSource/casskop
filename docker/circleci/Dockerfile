@@ -97,7 +97,6 @@ RUN mkdir -p $GOPATH/src/github.com/operator-framework \
     && go get -u github.com/operator-framework/operator-sdk || true \
     && cd $GOPATH/src/github.com/operator-framework/operator-sdk \
     && git checkout $OPERATOR_SDK_VERSION \
-    && make dep \
     && make install \
     && make clean && rm -rf vendor && rm -rf .git \
     && go clean \
@@ -110,6 +109,6 @@ RUN mkdir -p $GOPATH/src/github.com/operator-framework \
 
 #USER circleci
 
-WORKDIR /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
+WORKDIR cassandra-k8s-operator
 
 CMD ["/bin/sh"]
