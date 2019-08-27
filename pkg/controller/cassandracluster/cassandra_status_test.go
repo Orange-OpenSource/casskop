@@ -152,73 +152,83 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
-	dcRackNames := cc.GetDCRackNames()
-	for _, dcRackName := range dcRackNames {
-		//Update Statefulset fake status
-		sts := &appsv1.StatefulSet{}
-		err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
-			Namespace: cc.Namespace},
-			sts)
-		if err != nil {
-			t.Fatalf("get statefulset: (%v)", err)
-		}
-		// Check if the quantity of Replicas for this deployment is equals the specification
-		dsize := *sts.Spec.Replicas
-		if dsize != 1 {
-			t.Errorf("dep size (%d) is not the expected size (%d)", dsize, cc.Spec.NodesPerRacks)
-		}
-		//Now simulate sts to be ready for CassKop
-		sts.Status.Replicas = *sts.Spec.Replicas
-		sts.Status.ReadyReplicas = *sts.Spec.Replicas
-		rcc.UpdateStatefulSet(sts)
+	for _, dc := range cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
+				Namespace: cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			// Check if the quantity of Replicas for this deployment is equals the specification
+			dsize := *sts.Spec.Replicas
+			if dsize != 1 {
+				t.Errorf("dep size (%d) is not the expected size (%d)", dsize, cc.Spec.NodesPerRacks)
+			}
+			//Now simulate sts to be ready for CassKop
+			sts.Status.Replicas = *sts.Spec.Replicas
+			sts.Status.ReadyReplicas = *sts.Spec.Replicas
+			rcc.UpdateStatefulSet(sts)
 
-		//Create Statefulsets associated fake Pods
-		pod := &v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Pod",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "template",
-				Namespace: namespace,
-			},
-			Status: v1.PodStatus{
-				Phase: v1.PodRunning,
-				ContainerStatuses: []v1.ContainerStatus{
-					v1.ContainerStatus{
-						Name:  "cassandra",
-						Ready: true,
+			//Create Statefulsets associated fake Pods
+			pod := &v1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "template",
+					Namespace: namespace,
+					Labels: map[string]string{
+						"cluster": "k8s.pic",
+						"dc-rack": dcRackName,
+						"cassandraclusters.db.orange.com.dc": dc.Name,
+						"cassandraclusters.db.orange.com.rack": rack.Name,
+						"app": "cassandracluster",
+						"cassandracluster": "cassandra-demo",
 					},
 				},
-			},
-		}
-
-		for i := 0; i < int(sts.Status.Replicas); i++ {
-			pod.Name = sts.Name + strconv.Itoa(i)
-			err = rcc.CreatePod(pod)
-			if err != nil {
-				t.Fatalf("can't create pod: (%v)", err)
+				Status: v1.PodStatus{
+					Phase: v1.PodRunning,
+					ContainerStatuses: []v1.ContainerStatus{
+						v1.ContainerStatus{
+							Name:  "cassandra",
+							Ready: true,
+						},
+					},
+				},
 			}
-		}
 
-		//We recall Reconcile to update Next rack
-		res, err = rcc.Reconcile(req)
-		if err != nil {
-			t.Fatalf("reconcile: (%v)", err)
+			for i := 0; i < int(sts.Status.Replicas); i++ {
+				pod.Name = sts.Name + strconv.Itoa(i)
+				if err = rcc.CreatePod(pod); err != nil {
+					t.Fatalf("can't create pod: (%v)", err)
+				}
+			}
+
+			//We recall Reconcile to update Next rack
+			if res, err = rcc.Reconcile(req); err != nil {
+				t.Fatalf("reconcile: (%v)", err)
+			}
 		}
 	}
 
 	//Check creation Statuses
-	err = rcc.client.Get(context.TODO(), req.NamespacedName, cc)
-	if err != nil {
+	if err = rcc.client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning)
 
-	for _, dcRackName := range dcRackNames {
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone)
+	for _, dcRackName := range cc.GetDCRackNames() {
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning,
+			"dc-rack: %s", dcRackName)
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial,
+			"dc-rack: %s", dcRackName)
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone,
+			"dc-rack %s", dcRackName)
 	}
 	assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial)
 	assert.Equal(cc.Status.LastClusterActionStatus, api.StatusDone)
