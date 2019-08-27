@@ -186,8 +186,9 @@ func generatePaths(s string) []string {
 	return strings.Split(s, ".")
 }
 
-func lookForFilter(path []string, filtersRule [][]string, filtersFound *map[string]bool) {
-	for _, filter := range filtersRule {
+// lookForFilter checks if filters are found in path and add the information to filtersFound if that's the case
+func lookForFilter(path []string, filters [][]string, filtersFound *map[string]bool) {
+	for _, filter := range filters {
 		if 2*len(filter)+1 == len(path) {
 			currentPath := path[0]
 			for i := 2; i < len(path)-1; i += 2 {
@@ -202,9 +203,10 @@ func lookForFilter(path []string, filtersRule [][]string, filtersFound *map[stri
 	}
 }
 
-// hasChange returns if there a the changes with the type provided and only for all paths
-// paths must be provided in ascending order like ('DC', 'DC.Rack') in order to work
-// ('DC', '-DC.Rack') means a DC change without a DC.Rack change
+// hasChange returns if there is a change with the type provided and matching all paths
+// paths can be prepended with a - to specify  that it should not be found
+// for instance ('DC', '-DC.Rack') means a DC change without a DC.Rack change
+// changes of property NodesPerRacks are skipped
 func hasChange(changelog diff.Changelog, changeType string, paths ...string) bool {
 	regexPath := regexp.MustCompile("^\\-([^\\+]*)$")
 	if len(changelog) == 0 {
@@ -221,20 +223,20 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 		includeFilters = append(includeFilters, generatePaths(path))
 	}
 	idx := "-1"
-	includedFiltersFound := map[string]bool{}
-	excludedFiltersFound := map[string]bool{}
+	var includedFiltersFound, excludedFiltersFound map[string]bool
 	for _, cl := range changelog {
 		if cl.Type == changeType && cl.Path[2] != "NodesPerRacks" {
 			if noPaths {
 				return true
 			}
+
 			// We reset counters when it's a new index
 			if cl.Path[1] != idx {
 				idx = cl.Path[1]
 				includedFiltersFound = map[string]bool{}
 				excludedFiltersFound = map[string]bool{}
-
 			}
+
 			// We look for all matching filters
 			lookForFilter(cl.Path, includeFilters, &includedFiltersFound)
 
