@@ -126,8 +126,7 @@ APP_DIR := build/Dockerfile
 
 OPERATOR_SDK_VERSION=v0.9.0
 # workdir
-WORKDIR := /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator
-#WORKDIR := $(PWD)
+WORKDIR := /go/cassandra-k8s-operator
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
