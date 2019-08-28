@@ -45,9 +45,6 @@ const (
 	defaultJvmMaxHeap      = "2048M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
-	passwordAuthenticator = "PasswordAuthenticator"
-	passwordAuthorizer    = "CassandraAuthorizer"
-
 	livenessInitialDelaySeconds int32 = 120
 	livenessHealthCheckTimeout  int32 = 20
 	livenessHealthCheckPeriod   int32 = 10
@@ -354,14 +351,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 								v1.EnvVar{
 									Name:  "CASSANDRA_AUTO_BOOTSTRAP",
 									Value: "true",
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_AUTHENTICATOR",
-									Value: passwordAuthenticator,
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_AUTHORIZER",
-									Value: passwordAuthorizer,
 								},
 								v1.EnvVar{
 									Name: "POD_IP",
