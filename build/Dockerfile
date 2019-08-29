@@ -6,7 +6,7 @@ RUN useradd -u 1000 cassandra-k8s-operator
 RUN mkdir -p /tmp && chown cassandra-k8s-operator /tmp
 
 ADD tools tools
-RUN cd tools/health && go build -o ../../health -mod vendor main.go 
+RUN cd tools/health && go build -o ../../health main.go 
 
 
 ADD . cassandra-k8s-operator
