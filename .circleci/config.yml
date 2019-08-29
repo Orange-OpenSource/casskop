@@ -121,11 +121,11 @@ jobs:
 
     - run:
         name: Download dependencies
-        command: go mod download
+        command: if [ ! -d vendor ]; then go mod download; fi
 
     - run:
         name: Vendor dependencies
-        command: go mod vendor
+        command: if [ ! -d vendor ]; then go mod vendor; fi
 
     - run:
         name: Build Cassandra Operator
@@ -168,7 +168,7 @@ jobs:
         at: ./
     - run:
         name: Unit Tests
-        command: make unit-test
+        command: make unit-test-with-vendor
 
     - store_artifacts:
         path: coverage.html
