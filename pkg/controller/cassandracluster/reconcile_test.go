@@ -638,4 +638,13 @@ func TestHasChange(t *testing.T) {
 	assert.True(hasChange(changelog, diff.UPDATE, "DC"))
 	assert.False(hasChange(changelog, diff.UPDATE, "-DC", "DC.Rack"))
 	assert.False(hasChange(changelog, diff.CREATE))
+
+	changelog = []diff.Change{
+		{Type: diff.UPDATE, Path: []string{"DC", "1", "Rack", "2", "RollingRestart"}},
+		{Type: diff.UPDATE, Path: []string{"DC", "1", "NodesPerRacks"}},
+	}
+
+	assert.False(hasChange(changelog, diff.UPDATE, "DC"))
+	assert.False(hasChange(changelog, diff.UPDATE, "DC.Rack"))
+
 }
