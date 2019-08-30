@@ -89,8 +89,6 @@ orbs:
               command: |
                 kubectl get nodes
                 kubectl get pods
-                ls -la
-                ls -la ~/
 
           - run:
               name: Operator acceptance test
@@ -120,6 +118,14 @@ jobs:
           - build
 
     - run:
+        name: Download dependencies
+        command: if [ ! -d vendor ]; then go mod download; fi
+
+    - run:
+        name: Vendor dependencies
+        command: if [ ! -d vendor ]; then go mod vendor; fi
+
+    - run:
         name: Build Cassandra Operator
         command: make build
 
@@ -129,6 +135,7 @@ jobs:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+          - vendor
 
     - deploy:
         name: Push image to Docker Hub
@@ -147,7 +154,7 @@ jobs:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-
+          - vendor
 
   unit-test:
     working_directory: /home/circleci/cassandra-k8s-operator
@@ -159,7 +166,7 @@ jobs:
         at: ./
     - run:
         name: Unit Tests
-        command: make unit-test
+        command: make unit-test-with-vendor
 
     - store_artifacts:
         path: coverage.html
