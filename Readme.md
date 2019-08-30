@@ -144,11 +144,28 @@ created
 
 > We are looking where to store our helm in the future
 
+If it is the 1rst time you try to deploy a chart with [Helm](https://helm.sh/), you may need to [install](https://helm.sh/docs/install/) the helm client and tiller, and create the service account for tiller (more informations about how to create a tiller service account [here](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/#use-case-2-enable-helm-in-your-cluster).
+
+```
+helm init --history-max 200
+kubectl create serviceaccount tiller --namespace kube-system
+kubectl create -f tiller-clusterrolebinding.yaml
+helm init --service-account tiller --upgrade
+```
+
+
 Add the Helm incubator repo if you do not already have it:
 
 ```
 helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
 ```
+
+Get the latest information about charts from the chart repositories.
+
+```
+helm repo update
+```
+
 
 Helm is available in the official helm/charts/incubator:
 
