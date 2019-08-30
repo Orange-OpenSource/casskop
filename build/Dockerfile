@@ -1,16 +1,22 @@
-FROM golang:1.11 as build
+FROM golang:1.12 as build
+
+ENV GO111MODULE=on
+
+RUN useradd -u 1000 cassandra-k8s-operator
+RUN mkdir -p /tmp && chown cassandra-k8s-operator /tmp
+
+ADD tools tools
+RUN cd tools/health && go build -o ../../health main.go 
+
 
 ADD . cassandra-k8s-operator
 WORKDIR cassandra-k8s-operator
-#
-RUN useradd -u 1000 cassandra-k8s-operator
-RUN go get ./tools/health
-RUN mkdir -p /tmp && chown cassandra-k8s-operator /tmp
+
 
 FROM gcr.io/distroless/base
 
 COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/bin/health /
+COPY --from=build /go/health /
 COPY --from=build /tmp /tmp
 
 LABEL org.opencontainers.image.documentation="https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/README.md"

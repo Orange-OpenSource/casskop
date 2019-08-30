@@ -2,6 +2,10 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.3.3
+
+- upgrade to operator-sdk 0.9.0 & go modules (thanks @jsanda)
+
 ## 0.3.2
 
 - Released version
