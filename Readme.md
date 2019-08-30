@@ -144,7 +144,7 @@ created
 
 > We are looking where to store our helm in the future
 
-If it is the 1rst time you try to deploy a chart with [Helm](https://helm.sh/), you may need to [install](https://helm.sh/docs/install/) the helm client and tiller, and create the service account for tiller (more informations about how to create a tiller service account [here](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/#use-case-2-enable-helm-in-your-cluster).
+If it is the 1rst time you deploy a chart with [Helm](https://helm.sh/), you may need to [install](https://helm.sh/docs/install/) the helm client and tiller, and create the service account for tiller (more informations about how to create a tiller service account [here](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/#use-case-2-enable-helm-in-your-cluster).
 
 ```
 helm init --history-max 200
