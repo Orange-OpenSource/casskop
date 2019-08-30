@@ -18,6 +18,8 @@ if [ "$1" == "create" ]; then
 
     kubectl create namespace local-provisioner
     kubectl apply -f samples/kind/provisioner_generated.yaml
+    kubectl patch storageclass local-storage  -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+    kubectl patch storageclass standard -p '{"metadata": {"annotations":{"storageclass.beta.kubernetes.io/is-default-class":"false", "storageclass.kubernetes.io/is-default-class":"false"}}}'
 
 fi
 
