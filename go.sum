@@ -339,6 +339,8 @@ github.com/prometheus/procfs v0.0.0-20190403104016-ea9eea638872/go.mod h1:TjEm7z
 github.com/prometheus/procfs v0.0.2/go.mod h1:TjEm7ze935MbeOT/UhFTIMYKhuLP4wbCsTZCD3I8kEA=
 github.com/prometheus/procfs v0.0.3 h1:CTwfnzjQ+8dS6MhHHu4YswVAD99sL2wjPqP+VkURmKE=
 github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDaekg4FpcdQ=
+github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad h1:j5pg/OewZJyE6i3hIG4v3eQUvUyFdQkC8Nd/mjaEkxE=
+github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad/go.mod h1:ozniNEFS3j1qCwHKdvraMn1WJOsUxHd7lYfukEIS4cs=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/robfig/cron v0.0.0-20170526150127-736158dc09e1/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
