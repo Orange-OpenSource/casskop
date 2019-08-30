@@ -85,7 +85,7 @@ else
 		ifeq ($(BRANCH),master)
 	    E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):latest
     else
-	    E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(BRANCH)
+	    E2EIMAGE := $(DOCKER_REPO_BASE_TEST)/$(IMAGE_NAME):$(VERSION)
     endif
   endif
 endif
@@ -95,7 +95,9 @@ e2eimage:
 
 params:
 	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
+	@echo "CIRCLE_TAG = '$(CIRCLE_TAG)'"
 	@echo "Version = '$(VERSION)'"
+	@echo "E2EIMAGE = '$(E2EIMAGE)'"
 
 # Shell to use for running scripts
 SHELL := $(shell which bash)
