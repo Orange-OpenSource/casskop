@@ -19,6 +19,7 @@ require (
 	github.com/operator-framework/operator-sdk v0.9.0
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
+	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5 // indirect
 	github.com/stretchr/testify v1.3.0
