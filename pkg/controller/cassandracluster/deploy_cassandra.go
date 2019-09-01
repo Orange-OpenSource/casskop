@@ -39,7 +39,7 @@ const (
 	cassandraJMXName             = "jmx-port"
 	JolokiaPort                  = 8778
 	JolokiaPortName              = "jolokia"
-	exporterCassandraJmxPort     = 1234
+	exporterCassandraJmxPort     = 9500
 	exporterCassandraJmxPortName = "promjmx"
 )
 
