@@ -37,19 +37,15 @@ import (
 
 type finalizedOp struct {
 	err           error
-	cc            *api.CassandraCluster
 	dcRackName    string
 	pod           v1.Pod
-	status        *api.CassandraClusterStatus
 	operationName string
 }
 
 type op struct {
-	Action func(*ReconcileCassandraCluster, string, *api.CassandraCluster, string, v1.Pod,
-		*api.CassandraClusterStatus) error
+	Action     func(*ReconcileCassandraCluster, string, *api.CassandraCluster, string, v1.Pod) error
 	Monitor    func(*JolokiaClient) (bool, error)
-	PostAction func(*ReconcileCassandraCluster, *api.CassandraCluster, string, v1.Pod,
-		*api.CassandraClusterStatus) error
+	PostAction func(*ReconcileCassandraCluster, *api.CassandraCluster, string, v1.Pod) error
 }
 
 var podOperationMap = map[string]op{
@@ -64,8 +60,7 @@ const continueResyncLoop bool = false
 const monitorSleepDelay = 10 * time.Second
 const deletedPvcTimeout = 30 * time.Second
 
-var chanRunningOp = make(chan finalizedOp)
-var runningFinalizedRoutine bool
+var chanRunningOp = make(chan finalizedOp, 100)
 
 func randomPodOperationKey() string {
 	r := rand.Intn(len(podOperationMap))
@@ -89,7 +84,7 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 	var err error
 
 	// If we ask a ScaleDown, We can't update the Statefulset before the nodetool decommission has finished
-	if rcc.weAreScalingDown(dcRackStatus){
+	if rcc.weAreScalingDown(dcRackStatus) {
 		//If a Decommission is Ongoing, we want to break the Resyncloop until the Decommission is succeed
 		breakResyncloop, err = rcc.ensureDecommission(cc, dcName, rackName, status)
 		if err != nil {
@@ -228,23 +223,17 @@ func (rcc *ReconcileCassandraCluster) startOperation(cc *api.CassandraCluster, s
 
 // ensureOperation goal is to find pods with Labels :
 //  - operation-name=xxxx and operation-status=To-Do
-// This method is asynchronous
 func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	podsSlice, checkOnly := rcc.getPodsToWorkOn(cc, dcName, rackName, status, operationName)
-
-	if !runningFinalizedRoutine {
-		go rcc.finalizeOperations()
-		runningFinalizedRoutine = true
-	}
 
 	// For each pod where we need to run the operation on
 	for _, pod := range podsSlice {
 		hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 		// We check if an operation is running
 		if checkOnly {
-			go rcc.monitorOperation(hostName, cc, dcRackName, pod, status, operationName)
+			go rcc.monitorOperation(hostName, cc, dcRackName, pod, operationName)
 			continue
 		}
 		err := rcc.startOperation(cc, status, pod, dcRackName, operationName)
@@ -269,17 +258,18 @@ func (rcc *ReconcileCassandraCluster) finalizeOperations() {
 
 func (rcc *ReconcileCassandraCluster) runOperation(operationName, hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod,
 	status *api.CassandraClusterStatus) {
-	err := podOperationMap[operationName].Action(rcc, hostName, cc, dcRackName, pod, status)
+	err := podOperationMap[operationName].Action(rcc, hostName, cc, dcRackName, pod)
+
 	// If there is an error we finalize the operation but skip any existing post action
 	if err != nil {
-		chanRunningOp <- finalizedOp{err, cc, dcRackName, pod, status, operationName}
+		chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
 		return
 	}
 	postAction := podOperationMap[operationName].PostAction
 	if postAction != nil {
-		err = postAction(rcc, cc, dcRackName, pod, status)
+		err = postAction(rcc, cc, dcRackName, pod)
 	}
-	chanRunningOp <- finalizedOp{err, cc, dcRackName, pod, status, operationName}
+	chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
 }
 
 /* ensureDecommission will ensure that the Last Pod of the StatefulSet will be decommissionned
@@ -414,7 +404,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	//If Pod is unschedulable, we bypass decommission (cassandra is not running)
 	if lastPod.Status.Phase == v1.PodPending &&
 		lastPod.Status.Conditions != nil &&
-		lastPod.Status.Conditions[0].Reason == "Unschedulable"{
+		lastPod.Status.Conditions[0].Reason == "Unschedulable" {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name}).Warn("ScaleDown detected on a pending Pod. we don't launch decommission")
 		podLastOperation.Status = api.StatusFinalizing
@@ -600,27 +590,29 @@ func (rcc *ReconcileCassandraCluster) finalizeOperation(err error, cc *api.Cassa
 	rcc.updatePodLastOperation(cc.Name, dcRackName, pod.Name, strings.Title(operationName), status, err)
 
 	for {
-		err = rcc.UpdatePodLabel(&pod, labels)
-		if err != nil {
+		if err = rcc.UpdatePodLabel(&pod, labels); err != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
-				"labels": labels}).Error("Can't update labels")
+				"labels": labels, "error": err}).Error("Can't update labels")
 			continue
 		}
-		if rcc.updateCassandraStatus(ccRefreshed, status) == nil {
+		if err = rcc.updateCassandraStatus(ccRefreshed, status); err == nil {
 			break
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
-			"status": status}).Debug("Got an error. Get new version of Cassandra Cluster.")
-		for rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) != nil {
+			"status": status, "error": err}).Debug("Got an error. Getting a new version of Cassandra Cluster")
+		if rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
-				"status": status}).Debug("Can't get new version of Cassandra Cluster. Try again")
-			time.Sleep(retryInterval)
+				"status": status}).Debug("Got a new version of Cassandra Cluster")
+			continue
 		}
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
+			"status": status}).Debug("Can't get new version of Cassandra Cluster. Will try again")
+		time.Sleep(retryInterval)
 	}
 }
 
 func (rcc *ReconcileCassandraCluster) monitorOperation(hostName string, cc *api.CassandraCluster, dcRackName string,
-	pod v1.Pod, status *api.CassandraClusterStatus, operationName string) {
+	pod v1.Pod, operationName string) {
 	// Wait until there are no more cleanup compactions
 	for {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
@@ -644,21 +636,19 @@ func (rcc *ReconcileCassandraCluster) monitorOperation(hostName string, cc *api.
 	postAction := podOperationMap[operationName].PostAction
 	var err error
 	if postAction != nil {
-		err = postAction(rcc, cc, dcRackName, pod, status)
+		err = postAction(rcc, cc, dcRackName, pod)
 	}
-	chanRunningOp <- finalizedOp{err, cc, dcRackName, pod, status, operationName}
+	chanRunningOp <- finalizedOp{err, dcRackName, pod, operationName}
 }
 
 func (rcc *ReconcileCassandraCluster) runUpgradeSSTables(hostName string, cc *api.CassandraCluster, dcRackName string,
-	pod v1.Pod, status *api.CassandraClusterStatus) error {
+	pod v1.Pod) error {
 	var err error
 	operation := strings.Title(api.OperationUpgradeSSTables)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
-	// Add the operatorName to the last pod operation in case the operator pod is replaced
-	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
-	rcc.updateCassandraStatus(cc, status)
+
 	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err == nil {
@@ -667,8 +657,7 @@ func (rcc *ReconcileCassandraCluster) runUpgradeSSTables(hostName string, cc *ap
 	return err
 }
 
-func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod,
-	status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	var err error
 	var rebuildFrom, labelSet = pod.GetLabels()["operation-argument"]
 	operation := strings.Title(api.OperationRebuild)
@@ -690,9 +679,6 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"datacenter": rebuildFrom, "operation": operation}).Info("Execute the Jolokia Operation")
 
-	// Add the operatorName to the last pod operation in case the operator pod is replaced
-	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
-	rcc.updateCassandraStatus(cc, status)
 	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err == nil {
@@ -701,8 +687,7 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 	return err
 }
 
-func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod,
-	status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	operation := strings.Title(api.OperationRemove)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
@@ -731,10 +716,6 @@ func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.Cassand
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"nodeToRemove": podToRemove, "operation": operation}).Info("Execute the Jolokia Operation")
-
-	// Add the operatorName to the last pod operation in case the operator pod is replaced
-	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
-	rcc.updateCassandraStatus(cc, status)
 
 	var lostPod *v1.Pod
 	var err error
@@ -797,8 +778,7 @@ func (rcc *ReconcileCassandraCluster) waitUntilPvcIsDeleted(namespace, pvcName s
 	return nil
 }
 
-func (rcc *ReconcileCassandraCluster) postRunRemove(cc *api.CassandraCluster, dcRackName string, pod v1.Pod,
-	status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) postRunRemove(cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name}).Info("Post operation start")
 
 	var label, labelSet = pod.GetLabels()["operation-argument"]
@@ -853,8 +833,7 @@ func (rcc *ReconcileCassandraCluster) postRunRemove(cc *api.CassandraCluster, dc
 	return err
 }
 
-func (rcc *ReconcileCassandraCluster) runCleanup(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod,
-	status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) runCleanup(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	var err error
 	operation := strings.Title(api.OperationCleanup)
 
@@ -869,9 +848,6 @@ func (rcc *ReconcileCassandraCluster) runCleanup(hostName string, cc *api.Cassan
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"operation": operation}).Info("Execute the Jolokia Operation")
 
-	// Add the operatorName to the last pod operation in case the operator pod is replaced
-	status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
-	rcc.updateCassandraStatus(cc, status)
 	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
