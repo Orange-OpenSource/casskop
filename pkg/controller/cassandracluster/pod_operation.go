@@ -101,6 +101,9 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 		// we won't be able to label pods to execute an action outside of a scaleup
 		// && status.LastClusterAction == api.ActionScaleUp {
 
+		// Finalize operations that are done
+		rcc.finalizeOperations(cc)
+
 		// We run approximately a different operation each time
 		rcc.ensureOperation(cc, dcName, rackName, status, randomPodOperationKey())
 	}
@@ -242,17 +245,18 @@ func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, 
 				"pod": pod.Name, "err": err}).Debug("Failed to start operation on pod")
 			continue
 		}
+		// Add the operatorName to the last pod operation in case the operator pod is replaced
+		status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 		go rcc.runOperation(operationName, hostName, cc, dcRackName, pod, status)
 	}
 }
 
-func (rcc *ReconcileCassandraCluster) finalizeOperations() {
-	for {
-		select {
-		case op := <-chanRunningOp:
-			rcc.finalizeOperation(op.err, op.cc, op.dcRackName, op.pod, op.status,
-				strings.Title(op.operationName))
-		}
+func (rcc *ReconcileCassandraCluster) finalizeOperations(cc *api.CassandraCluster) {
+	// Finalize all operations here to avoid update conflicts
+	for chanOp := 0; chanOp < len(chanRunningOp); chanOp++ {
+		op := <-chanRunningOp
+		rcc.finalizeOperation(op.err, cc, op.dcRackName, op.pod, &rcc.cc.Status,
+			strings.Title(op.operationName))
 	}
 }
 
@@ -317,9 +321,9 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 
 		//LastPod Still Exists
 		if !PodContainersReady(lastPod) && lastPod.DeletionTimestamp != nil {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-					"lastPod": lastPod.Name}).Infof("We already asked Statefulset to scaleDown, waiting..")
-				return breakResyncLoop, nil
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+				"lastPod": lastPod.Name}).Infof("We already asked Statefulset to scaleDown, waiting..")
+			return breakResyncLoop, nil
 
 		}
 
@@ -576,9 +580,13 @@ func (rcc *ReconcileCassandraCluster) updatePodLastOperation(clusterName, dcRack
 	podLastOperation.Pods = k8s.RemoveString(podLastOperation.Pods, podName)
 }
 
-/* finalizeOperation sets the labels on the pod where ran an operation depending on the error status */
+/* finalizeOperation sets the labels on the pod where ran an operation depending on the error status
+   It also updates status.CassandraRackStatus[dcRackName].PodLastOperation
+*/
 func (rcc *ReconcileCassandraCluster) finalizeOperation(err error, cc *api.CassandraCluster, dcRackName string,
 	pod v1.Pod, status *api.CassandraClusterStatus, operationName string) {
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
+		"status": status, "operation": operationName}).Debug("Finalize operation")
 	labels := map[string]string{"operation-status": api.StatusDone, "operation-end": k8s.LabelTime()}
 
 	if err != nil {
