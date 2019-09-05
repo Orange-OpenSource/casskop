@@ -175,29 +175,29 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 
 	var pvc []v1.PersistentVolumeClaim
 
-	if cc.Spec.DataCapacity != "" {
+	if cc.Spec.DataCapacity == "" {
+		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
+		return pvc
+	}
 
-		pvc = []v1.PersistentVolumeClaim{
-			v1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   "data",
-					Labels: labels,
+	pvc = []v1.PersistentVolumeClaim{
+		v1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "data",
+				Labels: labels,
+			},
+			Spec: v1.PersistentVolumeClaimSpec{
+				AccessModes: []v1.PersistentVolumeAccessMode{
+					v1.ReadWriteOnce,
 				},
-				Spec: v1.PersistentVolumeClaimSpec{
-					AccessModes: []v1.PersistentVolumeAccessMode{
-						v1.ReadWriteOnce,
-					},
 
-					Resources: v1.ResourceRequirements{
-						Requests: v1.ResourceList{
-							"storage": generateResourceQuantity(cc.Spec.DataCapacity),
-						},
+				Resources: v1.ResourceRequirements{
+					Requests: v1.ResourceList{
+						"storage": generateResourceQuantity(cc.Spec.DataCapacity),
 					},
 				},
 			},
-		}
-	} else {
-		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
+		},
 	}
 
 	if cc.Spec.DataStorageClass != "" {
