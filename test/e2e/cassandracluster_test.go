@@ -333,29 +333,28 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 		dcRack := "dc1-" + rack
 		nodeName := fmt.Sprintf("%s-%s-%d", clusterName, dcRack, node)
 
-		//dcRackStatus, found :=cc.Status.CassandraRackStatus[dcRack]
-		_, found :=cc.Status.CassandraRackStatus[dcRack]
+		dcRackStatus, found :=cc.Status.CassandraRackStatus[dcRack]
+		_, found =cc.Status.CassandraRackStatus[dcRack]
 		if !found {
 			return false, fmt.Errorf("Did not find rack status for %s", rack)
 		}
 
-		// Commenting out status checks for now due to https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/98
-		//
-		//if len(dcRackStatus.PodLastOperation.PodsOK) == 0 {
-		//	// The operation has not completed yet
-		//	return false, fmt.Errorf("The cleanup operation has not yet finished for %s", nodeName)
-		//}
-		//
-		//if len(dcRackStatus.PodLastOperation.PodsOK) > 1 {
-		//	// We only scheduled cleanup on one C* node in each rack, so PodsOK should have a length of 1.
-		//	return false, fmt.Errorf("expected cleanup to run on one pod it ran on %d. dcRackStatus.PodLastOperation (+%v)",
-		//		len(dcRackStatus.PodLastOperation.PodsOK), dcRackStatus.PodLastOperation)
-		//}
-		//if dcRackStatus.PodLastOperation.PodsOK[0] != nodeName {
-		//	// Make sure the operation executed against the expected node
-		//	return false, fmt.Errorf("expected cleanup to run on %s but it ran on %s", nodeName,
-		//		dcRackStatus.PodLastOperation.PodsOK[0])
-		//}
+		if len(dcRackStatus.PodLastOperation.PodsOK) == 0 {
+			// The operation has not completed yet
+			t.Logf("The cleanup operation has not yet finished for %s", nodeName)
+			return false, nil
+		}
+
+		if len(dcRackStatus.PodLastOperation.PodsOK) > 1 {
+			// We only scheduled cleanup on one C* node in each rack, so PodsOK should have a length of 1.
+			return false, fmt.Errorf("expected cleanup to run on one pod it ran on %d. dcRackStatus.PodLastOperation (+%v)",
+				len(dcRackStatus.PodLastOperation.PodsOK), dcRackStatus.PodLastOperation)
+		}
+		if dcRackStatus.PodLastOperation.PodsOK[0] != nodeName {
+			// Make sure the operation executed against the expected node
+			return false, fmt.Errorf("expected cleanup to run on %s but it ran on %s", nodeName,
+				dcRackStatus.PodLastOperation.PodsOK[0])
+		}
 
 		pod, err := f.KubeClient.CoreV1().Pods(namespace).Get(nodeName, metav1.GetOptions{})
 		if err != nil {
