@@ -1246,7 +1246,7 @@ data:
     #-XX:NumberOfGCLogFiles=10
     #-XX:GCLogFileSize=10M
     
-    -javaagent:/usr/local/share/prometheus-agent.jar=1234:/etc/cassandra/prometheus.yaml
+    -javaagent:/usr/local/share/prometheus-agent.jar=@/etc/cassandra/exporter.conf
     
     # Debug
     -XX:+PrintCommandLineFlags
