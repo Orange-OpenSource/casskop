@@ -219,7 +219,7 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.True(t, *monitoringService.ObjectMeta.OwnerReferences[0].Controller)
 	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
 
-	assertServiceExposesPort(t, &monitoringService, "promjmx", 1234)
+	assertServiceExposesPort(t, &monitoringService, "promjmx", 9500)
 }
 
 func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {

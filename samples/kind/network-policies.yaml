@@ -120,7 +120,7 @@ spec:
   ingress:
   - ports:
     - protocol: TCP
-      port: 1234
+      port: 9500
   - from:
     - namespaceSelector: {}
       podSelector:

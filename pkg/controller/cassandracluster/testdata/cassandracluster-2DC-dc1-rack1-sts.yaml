@@ -148,7 +148,7 @@ spec:
         - containerPort: 9042
           name: cql
           protocol: TCP
-        - containerPort: 1234
+        - containerPort: 9500
           name: promjmx
           protocol: TCP
         - containerPort: 8778
