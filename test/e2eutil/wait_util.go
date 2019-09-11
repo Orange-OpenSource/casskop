@@ -145,7 +145,7 @@ type CassandraClusterConditionFunc func(cc *api.CassandraCluster) (bool, error)
 // WaitForStatusChange tries a condition func until it returns true, an error, or
 // the timeout is reached. Each invocation of conditionFunc will receive a newly
 // fetched instance of the CassandraCluster.
-func WaitForStatuChange(
+func WaitForStatusChange(
 	t *testing.T,
 	f *framework.Framework,
 	namespace string,
