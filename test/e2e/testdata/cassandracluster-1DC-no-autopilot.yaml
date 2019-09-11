@@ -9,8 +9,6 @@ spec:
   baseImage: orangeopensource/cassandra-image
   version: latest-cqlsh
   imagePullPolicy: "IfNotPresent"
-  imageJolokiaSecret:
-    name: jolokia-auth
   rollingPartition: 0
   dataCapacity: "1Gi"
   hardAntiAffinity: false
