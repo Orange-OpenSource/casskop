@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/sirupsen/logrus"
@@ -384,20 +385,35 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			return false, nil
 		}
 
-		val, exists = pod.Labels["operation-start"]
+		startTimeLabel, exists := pod.Labels["operation-start"]
 		if !exists {
 			t.Logf("Expected to find label operation-start on %s", nodeName)
 			return false, nil
 		}
 
 
-		val, exists = pod.Labels["operation-end"]
+		endTimeLabel, exists := pod.Labels["operation-end"]
 		if !exists {
 			t.Logf("Expected to find label operation-end on %s", nodeName)
 			return false, nil
 		}
 
-		// TODO parse start/end times and verify end > start
+		startTime, err := k8s.LabelTime2Time(startTimeLabel)
+		if err != nil {
+			t.Logf("Failed to parse operation-start label: %s", err)
+			return false, nil
+		}
+
+		endTime, err := k8s.LabelTime2Time(endTimeLabel)
+		if err != nil {
+			t.Logf("Failed to parse operation-end label: %s", err)
+			return false, nil
+		}
+
+		if !endTime.After(startTime) {
+			t.Logf("Expected endTime (%s) to be after startTime (%s)", endTime, startTime)
+			return false, nil
+		}
 
 		return true, nil
 	}
@@ -419,13 +435,13 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack1\n")
-	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack1)
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack1)
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack2\n")
-	err = mye2eutil.WaitForStatuChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack2)
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1 * time.Second, 60 * time.Second, checkRack2)
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
