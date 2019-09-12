@@ -140,6 +140,45 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 	return nil
 }
 
+type CassandraClusterConditionFunc func(cc *api.CassandraCluster) (bool, error)
+
+// WaitForStatusChange tries a condition func until it returns true, an error, or
+// the timeout is reached. Each invocation of conditionFunc will receive a newly
+// fetched instance of the CassandraCluster.
+func WaitForStatusChange(
+	t *testing.T,
+	f *framework.Framework,
+	namespace string,
+	name string,
+	retryInterval time.Duration,
+	timeout time.Duration,
+	conditionFunc CassandraClusterConditionFunc) error {
+
+		cluster :=  &api.CassandraCluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CassandraCluster",
+				APIVersion: "db.orange.com/v1alpha1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		}
+
+		return wait.Poll(retryInterval, timeout, func() (bool, error) {
+			err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					t.Logf("CassandraCluster %s in namespace %s not found: %s", name, namespace, err)
+					return false, nil
+				}
+				return false, err
+			}
+
+			return conditionFunc(cluster)
+		})
+}
+
 func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name string,
 	retryInterval, timeout time.Duration) error {
 
