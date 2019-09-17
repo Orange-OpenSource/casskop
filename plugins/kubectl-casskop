@@ -253,11 +253,11 @@ For more information you can run {plugin} <command> --help
         args = parser.parse_args(sys.argv[2:])
         pod = pod_is_mandatory(args.pod)
         pre_run = f"test \"$(hostname)\" == '{args.pod}' && echo -Dcassandra.replace_address_first_boot={args.previous_ip} >> /etc/cassandra/jvm.options"
-        crds = k("get", "cassandraclusters.db.orange.com")
+        crds = k("get", "cassandracluster")
         if not crds:
             die("No crds found")
         crd = next(c[0] for c in crds if c[0] in args.pod)
-        config_map = k("get", "cassandraclusters.db.orange.com", crd, "--output=jsonpath={.spec.configMapName}")
+        config_map = k("get", "cassandracluster", crd, "--output=jsonpath={.spec.configMapName}")
         if not config_map:
             die("No ConfigMap found")
         result = json.loads(k("get", "configmap", config_map, "-o", "json"))
