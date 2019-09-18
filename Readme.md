@@ -123,10 +123,11 @@ This table shows compatibility between CassKop and associated Cassandra image
 | ---------     | -----------                   |
 | 0.3.1-release | >= 3.11.4-8u212-0.3.1         |
 | 0.3.2-release | >= 3.11.4-8u212-0.3.2-release |
+| 0.3.3-release | >= 3.11.4-8u212-0.3.3-release |
 
 
-> docker image: orangeopensource/cassandra-image:3.11.4-8u212-0.3.2-release
-> or 3.11.4-8u212-0.3.2-release-cqlsh if you need cqlsh
+> docker image: orangeopensource/cassandra-image:3.11.4-8u212-0.3.3-release
+> or 3.11.4-8u212-0.3.3-release-cqlsh if you need cqlsh
 
 
 ## Deploy the Cassandra operator in the cluster
