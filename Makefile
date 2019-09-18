@@ -27,7 +27,7 @@ IMAGE_NAME := $(SERVICE_NAME)
 
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
-TELEPRESENCE_REGISTRY:=datawire
+TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
 MINIKUBE_CONFIG ?= ~/.minikube
@@ -420,6 +420,9 @@ configure-psp:
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml | grep -vE '(annotations|creationTimestamp|resourceVersion|uid|selfLink|last-applied-configuration)' | sed 's/cassandra/cassandra-e2e/' | kubectl apply -f -
 
 
+# Usage example:
+# REPLICATION_FACTOR=3 make cassandra-stress small
+#
 ifeq (cassandra-stress,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
   STRESS_TYPE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -429,8 +432,8 @@ endif
 
 REPLICATION_FACTOR ?= 1
 DC ?= dc1
-USERNAME =? cassandra
-PASSWORD =? cassandra
+USERNAME ?= cassandra
+PASSWORD ?= cassandra
 
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
@@ -462,4 +465,7 @@ endif
 ifdef CONSISTENCY_LEVEL
 	sed -i -e 's/cl=one/cl=$(CONSISTENCY_LEVEL)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
+
+	cat /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+
