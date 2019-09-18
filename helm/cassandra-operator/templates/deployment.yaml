@@ -56,7 +56,7 @@ spec:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
             value: "cassandra-operator"
-{{- if .Values.debug }}
+{{- if .Values.debug.enable }}
           - name: LOG_LEVEL
             value: Debug
 {{- end }}
