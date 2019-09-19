@@ -1037,7 +1037,7 @@ status:
 ```
 
 In this example we see that we allowed only 1 Pod unavailable, and on our cluster we wants to have 14 pods and we only
-have 13 healthy, that's why the PDB won't allow the eviction of an additionary pod.
+have 13 healthy, that's why the PDB won't allow the eviction of an additional pod.
 
 To be able to continue, we need to wait or to make appropriate actions so that the Cassandra cluster won't have any
 unavailable nodes.
@@ -1046,7 +1046,7 @@ unavailable nodes.
 ### K8S host major failure: replacing a cassandra node
 
 In the case of a major host failure, it may not be possible to bring back the node to life. We can in this case
-considere that our cassandra node is lost and we will want to replace it on another host.
+consider that our cassandra node is lost and we will want to replace it on another host.
 
 In this case we may have 2 solutions that will require some manual actions :
 
@@ -1059,9 +1059,6 @@ $ kubectl casskop removenode --pod <node-id>
 ```
 
 This will trigger the PodOperation removenode by setting the appropriate labels on a cassandra Pod.
-
-TODO: link to PodOperation Removenode..
-
 
 2. Once the node is properly removed, we can free the link between the Pod and the failing host by removing the
    associated PodDisruptionBudget
