@@ -120,23 +120,21 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	//updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
 
 	//Things we won't check :
+	//TODO: we should rely on library to ease the comparison between 2 statefulset and to know If we need to apply
+	// change or not cf: https://github.com/banzaicloud/k8s-objectmatcher
 	sts1.Spec.Template.Spec.SchedulerName = sts2.Spec.Template.Spec.SchedulerName
 	sts1.Spec.Template.Spec.DNSPolicy = sts2.Spec.Template.Spec.DNSPolicy // ClusterFirst
 	for i := 0; i < len(sts1.Spec.Template.Spec.Containers); i++ {
-		sts1.Spec.Template.Spec.Containers[i].LivenessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[i].LivenessProbe.SuccessThreshold
-		sts1.Spec.Template.Spec.Containers[i].LivenessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[i].LivenessProbe.FailureThreshold
-		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe.SuccessThreshold
-		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe.FailureThreshold
+		sts1.Spec.Template.Spec.Containers[i].LivenessProbe = sts2.Spec.Template.Spec.Containers[i].LivenessProbe
+		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe
 
 		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePath = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePath
 		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePolicy
 	}
 
 	for i := 0; i < len(sts1.Spec.Template.Spec.InitContainers); i++ {
-		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe.SuccessThreshold = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe.SuccessThreshold
-		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe.FailureThreshold = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe.FailureThreshold
-		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe.SuccessThreshold = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe.SuccessThreshold
-		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe.FailureThreshold = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe.FailureThreshold
+		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe
+		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe
 
 		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePath = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePath
 		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy

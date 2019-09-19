@@ -553,11 +553,12 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	volumeMounts := generateCassandraVolumeMount(cc)
 
 	return v1.Container{
-		Name:         "init-config",
-		Image:        cassandraImage,
-		Command:      []string{"sh", "-c", "cp -vr /etc/cassandra/* /configuration"},
-		VolumeMounts: volumeMounts,
-		Resources:    resources,
+		Name:            "init-config",
+		Image:           cassandraImage,
+		ImagePullPolicy: cc.Spec.ImagePullPolicy,
+		Command:         []string{"sh", "-c", "cp -vr /etc/cassandra/* /configuration"},
+		VolumeMounts:    volumeMounts,
+		Resources:       resources,
 	}
 }
 
@@ -566,11 +567,12 @@ func createCassandraBootstrapperContainer(cc *api.CassandraCluster) v1.Container
 	volumeMounts := generateCassandraVolumeMount(cc)
 
 	return v1.Container{
-		Name:         "bootstrap",
-		Image:        cc.Spec.BootstrapImage,
-		Command:      []string{"sh", "-c", "cp -vr /run.sh /configuration"},
-		VolumeMounts: volumeMounts,
-		Resources:    resources,
+		Name:            "bootstrap",
+		Image:           cc.Spec.BootstrapImage,
+		ImagePullPolicy: cc.Spec.ImagePullPolicy,
+		Command:         []string{"sh", "-c", "cp -vr /run.sh /configuration"},
+		VolumeMounts:    volumeMounts,
+		Resources:       resources,
 	}
 }
 
