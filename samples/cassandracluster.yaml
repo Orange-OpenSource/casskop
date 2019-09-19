@@ -8,8 +8,8 @@ spec:
   baseImage: orangeopensource/cassandra-image
   version: 3.11.4-8u212-0.3.2-release-cqlsh
   configMapName: cassandra-configmap-v1
-  dataCapacity: "20Gi"
-#  dataStorageClass: "local-storage"
+  dataCapacity: "200Mi"
+  dataStorageClass: "local-storage"
   imagepullpolicy: IfNotPresent  
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
