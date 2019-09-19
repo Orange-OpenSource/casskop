@@ -45,6 +45,8 @@ const (
 	defaultJvmMaxHeap      = "2048M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
+	cassandraConfigMapName = "cassandra-config"
+
 	livenessInitialDelaySeconds int32 = 120
 	livenessHealthCheckTimeout  int32 = 20
 	livenessHealthCheckPeriod   int32 = 10
@@ -94,7 +96,7 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 					Name:     cassandraPortName,
 				},
 			},
-			Selector: labels,
+			Selector:                 labels,
 			PublishNotReadyAddresses: true,
 		},
 	}
@@ -132,12 +134,22 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 	}
 }
 
+func emptyDir(name string) v1.Volume {
+	return v1.Volume{
+		Name:         name,
+		VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}},
+	}
+}
+
 func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
-	var v []v1.Volume
+	var v = []v1.Volume{
+		emptyDir("configuration"),
+		emptyDir("extra-lib"),
+	}
 
 	if cc.Spec.ConfigMapName != "" {
 		v = append(v, v1.Volume{
-			Name: "cassandra-config",
+			Name: cassandraConfigMapName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{
@@ -156,18 +168,13 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	var vm []v1.VolumeMount
 
 	if cc.Spec.DataCapacity != "" {
-		vm = append(vm, v1.VolumeMount{
-			Name:      "data",
-			MountPath: "/var/lib/cassandra",
-		})
+		vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
 	}
 
 	if cc.Spec.ConfigMapName != "" {
-		vm = append(vm, v1.VolumeMount{
-			Name:      "cassandra-config",
-			MountPath: "/tmp/cassandra/configmap",
-		})
+		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/tmp/cassandra/configmap"})
 	}
+	vm = append(vm, v1.VolumeMount{Name: "configuration", MountPath: "/configuration"})
 	return vm
 }
 
@@ -212,14 +219,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) *appsv1.StatefulSet {
 	name := cc.GetName()
 	namespace := cc.Namespace
-
-	spec := cc.Spec
-	cassandraImage := k8s.GetCassandraImage(cc)
-	resources := getCassandraResources(spec)
-
 	volumes := generateCassandraVolumes(cc)
-	volumemounts := generateCassandraVolumeMount(cc)
-
 	volumeClaimTemplate := generateVolumeClaimTemplate(cc, labels)
 
 	for _, pvc := range volumeClaimTemplate {
@@ -227,15 +227,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	nodeAffinity := createNodeAffinity(nodeSelector)
-
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
-
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
-
-	//in statefulset.go we surcharge this value with conditions
-	seedList := cc.GetSeedList(&status.SeedList)
-
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 
 	ss := &appsv1.StatefulSet{
@@ -273,188 +266,16 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					SecurityContext: &v1.PodSecurityContext{
 						RunAsUser:    cc.Spec.RunAsUser,
 						RunAsNonRoot: func(b bool) *bool { return &b }(true),
+						FSGroup:      func(i int64) *int64 { return &i }(1),
+					},
 
-						FSGroup: func(i int64) *int64 { return &i }(1),
+					InitContainers: []v1.Container{
+						createInitConfigContainer(cc),
+						createCassandraBootstrapperContainer(cc),
 					},
 
 					Containers: []v1.Container{
-						v1.Container{
-							Name:            cassandraContainerName,
-							Image:           cassandraImage,
-							ImagePullPolicy: cc.Spec.ImagePullPolicy,
-							Ports: []v1.ContainerPort{
-								v1.ContainerPort{
-									Name:          cassandraIntraNodeName,
-									ContainerPort: cassandraIntraNodePort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          cassandraIntraNodeTLSName,
-									ContainerPort: cassandraIntraNodeTLSPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          cassandraJMXName,
-									ContainerPort: cassandraJMX,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          cassandraPortName,
-									ContainerPort: cassandraPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          exporterCassandraJmxPortName,
-									ContainerPort: exporterCassandraJmxPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-								v1.ContainerPort{
-									Name:          JolokiaPortName,
-									ContainerPort: JolokiaPort,
-									Protocol:      v1.ProtocolTCP,
-								},
-							},
-
-							SecurityContext: &v1.SecurityContext{
-								Capabilities: &v1.Capabilities{
-									Add: []v1.Capability{
-										"IPC_LOCK",
-									},
-								},
-								ProcMount: func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
-							},
-
-							Lifecycle: &v1.Lifecycle{
-								PreStop: &v1.Handler{
-									Exec: &v1.ExecAction{
-										Command: []string{
-											"/bin/bash",
-											"-c",
-											"/etc/cassandra/pre_stop.sh",
-										},
-									},
-								},
-							},
-							Env: []v1.EnvVar{
-								v1.EnvVar{
-									Name:  "CASSANDRA_MAX_HEAP",
-									Value: defineJvmMemory(resources).maxHeapSize,
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_SEEDS",
-									Value: seedList,
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_CLUSTER_NAME",
-									Value: name,
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_AUTO_BOOTSTRAP",
-									Value: "true",
-								},
-								v1.EnvVar{
-									Name: "POD_IP",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "status.podIP",
-										},
-									},
-								},
-								v1.EnvVar{
-									Name: "POD_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "metadata.name",
-										},
-									},
-								},
-								v1.EnvVar{
-									Name:  "SERVICE_NAME",
-									Value: name + "-" + dcRackName,
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_GC_STDOUT",
-									Value: strconv.FormatBool(cc.Spec.GCStdout),
-								},
-								v1.EnvVar{
-									Name:  "CASSANDRA_NUM_TOKENS",
-									Value: strconv.Itoa(int(numTokensPerRacks)),
-								},
-								v1.EnvVar{
-									Name: "NODE_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "spec.nodeName",
-										},
-									},
-								},
-								v1.EnvVar{
-									Name: "CASSANDRA_DC",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "metadata.labels['cassandraclusters.db.orange.com.dc']",
-										},
-									},
-								},
-								v1.EnvVar{
-									Name: "CASSANDRA_RACK",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											APIVersion: "v1",
-											FieldPath:  "metadata.labels['cassandraclusters.db.orange.com.rack']",
-										},
-									},
-								},
-							},
-							ReadinessProbe: &v1.Probe{
-								InitialDelaySeconds: readinessInitialDelaySeconds,
-								TimeoutSeconds:      readinessHealthCheckTimeout,
-								PeriodSeconds:       readinessHealthCheckPeriod,
-								Handler: v1.Handler{
-									Exec: &v1.ExecAction{
-										Command: []string{
-											"/bin/bash",
-											"-c",
-											"/ready-probe.sh",
-										},
-									},
-								},
-							},
-							LivenessProbe: &v1.Probe{
-								InitialDelaySeconds: livenessInitialDelaySeconds,
-								TimeoutSeconds:      livenessHealthCheckTimeout,
-								PeriodSeconds:       livenessHealthCheckPeriod,
-								Handler: v1.Handler{
-									Exec: &v1.ExecAction{
-										Command: []string{
-											"/bin/bash",
-											"-c",
-											"nodetool status",
-										},
-									},
-								},
-							},
-							VolumeMounts: volumemounts,
-							//on utilise la command par defaut de l'image
-							/* we remove this to use the cmd specified in the docker image*/
-							/*
-								Command: []string{
-									//"/sbin/dumb-init",
-									//"/bin/bash",
-									//"/run.sh",
-									//debug: keep container running in case of problem
-									"sh",
-									"-c",
-									"tail -f /dev/null",
-								},
-							*/
-							/**/
-							Resources: resources,
-						},
+						createCassandraContainer(cc, status, dcRackName),
 					},
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
@@ -637,5 +458,232 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 				},
 			},
 		},
+	}
+}
+
+func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
+	name := cc.GetName()
+	//in statefulset.go we surcharge this value with conditions
+	seedList := cc.GetSeedList(&status.SeedList)
+	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
+
+	return []v1.EnvVar{
+		v1.EnvVar{
+			Name:  "CASSANDRA_MAX_HEAP",
+			Value: defineJvmMemory(resources).maxHeapSize,
+		},
+		v1.EnvVar{
+			Name:  "CASSANDRA_SEEDS",
+			Value: seedList,
+		},
+		v1.EnvVar{
+			Name:  "CASSANDRA_CLUSTER_NAME",
+			Value: name,
+		},
+		v1.EnvVar{
+			Name:  "CASSANDRA_AUTO_BOOTSTRAP",
+			Value: "true",
+		},
+		v1.EnvVar{
+			Name: "POD_IP",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "status.podIP",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "POD_NAME",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name:  "SERVICE_NAME",
+			Value: name + "-" + dcRackName,
+		},
+		v1.EnvVar{
+			Name:  "CASSANDRA_GC_STDOUT",
+			Value: strconv.FormatBool(cc.Spec.GCStdout),
+		},
+		v1.EnvVar{
+			Name:  "CASSANDRA_NUM_TOKENS",
+			Value: strconv.Itoa(int(numTokensPerRacks)),
+		},
+		v1.EnvVar{
+			Name: "NODE_NAME",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "spec.nodeName",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "CASSANDRA_DC",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.labels['cassandraclusters.db.orange.com.dc']",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "CASSANDRA_RACK",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.labels['cassandraclusters.db.orange.com.rack']",
+				},
+			},
+		},
+	}
+}
+
+// createInitConfigContainer allows to copy origin config files from docker image to /configuration directory
+// where it will be surcharged by casskop needs, and by user's configmap changes
+func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
+	cassandraImage := k8s.GetCassandraImage(cc)
+	resources := getCassandraResources(cc.Spec)
+	volumeMounts := generateCassandraVolumeMount(cc)
+
+	return v1.Container{
+		Name:         "init-config",
+		Image:        cassandraImage,
+		Command:      []string{"sh", "-c", "cp -vr /etc/cassandra/* /configuration"},
+		VolumeMounts: volumeMounts,
+		Resources:    resources,
+	}
+}
+
+func createCassandraBootstrapperContainer(cc *api.CassandraCluster) v1.Container {
+	resources := getCassandraResources(cc.Spec)
+	volumeMounts := generateCassandraVolumeMount(cc)
+
+	return v1.Container{
+		Name:         "bootstrap",
+		Image:        cc.Spec.BootstrapImage,
+		Command:      []string{"sh", "-c", "cp -vr /run.sh /configuration"},
+		VolumeMounts: volumeMounts,
+		Resources:    resources,
+	}
+}
+
+/* CreateCassandraContainer create the main container for cassandra
+ */
+func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) v1.Container {
+	cassandraImage := k8s.GetCassandraImage(cc)
+	resources := getCassandraResources(cc.Spec)
+	volumeMounts := generateCassandraVolumeMount(cc)
+
+	return v1.Container{
+		Name:            cassandraContainerName,
+		Image:           cassandraImage,
+		ImagePullPolicy: cc.Spec.ImagePullPolicy,
+		Ports: []v1.ContainerPort{
+			v1.ContainerPort{
+				Name:          cassandraIntraNodeName,
+				ContainerPort: cassandraIntraNodePort,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          cassandraIntraNodeTLSName,
+				ContainerPort: cassandraIntraNodeTLSPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          cassandraJMXName,
+				ContainerPort: cassandraJMX,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          cassandraPortName,
+				ContainerPort: cassandraPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          exporterCassandraJmxPortName,
+				ContainerPort: exporterCassandraJmxPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          JolokiaPortName,
+				ContainerPort: JolokiaPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+		},
+
+		SecurityContext: &v1.SecurityContext{
+			Capabilities: &v1.Capabilities{
+				Add: []v1.Capability{
+					"IPC_LOCK",
+				},
+			},
+			ProcMount: func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
+			//ReadOnlyRootFilesystem: func(b bool) *bool { return &b }(true),
+		},
+
+		Lifecycle: &v1.Lifecycle{
+			PreStop: &v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: []string{
+						"/bin/bash",
+						"-c",
+						"/etc/cassandra/pre_stop.sh",
+					},
+				},
+			},
+		},
+		Env: createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		ReadinessProbe: &v1.Probe{
+			InitialDelaySeconds: readinessInitialDelaySeconds,
+			TimeoutSeconds:      readinessHealthCheckTimeout,
+			PeriodSeconds:       readinessHealthCheckPeriod,
+			Handler: v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: []string{
+						"/bin/bash",
+						"-c",
+						"/ready-probe.sh",
+					},
+				},
+			},
+		},
+		LivenessProbe: &v1.Probe{
+			InitialDelaySeconds: livenessInitialDelaySeconds,
+			TimeoutSeconds:      livenessHealthCheckTimeout,
+			PeriodSeconds:       livenessHealthCheckPeriod,
+			Handler: v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: []string{
+						"/bin/bash",
+						"-c",
+						"nodetool status",
+					},
+				},
+			},
+		},
+		VolumeMounts: volumeMounts,
+		//on utilise la command par defaut de l'image
+		/* we remove this to use the cmd specified in the docker image*/
+		/*
+			Command: []string{
+				//"/sbin/dumb-init",
+				//"/bin/bash",
+				//"/run.sh",
+				//debug: keep container running in case of problem
+				"sh",
+				"-c",
+				"tail -f /dev/null",
+			},
+		*/
+		/**/
+		Resources: resources,
 	}
 }

@@ -79,13 +79,13 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
 	needSpecificChange := false
 	if cc.Spec.UnlockNextOperation &&
-		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName){
+		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName) {
 		needSpecificChange = true
 	}
 	//Do nothing in Initial phase except if we force it
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial {
 		if !needSpecificChange {
-		return nil
+			return nil
 		}
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
 	}
@@ -98,12 +98,12 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
-    // Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
+	// Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
 	if needSpecificChange ||
 		(!rcc.thereIsPodDisruption() &&
-		  lastAction.Status != api.StatusOngoing &&
-		  lastAction.Status != api.StatusToDo &&
-		  lastAction.Status != api.StatusFinalizing){
+			lastAction.Status != api.StatusOngoing &&
+			lastAction.Status != api.StatusToDo &&
+			lastAction.Status != api.StatusFinalizing) {
 
 		// Update Status if ConfigMap Has Changed
 		if UpdateStatusIfconfigMapHasChanged(cc, dcRackName, storedStatefulSet, status) {
@@ -187,17 +187,35 @@ func UpdateStatusIfUpdateResources(cc *api.CassandraCluster, dcRackName string, 
 // - or the add or remoove of the configmap in the CRD
 func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
-	//Detect a change if there is a difference between the ConfigMapName and mounted volumes
-	//TODO: this needs to be refactor if there can be several volumes/configmap mounted
-	if (storedStatefulSet.Spec.Template.Spec.Volumes != nil && cc.Spec.ConfigMapName != storedStatefulSet.Spec.Template.Spec.Volumes[0].ConfigMap.Name) || (storedStatefulSet.Spec.Template.Spec.Volumes == nil && cc.Spec.ConfigMapName != "") {
+	var updateConfigMap bool = false
 
-		if storedStatefulSet.Spec.Template.Spec.Volumes != nil {
-			logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
-				cc.Spec.ConfigMapName, storedStatefulSet.Spec.Template.Spec.Volumes[0].ConfigMap.Name)
-		} else {
+	if storedStatefulSet.Spec.Template.Spec.Volumes == nil && cc.Spec.ConfigMapName != "" {
+		logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
+			cc.Spec.ConfigMapName, "-")
+		updateConfigMap = true
+	}
+	if storedStatefulSet.Spec.Template.Spec.Volumes != nil {
+		var found bool = false
+		for _, v := range storedStatefulSet.Spec.Template.Spec.Volumes {
+			if v.Name == cassandraConfigMapName {
+				found = true
+				if v.ConfigMap != nil && v.ConfigMap.Name != cc.Spec.ConfigMapName {
+					logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
+						cc.Spec.ConfigMapName, v.ConfigMap.Name)
+					updateConfigMap = true
+				}
+				break // we have found the configmap
+			}
+		}
+		//If volume for configmap don't exist and we ask for a configmap
+		if !found && cc.Spec.ConfigMapName != "" {
 			logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
 				cc.Spec.ConfigMapName, "-")
+			updateConfigMap = true
 		}
+	}
+
+	if updateConfigMap {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
 		lastAction.Name = api.ActionUpdateConfigMap
@@ -214,15 +232,20 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName st
 	desiredDockerImage := cc.Spec.BaseImage + ":" + cc.Spec.Version
 
 	//This needs to be refactor if we load more than 1 container
-	if storedStatefulSet.Spec.Template.Spec.Containers != nil &&
-		desiredDockerImage != storedStatefulSet.Spec.Template.Spec.Containers[0].Image {
-		logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, storedStatefulSet.Spec.Template.Spec.Containers[0].Image)
-		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
-		lastAction.Status = api.StatusToDo
-		lastAction.Name = api.ActionUpdateDockerImage
-		lastAction.StartTime = nil
-		lastAction.EndTime = nil
-		return true
+	if storedStatefulSet.Spec.Template.Spec.Containers != nil {
+		for _, c := range storedStatefulSet.Spec.Template.Spec.Containers {
+			if c.Name == cassandraContainerName && desiredDockerImage != c.Image {
+				{
+					logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, storedStatefulSet.Spec.Template.Spec.Containers[0].Image)
+					lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+					lastAction.Status = api.StatusToDo
+					lastAction.Name = api.ActionUpdateDockerImage
+					lastAction.StartTime = nil
+					lastAction.EndTime = nil
+					return true
+				}
+			}
+		}
 	}
 	return false
 }
@@ -412,7 +435,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
-		if nodesPerRacks <=0 {
+		if nodesPerRacks <= 0 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Warn("Aborting Initializing..., start ScaleDown")
 			setDecommissionStatus(status, dcRackName)
@@ -466,8 +489,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 	return nil
 }
 
-
-func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string){
+func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string) {
 	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
 	now := metav1.Now()
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction

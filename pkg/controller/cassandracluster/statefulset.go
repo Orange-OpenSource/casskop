@@ -95,7 +95,7 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	//Check that the new revision of statefulset has been taken into account
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
-		if err != nil && !apierrors.IsNotFound(err){
+		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
 		}
 		if statefulSet.ResourceVersion != newSts.ResourceVersion {
@@ -122,13 +122,25 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	//Things we won't check :
 	sts1.Spec.Template.Spec.SchedulerName = sts2.Spec.Template.Spec.SchedulerName
 	sts1.Spec.Template.Spec.DNSPolicy = sts2.Spec.Template.Spec.DNSPolicy // ClusterFirst
-	sts1.Spec.Template.Spec.Containers[0].LivenessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[0].LivenessProbe.SuccessThreshold
-	sts1.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold
-	sts1.Spec.Template.Spec.Containers[0].ReadinessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[0].ReadinessProbe.SuccessThreshold
-	sts1.Spec.Template.Spec.Containers[0].ReadinessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[0].ReadinessProbe.FailureThreshold
+	for i := 0; i < len(sts1.Spec.Template.Spec.Containers); i++ {
+		sts1.Spec.Template.Spec.Containers[i].LivenessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[i].LivenessProbe.SuccessThreshold
+		sts1.Spec.Template.Spec.Containers[i].LivenessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[i].LivenessProbe.FailureThreshold
+		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe.SuccessThreshold = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe.SuccessThreshold
+		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe.FailureThreshold = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe.FailureThreshold
 
-	sts1.Spec.Template.Spec.Containers[0].TerminationMessagePath = sts2.Spec.Template.Spec.Containers[0].TerminationMessagePath
-	sts1.Spec.Template.Spec.Containers[0].TerminationMessagePolicy = sts2.Spec.Template.Spec.Containers[0].TerminationMessagePolicy
+		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePath = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePath
+		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePolicy
+	}
+
+	for i := 0; i < len(sts1.Spec.Template.Spec.InitContainers); i++ {
+		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe.SuccessThreshold = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe.SuccessThreshold
+		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe.FailureThreshold = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe.FailureThreshold
+		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe.SuccessThreshold = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe.SuccessThreshold
+		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe.FailureThreshold = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe.FailureThreshold
+
+		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePath = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePath
+		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy
+	}
 
 	//some defaultMode changes make falsepositif, so we bypass this, we already have check on configmap changes
 	sts1.Spec.VolumeClaimTemplates = sts2.Spec.VolumeClaimTemplates
@@ -196,6 +208,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	} else {
 
 		//We need to keep the SeedList from the stored statefulset
+		//TODO: the container may not be at index 0
 		for i, env := range statefulSet.Spec.Template.Spec.Containers[0].Env {
 			if env.Name == "CASSANDRA_SEEDS" {
 				for _, oldenv := range rcc.storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
@@ -255,6 +268,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 
+	//TODO: the container may not be at index 0
 	for _, env := range storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
 		if env.Name == "CASSANDRA_SEEDS" {
 			return strings.Split(env.Value, ",")

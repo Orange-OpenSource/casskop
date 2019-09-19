@@ -105,6 +105,10 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.ImagePullPolicy = defaultImagePullPolicy
 		changed = true
 	}
+	if len(ccs.BootstrapImage) == 0 {
+		ccs.BootstrapImage = ccs.BaseImage + ":" + ccs.Version
+	}
+
 	if len(ccs.Version) == 0 {
 		ccs.Version = defaultVersion
 		changed = true
@@ -610,6 +614,9 @@ type CassandraClusterSpec struct {
 
 	//ImagePullPolicy define the pull poicy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
+
+	// Image used for bootstrapping cluster (use the form : base:version)
+	BootstrapImage string `json:"bootstrapImage"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
 	RunAsUser *int64 `json:"runAsUser"`
