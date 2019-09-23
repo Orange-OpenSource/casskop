@@ -4,14 +4,14 @@ go 1.12
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
+	github.com/NYTimes/gziphandler v1.0.1 // indirect
+	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
-	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.19.2 // indirect
 	github.com/go-openapi/swag v0.19.3 // indirect
 	github.com/gobuffalo/envy v1.7.0 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
-	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0
@@ -27,17 +27,13 @@ require (
 	github.com/thoas/go-funk v0.4.0
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
-	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb // indirect
 	golang.org/x/tools v0.0.0-20190703212419-2214986f1668 // indirect
 	google.golang.org/genproto v0.0.0-20190701230453-710ae3a149df // indirect
 	google.golang.org/grpc v1.22.0 // indirect
-	k8s.io/api v0.0.0-20190612125737-db0771252981
-	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
-	k8s.io/client-go v11.0.0+incompatible
-	k8s.io/klog v0.3.3 // indirect
+	k8s.io/api v0.0.0-20190704095032-f4ca3d3bdf1d
+	k8s.io/apimachinery v0.0.0-20190704094733-8f6ac2502e51
+	k8s.io/client-go v11.0.1-0.20190516230509-ae8359b20417+incompatible
 	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde // indirect
 )
