@@ -147,7 +147,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	var v = []v1.Volume{
 		emptyDir("bootstrap"),
 		emptyDir("extra-lib"),
-		emptyDir("configuration"),
+		//emptyDir("configuration"),
 		emptyDir("tmp"),
 	}
 
@@ -168,6 +168,15 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	return v
 }
 
+// generateCassandraVolumeMount generate volumemounts for cassandra containers
+// Volume Claim
+//  - /var/lib/cassandra for Cassandra data
+// ConfigMap
+//  - /tmp/cassandra/configmap for user defined configmap
+// EmptyDirs
+//   - /bootstrap for Cassandra configuration
+//   - /extra-lib for additional jar we want to load
+//   - /tmp to work with readonly containers
 func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	var vm []v1.VolumeMount
 
@@ -277,7 +286,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 					InitContainers: []v1.Container{
 						createInitConfigContainer(cc),
-						createCassandraBootstrapperContainer(cc),
+						createCassandraBootstrapContainer(cc),
 					},
 
 					Containers: []v1.Container{
@@ -571,7 +580,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	}
 }
 
-func createCassandraBootstrapperContainer(cc *api.CassandraCluster) v1.Container {
+func createCassandraBootstrapContainer(cc *api.CassandraCluster) v1.Container {
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
@@ -593,6 +602,30 @@ func createCassandraBootstrapperContainer(cc *api.CassandraCluster) v1.Container
 	}
 }
 
+func getPos(slice []v1.VolumeMount, value string) int {
+	for i, v := range slice {
+		if v.Name == value {
+			return i
+		}
+	}
+	return -1
+}
+func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
+	if i := getPos(slice, value); i >= 0 {
+		slice = append(slice[:i], slice[i+1:]...)
+		return slice
+	}
+	/*
+		for i, v := range slice {
+			if v == value {
+				slice = append(slice[:i], slice[i+1:]...)
+				return true
+			}
+		}
+	*/
+	return slice
+}
+
 /* CreateCassandraContainer create the main container for cassandra
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
@@ -600,8 +633,10 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	cassandraImage := k8s.GetCassandraImage(cc)
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
-	//override /etc/cassandra with emptydir
-	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "configuration", MountPath: "/etc/cassandra"})
+
+	//we want to mount boostrap volume to replace /etc/cassandra directory
+	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
+	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 
 	var command = []string{}
 	if cc.Spec.DumbInit {
@@ -609,8 +644,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	} else {
 		command = append(command, "/bin/bash", "-c")
 	}
-	command = append(command, "cp -rv /bootstrap/* /etc/cassandra/ && "+
-		"exec /etc/cassandra/run.sh")
+	command = append(command, "exec /etc/cassandra/run.sh")
 
 	if cc.Spec.Debug {
 		//debug: keep container running
