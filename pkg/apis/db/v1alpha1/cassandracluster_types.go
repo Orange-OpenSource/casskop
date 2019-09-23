@@ -612,6 +612,8 @@ type CassandraClusterSpec struct {
 	// Version of Cassandra to be deployed.
 	Version string `json:"version"`
 
+	DumbInit bool `json:"dumbinit`
+
 	//ImagePullPolicy define the pull poicy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
@@ -633,6 +635,10 @@ type CassandraClusterSpec struct {
 	//DeletePVC defines if the PVC must be deleted when the cluster is deleted
 	//it is false by default
 	DeletePVC bool `json:"deletePVC,omitempty"`
+
+	//Debug is used to surcharge Cassandra pod command to not directly start cassandra but
+	//starts an infinite wait to allow user to connect a bash into the pod to make some diagnoses.
+	Debug bool `json:"debug,omitempty"`
 
 	//AutoPilot defines if the Operator can fly alone or if we need human action to trigger
 	//Actions on specific Cassandra nodes

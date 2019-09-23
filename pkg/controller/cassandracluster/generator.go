@@ -17,6 +17,8 @@ package cassandracluster
 import (
 	"fmt"
 
+	"github.com/banzaicloud/k8s-objectmatcher/patch"
+
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -143,8 +145,10 @@ func emptyDir(name string) v1.Volume {
 
 func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	var v = []v1.Volume{
-		emptyDir("configuration"),
+		emptyDir("bootstrap"),
 		emptyDir("extra-lib"),
+		emptyDir("configuration"),
+		emptyDir("tmp"),
 	}
 
 	if cc.Spec.ConfigMapName != "" {
@@ -174,7 +178,9 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	if cc.Spec.ConfigMapName != "" {
 		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/tmp/cassandra/configmap"})
 	}
-	vm = append(vm, v1.VolumeMount{Name: "configuration", MountPath: "/configuration"})
+	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/bootstrap"})
+	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
+	vm = append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
 	return vm
 }
 
@@ -321,6 +327,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		}
 	}
 
+	if err := patch.DefaultAnnotator.SetLastAppliedAnnotation(ss); err != nil {
+		logrus.Warnf("[%s]: error while applying LastApplied Annotation on Statefulset", cc.Name)
+	}
 	return ss
 }
 
@@ -545,7 +554,7 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 	}
 }
 
-// createInitConfigContainer allows to copy origin config files from docker image to /configuration directory
+// createInitConfigContainer allows to copy origin config files from docker image to /bootstrap directory
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	cassandraImage := k8s.GetCassandraImage(cc)
@@ -556,7 +565,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 		Name:            "init-config",
 		Image:           cassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Command:         []string{"sh", "-c", "cp -vr /etc/cassandra/* /configuration"},
+		Command:         []string{"sh", "-c", "cp -vr /etc/cassandra/* /bootstrap"},
 		VolumeMounts:    volumeMounts,
 		Resources:       resources,
 	}
@@ -570,9 +579,17 @@ func createCassandraBootstrapperContainer(cc *api.CassandraCluster) v1.Container
 		Name:            "bootstrap",
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Command:         []string{"sh", "-c", "cp -vr /run.sh /configuration"},
-		VolumeMounts:    volumeMounts,
-		Resources:       resources,
+		Command: []string{"sh", "-c",
+			"cp -v /run.sh /bootstrap/ && " +
+				"cp /ready-probe.sh /bootstrap && " +
+				"sed -i -e 's#/usr/local/share/#/extra-lib/#' /bootstrap/run.sh && " +
+				"sed -i -e 's#/usr/local/share/#/extra-lib/#' /bootstrap/jvm.options && " +
+				"cp /usr/local/share/jolokia-agent.jar /extra-lib && " +
+				"cp /usr/local/share/cassandra-exporter-agent.jar /extra-lib && " +
+				"echo 'end :-)'",
+		},
+		VolumeMounts: volumeMounts,
+		Resources:    resources,
 	}
 }
 
@@ -583,6 +600,24 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	cassandraImage := k8s.GetCassandraImage(cc)
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
+	//override /etc/cassandra with emptydir
+	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "configuration", MountPath: "/etc/cassandra"})
+
+	var command = []string{}
+	if cc.Spec.DumbInit {
+		command = append(command, "/sbin/dumb-init", "--", "/bin/bash", "-c")
+	} else {
+		command = append(command, "/bin/bash", "-c")
+	}
+	command = append(command, "cp -rv /bootstrap/* /etc/cassandra/ && "+
+		"exec /etc/cassandra/run.sh")
+
+	if cc.Spec.Debug {
+		//debug: keep container running
+		command = []string{"sh",
+			"-c",
+			"tail -f /dev/null"}
+	}
 
 	return v1.Container{
 		Name:            cassandraContainerName,
@@ -627,8 +662,8 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					"IPC_LOCK",
 				},
 			},
-			ProcMount: func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
-			//ReadOnlyRootFilesystem: func(b bool) *bool { return &b }(true),
+			ProcMount:              func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
+			ReadOnlyRootFilesystem: func(b bool) *bool { return &b }(true),
 		},
 
 		Lifecycle: &v1.Lifecycle{
@@ -652,7 +687,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					Command: []string{
 						"/bin/bash",
 						"-c",
-						"/ready-probe.sh",
+						"/etc/cassandra/ready-probe.sh",
 					},
 				},
 			},
@@ -674,17 +709,9 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		VolumeMounts: volumeMounts,
 		//on utilise la command par defaut de l'image
 		/* we remove this to use the cmd specified in the docker image*/
-		/*
-			Command: []string{
-				//"/sbin/dumb-init",
-				//"/bin/bash",
-				//"/run.sh",
-				//debug: keep container running in case of problem
-				"sh",
-				"-c",
-				"tail -f /dev/null",
-			},
-		*/
+
+		Command: command,
+
 		/**/
 		Resources: resources,
 	}

@@ -32,6 +32,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	//patch "github.com/banzaicloud/k8s-objectmatcher/patch"
 )
 
 var (
@@ -122,6 +123,18 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	//Things we won't check :
 	//TODO: we should rely on library to ease the comparison between 2 statefulset and to know If we need to apply
 	// change or not cf: https://github.com/banzaicloud/k8s-objectmatcher
+
+	/*
+		patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
+		if err != nil {
+			logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+			return false
+		}
+		if !patchResult.IsEmpty() {
+			logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+			return false
+		}
+	*/
 	sts1.Spec.Template.Spec.SchedulerName = sts2.Spec.Template.Spec.SchedulerName
 	sts1.Spec.Template.Spec.DNSPolicy = sts2.Spec.Template.Spec.DNSPolicy // ClusterFirst
 	for i := 0; i < len(sts1.Spec.Template.Spec.Containers); i++ {
