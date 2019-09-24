@@ -1217,5 +1217,31 @@ kubectl label pod cassandra-demo-dc2-rack1-0 operation-argument=dc1 --overwrite
 
 see [UpdateScaleDown](#updatescaledown)
 
+### RollingRestart
+
+This operation can be triggered with the plugin using simple commands as :
+
+```
+$ k casskop restart --crd cassandra-e2e --rack dc1.rack1 dc2.rack1
+
+Namespace cassandra-e2e
+Trigger restart of dc1.rack1
+Trigger restart of dc2.rack1
+
+$ k casskop restart --crd cassandra-e2e --dc dc1
+
+Namespace cassandra-e2e
+Trigger restart of dc1.rack1
+Trigger restart of dc1.rack2
+
+$ k casskop restart --crd cassandra-e2e --full
+
+Namespace cassandra-e2e
+Trigger restart of dc1.rack1
+Trigger restart of dc1.rack2
+Trigger restart of dc2.rack1
+```
+
+After one of this command, CassKop will do a rolling restart of each rack one at a time avoiding any disruption.
 
 
