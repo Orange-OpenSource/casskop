@@ -413,7 +413,6 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			if dcRackName == "" {
 				return fmt.Errorf("Name uses for DC and/or Rack are not good")
-
 			}
 
 			//If we have added a dc/rack to the CRD, we add it to the Status
@@ -530,7 +529,12 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
-			dcRackStatus := status.CassandraRackStatus[dcRackName]
+			dcRackStatus, exist := status.CassandraRackStatus[dcRackName]
+			if !exist {
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("the DC(%s) and Rack(%s) does not exist, "+
+					"the rack status will be updated in next reconcile", dcName, rackName)
+				continue
+			}
 
 			// If there is a lastAction ongoing in a Rack we update cluster lastaction accordingly
 			if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
