@@ -17,6 +17,7 @@
 import argparse
 import sys
 import json
+import re
 from subprocess import check_output, STDOUT, CalledProcessError
 from os.path import basename
 from random import shuffle
@@ -25,6 +26,7 @@ from itertools import groupby
 PAUSE_LABELS_OP = ["ToDo", "Paused"]
 NO_PODS_FOUND = "No pods found for operation"
 NO_ONGOING_OP = "--selector=operation-status notin (Ongoing, Finalizing)"
+RE_RACK_NAME = re.compile(r"(\w+)\W(\w+)")
 
 def k_apply_with_input(input, error, *args):
     try:
@@ -90,7 +92,7 @@ def set_pod_label(pod, operation, status="ToDo", argument=None):
 # Returns one running pod in the crd
 def available_pod_in_crd(crd):
     pods = grep_pods(crd)
-    crd_content = k("get", "cassandracluster.db.orange.com", crd, "-o", "json")
+    crd_content = k("get", "cassandracluster", crd, "-o", "json")
     if not crd_content:
         die(f"crd {crd} not found")
     crd_content = json.loads(crd_content)["status"]["cassandraRackStatus"]
@@ -117,6 +119,7 @@ The available commands are:
    upgradesstables
    rebuild
    remove
+   restart
    pause
    unpause
 
@@ -174,6 +177,44 @@ For more information you can run {plugin} <command> --help
     def upgradesstables(self):
         self._simple_operation(self.upgradesstables.__name__)
 
+    def _rolling_restart(self, topology, matching_test):
+        m = {f"{d['name']}.{r['name']}":r for d in topology for r in d['rack']
+               if matching_test(d['name'], r['name'])}
+        if not m:
+            die("Can't match dc or rack")
+        for rack, r in m.items():
+            print(f"Trigger {self.restart.__name__} of {rack}")
+            r['rollingRestart'] = True
+
+    def restart(self):
+        parser = argparse.ArgumentParser(self.restart.__name__)
+        parser.add_argument('--crd', required=True)
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('--rack', nargs='+')
+        group.add_argument('--dc', nargs='+')
+        group.add_argument('--full', action='store_true')
+        args = parser.parse_args(sys.argv[2:])
+        crd_content = k("get", "cassandracluster", args.crd, "-o", "json")
+        if not crd_content:
+            die(f"crd {crd} not found")
+        crd_content = json.loads(crd_content)
+        topology = crd_content["spec"]["topology"]["dc"]
+
+        if args.rack:
+            for rack in args.rack:
+                m = RE_RACK_NAME.match(rack)
+                if not m:
+                    die(f"Can't extract dcname and rackname from {rack}")
+                dc, rack = m.groups()
+                self._rolling_restart(topology, lambda d,r: d == dc and r == rack)
+        elif args.dc:
+            for dc in args.dc:
+                self._rolling_restart(topology, lambda d,r: d == dc)
+        elif args.full:
+            self._rolling_restart(topology, lambda d,r: True)
+
+        k_apply_with_input(json.dumps(crd_content), f"Can't update CassandraCluster {args.crd}")
+
     def remove(self):
         parser = argparse.ArgumentParser(self.remove.__name__)
         parser.add_argument('--pod')
@@ -212,11 +253,11 @@ For more information you can run {plugin} <command> --help
         args = parser.parse_args(sys.argv[2:])
         pod = pod_is_mandatory(args.pod)
         pre_run = f"test \"$(hostname)\" == '{args.pod}' && echo -Dcassandra.replace_address_first_boot={args.previous_ip} >> /etc/cassandra/jvm.options"
-        crds = k("get", "cassandraclusters.db.orange.com")
+        crds = k("get", "cassandracluster")
         if not crds:
             die("No crds found")
         crd = next(c[0] for c in crds if c[0] in args.pod)
-        config_map = k("get", "cassandraclusters.db.orange.com", crd, "--output=jsonpath={.spec.configMapName}")
+        config_map = k("get", "cassandracluster", crd, "--output=jsonpath={.spec.configMapName}")
         if not config_map:
             die("No ConfigMap found")
         result = json.loads(k("get", "configmap", config_map, "-o", "json"))
