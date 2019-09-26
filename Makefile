@@ -27,6 +27,8 @@ IMAGE_NAME := $(SERVICE_NAME)
 
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
+BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.0
+#BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-image:latest
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
@@ -213,6 +215,10 @@ push-ci-image: deps-development
 ifdef PUSHLATEST
 	docker push $(BUILD_IMAGE):latest
 endif
+
+.PHONY: build-bootstrap-image
+build-bootstrap-image: deps-development
+	$(MAKE) -C docker/bootstrap build
 
 
 pipeline:
@@ -412,7 +418,8 @@ endif
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
-
+dgoss-bootstrap:
+	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
 
 configure-psp:
 	kubectl get clusterrole psp:cassie -o yaml

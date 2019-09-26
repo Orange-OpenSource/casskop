@@ -185,9 +185,9 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	}
 
 	if cc.Spec.ConfigMapName != "" {
-		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/tmp/cassandra/configmap"})
+		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
 	}
-	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/bootstrap"})
+	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
 	vm = append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
 	return vm
@@ -286,7 +286,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 					InitContainers: []v1.Container{
 						createInitConfigContainer(cc),
-						createCassandraBootstrapContainer(cc),
+						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
 
 					Containers: []v1.Container{
@@ -570,6 +570,10 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
+	//we want to mount boostrap volume to backup /etc/cassandra directory
+	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
+	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/bootstrap"})
+
 	return v1.Container{
 		Name:            "init-config",
 		Image:           cassandraImage,
@@ -580,7 +584,10 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	}
 }
 
-func createCassandraBootstrapContainer(cc *api.CassandraCluster) v1.Container {
+// createCassandraBootstrapContainer will copy jar from bootstrap image to /extra-lib/ directory.
+// configure /etc/cassandra with Env var and with userConfigMap (if enabled) by running the run.sh script
+func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) v1.Container {
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
@@ -588,17 +595,9 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster) v1.Container {
 		Name:            "bootstrap",
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Command: []string{"sh", "-c",
-			"cp -v /run.sh /bootstrap/ && " +
-				"cp /ready-probe.sh /bootstrap && " +
-				"sed -i -e 's#/usr/local/share/#/extra-lib/#' /bootstrap/run.sh && " +
-				"sed -i -e 's#/usr/local/share/#/extra-lib/#' /bootstrap/jvm.options && " +
-				"cp /usr/local/share/jolokia-agent.jar /extra-lib && " +
-				"cp /usr/local/share/cassandra-exporter-agent.jar /extra-lib && " +
-				"echo 'end :-)'",
-		},
-		VolumeMounts: volumeMounts,
-		Resources:    resources,
+		Env:             createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		VolumeMounts:    volumeMounts,
+		Resources:       resources,
 	}
 }
 
@@ -615,14 +614,6 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
 		slice = append(slice[:i], slice[i+1:]...)
 		return slice
 	}
-	/*
-		for i, v := range slice {
-			if v == value {
-				slice = append(slice[:i], slice[i+1:]...)
-				return true
-			}
-		}
-	*/
 	return slice
 }
 
@@ -634,18 +625,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
-	//we want to mount boostrap volume to replace /etc/cassandra directory
-	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
-	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
-
 	var command = []string{}
-	if cc.Spec.DumbInit {
-		command = append(command, "/sbin/dumb-init", "--", "/bin/bash", "-c")
-	} else {
-		command = append(command, "/bin/bash", "-c")
-	}
-	command = append(command, "exec /etc/cassandra/run.sh")
-
 	if cc.Spec.Debug {
 		//debug: keep container running
 		command = []string{"sh",
@@ -653,7 +633,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			"tail -f /dev/null"}
 	}
 
-	return v1.Container{
+	cassandraContainer := v1.Container{
 		Name:            cassandraContainerName,
 		Image:           cassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
@@ -741,12 +721,12 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			},
 		},
 		VolumeMounts: volumeMounts,
-		//on utilise la command par defaut de l'image
-		/* we remove this to use the cmd specified in the docker image*/
-
-		Command: command,
-
-		/**/
-		Resources: resources,
+		Resources:    resources,
 	}
+
+	if command != nil {
+		cassandraContainer.Command = command
+
+	}
+	return cassandraContainer
 }

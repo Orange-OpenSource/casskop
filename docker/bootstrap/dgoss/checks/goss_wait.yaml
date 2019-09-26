@@ -1,0 +1,5 @@
+addr:
+  # client
+  tcp://{{.Env.HOSTNAME}}:9042:
+    reachable: true
+    

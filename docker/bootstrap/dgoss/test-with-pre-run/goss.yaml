@@ -1,0 +1,4 @@
+file:
+  /etc/cassandra/cassandra.yaml:
+    exists: true
+    contains: ["max_hints_delivery_threads: 8"]

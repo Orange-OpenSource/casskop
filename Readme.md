@@ -54,11 +54,12 @@ The following features are supported by CassKop:
     - [x] Process a remove node (and create new Cassandra node on another Kubernetes node)
     - [x] Process a replace address (of the old Cassandra node on another Kubernetes node)
 - [x] Manage operations on pods through CassKop plugin (cleanup, rebuild, upgradesstable, removenode..)
-- [ ] Monitoring (using Instaclustr Prometheus exporter to Prometheus/Grafana)
+- [x] Monitoring (using Instaclustr Prometheus exporter to Prometheus/Grafana)
+- [x] Use official Cassandra Image (configuration for Casskop is done through a bootstrap init-container)
 - [ ] Performing live backup of Cassandra datas (using Instaclustr sidecar)
 - [ ] Performing live restore of datas (using Instaclustr sidecar)
 - [x] Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
-- [ ] Pause/Restart operations through CassKoP plugin.
+- [x] Pause/Restart operations through CassKoP plugin.
 
 > CassKop doesn't use nodetool but invokes operations through authenticated JMX/Jolokia call
 
@@ -124,10 +125,11 @@ This table shows compatibility between CassKop and associated Cassandra image
 | 0.3.1-release | >= 3.11.4-8u212-0.3.1         |
 | 0.3.2-release | >= 3.11.4-8u212-0.3.2-release |
 | 0.3.3-release | >= 3.11.4-8u212-0.3.3-release |
+| 0.4.0-release | >= 3.11.4-8u212-0.4.0-release |
 
 
-> docker image: orangeopensource/cassandra-image:3.11.4-8u212-0.3.3-release
-> or 3.11.4-8u212-0.3.3-release-cqlsh if you need cqlsh
+> docker image: orangeopensource/cassandra-image:3.11.4-8u212-0.4.0-release
+> or 3.11.4-8u212-0.4.0-release-cqlsh if you need cqlsh
 
 
 ## Deploy the Cassandra operator in the cluster

@@ -1,0 +1,4 @@
+file:
+  /etc/cassandra/additional-file.yaml:
+    exists: true
+    contains: ["this is additional file"]

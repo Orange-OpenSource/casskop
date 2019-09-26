@@ -612,8 +612,6 @@ type CassandraClusterSpec struct {
 	// Version of Cassandra to be deployed.
 	Version string `json:"version"`
 
-	DumbInit bool `json:"dumbinit`
-
 	//ImagePullPolicy define the pull poicy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 

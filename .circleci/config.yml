@@ -178,6 +178,20 @@ jobs:
           - test-report.out
 
 
+
+  docker-dgoss-test:
+    working_directory: /home/circleci/cassandra-k8s-operator
+    executor: casskop-build
+    steps:
+    - checkout
+
+    - attach_workspace:
+        at: ./
+    - run:
+        name: Dgoss tests
+        command: make dgoss-bootstrap
+
+
   report:
     working_directory: /home/circleci/cassandra-k8s-operator
     executor: casskop-build
@@ -247,6 +261,13 @@ workflows:
               only: /.*/
 
       - unit-test:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - docker-dgoss-test:
           requires:
             - build
           filters:
