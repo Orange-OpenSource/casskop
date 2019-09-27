@@ -97,14 +97,14 @@ func TestDeleteVolumeMount(t *testing.T) {
 
 	assert.Equal(t, 4, len(volumeMounts))
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
-	assert.Equal(t, "/bootstrap", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
+	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 
 	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
 	assert.Equal(t, 3, len(volumeMounts))
-	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
+	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/else"})
 
 	assert.Equal(t, 4, len(volumeMounts))
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
-	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
+	assert.Equal(t, "/etc/else", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 
 }

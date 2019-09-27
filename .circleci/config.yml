@@ -114,8 +114,7 @@ jobs:
 
     - restore_cache:
         keys:
-          - build-{{ .Branch }}
-          - build
+          - build-{{ .Branch }}-{{ checksum "go.sum" }}
 
     - run:
         name: Download dependencies
