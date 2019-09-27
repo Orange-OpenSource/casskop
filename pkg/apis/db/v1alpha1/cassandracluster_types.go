@@ -27,6 +27,7 @@ import (
 
 const (
 	defaultBaseImage              string        = "orangeopensource/cassandra-image"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
 	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -106,7 +107,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		changed = true
 	}
 	if len(ccs.BootstrapImage) == 0 {
-		ccs.BootstrapImage = ccs.BaseImage + ":" + ccs.Version
+		ccs.BootstrapImage = defaultBootstrapImage
 	}
 
 	if len(ccs.Version) == 0 {
