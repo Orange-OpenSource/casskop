@@ -190,7 +190,10 @@ jobs:
         at: ./
     - run:
         name: Dgoss tests
-        command: make dgoss-bootstrap
+        command: |
+          curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
+          chmod +rx /usr/local/bin/dgoss
+          make dgoss-bootstrap
 
 
   report:
