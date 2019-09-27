@@ -193,6 +193,9 @@ jobs:
         command: |
           curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
           chmod +rx /usr/local/bin/dgoss
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
+          chmod +rx /usr/local/bin/goss
+          export GOSS_PATH=/usr/local/bin/goss
           make dgoss-bootstrap
 
 
