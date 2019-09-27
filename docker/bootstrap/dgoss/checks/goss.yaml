@@ -48,7 +48,7 @@ http:
 file:
   /etc/cassandra/jvm.options:
     exists: true
-    contains: ["-javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"]
+    contains: ["-XX:PrintFLSStatistics=1"]
   /etc/cassandra/cassandra.yaml:
     exists: true
   /etc/cassandra/cassandra-rackdc.properties:
@@ -57,7 +57,9 @@ file:
 
   /etc/cassandra/cassandra-env.sh:
     exists: true
-    contains: ["/extra-lib/jolokia-agent.jar"]
+    contains:
+      - "/extra-lib/jolokia-agent.jar"
+      - "-javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
 
   /etc/cassandra/exporter.conf:
     exists: true

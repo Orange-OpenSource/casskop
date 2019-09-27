@@ -9,13 +9,13 @@ source ../util.sh
 
 createDgossVolumes
 # Add test file to user config map
-createSimpleConfigMapFile
 createInitConfigContainer
-createCassandraBootstrapContainer
+createCassandraBootstrapContainerNoExtraLib
 #createAndCheckCassandraContainer # already tested
 
+#createCassandraContainer
+
 # check using test specific `goss.yaml`
-GOSS_SLEEP=0 dgoss run \
+ GOSS_WAIT_OPTS='-r 90s -s 1s > /dev/null' dgoss run \
           -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
-          -v ${EXTRA_LIB_VOLUME}:/extra-lib \
           ${CASSANDRA_IMAGE}

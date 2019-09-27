@@ -15,7 +15,9 @@
 FROM bitnami/minideb:stretch
 
 ENV \
+    CASSANDRA_DATA=/var/lib/cassandra \
     CASSANDRA_CONF=/etc/cassandra \
+    CASSANDRA_LIBS=/extra-lib \
     BOOTSTRAP_CONF=/bootstrap/conf \
     BOOTSTRAP_LIBS=/bootstrap/libs \
     CONFIGMAP=/configmap \
@@ -50,16 +52,16 @@ LABEL \
 #        procps \
 #        dnsutils && \
 
-RUN mkdir -p $BOOTSTRAP_CONF $BOOTSTRAP_LIBS /tmp
-RUN set -ex; \
+RUN mkdir -p $CASSANDRA_DATA  $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS /tmp && \
+    set -ex; \
     apt-get update && apt-get -qq -y install --no-install-recommends \
         ca-certificates \
         wget \
         netcat && \
     wget -O ${BOOTSTRAP_LIBS}/cassandra-exporter-agent.jar https://github.com/instaclustr/cassandra-exporter/releases/download/v${EXPORTER_VERSION}/cassandra-exporter-agent-${EXPORTER_VERSION}.jar; \
     wget -O ${BOOTSTRAP_LIBS}/jolokia-agent.jar http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/${JOLOKIA_VERSION}/jolokia-jvm-${JOLOKIA_VERSION}-agent.jar; \
-    adduser --disabled-password --no-create-home --gecos '' --disabled-login cassandra; \
-    chown -R cassandra: /${BOOTSTRAP_CONF} /tmp /${BOOTSTRAP_CONF}; \
+    groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra ; \
+    chown -R cassandra:cassandra $CASSANDRA_DATA $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS /tmp ; \
     apt-get -y purge; \
     apt-get -y autoremove; \
     apt-get -y clean; \
@@ -81,7 +83,6 @@ RUN set -ex; \
         /usr/share/man/ \
         /tmp/*; 
     
-RUN mkdir -p /etc/cassandra && chown cassandra: /etc/cassandra
 USER cassandra
 
 COPY files /bootstrap/conf/

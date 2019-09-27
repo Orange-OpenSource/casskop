@@ -84,6 +84,8 @@ CASSANDRA_CLUSTER_NAME="${CASSANDRA_CLUSTER_NAME:='Test Cluster'}"
 CASSANDRA_AUTHENTICATOR="${CASSANDRA_AUTHENTICATOR:-$(default_value authenticator)}"
 CASSANDRA_AUTHORIZER="${CASSANDRA_AUTHORIZER:-$(default_value authorizer)}"
 
+# Enable cassandra exporter
+CASSANDRA_EXPORTER_AGENT="${CASSANDRA_EXPORTER_AGENT:-true}"
 # Enable JMX
 CASSANDRA_ENABLE_JMX="${CASSANDRA_ENABLE_JMX:-true}"
 # Enable Jolokia
@@ -223,9 +225,10 @@ EOF
   fi
 fi
 
+if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]; then
+    cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
 
-cat  <<EOF >>$CASSANDRA_CONF/jvm.options
 # Prometheus exporter from Instaclustr
--javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf
+JVM_OPTS="\$JVM_OPTS -javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
 EOF
-
+fi

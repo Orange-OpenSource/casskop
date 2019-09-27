@@ -64,6 +64,30 @@ function createCassandraBootstrapContainer {
            ${IMAGE_TO_TEST} 
 }
 
+#disable jolokia & exporter
+function createCassandraBootstrapContainerNoExtraLib {
+    echo "== createCassandraBootstrapContainer"
+    docker run \
+           -u 999 \
+           --rm -ti \
+           -e CASSANDRA_MAX_HEAP=1024M \
+           -e CASSANDRA_SEEDS=cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc1-rack3-0.cassandra-demo.ns \
+           -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
+           -e CASSANDRA_AUTO_BOOTSTRAP=true \
+           -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
+           -e POD_NAME=cassandra-demo-dc1-rack1-0 \
+           -e POD_NAMESPACE=ns \
+           -e SERVICE_NAME=cassandra-demo \
+           -e CASSANDRA_GC_STDOUT=true \
+           -e CASSANDRA_ENABLE_JOLOKIA=false \
+           -e CASSANDRA_EXPORTER_AGENT=false \
+           -e CASSANDRA_NUM_TOKENS=32 \
+           -e CASSANDRA_DC=dc1 \
+           -e CASSANDRA_RACK=rack1 \
+           -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
+           ${IMAGE_TO_TEST} 
+}
+
 
 function createCassandraBootstrapContainerWithConfigMap {
     echo "== createCassandraBootstrapContainer"
