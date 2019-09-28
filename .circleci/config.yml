@@ -196,6 +196,7 @@ jobs:
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
           chmod +rx /usr/local/bin/goss
           export GOSS_PATH=/usr/local/bin/goss
+          export GOSS_FILES_STRATEGY=cp
           make dgoss-bootstrap
 
 
