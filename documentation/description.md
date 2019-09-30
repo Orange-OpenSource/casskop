@@ -150,8 +150,20 @@ to works with CassKop.
 The configuration of the Cassandra image has been delegated to init-containers that are executed prior to the Cassandra
 container when the pod is started.
 
-The init containers are responsible for the foloowing actions :
+#### Initcontainer 1 : init-config
+
+The init containers is responsible for the foloowing actions :
 - copy the default Cassandra configuration from user's provided Cassandra image.
+
+Configuration:
+- The init-config container is by default the baseImage Cassandra image that can be changed using
+`Spec.initContainerImage`.
+- The default command executed by the init-container is `cp -vr /etc/cassandra/* /bootstrap"` and can be changed using
+  `Spec.initContainerCmd`
+
+#### Initcontainer 2 : bootstrap
+
+The bootstrap Container : 
 - applying files and additional jar from the bootstrap image to the default configuration
 - applying the user's configmap custom configuration (if any) on top of the default configuration
 - modifying the configuration to be suitable to run with Casskop:
@@ -160,6 +172,9 @@ The init containers are responsible for the foloowing actions :
   - applying seedlist
   - add cassadnra exporter and jolokia agent
   - ..
+
+We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
+required actions, see [Bootstrap](../docker/bootstrap).
 
 ### Cassandra docker image
 

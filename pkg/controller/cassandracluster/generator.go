@@ -578,7 +578,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 		Name:            "init-config",
 		Image:           cassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Command:         []string{"sh", "-c", "cp -vr /etc/cassandra/* /bootstrap"},
+		Command:         []string{"sh", "-c", cc.Spec.InitContainerCmd},
 		VolumeMounts:    volumeMounts,
 		Resources:       resources,
 	}
@@ -725,6 +725,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	}
 
 	if command != nil {
+		cassandraContainer.Command = command
 		cassandraContainer.Command = command
 
 	}

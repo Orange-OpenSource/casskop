@@ -28,6 +28,7 @@ import (
 const (
 	defaultBaseImage              string        = "orangeopensource/cassandra-image"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
+	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -90,32 +91,44 @@ const (
 	OperationRemove          string = "remove"
 )
 
+// CheckDefaults chckes that required fields havent good values
+func (cc *CassandraCluster) CheckDefaults() {
+	ccs := &cc.Spec
+
+	if len(ccs.BaseImage) == 0 {
+		ccs.BaseImage = defaultBaseImage
+	}
+	if len(ccs.Version) == 0 {
+		ccs.Version = defaultVersion
+	}
+	if len(ccs.ImagePullPolicy) == 0 {
+		ccs.ImagePullPolicy = defaultImagePullPolicy
+	}
+	if len(ccs.BootstrapImage) == 0 {
+		ccs.BootstrapImage = defaultBootstrapImage
+	}
+
+	//Init-Container 1 : init-config
+	if len(ccs.InitContainerImage) == 0 {
+		ccs.InitContainerImage = ccs.BaseImage + ":" + ccs.Version
+	}
+	if len(ccs.InitContainerCmd) == 0 {
+		ccs.InitContainerCmd = InitContainerCmd
+	}
+
+	if ccs.RunAsUser == nil {
+		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
+	}
+}
+
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
+// SetDefault mus be done only once at startup
 func (cc *CassandraCluster) SetDefaults() bool {
 	changed := false
 	ccs := &cc.Spec
 	if ccs.NodesPerRacks == 0 {
 		ccs.NodesPerRacks = 1
 		changed = true
-	}
-	if len(ccs.BaseImage) == 0 {
-		ccs.BaseImage = defaultBaseImage
-		changed = true
-	}
-	if len(ccs.ImagePullPolicy) == 0 {
-		ccs.ImagePullPolicy = defaultImagePullPolicy
-		changed = true
-	}
-	if len(ccs.BootstrapImage) == 0 {
-		ccs.BootstrapImage = defaultBootstrapImage
-	}
-
-	if len(ccs.Version) == 0 {
-		ccs.Version = defaultVersion
-		changed = true
-	}
-	if ccs.RunAsUser == nil {
-		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
 	}
 	if len(cc.Status.Phase) == 0 {
 		cc.Status.Phase = ClusterPhaseInitial
@@ -618,6 +631,11 @@ type CassandraClusterSpec struct {
 
 	// Image used for bootstrapping cluster (use the form : base:version)
 	BootstrapImage string `json:"bootstrapImage"`
+
+	// Command to execute in the initContainer in the targeted image
+	InitContainerImage string `json:"initContainerImage"`
+	// Command to execute in the initContainer in the targeted image
+	InitContainerCmd string `json:"initContainerCmd"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
 	RunAsUser *int64 `json:"runAsUser"`
