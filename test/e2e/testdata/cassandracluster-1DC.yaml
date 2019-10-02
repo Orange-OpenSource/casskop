@@ -17,7 +17,7 @@ spec:
   nodesPerRacks: 1
   baseImage: orangeopensource/cassandra-image
   version: latest-cqlsh
-  imagePullPolicy: "Always"
+  imagePullPolicy: "IfNotPresent"
   imageJolokiaSecret:
     name: jolokia-auth
   rollingPartition: 0

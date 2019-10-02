@@ -9,7 +9,7 @@ spec:
   nodesPerRacks: 1
   baseImage: orangeopensource/cassandra-image
   version: latest-cqlsh
-  imagePullPolicy: "Always"
+  imagePullPolicy: "IfNotPresent"
   rollingPartition: 0
   configMapName: cassandra-configmap-v1
   dataCapacity: "1Gi"

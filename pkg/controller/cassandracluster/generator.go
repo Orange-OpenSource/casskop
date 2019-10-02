@@ -726,7 +726,6 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 
 	if command != nil {
 		cassandraContainer.Command = command
-		cassandraContainer.Command = command
 
 	}
 	return cassandraContainer
