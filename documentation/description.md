@@ -1211,7 +1211,7 @@ The CassandraCluster prints out it's whole status.
 > lastClusterActionStatus will turn also to Done.
 
 
-## Cassandra cluster CRD definition version 0.3.0
+## Cassandra cluster CRD definition version 0.4.0
 
 The CRD Type is how we want to declare a CassandraCluster Object into Kubernetes.
 

@@ -119,6 +119,9 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if ccs.RunAsUser == nil {
 		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
 	}
+	if ccs.ReadOnlyRootFilesystem == nil {
+		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
+	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -639,6 +642,9 @@ type CassandraClusterSpec struct {
 
 	//RunAsUser define the id of the user to run in the Cassandra image
 	RunAsUser *int64 `json:"runAsUser"`
+
+	//Make the pod as Readonly
+	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
 
 	// Pod defines the policy for pods owned by cassandra operator.
 	// This field cannot be updated once the CR is created.

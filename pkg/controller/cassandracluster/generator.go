@@ -677,7 +677,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 				},
 			},
 			ProcMount:              func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
-			ReadOnlyRootFilesystem: func(b bool) *bool { return &b }(true),
+			ReadOnlyRootFilesystem: cc.Spec.ReadOnlyRootFilesystem,
 		},
 
 		Lifecycle: &v1.Lifecycle{

@@ -5,6 +5,7 @@
 ## 0.4.0
 
 - Uses of initContainerImage and bootstrapContainerImage to be able to adapt to official cassandra image.
+- Use of ReadOnly Container : `Spec.ReadOnlyRootFilesystem` default true
 
 ## 0.3.3
 
