@@ -138,29 +138,18 @@ func AsOwner(cc *api.CassandraCluster) metav1.OwnerReference {
 	}
 }
 
-const (
-	// CassandraImage defines the default cassandra image
-	// can be surcharded by the CRD
-	CassandraImage = "sebmoule/cassandra-k8s"
-	//CassandraImage = "bac-a-sable-registry.artifactory.packages.install-os.multis.p.fti.net/cassandra-k8s"
-
-	// CassandraImageVersion defines the default cassandra image version
-	// can be surcharge by the CRD
-	CassandraImageVersion = "3.11.1-dev" //
-)
-
 // getCassandraImage returns the docker image to used for cassandra
 func GetCassandraImage(cc *api.CassandraCluster) string {
 	var baseImage, version string
 	if cc.Spec.BaseImage != "" {
 		baseImage = cc.Spec.BaseImage
 	} else {
-		baseImage = CassandraImage
+		baseImage = defaultBaseImage
 	}
 	if cc.Spec.Version != "" {
 		version = cc.Spec.Version
 	} else {
-		version = CassandraImageVersion
+		version = defaultVersion
 	}
 	return fmt.Sprintf("%s:%s", baseImage, version)
 }

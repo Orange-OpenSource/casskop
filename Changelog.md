@@ -2,6 +2,10 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.4.0
+
+- Uses of initContainerImage and bootstrapContainerImage to be able to adapt to official cassandra image.
+
 ## 0.3.3
 
 - upgrade to operator-sdk 0.9.0 & go modules (thanks @jsanda)

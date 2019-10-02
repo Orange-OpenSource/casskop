@@ -111,7 +111,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-        image: orangeopensource/cassandra-image:seed-dev
+        image: cassandra
         imagePullPolicy: Always
         lifecycle:
           preStop:

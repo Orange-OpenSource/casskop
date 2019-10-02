@@ -92,7 +92,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -187,7 +187,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -324,7 +324,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -907,7 +907,7 @@ Example With this CRD deployed :
 ```yaml
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   imagePullSecret:
     name: advisedev # To authenticate on docker registry

@@ -53,7 +53,7 @@ metadata:
     cluster: k8s.pic 
 spec:
   nodesPerRacks: 6
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -102,7 +102,7 @@ spec:
 	labels, nodeSelector := GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 
 	assert.Equal("latest", cc.Spec.Version)
-	assert.Equal("orangeopensource/cassandra-image", cc.Spec.BaseImage)
+	assert.Equal("cassandra", cc.Spec.BaseImage)
 	assert.Equal(cc.Spec.Topology.DC[dc].Name, labels["cassandraclusters.db.orange.com.dc"])
 	assert.Equal(cc.Spec.Topology.DC[dc].Rack[rack].Name, labels["cassandraclusters.db.orange.com.rack"])
 	assert.Equal(2, len(nodeSelector))
@@ -127,7 +127,7 @@ metadata:
     cluster: k8s.kaas
 spec:
   nodes: 1
-  baseImage: "orangeopensource/cassandra-image"
+  baseImage: "cassandra"
   version: latest
   rollingPartition: 0
   dataCapacity: 10Gi
@@ -154,7 +154,7 @@ spec:
 	labels, nodeSelector := GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 
 	assert.Equal("latest", cc.Spec.Version)
-	assert.Equal("orangeopensource/cassandra-image", cc.Spec.BaseImage)
+	assert.Equal("cassandra", cc.Spec.BaseImage)
 	assert.Equal(api.DefaultCassandraDC, labels["cassandraclusters.db.orange.com.dc"])
 	assert.Equal(api.DefaultCassandraRack, labels["cassandraclusters.db.orange.com.rack"])
 	assert.Equal(0, len(nodeSelector))

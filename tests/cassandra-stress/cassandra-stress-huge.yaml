@@ -19,7 +19,7 @@ spec:
     - 1
   containers:
   - name: cassie1-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:
@@ -37,7 +37,7 @@ spec:
     - name: cassandra-stress-profile-volume
       mountPath: /opt/cassandra-stress
   - name: cassie2-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:

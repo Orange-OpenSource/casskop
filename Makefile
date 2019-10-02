@@ -455,7 +455,7 @@ cassandra-stress:
 	sed -i -e 's/user=[a-zA-Z]* password=[a-zA-Z]*/user=$(USERNAME) password=$(PASSWORD)/' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
-	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	sed -i -e 's#image:.*#image: $(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
 
 ifdef CASSANDRA_NODE

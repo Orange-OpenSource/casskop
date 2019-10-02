@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	defaultBaseImage              string        = "orangeopensource/cassandra-image"
+	defaultBaseImage              string        = "cassandra"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultVersion                string        = "latest"
@@ -49,7 +49,7 @@ const (
 	DefaultDelayWaitForDecommission = 120
 
 	//DefaultUserID is the default ID to use in cassandra image (RunAsUser)
-	DefaultUserID int64 = 1000
+	DefaultUserID int64 = 999
 )
 
 const (
