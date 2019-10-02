@@ -176,7 +176,7 @@ The bootstrap Container :
 We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
 required actions, see [Bootstrap](../docker/bootstrap).
 
-### Cassandra docker image
+### OLD Cassandra docker image
 
 CassKop (< 0.4.0) relies on specific Docker Cassandra Image, where we provide specific startup script
 that will be used to make live configuration on the Cassandra node we deploy.

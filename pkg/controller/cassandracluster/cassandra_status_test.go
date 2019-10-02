@@ -416,7 +416,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	}
 
 	//Ask for a change in Docker version
-	rcc.cc.Spec.Version = "latest"
+	rcc.cc.Spec.Version = "new-versionftt"
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
