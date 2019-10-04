@@ -196,12 +196,12 @@ func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName stri
 	}
 	if storedStatefulSet.Spec.Template.Spec.Volumes != nil {
 		var found bool = false
-		for _, v := range storedStatefulSet.Spec.Template.Spec.Volumes {
-			if v.Name == cassandraConfigMapName {
+		for _, volume := range storedStatefulSet.Spec.Template.Spec.Volumes {
+			if volume.Name == cassandraConfigMapName {
 				found = true
-				if v.ConfigMap != nil && v.ConfigMap.Name != cc.Spec.ConfigMapName {
+				if volume.ConfigMap != nil && volume.ConfigMap.Name != cc.Spec.ConfigMapName {
 					logrus.Infof("[%s][%s]: We ask to change ConfigMap New-CRD:%s -> Old-StatefulSet:%s", cc.Name, dcRackName,
-						cc.Spec.ConfigMapName, v.ConfigMap.Name)
+						cc.Spec.ConfigMapName, volume.ConfigMap.Name)
 					updateConfigMap = true
 				}
 				break // we have found the configmap
@@ -233,8 +233,8 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName st
 
 	//This needs to be refactor if we load more than 1 container
 	if storedStatefulSet.Spec.Template.Spec.Containers != nil {
-		for _, c := range storedStatefulSet.Spec.Template.Spec.Containers {
-			if c.Name == cassandraContainerName && desiredDockerImage != c.Image {
+		for _, container := range storedStatefulSet.Spec.Template.Spec.Containers {
+			if container.Name == cassandraContainerName && desiredDockerImage != container.Image {
 				{
 					logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, storedStatefulSet.Spec.Template.Spec.Containers[0].Image)
 					lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction

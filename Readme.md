@@ -59,7 +59,7 @@ The following features are supported by CassKop:
 - [ ] Performing live backup of Cassandra datas (using Instaclustr sidecar)
 - [ ] Performing live restore of datas (using Instaclustr sidecar)
 - [x] Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
-- [x] Pause/Restart operations through CassKoP plugin.
+- [x] Pause/Restart & rolling restart operations through CassKoP plugin.
 
 > CassKop doesn't use nodetool but invokes operations through authenticated JMX/Jolokia call
 
