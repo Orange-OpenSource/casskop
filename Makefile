@@ -28,7 +28,6 @@ IMAGE_NAME := $(SERVICE_NAME)
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
 BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.0
-#BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-image:latest
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
