@@ -29,7 +29,7 @@ ifeq (nodetool,$(firstword $(MAKECMDGOALS)))
   $(eval $(NODETOOL_ARGS):;@:)
 endif
 
-ifeq (kube-namespace,$(firstword $(MAKECMDGOALS)))
+ifeq (kube-set-namespace,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
   KUBENAMESPACE_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   # ...and turn them into do-nothing targets
@@ -100,11 +100,11 @@ list-app-by-nodes:
 	  kubectl describe node $$node | egrep "$(APP)|namespace" ; \
   done
 
-#Force kubectl to use the NAMESPACE by default
-kubectl-change-namespace:
-	kubectl config set-context $$(kubectl config current-context) --namespace=$(NAMESPACE)
+# Change current namespace
+kube-set-namespace:
+	kubectl config set-context $$(kubectl config current-context) --namespace=$(KUBENAMESPACE_ARGS)
 
-# Supprime le namespace
+# Delete a namespace
 delete:
 	kubectl delete namespace $(NAMESPACE)
 
@@ -133,7 +133,7 @@ hostname:
 	for pod in $$KUBE_PODS; do kubectl -n $(NAMESPACE) exec -it $$pod -- sh -c 'hostname'; done
 
 # Go into each Cassandra pods, and create a /var/lib/cassandra/name file with the host name
-fullfil:
+fulfill:
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for pod in $$KUBE_PODS; do kubectl -n $(NAMESPACE) exec -it $$pod -- sh -c "echo $$(hostname) > /var/lib/cassandra/$(NAMESPACE)-$$pod"; done
 
@@ -214,7 +214,6 @@ check-pvc:
 	  echo "" ; \
 	done
 
-
 #Usage make node 'ls -la'
 node:
 	KUBE_IPS=`kubectl get nodes -l node-role.kubernetes.io/node=true -o jsonpath='{range .items[*]}{.status.addresses[0].address}{" "}'` ; \
@@ -223,13 +222,11 @@ node:
     ssh -q cloudwatt-k8s "ssh $$x '$(NODE_ARGS)'" ; \
   done;
 
-
 annotate-upgradesstables:
 	make check-annotations
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for x in $$KUBE_PODS; do kubectl -n $(NAMESPACE) annotate --overwrite pods $$x cc-action=upgradesstables; done
 	make check-annotations
-
 
 os:
 	echo $(GOOS)
@@ -237,11 +234,6 @@ os:
 check-env:
 	echo "working on OS type $(GOOS)"
 	echo " Working with docker repository $(REPOSITORY)"
-
-#usage: kube-namespace <mynamespace>
-#permet de changer le namespace par default de kubectl
-kube-namespace:
-	kubectl config set-context $$(kubectl config current-context) --namespace=$(KUBENAMESPACE_ARGS)
 
 #list all resources in current namespace
 list-all:
