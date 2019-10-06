@@ -103,12 +103,10 @@ RUN mkdir -p $GOPATH/src/github.com/operator-framework \
     && rm -rf /root/.cache \
     && rm -rf /go/pkg/dep/sources/
 
-
-
 # END IMAGE CUSTOMIZATIONS
 
 #USER circleci
 
-WORKDIR cassandra-k8s-operator
+WORKDIR /go/cassandra-k8s-operator
 
 CMD ["/bin/sh"]
