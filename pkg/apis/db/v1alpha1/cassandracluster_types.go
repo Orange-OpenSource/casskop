@@ -26,7 +26,9 @@ import (
 )
 
 const (
-	defaultBaseImage              string        = "orangeopensource/cassandra-image"
+	defaultBaseImage              string        = "cassandra"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
+	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -47,7 +49,7 @@ const (
 	DefaultDelayWaitForDecommission = 120
 
 	//DefaultUserID is the default ID to use in cassandra image (RunAsUser)
-	DefaultUserID int64 = 1000
+	DefaultUserID int64 = 999
 )
 
 const (
@@ -89,28 +91,47 @@ const (
 	OperationRemove          string = "remove"
 )
 
+// CheckDefaults chckes that required fields havent good values
+func (cc *CassandraCluster) CheckDefaults() {
+	ccs := &cc.Spec
+
+	if len(ccs.BaseImage) == 0 {
+		ccs.BaseImage = defaultBaseImage
+	}
+	if len(ccs.Version) == 0 {
+		ccs.Version = defaultVersion
+	}
+	if len(ccs.ImagePullPolicy) == 0 {
+		ccs.ImagePullPolicy = defaultImagePullPolicy
+	}
+	if len(ccs.BootstrapImage) == 0 {
+		ccs.BootstrapImage = defaultBootstrapImage
+	}
+
+	//Init-Container 1 : init-config
+	if len(ccs.InitContainerImage) == 0 {
+		ccs.InitContainerImage = ccs.BaseImage + ":" + ccs.Version
+	}
+	if len(ccs.InitContainerCmd) == 0 {
+		ccs.InitContainerCmd = InitContainerCmd
+	}
+
+	if ccs.RunAsUser == nil {
+		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
+	}
+	if ccs.ReadOnlyRootFilesystem == nil {
+		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
+	}
+}
+
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
+// SetDefault mus be done only once at startup
 func (cc *CassandraCluster) SetDefaults() bool {
 	changed := false
 	ccs := &cc.Spec
 	if ccs.NodesPerRacks == 0 {
 		ccs.NodesPerRacks = 1
 		changed = true
-	}
-	if len(ccs.BaseImage) == 0 {
-		ccs.BaseImage = defaultBaseImage
-		changed = true
-	}
-	if len(ccs.ImagePullPolicy) == 0 {
-		ccs.ImagePullPolicy = defaultImagePullPolicy
-		changed = true
-	}
-	if len(ccs.Version) == 0 {
-		ccs.Version = defaultVersion
-		changed = true
-	}
-	if ccs.RunAsUser == nil {
-		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
 	}
 	if len(cc.Status.Phase) == 0 {
 		cc.Status.Phase = ClusterPhaseInitial
@@ -611,8 +632,19 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull poicy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
+	// Image used for bootstrapping cluster (use the form : base:version)
+	BootstrapImage string `json:"bootstrapImage"`
+
+	// Command to execute in the initContainer in the targeted image
+	InitContainerImage string `json:"initContainerImage"`
+	// Command to execute in the initContainer in the targeted image
+	InitContainerCmd string `json:"initContainerCmd"`
+
 	//RunAsUser define the id of the user to run in the Cassandra image
 	RunAsUser *int64 `json:"runAsUser"`
+
+	//Make the pod as Readonly
+	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
 
 	// Pod defines the policy for pods owned by cassandra operator.
 	// This field cannot be updated once the CR is created.
@@ -626,6 +658,10 @@ type CassandraClusterSpec struct {
 	//DeletePVC defines if the PVC must be deleted when the cluster is deleted
 	//it is false by default
 	DeletePVC bool `json:"deletePVC,omitempty"`
+
+	//Debug is used to surcharge Cassandra pod command to not directly start cassandra but
+	//starts an infinite wait to allow user to connect a bash into the pod to make some diagnoses.
+	Debug bool `json:"debug,omitempty"`
 
 	//AutoPilot defines if the Operator can fly alone or if we need human action to trigger
 	//Actions on specific Cassandra nodes

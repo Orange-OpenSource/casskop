@@ -14,18 +14,18 @@ spec:
   securityContext:
     fsGroup: 1
     runAsNonRoot: true
-    runAsUser: 1006
+    runAsUser: 1000
     supplementalGroups:
     - 1
   containers:
   - name: cassie1-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:
         add: ["IPC_LOCK"]
     command: ["/bin/sh"]
-    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/medium_stress.yaml ops(insert=1) n=5m cl=one -node cassandra-demo -mode native cql3 user=cassandra password=cassandra -rate threads=50 -pop seq=0..5m -graph file=/tmp/stress-medium1.html' && echo END && while true ; do sleep 60; done"]
+    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/medium_stress.yaml ops(insert=1,query_by_sub_id=1) n=5m cl=one -node cassandra-demo -mode native cql3 user=cassandra password=cassandra -rate threads=50 -pop seq=0..5m -graph file=/tmp/stress-medium1.html' && echo END && while true ; do sleep 60; done"]
     resources:
       limits:
         cpu: "8"
@@ -37,13 +37,13 @@ spec:
     - name: cassandra-stress-profile-volume
       mountPath: /opt/cassandra-stress
   - name: cassie2-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:
         add: ["IPC_LOCK"]
     command: ["/bin/sh"]
-    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/medium_stress.yaml ops(insert=1) n=5m cl=one -node cassandra-demo-dc1.cassandra-demo -mode native cql3 user=cassandra password=cassandra -rate threads=50 -pop seq=5000001..10m -graph file=/tmp/stress-medium2.html' && echo END && while true ; do sleep 60; done"]
+    args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/medium_stress.yaml ops(insert=1) n=5m cl=one -node cassandra-demo -mode native cql3 user=cassandra password=cassandra -rate threads=50 -pop seq=5000001..10m -graph file=/tmp/stress-medium2.html' && echo END && while true ; do sleep 60; done"]
     resources:
       limits:
         cpu: "8"

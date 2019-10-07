@@ -2,6 +2,11 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.4.0
+
+- initContainerImage and bootstrapContainerImage used to adapt to official cassandra image.
+- ReadOnly Container : `Spec.ReadOnlyRootFilesystem` default true
+
 ## 0.3.3
 
 - upgrade to operator-sdk 0.9.0 & go modules (thanks @jsanda)

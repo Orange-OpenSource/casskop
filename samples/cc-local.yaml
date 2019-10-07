@@ -5,7 +5,7 @@ metadata:
 spec:
   nodesPerRacks: 3
 
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
 
   #configMapName: cassandra-jvm-configmap-full

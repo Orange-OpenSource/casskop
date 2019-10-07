@@ -5,8 +5,8 @@ metadata:
   labels:
     cluster: k8s.kaas
 spec:
-  baseImage: orangeopensource/cassandra-image
-  version: 3.11.4-8u212-0.3.2-release-cqlsh
+  baseImage: cassandra
+  version: latest
   configMapName: cassandra-configmap-v1
   dataCapacity: "20Gi"
   dataStorageClass: "standard"

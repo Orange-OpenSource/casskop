@@ -262,7 +262,7 @@ For more information you can run {plugin} <command> --help
             die("No ConfigMap found")
         result = json.loads(k("get", "configmap", config_map, "-o", "json"))
         result["data"]["pre_run.sh"] = pre_run
-        print("Update pre-run.sh in ConfigMap {config_map}")
+        print("Update pre_run.sh in ConfigMap {config_map}")
         k_apply_with_input(json.dumps(result), f"Can't update ConfigMap {config_map}")
         print(f"Delete pvc data-{args.pod}")
         k("delete", "pvc", f"data-{args.pod}")

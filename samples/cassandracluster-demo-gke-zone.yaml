@@ -14,8 +14,8 @@ metadata:
   labels:
     cluster: k8s.kaas
 spec:
-  baseImage: orangeopensource/cassandra-image
-  version: latest-cqlsh
+  baseImage: cassandra
+  version: latest
   configMapName: cassandra-configmap-v1
   dataCapacity: "20Gi"
   dataStorageClass: "standard-wait"
@@ -28,7 +28,7 @@ spec:
   gcStdout: true
   autoUpdateSeedList: true
   maxPodUnavailable: 1
-  runAsUser: 1000
+  runAsUser: 999
   resources:         
     requests:
       cpu: '1'

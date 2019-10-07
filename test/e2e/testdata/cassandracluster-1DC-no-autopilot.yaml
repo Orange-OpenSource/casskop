@@ -6,8 +6,8 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 1
-  baseImage: orangeopensource/cassandra-image
-  version: latest-cqlsh
+  baseImage: cassandra
+  version: latest
   imagePullPolicy: "IfNotPresent"
   rollingPartition: 0
   dataCapacity: "1Gi"

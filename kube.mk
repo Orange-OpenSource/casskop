@@ -164,7 +164,7 @@ check-seeds-env:
 
 # for each cassandra pods, extract the docker image name from metadata
 check-version:
-	kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[0].image}{"\n"}'
+	kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[0].image}{"\n"}{.spec.initContainers[1].image}{"\n"}'
 
 check-annotations:
 	kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.items[*]}{.metadata.annotations}{"\n"}'

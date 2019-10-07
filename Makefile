@@ -27,8 +27,11 @@ IMAGE_NAME := $(SERVICE_NAME)
 
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
-TELEPRESENCE_REGISTRY:=datawire
+BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.0
+TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
+
+KUBECONFIG ?= ~/.kube/config
 
 MINIKUBE_CONFIG ?= ~/.minikube
 MINIKUBE_CONFIG_MOUNT ?= /home/circleci/.minikube
@@ -214,6 +217,10 @@ ifdef PUSHLATEST
 	docker push $(BUILD_IMAGE):latest
 endif
 
+.PHONY: build-bootstrap-image
+build-bootstrap-image: deps-development
+	$(MAKE) -C docker/bootstrap build
+
 
 pipeline:
 	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator -w /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator \
@@ -392,27 +399,27 @@ ifeq ($(E2E_ARGS),)
 endif
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
+#docker-e2e-test-fix and docker-e2e-test-fix-args need vendor rep to be filled (go mod vendor)
 docker-e2e-test-fix:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --namespace cassandra-e2e'
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --namespace cassandra-e2e'
 
 #execute Test filter based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  # use the rest as arguments for "run"
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  # ...and turn them into do-nothing targets
   $(eval $(E2E_ARGS):;@:)
 endif
 docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-	docker run --rm --env GO111MODULE=on -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	docker run --rm --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 .PHONY: e2e-test-fix
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
-
+dgoss-bootstrap:
+	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
 
 configure-psp:
 	kubectl get clusterrole psp:cassie -o yaml
@@ -420,6 +427,9 @@ configure-psp:
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml | grep -vE '(annotations|creationTimestamp|resourceVersion|uid|selfLink|last-applied-configuration)' | sed 's/cassandra/cassandra-e2e/' | kubectl apply -f -
 
 
+# Usage example:
+# REPLICATION_FACTOR=3 make cassandra-stress small
+#
 ifeq (cassandra-stress,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
   STRESS_TYPE := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -429,8 +439,8 @@ endif
 
 REPLICATION_FACTOR ?= 1
 DC ?= dc1
-USERNAME =? cassandra
-PASSWORD =? cassandra
+USERNAME ?= cassandra
+PASSWORD ?= cassandra
 
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
@@ -444,7 +454,7 @@ cassandra-stress:
 	sed -i -e 's/user=[a-zA-Z]* password=[a-zA-Z]*/user=$(USERNAME) password=$(PASSWORD)/' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
-	sed -i -e 's#orangeopensource/cassandra-image.*#$(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+	sed -i -e 's#image:.*#image: $(CASSANDRA_IMAGE)#g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
 
 ifdef CASSANDRA_NODE
@@ -462,4 +472,7 @@ endif
 ifdef CONSISTENCY_LEVEL
 	sed -i -e 's/cl=one/cl=$(CONSISTENCY_LEVEL)/g' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 endif
+
+	cat /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
+

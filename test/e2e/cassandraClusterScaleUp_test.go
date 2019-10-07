@@ -2,8 +2,9 @@ package e2e
 
 import (
 	goctx "context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
@@ -81,6 +82,14 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	//Now we need to wait for PodOperation to endUp (it's automatically trigger because of the auto-pilot:true)
+	err = mye2eutil.WaitForPodOperationDone(t, f, namespace, "cassandra-e2e", "dc1-rack1", mye2eutil.RetryInterval,
+		mye2eutil.Timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	//Get Updated cc
 	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e", Namespace: namespace}, cc)
 	if err != nil {

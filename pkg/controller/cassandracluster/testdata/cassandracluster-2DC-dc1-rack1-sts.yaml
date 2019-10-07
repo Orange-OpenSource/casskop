@@ -111,7 +111,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-        image: orangeopensource/cassandra-image:seed-dev
+        image: cassandra
         imagePullPolicy: Always
         lifecycle:
           preStop:
@@ -162,7 +162,7 @@ spec:
             command:
             - /bin/bash
             - -c
-            - /ready-probe.sh
+            - /etc/cassandra/ready-probe.sh
           failureThreshold: 3
           initialDelaySeconds: 15
           periodSeconds: 40

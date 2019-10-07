@@ -50,7 +50,7 @@ metadata:
   namespace: ns
 spec:
   nodesPerRacks: 6
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -138,9 +138,11 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	if err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
-	//Check that we have set the Finalizers
-	f := cc.GetFinalizers()
-	assert.Equal(f[0], "kubernetes.io/pvc-to-delete", "set finalizer for PVC")
+	if cc.Spec.DeletePVC {
+		//Check that we have set the Finalizers
+		f := cc.GetFinalizers()
+		assert.Equal(f[0], "kubernetes.io/pvc-to-delete", "set finalizer for PVC")
+	}
 	// Check the result of reconciliation to make sure it has the desired state.
 	if !res.Requeue {
 		t.Error("reconcile did not requeue request as expected")
@@ -183,19 +185,20 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 					Name:      "template",
 					Namespace: namespace,
 					Labels: map[string]string{
-						"cluster": "k8s.pic",
-						"dc-rack": dcRackName,
-						"cassandraclusters.db.orange.com.dc": dc.Name,
+						"cluster":                              cc.Labels["cluster"],
+						"dc-rack":                              dcRackName,
+						"cassandraclusters.db.orange.com.dc":   dc.Name,
 						"cassandraclusters.db.orange.com.rack": rack.Name,
-						"app": "cassandracluster",
-						"cassandracluster": "cassandra-demo",
+						"app":                                  "cassandracluster",
+						"cassandracluster":                     cc.Name,
 					},
 				},
 				Status: v1.PodStatus{
 					Phase: v1.PodRunning,
 					ContainerStatuses: []v1.ContainerStatus{
 						v1.ContainerStatus{
-							Name:  "cassandra",
+							Name: "cassandra",
+							//Image: cc.Spec.BaseImage + ":" + cc.Spec.Version
 							Ready: true,
 						},
 					},
@@ -251,6 +254,183 @@ func TestReconcileCassandraCluster(t *testing.T) {
 	}
 	if !res.Requeue && res.RequeueAfter == 0 {
 		t.Error("reconcile did not requeue request as expected")
+	}
+
+}
+
+// test that we detect an addition of a configmap
+func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
+	// Mock request to simulate Reconcile() being called on an event for a
+	// watched resource .
+	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
+
+	//WARNING: ListPod with fieldselector is not working on client-side
+	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
+	//https://github.com/kubernetes/client-go/issues/326
+	res, err := rcc.Reconcile(*req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+	if !res.Requeue && res.RequeueAfter == 0 {
+		t.Error("reconcile did not requeue request as expected")
+	}
+
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+	//Ask for a new ConfigMap
+	rcc.cc.Spec.ConfigMapName = "my-super-configmap"
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+}
+
+// test that we detect a change in a configmap
+func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
+	// Mock request to simulate Reconcile() being called on an event for a
+	// watched resource .
+	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
+
+	//WARNING: ListPod with fieldselector is not working on client-side
+	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
+	//https://github.com/kubernetes/client-go/issues/326
+	res, err := rcc.Reconcile(*req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+	if !res.Requeue && res.RequeueAfter == 0 {
+		t.Error("reconcile did not requeue request as expected")
+	}
+
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, false, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+	//Ask for a new ConfigMap
+	rcc.cc.Spec.ConfigMapName = "my-super-configmap"
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+	//Whant to remove the configmap
+	rcc.cc.Spec.ConfigMapName = ""
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, true, UpdateStatusIfconfigMapHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+}
+
+// test that we detect a change in a the docker image
+func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
+	// Mock request to simulate Reconcile() being called on an event for a
+	// watched resource .
+	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
+
+	//WARNING: ListPod with fieldselector is not working on client-side
+	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
+	//https://github.com/kubernetes/client-go/issues/326
+	res, err := rcc.Reconcile(*req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+	if !res.Requeue && res.RequeueAfter == 0 {
+		t.Error("reconcile did not requeue request as expected")
+	}
+
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, false, UpdateStatusIfDockerImageHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
+	}
+
+	//Ask for a change in Docker version
+	rcc.cc.Spec.Version = "new-versionftt"
+	//Test on each statefulset
+	for _, dc := range rcc.cc.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
+			//Update Statefulset fake status
+			sts := &appsv1.StatefulSet{}
+			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+				Namespace: rcc.cc.Namespace},
+				sts)
+			if err != nil {
+				t.Fatalf("get statefulset: (%v)", err)
+			}
+			assert.Equal(t, true, UpdateStatusIfDockerImageHasChanged(rcc.cc, dcRackName, sts, &rcc.cc.Status))
+		}
 	}
 
 }
