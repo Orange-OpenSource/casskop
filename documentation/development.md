@@ -44,7 +44,7 @@ Casskop has been validated with :
 - [docker](docker_tool) version 18.09+.
 - [kubectl](kubectl_tool) version v1.13.3+.
 - [Helm](https://helm.sh/) version v2.12.2.
-- [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.7.0.
+- [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.9.0.
 
 
 ### Install the Operator SDK CLI
@@ -53,7 +53,7 @@ First, checkout and install the operator-sdk CLI:
 
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout v0.7.0
+$ git checkout v0.9.0
 $ make dep
 $ make install
 ```
@@ -230,7 +230,7 @@ Install the Helm chart.
 
 ```
 $ helm install ./helm/cassandra-operator \
-    --set-string image.repository=orangeopensource/cassandra-k8s-operator,image.tag=0.3.1-local-dev-helm \
+    --set-string image.repository=orangeopensource/cassandra-k8s-operator,image.tag=0.4.0-local-dev-helm \
     --name local-dev-helm
 ```
 
@@ -348,7 +348,19 @@ We used the SDK to create the repository layout. This command is for memory ;) (
 > You need to have first install the SDK.
 
 ```
-operator-sdk new cassandra-k8s-operator --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+#old version
+ operator-sdk new cassandra-k8s-operator --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+#new version
+operator-sdk new casskop --dep-manager=modules --repo=github.com.Orange-OpenSource/casskop --type=go
+```
+Then you want to add managers:
+
+```
+# Add a new API for the custom resource CassandraCluster
+$ operator-sdk add api --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+
+# Add a new controller that watches for CassandraCluster
+$ operator-sdk add controller --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
 ```
 
 ## Useful Infos for developers
