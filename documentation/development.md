@@ -85,7 +85,7 @@ brew install kubectx
 The installation of kind is then done with (outside of the cassandra operator folder if you want it to run fast) :
 
 ```sh
-$ GO111MODULE="on" go get sigs.k8s.io/kind@v0.4.0
+$ GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1
 ```
 
 #### Setup
