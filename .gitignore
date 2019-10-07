@@ -115,4 +115,3 @@ debug
 cassandra-operator.env
 telepresence.log
 build/_output
-deploy/test

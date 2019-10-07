@@ -92,7 +92,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -187,7 +187,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -324,7 +324,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   rollingPartition: 0
   dataCapacity: "3Gi"
@@ -907,7 +907,7 @@ Example With this CRD deployed :
 ```yaml
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: latest
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
@@ -1037,7 +1037,7 @@ status:
 ```
 
 In this example we see that we allowed only 1 Pod unavailable, and on our cluster we wants to have 14 pods and we only
-have 13 healthy, that's why the PDB won't allow the eviction of an additionary pod.
+have 13 healthy, that's why the PDB won't allow the eviction of an additional pod.
 
 To be able to continue, we need to wait or to make appropriate actions so that the Cassandra cluster won't have any
 unavailable nodes.
@@ -1046,7 +1046,7 @@ unavailable nodes.
 ### K8S host major failure: replacing a cassandra node
 
 In the case of a major host failure, it may not be possible to bring back the node to life. We can in this case
-considere that our cassandra node is lost and we will want to replace it on another host.
+consider that our cassandra node is lost and we will want to replace it on another host.
 
 In this case we may have 2 solutions that will require some manual actions :
 
@@ -1059,9 +1059,6 @@ $ kubectl casskop removenode --pod <node-id>
 ```
 
 This will trigger the PodOperation removenode by setting the appropriate labels on a cassandra Pod.
-
-TODO: link to PodOperation Removenode..
-
 
 2. Once the node is properly removed, we can free the link between the Pod and the failing host by removing the
    associated PodDisruptionBudget
@@ -1090,7 +1087,7 @@ $ kubectl casskop cleanup status
 In some cases It may be useful to prefer to replace the node. Because we use a statefulset to deploy cassandra pods,
 by definition all pods are identical and we couldn't execute specific actions on a specific node at startup.
 
-For that CassKop provide the ability to execute a `pre-run.sh` script that can be change using the CRD ConfigMap.
+For that CassKop provide the ability to execute a `pre_run.sh` script that can be change using the CRD ConfigMap.
 
 To see how to use the configmap see [Overriding Configuration using
 configMap](../documentation/description.md#overriding-configuration-using-configmap)
@@ -1130,7 +1127,7 @@ data:
 So the Operation will be :
 1. Edit the configmap with the appropriate CASSANDRA_REPLACE_NODE IP for the targeted pod name
 2. delete the pvc data-cassandra-test-dc1-rack2-1
-3. the Pod will boot, execute the pre-run.sh script prior to the /run.sh
+3. the Pod will boot, execute the pre_run.sh script prior to the /run.sh
 4. the new pod replace the dead one by re-syncing the content which could take some times depending on the data size.
 5. Do not forget to edit again the ConfigMap and to remove the specific line with replace_node instructions.
 

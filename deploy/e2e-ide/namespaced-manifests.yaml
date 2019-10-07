@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cassandra-k8s-operator
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cassandra-k8s-operator
+rules:
+- apiGroups:
+  - db.orange.com
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
+- apiGroups:
+  - policy
+  resources:
+    - poddisruptionbudgets
+  verbs:
+    - "*"
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - "get"
+  - "create"
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - cassandra-k8s-operator
+  verbs:
+  - "update"
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cassandra-k8s-operator
+subjects:
+- kind: ServiceAccount
+  name: cassandra-k8s-operator
+roleRef:
+  kind: Role
+  name: cassandra-k8s-operator
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cassandra-k8s-operator
+  name: cassandra-k8s-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cassandra-k8s-operator
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cassandra-k8s-operator
+        name: cassandra-k8s-operator
+    spec:
+      containers:
+      - command:
+        - cassandra-k8s-operator
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: cassandra-k8s-operator
+        image: orangeopensource/cassandra-k8s-operator:0.4.0-sidecar
+        imagePullPolicy: Always
+        name: cassandra-k8s-operator
+        ports:
+        - containerPort: 60000
+          name: metrics
+        readinessProbe:
+          exec:
+            command:
+            - /health
+          failureThreshold: 1
+          initialDelaySeconds: 4
+          periodSeconds: 10
+        resources: {}
+      securityContext:
+        runAsUser: 1000
+      serviceAccountName: cassandra-k8s-operator
+status: {}

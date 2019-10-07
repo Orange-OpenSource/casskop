@@ -32,7 +32,7 @@ import (
 
 var (
 	RetryInterval        = time.Second * 10
-	Timeout              = time.Second * 300
+	Timeout              = time.Second * 600
 	CleanupRetryInterval = time.Second * 5
 	CleanupTimeout       = time.Second * 20
 )
@@ -154,29 +154,29 @@ func WaitForStatusChange(
 	timeout time.Duration,
 	conditionFunc CassandraClusterConditionFunc) error {
 
-		cluster :=  &api.CassandraCluster{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "CassandraCluster",
-				APIVersion: "db.orange.com/v1alpha1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
+	cluster := &api.CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	return wait.Poll(retryInterval, timeout, func() (bool, error) {
+		err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("CassandraCluster %s in namespace %s not found: %s", name, namespace, err)
+				return false, nil
+			}
+			return false, err
 		}
 
-		return wait.Poll(retryInterval, timeout, func() (bool, error) {
-			err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cluster)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					t.Logf("CassandraCluster %s in namespace %s not found: %s", name, namespace, err)
-					return false, nil
-				}
-				return false, err
-			}
-
-			return conditionFunc(cluster)
-		})
+		return conditionFunc(cluster)
+	})
 }
 
 func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name string,
@@ -216,8 +216,49 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 	if err != nil {
 		return err
 	}
-	t.Logf("Operator Status id Done (%s/%s)\n", cc2.Status.LastClusterAction,
+	t.Logf("Operator Status is Done (%s/%s)\n", cc2.Status.LastClusterAction,
 		cc2.Status.LastClusterActionStatus)
+	return nil
+}
+
+func WaitForPodOperationDone(t *testing.T, f *framework.Framework, namespace, name string, dcRackName string,
+	retryInterval, timeout time.Duration) error {
+
+	cc2 := &api.CassandraCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraCluster",
+			APIVersion: "db.orange.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+
+		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("CassandraCluster not found.. this is not good..\n", name)
+				return false, nil
+			}
+			return false, err
+		}
+
+		if cc2.Status.CassandraRackStatus[dcRackName].PodLastOperation.Status == api.StatusDone {
+			return true, nil
+		}
+		t.Logf("Waiting for PodOperation %s to finish\n",
+			cc2.Status.CassandraRackStatus[dcRackName].PodLastOperation.Name)
+
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	t.Logf("PodOperation is Done (%s/%s)\n", cc2.Status.CassandraRackStatus[dcRackName].PodLastOperation.Name,
+		cc2.Status.CassandraRackStatus[dcRackName].PodLastOperation.Status)
 	return nil
 }
 
@@ -278,8 +319,8 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 
 }
 
-func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx * framework.TestCtx, configMapName, namespace string) {
-	configMapFile := helperLoadBytes(t, configMapName + ".yaml")
+func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, configMapName, namespace string) {
+	configMapFile := helperLoadBytes(t, configMapName+".yaml")
 	decode := serializer.NewCodecFactory(f.Scheme).UniversalDeserializer().Decode
 	configMapString := string(configMapFile[:])
 	obj, _, err := decode([]byte(configMapString), nil, nil)

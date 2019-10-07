@@ -16,10 +16,12 @@
 - [Deployment configuration](#deployment-configuration)
     - [Cassandra cluster configuration](#cassandra-cluster-configuration)
     - [Cassandra configuration](#cassandra-configuration)
+        - [Casskop >= 0.4.0](#casskop--040)
+            - [Cassandra bootstrap](#cassandra-bootstrap)
         - [Cassandra docker image](#cassandra-docker-image)
         - [NodesPerRacks](#nodesperracks)
         - [Configuration override using configMap](#configuration-override-using-configmap)
-        - [Configuration pre-run.sh script](#configuration-pre-runsh-script)
+        - [Configuration pre_run.sh script](#configuration-prerunsh-script)
         - [JVM options](#jvm-options)
             - [Memory](#memory)
             - [GarbageCollector output](#garbagecollector-output)
@@ -133,9 +135,50 @@ the user requires.
 
 ## Cassandra configuration
 
-### Cassandra docker image
+### Casskop >= 0.4.0
 
-CassKop relies on specific Docker Cassandra Image, where we provide specific startup script
+Starting with CassKop 0.4.0, there is no more obligation to rely on the CassKop Cassandra docker image.
+
+The specific part of configuring Cassandra to works with CassKoçp has been mooved out from the image to a specific
+init-container which is executed prior to the Cassandra image.
+
+There is a specific bootstrap image that is build from the docker directory, and contains all required files or scripts
+to works with CassKop.
+
+#### Cassandra bootstrap 
+
+The configuration of the Cassandra image has been delegated to init-containers that are executed prior to the Cassandra
+container when the pod is started.
+
+#### Initcontainer 1 : init-config
+
+The init containers is responsible for the foloowing actions :
+- copy the default Cassandra configuration from user's provided Cassandra image.
+
+Configuration:
+- The init-config container is by default the baseImage Cassandra image that can be changed using
+`Spec.initContainerImage`.
+- The default command executed by the init-container is `cp -vr /etc/cassandra/* /bootstrap"` and can be changed using
+  `Spec.initContainerCmd`
+
+#### Initcontainer 2 : bootstrap
+
+The bootstrap Container : 
+- applying files and additional jar from the bootstrap image to the default configuration
+- applying the user's configmap custom configuration (if any) on top of the default configuration
+- modifying the configuration to be suitable to run with Casskop:
+  - update cluster name 
+  - configure dc/rack properties
+  - applying seedlist
+  - add cassadnra exporter and jolokia agent
+  - ..
+
+We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
+required actions, see [Bootstrap](../docker/bootstrap).
+
+### OLD Cassandra docker image
+
+CassKop (< 0.4.0) relies on specific Docker Cassandra Image, where we provide specific startup script
 that will be used to make live configuration on the Cassandra node we deploy.
 
 The actual associated Docker image can be found in the gitlab repo :
@@ -154,10 +197,6 @@ The actual naming of the Cassandra Image is as follow :
 
 Example :
 `3.11.3-8u201-0.3.0`
-
-CassKop may use (TODO: in future) the first part of the tag which represents the Cassandra version to detect
-what to do.
-
 
 When Changing one of thoses fields, CassKop will triger an
 [UpdateDockerImage](../documentation/operations.md#updatedockerimage)
@@ -213,7 +252,7 @@ We have a specific Cassandra Docker image startup script that will overwrite eac
 Typical overwriting files may be :
 - cassandra.yaml
 - jvm.options
-- specifying a pre-run.sh script
+- specifying a pre_run.sh script
 
 You can find an example with [this example](../samples/cassandra-configmap-v1.yaml)
 ```
@@ -238,13 +277,13 @@ will trigger a rollingRestart of the whole cluster applying the new configuratio
 
 
 
-### Configuration pre-run.sh script
+### Configuration pre_run.sh script
 
 In case you need to make some specific actions on a particular node, such as make uses of the **CASSANDRA_REPLACE_NODE**
-variable, you can uses the pre-run.sh script in the ConfigMap. If present, the cassandra docker will execute this script
+variable, you can uses the pre_run.sh script in the ConfigMap. If present, the cassandra docker will execute this script
 prior to the `run.sh` script from the docker image.
 
-example of a configMap with the pre-run.sh script :
+example of a configMap with the pre_run.sh script :
 
 ```yaml
 apiVersion: v1
@@ -1172,7 +1211,7 @@ The CassandraCluster prints out it's whole status.
 > lastClusterActionStatus will turn also to Done.
 
 
-## Cassandra cluster CRD definition version 0.3.0
+## Cassandra cluster CRD definition version 0.4.0
 
 The CRD Type is how we want to declare a CassandraCluster Object into Kubernetes.
 

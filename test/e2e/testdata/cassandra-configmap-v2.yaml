@@ -1245,8 +1245,6 @@ data:
     #-XX:+UseGCLogFileRotation
     #-XX:NumberOfGCLogFiles=10
     #-XX:GCLogFileSize=10M
-    
-    -javaagent:/usr/local/share/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf
-    
+     
     # Debug
     -XX:+PrintCommandLineFlags

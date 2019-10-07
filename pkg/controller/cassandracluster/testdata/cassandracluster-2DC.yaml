@@ -7,8 +7,8 @@ metadata:
   namespace: ns
 spec:
   nodesPerRacks: 1
-  baseImage: orangeopensource/cassandra-image
-  version: seed-dev
+  baseImage: cassandra
+  version: latest
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
   rollingPartition: 0
@@ -44,12 +44,3 @@ spec:
           - name: rack1
             labels: 
               location.dfy.orange.com/street : street3
-#      - name: dc3
-#        nodesPerRacks: 1
-#        labels: 
-#          location.dfy.orange.com/site : mts
-#        rack:
-#          - name: rack1
-#            labels: 
-#              location.dfy.orange.com/street : street3
-#

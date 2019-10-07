@@ -19,7 +19,7 @@ spec:
     - 1
   containers:
   - name: cassie1-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:
@@ -28,11 +28,11 @@ spec:
     args: ["-c", "cassandra-stress 'user profile=/opt/cassandra-stress/normal_stress.yaml ops(insert=10,query_by_sub_id=8) duration=120m cl=one -node cassandra-demo -mode native cql3 user=bench password=monbench -rate threads=30 -pop seq=0..100M -tokenrange -graph file=/tmp/stress-normal.html' && echo END && while true ; do sleep 60; done"]
     resources:
       limits:
-        cpu: "8"
-        memory: 32Gi
+        cpu: "3"
+        memory: 8Gi
       requests:
-        cpu: "8"
-        memory: 32Gi
+        cpu: "3"
+        memory: 8Gi
     volumeMounts:
     - name: cassandra-stress-profile-volume
       mountPath: /opt/cassandra-stress

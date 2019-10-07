@@ -1,0 +1,53 @@
+addr:
+  # intra-nodes
+  tcp://{{.Env.HOSTNAME}}:7000:
+    reachable: true
+    timeout: 5000
+  # cassandra prometheus exporter
+  tcp://{{.Env.HOSTNAME}}:9500:
+    reachable: false
+  # cassandra jmx port
+  tcp://localhost:7199:
+    reachable: true
+  tcp://{{.Env.HOSTNAME}}:7199:
+    reachable: false
+    timeout: 5000
+  # jolokia rest service
+  tcp://{{.Env.HOSTNAME}}:8778:
+    reachable: false
+  # client
+  tcp://{{.Env.HOSTNAME}}:9042:
+    reachable: true
+    timeout: 5000
+http:
+file:
+  /etc/cassandra/jvm.options:
+    exists: true
+    contains: ["-XX:PrintFLSStatistics=1"]
+  /etc/cassandra/cassandra.yaml:
+    exists: true
+  /etc/cassandra/cassandra-rackdc.properties:
+    exists: true
+    contains: ["dc=dc1", "rack=rack1"]
+
+  /etc/cassandra/cassandra-env.sh:
+    exists: true
+    contains:
+      - "!jolokia-agent.jar"
+      - "!javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
+
+  # pre_run.sh is created through configmap which is not used in this test
+  /etc/cassandra/pre_run.sh:
+    exists: false
+
+  /etc/cassandra/ready-probe.sh:
+    exists: true
+
+  /etc/cassandra/run.sh:
+    exists: true
+
+  /extra-lib/cassandra-exporter-agent.jar:
+    exists: false
+
+  /extra-lib/jolokia-agent.jar:
+    exists: false

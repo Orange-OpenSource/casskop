@@ -19,7 +19,7 @@ spec:
     - 1
   containers:
   - name: cassie1-cassandra-stress
-    image: orangeopensource/cassandra-image
+    image: cassandra
     imagePullPolicy: "IfNotPresent"
     securityContext:
       capabilities:

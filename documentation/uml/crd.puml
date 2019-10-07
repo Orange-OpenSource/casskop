@@ -21,6 +21,10 @@ CassandraClusterSpec : nodesPerRacks
 CassandraClusterSpec : baseImage
 CassandraClusterSpec : version
 CassandraClusterSpec : runAsUser
+CassandraClusterSpec : readOnlyRootFileSystem
+CassandraClusterSpec : initContainerImage
+CassandraClusterSpec : initContainerCmd
+CassandraClusterSpec : bootstrapImage
 CassandraClusterSpec : resources
 CassandraClusterSpec : hardAntiAffinity
 CassandraClusterSpec : deletePVC

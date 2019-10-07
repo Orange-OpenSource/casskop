@@ -114,7 +114,7 @@ metadata:
     cluster: demo
 spec:
   nodesPerRacks: 2
-  baseImage: orangeopensource/cassandra-image
+  baseImage: cassandra
   version: 3.11.4-8u212-0.3.1-cqlsh
   configMapName: cassandra-configmap-v1
   dataCapacity: "3Gi"
@@ -869,9 +869,9 @@ windows_timer_interval: 2
 
 # Update of the Cassandra docker image
 
-The docker image version used for Cassandra is defined in the CRD by `version: 3.11.4-8u212-0.3.1-cqlsh`
+The docker image version used for Cassandra is defined in the CRD by `version: latest`
 
-Update this value with `version: latest-cqlsh` and apply again the manigest
+Update this value with `version: 3.11` and apply again the manigest
 
 CassKop start a rolling update of the entire cluster.
 

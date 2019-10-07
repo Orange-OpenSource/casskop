@@ -61,7 +61,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
+	// Modify this to be the types you create that are owned by the primary resource
 	/* We currently don't have secondary resource to watch
 	// Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner CassandraCluster
@@ -131,6 +131,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 			return requeue, rcc.client.Update(context.TODO(), cc)
 		}
 	}
+	cc.CheckDefaults()
 
 	err = rcc.CheckDeletePVC(cc)
 	if err != nil {

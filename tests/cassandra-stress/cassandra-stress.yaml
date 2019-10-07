@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
   - name: cassandra-stress
-    image: "cassandra:3.11.2"
+    image: "cassandra"
     imagePullPolicy: "IfNotPresent"
     command: ["cassandra-stress", "user", "profile=/opt/cassandra-stress/cass_insert_bac.yaml",
               "ops(insert=3,read1=1)", "-node cassandra-bench-online-rack1-0.cassandra-bench-online-rack1", 
