@@ -630,15 +630,15 @@ type CassandraClusterSpec struct {
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
 	// Image used for bootstrapping cluster (use the form : base:version)
-	BootstrapImage string `json:"bootstrapImage"`
+	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
 	// Command to execute in the initContainer in the targeted image
-	InitContainerImage string `json:"initContainerImage"`
+	InitContainerImage string `json:"initContainerImage,omitempty"`
 	// Command to execute in the initContainer in the targeted image
-	InitContainerCmd string `json:"initContainerCmd"`
+	InitContainerCmd string `json:"initContainerCmd,omitempty"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
-	RunAsUser *int64 `json:"runAsUser"`
+	RunAsUser *int64 `json:"runAsUser,omitempty"`
 
 	//Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`

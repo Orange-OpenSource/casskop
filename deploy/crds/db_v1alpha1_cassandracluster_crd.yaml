@@ -196,15 +196,6 @@ spec:
             version:
               description: Version of Cassandra to be deployed.
               type: string
-          required:
-          - baseImage
-          - version
-          - imagepullpolicy
-          - bootstrapImage
-          - initContainerImage
-          - initContainerCmd
-          - runAsUser
-          - maxPodUnavailable
           type: object
         status:
           properties:
