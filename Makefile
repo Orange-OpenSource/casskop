@@ -117,7 +117,6 @@ UNIT_TEST_CMD_WITH_VENDOR := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yam
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-MOCKS_CMD := go generate ./mocks
 
 # environment dirs
 DEV_DIR := docker/circleci
@@ -298,9 +297,6 @@ docker-go-lint:
 # golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
 go-lint:
 	$(GO_LINT_CMD)
-
-mocks: 
-	docker run --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(MOCKS_CMD)'
 
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
