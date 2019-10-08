@@ -71,8 +71,7 @@ ifeq (get,$(firstword $(MAKECMDGOALS)))
   $(eval $(GET_ARGS):;@:)
 endif
 
-.PHONY: nodetool node get
-
+.PHONY: debug watch cc watch-pods get-pods nodetool node get
 
 debug:
 	curl -ssLO https://raw.githubusercontent.com/kubernetes/contrib/master/scratch-debugger/debug.sh
@@ -80,10 +79,10 @@ debug:
 #watch cassandracluster object
 watch:
 	watch 'kubectl get -o yaml cassandracluster $(WATCH_ARGS)'
+
 cc:
 	kubectl get -o yaml cassandracluster $(STATUS_ARGS)
 
-.PHONY: debug watch cc watch-pods get-pods
 watch-pods:
 	watch "kubectl get pods -o=go-template='{{\"NAME NODE IP READY REASON\n\"}}{{range .items}}\
 	{{printf \"%.30s\" .metadata.name}} \
@@ -92,13 +91,12 @@ watch-pods:
 	{{range .status.containerStatuses}}{{.ready}}{{\" \"}}{{if .state.running}}{{\"running\"}}{{else}}{{ .state.waiting.reason}}{{end}}{{end}} \
 	{{\"\n\"}}{{end}}' | column -t"
 
-
 list-app-by-nodes:
 	KUBE_NODES=`kubectl get nodes -l node-role.kubernetes.io/node=true -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for node in $$KUBE_NODES; do \
 	  echo "node $$node" ; \
 	  kubectl describe node $$node | egrep "$(APP)|namespace" ; \
-  done
+	done
 
 # Change current namespace
 kube-set-namespace:
@@ -115,7 +113,6 @@ create:
 	kubectl -n $(NAMESPACE) apply -f cassandra-service-metrics.yaml
 	kubectl -n $(NAMESPACE) apply -f cassandra-PodDisruptionBudget.yaml
 	make apply
-
 
 delete-pvc:
 	kubectl get pvc -o jsonpath='{.items[*].metadata.name}' | xargs k delete pvc
@@ -161,7 +158,6 @@ check-seeds-env:
     echo "" ; \
   done
 
-
 # for each cassandra pods, extract the docker image name from metadata
 check-version:
 	kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[0].image}{"\n"}{.spec.initContainers[1].image}{"\n"}'
@@ -193,7 +189,6 @@ nodetool-repair-full:
 nodetool-repair-full2:
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -l app=cassandracluster -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
   echo $$KUBE_PODS | xargs -I XX kubectl -n $(NAMESPACE) exec -it XX -- sh -c 'echo "$$HOSTNAME:"; echo nodetool repair -full'
-
 
 pod-repartition:
 	echo to implement
