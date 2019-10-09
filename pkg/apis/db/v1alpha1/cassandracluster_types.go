@@ -655,6 +655,10 @@ type CassandraClusterSpec struct {
 	// statefulsets has to be hard (it's soft by default)
 	HardAntiAffinity bool `json:"hardAntiAffinity,omitempty"`
 
+	Pod *PodPolicy `json:"pod,omitempty"`
+
+	Service *ServicePolicy `json:"service,omitempty"`
+
 	//DeletePVC defines if the PVC must be deleted when the cluster is deleted
 	//it is false by default
 	DeletePVC bool `json:"deletePVC,omitempty"`
@@ -750,10 +754,16 @@ type Rack struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// PodPolicy defines the policy for pods owned by vault operator.
+// PodPolicy defines the policy for pods owned by CassKop operator.
 type PodPolicy struct {
-	// Resources is the resource requirements for the containers.
-	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// PodPolicy defines the policy for headless service owned by CassKop operator.
+type ServicePolicy struct {
+	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // CassandraClusterResources sets the limits and requests for a container
