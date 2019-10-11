@@ -70,7 +70,7 @@ orbs:
           - run:
               name: Wait for minikube
               command: |
-                timeout 180s bash \<<EOT
+                timeout 300s bash \<<EOT
                   set -o pipefail
                   function is_ready()
                   {
