@@ -247,7 +247,6 @@ jobs:
           -Dsonar.go.coverage.reportPaths=coverage.out \
           -Dsonar.go.tests.reportPaths=test-report.out \
           -Dsonar.coverage.dtdVerification=false \
-          -Dsonar.login=${SONAR_LOGIN} \
           -Dsonar.log.level=INFO
           cat -n .scannerwork/report-task.txt
 
