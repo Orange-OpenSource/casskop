@@ -500,10 +500,6 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 			Value: name,
 		},
 		v1.EnvVar{
-			Name:  "CASSANDRA_AUTO_BOOTSTRAP",
-			Value: "true",
-		},
-		v1.EnvVar{
 			Name: "POD_IP",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{

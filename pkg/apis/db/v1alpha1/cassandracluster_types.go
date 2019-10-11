@@ -89,6 +89,9 @@ const (
 	OperationDecommission    string = "decommission"
 	OperationRebuild         string = "rebuild"
 	OperationRemove          string = "remove"
+
+	BreakResyncLoop    bool = true
+	ContinueResyncLoop bool = false
 )
 
 // CheckDefaults chckes that required fields havent good values
