@@ -5,10 +5,15 @@ metadata:
 data:
 
   pre_run.sh: |-
-    echo "** this is a pre-scrip for run.sh that can be edit with configmap"
+    echo "  ** this is pre_run.sh script executed before run.sh **"
+    #Examples:
     #test "$(hostname)" == 'cassandra-demo-dc1-rack2-0' && echo "update param" && sed -i 's/windows_timer_interval: 1/windows_timer_interval: 2/' /etc/cassandra/cassandra.yaml
     #test "$(hostname)" == 'cassandra-demo-dc1-rack3-0' && echo "-Dcassandra.replace_address_first_boot=172.31.183.209" > /etc/cassandra/jvm.options
+    #test "$(hostname)" == 'cassandra-demo-dc2-rack1-0' && echo "-Dcassandra.override_decommission=true" > /etc/cassandra/jvm.options    
+    echo "  ** end of pre_run.sh script, continue with run.sh **"
 
-    #test "$(hostname)" == 'cassandra-demo-dc2-rack1-0' && echo "-Dcassandra.override_decommission=true" > /etc/cassandra/jvm.options
-    
-    echo "** end of pre_run.sh script, continue with run.sh"
+  post_run.sh: |-
+    echo "  ** this is post_run.sh script executed after run.sh **"
+    #Examples:
+    #sed -i 's/auto_bootstrap: true/auto_bootstrap: false/' /etc/cassandra/cassandra.yaml
+    echo "  ** end of post_run.sh script, continue with run.sh **"
