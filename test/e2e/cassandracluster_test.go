@@ -37,8 +37,7 @@ func TestCassandraCluster(t *testing.T) {
 	}
 
 	logrus.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-		DisableColors: false,
+		FullTimestamp: true
 	})
 	logrus.SetReportCaller(true)
 	logrus.SetOutput(os.Stdout)
