@@ -132,7 +132,6 @@ jobs:
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
 
     - deploy:
@@ -150,7 +149,6 @@ jobs:
         key: build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
 
