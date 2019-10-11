@@ -212,10 +212,17 @@ jobs:
           - sonar-scanner-3.3.0.1492-linux
 
     - run:
-        name: Download SonarQube Scanner (if still necessary)
+        name: Download SonarQube Scanner
         command: |
           chmod +x .circleci/install_sonar-scanner.sh
           ./.circleci/install_sonar-scanner.sh
+
+    - save_cache:
+        name: Cache SonarQube Scanner
+        key: sonar-scanner-3.3.0.1492-linux
+        paths:
+          - sonar-scanner-3.3.0.1492-linux
+          - /home/circleci/cassandra-k8s-operator/.sonar
 
     - run:
         name: Sonarcloud Scan
@@ -244,12 +251,6 @@ jobs:
           -Dsonar.log.level=INFO
           cat -n .scannerwork/report-task.txt
 
-    - save_cache:
-        name: Cache SonarQube Scanner
-        key: sonar-scanner-3.3.0.1492-linux
-        paths:
-          - sonar-scanner-3.3.0.1492-linux
-          - /home/circleci/cassandra-k8s-operator/.sonar
     - store_test_results:
         path: reports
 
