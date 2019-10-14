@@ -90,8 +90,8 @@ const (
 	OperationRebuild         string = "rebuild"
 	OperationRemove          string = "remove"
 
-	BreakResyncLoop    bool = true
-	ContinueResyncLoop bool = false
+	BreakResyncLoop    = true
+	ContinueResyncLoop = false
 )
 
 // CheckDefaults chckes that required fields havent good values

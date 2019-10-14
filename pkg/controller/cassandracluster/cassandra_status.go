@@ -289,11 +289,11 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 		}
 	}
 
-	//We get a Manual Change on the SeedList
-	//If SeedList has changed in the CRD, we flag the rack with UpdateSeedList Operation Configuring
-	//Once all racks will be enabled with UpdateSeedList=Configuring,
+	// If seed list has changed in the CRD, we have a manual change on the SeedList.
+	// We flag the rack with UpdateSeedList Operation Configuring
+	// Once all racks will be enabled with UpdateSeedList=Configuring,
 	// then we update to ongoing and start the rollUpgrade
-	//This is to ensure that we won't do 2 different kind of operations in different racks at the same time (ex:scaling + updateseedlist)
+	// This is to ensure that we won't do 2 different kind of operations in different racks at the same time (ex:scaling + updateseedlist)
 	if !reflect.DeepEqual(status.SeedList, storedSeedListTab) {
 		logrus.Infof("[%s][%s]: We ask to Change the Cassandra SeedList", cc.Name, dcRackName)
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
