@@ -160,7 +160,8 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	if !apiequality.Semantic.DeepEqual(sts1.Spec, sts2.Spec) {
 		log.Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
-		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
+			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 
 		return false
 	}
@@ -170,7 +171,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 //CreateOrUpdateStatefulSet Create statefulset if not existing, or update it if existing.
 func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *appsv1.StatefulSet,
-	status *api.CassandraClusterStatus, dcRackName string) error {
+	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var err error
 	now := metav1.Now()
@@ -179,9 +180,9 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
-			return rcc.CreateStatefulSet(statefulSet)
+			return api.BreakResyncLoop, rcc.CreateStatefulSet(statefulSet)
 		}
-		return err
+		return api.ContinueResyncLoop, err
 	}
 
 	//We will not Update the Statefulset
@@ -200,7 +201,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 				"dc-rack": dcRackName}).Info("Cluster has Disruption on Pods, " +
 				"we wait before applying any change to statefulset")
-			return nil
+			return api.ContinueResyncLoop, nil
 		}
 	}
 
@@ -253,7 +254,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		statefulSetsAreEqual(rcc.storedStatefulSet.DeepCopy(), statefulSet.DeepCopy()) {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": dcRackName}).Debug("Statefulsets Are Equal: No Update")
-		return nil
+		return api.ContinueResyncLoop, nil
 	}
 
 	//If the Status is To-Do, then the Action will be Ongoing once we update the statefulset
@@ -273,7 +274,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		dcRackStatus.CassandraLastAction.EndTime = nil
 	}
 
-	return rcc.UpdateStatefulSet(statefulSet)
+	return api.BreakResyncLoop, rcc.UpdateStatefulSet(statefulSet)
 
 }
 
