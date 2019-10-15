@@ -543,6 +543,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 				setLastClusterActionStatus = true
 			}
 
+			//If a rack is not running we return
 			if dcRackStatus.Phase != api.ClusterPhaseRunning {
 				status.Phase = dcRackStatus.Phase
 
@@ -563,6 +564,12 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 		status.LastClusterActionStatus = api.StatusDone
 		status.Phase = api.ClusterPhaseRunning
 	}
+	//If cluster phase id not running, we update it
+	if status.Phase != api.ClusterPhaseRunning && status.LastClusterActionStatus == api.StatusDone {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("Cluster is running")
+		status.Phase = api.ClusterPhaseRunning
+	}
+
 	return
 }
 
