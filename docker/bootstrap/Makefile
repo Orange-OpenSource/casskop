@@ -19,7 +19,7 @@ else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
 
-VERSION:=0.1.0
+VERSION:=0.1.1
 TAG?=${VERSION}
 ifeq ($(CIRCLE_BRANCH),master)
 	BRANCH:=latest
@@ -44,9 +44,5 @@ build: params
 							 -t ${PROJECT}:${TAG} .
 
 push: params
-ifeq ($(CIRCLE_BRANCH),master)
 	docker push ${PROJECT}:${TAG}
-endif
-	docker tag ${PROJECT}:${TAG} ${PROJECT}:${BRANCH}
-	docker push ${PROJECT}:${BRANCH}
 

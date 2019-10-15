@@ -12,6 +12,12 @@ spec:
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
   rollingPartition: 0
+  service:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: my.custom.domain.com.
+  pod:
+    annotations:
+      exemple.com/test: my.custom.annotation
   dataCapacity: "3Gi"
   dataStorageClass: "local-storage"
   hardAntiAffinity: false

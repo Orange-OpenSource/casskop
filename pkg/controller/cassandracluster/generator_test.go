@@ -17,6 +17,8 @@ package cassandracluster
 import (
 	"testing"
 
+	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 )
@@ -107,4 +109,38 @@ func TestDeleteVolumeMount(t *testing.T) {
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/etc/else", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 
+}
+
+func TestGenerateCassandraService(t *testing.T) {
+	assert := assert.New(t)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	selector := k8s.LabelsForCassandra(cc)
+	svc := generateCassandraService(cc, selector, nil)
+
+	assert.Equal(map[string]string{
+		"app":              "cassandracluster",
+		"cassandracluster": "cassandra-demo",
+		"cluster":          "k8s.pic"},
+		svc.Labels)
+	assert.Equal(map[string]string{"external-dns.alpha.kubernetes.io/hostname": "my.custom.domain.com."},
+		svc.Annotations)
+}
+
+func TestGenerateCassandraStatefulSet(t *testing.T) {
+	assert := assert.New(t)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	sts := generateCassandraStatefulSet(cc, &cc.Status, "dc1", "dc1-rack1", labels, nodeSelector, nil)
+
+	assert.Equal(map[string]string{
+		"app":                                  "cassandracluster",
+		"cassandracluster":                     "cassandra-demo",
+		"cassandraclusters.db.orange.com.dc":   "dc1",
+		"cassandraclusters.db.orange.com.rack": "rack1",
+		"dc-rack":                              "dc1-rack1",
+		"cluster":                              "k8s.pic"},
+		sts.Labels)
+	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
 }

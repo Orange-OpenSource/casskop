@@ -60,7 +60,10 @@ const (
 
 func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 
-	//	labels = util.MergeLabels(labels, generateLabels(cassandraRoleName, cc.Name))
+	var annotations = map[string]string{}
+	if cc.Spec.Service != nil {
+		annotations = cc.Spec.Service.Annotations
+	}
 
 	return &v1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -71,6 +74,7 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 			Name:            cc.GetName(),
 			Namespace:       cc.GetNamespace(),
 			Labels:          labels,
+			Annotations:     annotations,
 			OwnerReferences: ownerRefs,
 		},
 		Spec: v1.ServiceSpec{
@@ -245,6 +249,10 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
+	var annotations = map[string]string{}
+	if cc.Spec.Pod != nil {
+		annotations = cc.Spec.Pod.Annotations
+	}
 
 	ss := &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
@@ -271,7 +279,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
+					Labels:      labels,
+					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{
 					Affinity: &v1.Affinity{
