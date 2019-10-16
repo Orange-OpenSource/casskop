@@ -283,6 +283,8 @@ workflows:
           requires:
             - unit-test
           filters:
+            tags:
+              only: /.*/
             branches:
               # report sonar only from canonical repository 
               only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804 
