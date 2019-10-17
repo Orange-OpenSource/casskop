@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
 	"github.com/allamand/godebug/pretty"
@@ -30,7 +32,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	//patch "github.com/banzaicloud/k8s-objectmatcher/patch"
 )
 
