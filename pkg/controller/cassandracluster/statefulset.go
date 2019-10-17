@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
@@ -27,7 +29,6 @@ import (
 	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -290,6 +291,7 @@ func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container
 
 func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
+	//TODO: check if this test is necessary
 	if ic != nil {
 		for _, env := range ic.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
