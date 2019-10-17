@@ -16,7 +16,5 @@ data:
     echo "  ** end of pre_run.sh script, continue with run.sh **"
 
   post_run.sh: |-
-    echo "  ** this is post_run.sh script executed after run.sh **"
-    #Examples:
-    #sed -i 's/auto_bootstrap: true/auto_bootstrap: false/' /etc/cassandra/cassandra.yaml
-    echo "  ** end of post_run.sh script, continue with run.sh **"
+    echo "Check Configured seeds by bootstrap"
+    grep "seeds:" /etc/cassandra/cassandra.yaml

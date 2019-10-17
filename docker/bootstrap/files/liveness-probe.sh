@@ -14,21 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-set -e
-
-echo "running PreStop Hook"
-echo "**disablegossip**"
-nodetool disablegossip
-sleep 1
-echo "**disablebinary**"
-nodetool disablebinary
-sleep 1
-echo "**drain**"
-nodetool drain
-sleep 1
-echo "**stop**"
-nodetool stop
-echo "**stopdaemon**"
-nodetool stopdaemon || true
-
+# We check when the node is up and in normal state
+nodetool status

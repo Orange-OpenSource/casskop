@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	//"github.com/kylelemons/godebug/pretty"
@@ -220,12 +222,14 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	} else {
 
 		//We need to keep the SeedList from the stored statefulset
-		//TODO: the container may not be at index 0
-		for i, env := range statefulSet.Spec.Template.Spec.Containers[0].Env {
+		//we retrieve it in the Env CASSANDRA_SEEDS of the bootstrap container
+		ic := getBootstrapContainerFromStatefulset(statefulSet)
+		oldIc := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
+		for i, env := range ic.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
-				for _, oldenv := range rcc.storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
+				for _, oldenv := range oldIc.Env {
 					if oldenv.Name == "CASSANDRA_SEEDS" && env.Value != oldenv.Value {
-						statefulSet.Spec.Template.Spec.Containers[0].Env[i].Value = oldenv.Value
+						ic.Env[i].Value = oldenv.Value
 					}
 				}
 			}
@@ -278,10 +282,18 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 }
 
-func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
+func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {
+	for _, ic := range sts.Spec.Template.Spec.InitContainers {
+		if ic.Name == "bootstrap" {
+			return &ic
+		}
+	}
+	return nil
+}
 
-	//TODO: the container may not be at index 0
-	for _, env := range storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
+func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
+	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
+	for _, env := range ic.Env {
 		if env.Name == "CASSANDRA_SEEDS" {
 			return strings.Split(env.Value, ",")
 		}
