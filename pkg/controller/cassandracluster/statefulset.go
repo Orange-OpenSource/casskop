@@ -22,7 +22,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/kylelemons/godebug/pretty"
+	//"github.com/kylelemons/godebug/pretty"
+	"github.com/allamand/godebug/pretty"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
@@ -159,9 +160,8 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	sts1.Spec.RevisionHistoryLimit = sts2.Spec.RevisionHistoryLimit
 
 	if !apiequality.Semantic.DeepEqual(sts1.Spec, sts2.Spec) {
-		log.Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
-			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.CompareAndPrintDiff(sts1.Spec, sts2.Spec))
 
 		return false
 	}
