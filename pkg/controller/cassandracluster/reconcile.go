@@ -565,7 +565,8 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 
 	}
 	//If there is no more action in racks, we update cluster
-	if !setLastClusterActionStatus && status.LastClusterActionStatus != api.StatusDone {
+	if !setLastClusterActionStatus &&
+		status.LastClusterActionStatus != api.StatusDone {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("Action %s is done!", status.LastClusterAction)
 		status.LastClusterActionStatus = api.StatusDone
 		status.Phase = api.ClusterPhaseRunning
