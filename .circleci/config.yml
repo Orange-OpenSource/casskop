@@ -132,7 +132,6 @@ jobs:
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
 
     - deploy:
@@ -150,7 +149,6 @@ jobs:
         key: build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
 
@@ -214,10 +212,17 @@ jobs:
           - sonar-scanner-3.3.0.1492-linux
 
     - run:
-        name: Download SonarQube Scanner (if still necessary)
+        name: Download SonarQube Scanner
         command: |
           chmod +x .circleci/install_sonar-scanner.sh
           ./.circleci/install_sonar-scanner.sh
+
+    - save_cache:
+        name: Cache SonarQube Scanner
+        key: sonar-scanner-3.3.0.1492-linux
+        paths:
+          - sonar-scanner-3.3.0.1492-linux
+          - /home/circleci/cassandra-k8s-operator/.sonar
 
     - run:
         name: Sonarcloud Scan
@@ -242,16 +247,9 @@ jobs:
           -Dsonar.go.coverage.reportPaths=coverage.out \
           -Dsonar.go.tests.reportPaths=test-report.out \
           -Dsonar.coverage.dtdVerification=false \
-          -Dsonar.login=${SONAR_LOGIN} \
           -Dsonar.log.level=INFO
           cat -n .scannerwork/report-task.txt
 
-    - save_cache:
-        name: Cache SonarQube Scanner
-        key: sonar-scanner-3.3.0.1492-linux
-        paths:
-          - sonar-scanner-3.3.0.1492-linux
-          - /home/circleci/cassandra-k8s-operator/.sonar
     - store_test_results:
         path: reports
 
@@ -285,6 +283,8 @@ workflows:
           requires:
             - unit-test
           filters:
+            tags:
+              only: /.*/
             branches:
               # report sonar only from canonical repository 
               only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804 

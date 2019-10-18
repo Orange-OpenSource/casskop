@@ -14,17 +14,11 @@
 
 ################################################################################
 
-
 # Name of this service/application
 SERVICE_NAME := cassandra-k8s-operator
-
 DOCKER_REPO_BASE ?= orangeopensource
-#we could want to separate registry for branches
 DOCKER_REPO_BASE_TEST ?= orangeopensource
-
-# Docker image name for this project
 IMAGE_NAME := $(SERVICE_NAME)
-
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
 BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.0
@@ -56,10 +50,10 @@ else
 	endif
 endif
 
-#Operator version is managed in go file
-#BaseVersion is for dev docker image tag
-BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$2}')
-#Version is for binary, docker image and helm
+# Operator version is managed in go file
+# BaseVersion is for dev docker image tag
+BASEVERSION := $(shell awk -F\" '/Version =/ { print $$2}' version/version.go)
+# Version is for binary, docker image and helm
 
 ifdef CIRCLE_TAG
 	VERSION := ${BRANCH}
@@ -117,14 +111,12 @@ UID := $(shell id -u)
 # Commit hash from git
 COMMIT=$(shell git rev-parse HEAD)
 
-
 # CMDs
 UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out
 UNIT_TEST_CMD_WITH_VENDOR := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test -mod=vendor --cover --coverprofile=coverage.out `go list -mod=vendor ./... | grep -v e2e` > test-report.out 
 UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
 GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
 GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-MOCKS_CMD := go generate ./mocks
 
 # environment dirs
 DEV_DIR := docker/circleci
@@ -142,27 +134,19 @@ ifeq ($(UNAME_S),Darwin)
 	GOOS = darwin
 endif
 
-# Some other usefule make file for interracting with kubernetes 
+# Some other useful make file for interacting with kubernetes
 include kube.mk
 
-#
-#
-################################################################################
-
 # The default action of this Makefile is to build the development docker image
-.PHONY: default
 default: build
 
 .DEFAULT_GOAL := help
 help:	
 	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
-## Example section
-example_target: ## Description for example target
-	@does something
-
 get-baseversion:
 	@echo $(BASEVERSION)
+
 get-version:
 	@echo $(VERSION)
 
@@ -187,10 +171,8 @@ build:
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
-#	
 
 # Run a shell into the development docker image
-.PHONY: docker-build
 docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build --env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
@@ -201,7 +183,6 @@ ifdef PUSHLATEST
 endif
 
 # Build the docker development environment
-.PHONY: build-ci-image
 build-ci-image: deps-development
 	docker build --cache-from $(BUILD_IMAGE):latest \
 	  --build-arg OPERATOR_SDK_VERSION=$(OPERATOR_SDK_VERSION) \
@@ -210,7 +191,6 @@ build-ci-image: deps-development
 		-f $(DEV_DIR)/Dockerfile \
 		.
 
-.PHONY: push-ci-image
 push-ci-image: deps-development
 	docker push $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
 ifdef PUSHLATEST
@@ -238,10 +218,8 @@ circleci-validate:
 	circleci config validate
 
 # Run a shell into the development docker image
-.PHONY: shell
 shell: docker-dev-build
 	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
-
 
 debug-port-forward:
 	kubectl port-forward `kubectl get pod -l app=cassandra-k8s-operator -o jsonpath="{.items[0].metadata.name}"` 40000:40000
@@ -249,48 +227,39 @@ debug-port-forward:
 debug-pod-logs:
 	kubectl logs -f `kubectl get pod -l app=cassandra-k8s-operator -o jsonpath="{.items[0].metadata.name}"`
 
+define debug_telepresence
+	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY)
+	echo "execute : cat cassandra-operator.env"
+	sudo mkdir -p /var/run/secrets/kubernetes.io
+	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/
+	tdep=`kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}'`
+	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
+endef
+
 debug-telepresence:
-	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
-	echo "execute : cat cassandra-operator.env" ; \
-  sudo mkdir -p /var/run/secrets/kubernetes.io ; \
-	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
-	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env
+	$(call debug_telepresence)
 
 debug-telepresence-with-alias:
-	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
-	echo "execute : cat cassandra-operator.env" ; \
-  sudo mkdir -p /var/run/secrets/kubernetes.io ; \
-	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
-	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env \
-	--also-proxy 10.40.0.0/16
-#	--also-proxy 172.18.0.0/16
-
+	$(call debug_telepresence,--also-proxy,10.40.0.0/16)
+	# $(call debug_telepresence,--also-proxy,172.18.0.0/16)
 
 debug-kubesquash:
 	kubesquash --container-repo $(KUBESQUASH_REGISTRY)
 
-
 # Run the development environment (in local go env) in the background using local ~/.kube/config
-.PHONY: run
 run:
 	export POD_NAME=cassandra-k8s-operator; \
 	operator-sdk up local
 
-
-.PHONY: push
 push:
 	docker push $(REPOSITORY):$(VERSION)
 ifdef PUSHLATEST
 	docker push $(REPOSITORY):latest
 endif
 
-.PHONY: tag
 tag:
 	git tag $(VERSION)
 
-.PHONY: publish
 publish:
 	@COMMIT_VERSION="$$(git rev-list -n 1 $(VERSION))"; \
 	docker tag $(REPOSITORY):"$$COMMIT_VERSION" $(REPOSITORY):$(VERSION)
@@ -299,45 +268,36 @@ ifdef PUSHLATEST
 	docker push $(REPOSITORY):latest
 endif
 
-.PHONY: release
 release: tag image publish
 
 # Test stuff in dev
-.PHONY: docker-unit-test
 docker-unit-test:
-	docker run  --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
-.PHONY: docker-unit-test-with-vendor
-docker-unit-test-with-vendor:
-	docker run  --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD_WITH_VENDOR); cat test-report.out; $(UNIT_TEST_COVERAGE)'
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
 
-.PHONY: unit-test
+docker-unit-test-with-vendor:
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD_WITH_VENDOR); cat test-report.out; $(UNIT_TEST_COVERAGE)'
+
 unit-test:
 	$(UNIT_TEST_CMD) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
 	cat test-report.out 
 	$(UNIT_TEST_COVERAGE)
 
-.PHONY: unit-test-with-vendor
 unit-test-with-vendor:
 	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
 	cat test-report.out 
 	$(UNIT_TEST_COVERAGE)
 
+define run-operator-cmd
+	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c $1
+endef
 
-.PHONY: docker-go-lint
 docker-go-lint:
-	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(GO_LINT_CMD)'
+	$(call run-operator-cmd,$(GO_LINT_CMD))
 
 # golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
-.PHONY: go-lint
 go-lint:
 	$(GO_LINT_CMD)
 
-
-.PHONY: mocks
-mocks: 
-	docker run --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(MOCKS_CMD)'
-
-.PHONY: deps-development
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
 ifndef DOCKER
@@ -345,47 +305,45 @@ ifndef DOCKER
 	@exit 1
 endif
 
-
 #Generate dep for graph
 UNAME := $(shell uname -s)
+
 dep-graph:
 ifeq ($(UNAME), Darwin)
-# do something osxsd
 	dep status -dot | dot -T png | open -f -a /Applications/Preview.app
 endif
 ifeq ($(UNAME), Linux)
-# do something osx
 	dep status -dot | dot -T png | display	
 endif
 
-
 count:
 	git ls-files | xargs wc -l
-
 
 image:
 	echo $(REPOSITORY):$(VERSION)
 
 export CGO_ENABLED:=0
 
-.PHONY: e2e e2e-scaleup docker-e2e
 e2e:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 docker-e2e:
 	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
+
+define scale-test
+	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^$1$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+endef
+
 e2e-scaleup:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleUp$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	$(call scale-test,ClusterScaleUp)
 
 e2e-scaledown:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	$(call scale-test,ClusterScaleDown)
 
 e2e-empty:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$" 
 
-
-.PHONY: e2e-test-fix e2e-tet-fix-arg docker-e2e-test-fix docker-e2e-test-fix-arg
 e2e-test-fix:
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
@@ -393,6 +351,7 @@ ifeq (e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(E2E_ARGS):;@:)
 endif
+
 e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
@@ -408,13 +367,13 @@ ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(E2E_ARGS):;@:)
 endif
+
 docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
 	docker run --rm --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config -v $(MINIKUBE_CONFIG):$(MINIKUBE_CONFIG_MOUNT)  $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
-.PHONY: e2e-test-fix
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
@@ -444,13 +403,13 @@ PASSWORD ?= cassandra
 
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
-	cp tests/cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/
+	cp cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/
 	echo Using replication factor $(REPLICATION_FACTOR) with DC $(DC) in cassandra-stress profile file
 	sed -i -e "s/'dc1': '3'/'$(DC)': '$(REPLICATION_FACTOR)'/" /tmp/$(STRESS_TYPE)_stress.yaml
 	kubectl create configmap cassandra-stress-$(STRESS_TYPE) --from-file=/tmp/$(STRESS_TYPE)_stress.yaml
-	kubectl delete -f tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
+	kubectl delete -f cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml --wait=false || true
 	while kubectl get pod cassandra-stress-$(STRESS_TYPE)>/dev/null; do echo -n "."; sleep 1 ; done
-	cp tests/cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/
+	cp cassandra-stress/cassandra-stress-$(STRESS_TYPE).yaml /tmp/
 	sed -i -e 's/user=[a-zA-Z]* password=[a-zA-Z]*/user=$(USERNAME) password=$(PASSWORD)/' /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 ifdef CASSANDRA_IMAGE
 	echo "using Cassandra image $(CASSANDRA_IMAGE)"
