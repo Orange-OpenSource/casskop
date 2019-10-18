@@ -1,26 +1,31 @@
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  creationTimestamp: 2018-09-05T08:57:11Z
-  generation: 14
+  annotations:
+  creationTimestamp: "2019-10-18T08:41:08Z"
+  generation: 1
   labels:
     app: cassandracluster
     cassandracluster: cassandra-demo
     cassandraclusters.db.orange.com.dc: dc1
     cassandraclusters.db.orange.com.rack: rack1
-    cluster: k8s.pic
+    cluster: casskop
     dc-rack: dc1-rack1
   name: cassandra-demo-dc1-rack1
-  namespace: ns
+  namespace: cassandra-demo
   ownerReferences:
-  - apiVersion: db.orange.com/v1alpha1
-    controller: true
-    kind: CassandraCluster
-    name: cassandra-demo
-    uid: ad29e479-b0e9-11e8-969d-a0b3cced3ef8
-  resourceVersion: "18600537"
-  selfLink: /apis/apps/v1/namespaces/ns/statefulsets/cassandra-demo-dc1-rack1
-  uid: ad70cd1f-b0e9-11e8-bd6c-a0b3cced1400
+    - apiVersion: db.orange.com/v1alpha1
+      controller: true
+      kind: CassandraCluster
+      name: cassandra-demo
+      uid: 064b7902-f183-11e9-8725-246e968d5c74
+  resourceVersion: "42797794"
+  selfLink: /apis/apps/v1/namespaces/cassandra-demo/statefulsets/cassandra-demo-dc1-rack1
+  uid: 07841e8b-f183-11e9-9f41-246e968d4b94
 spec:
   podManagementPolicy: OrderedReady
   replicas: 2
@@ -31,9 +36,9 @@ spec:
       cassandracluster: cassandra-demo
       cassandraclusters.db.orange.com.dc: dc1
       cassandraclusters.db.orange.com.rack: rack1
-      cluster: k8s.pic
+      cluster: casskop
       dc-rack: dc1-rack1
-  serviceName: cassandra-demo-dc1
+  serviceName: cassandra-demo
   template:
     metadata:
       creationTimestamp: null
@@ -42,184 +47,255 @@ spec:
         cassandracluster: cassandra-demo
         cassandraclusters.db.orange.com.dc: dc1
         cassandraclusters.db.orange.com.rack: rack1
-        cluster: k8s.pic
+        cluster: casskop
         dc-rack: dc1-rack1
     spec:
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: location.dfy.orange.com/site
-                operator: In
-                values:
-                - mts
-              - key: location.dfy.orange.com/street
-                operator: In
-                values:
-                - street1
+              - matchExpressions:
+                  - key: location.dfy.orange.com/building
+                    operator: In
+                    values:
+                      - HT2
+                  - key: location.dfy.orange.com/room
+                    operator: In
+                    values:
+                      - Salle_1
+                  - key: location.dfy.orange.com/site
+                    operator: In
+                    values:
+                      - Valbonne
+                  - key: location.dfy.orange.com/street
+                    operator: In
+                    values:
+                      - Rue_9
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
                 matchLabels:
                   app: cassandracluster
                   cassandracluster: cassandra-demo
-                  cassandraclusters.db.orange.com.dc: dc1
-                  cassandraclusters.db.orange.com.rack: rack1
-                  cluster: k8s.pic
-                  dc-rack: dc1-rack1
+                  cluster: casskop
               topologyKey: kubernetes.io/hostname
-            weight: 100
       containers:
-      - env:
-        - name: CASSANDRA_MAX_HEAP
-          value: 512M
-        - name: CASSANDRA_SEEDS
-          value: cassandra-demo-dc1-rack1-0.cassandra-demo-dc1.ns,cassandra-demo-dc1-rack2-0.cassandra-demo-dc1.ns,cassandra-demo-dc2-rack1-0.cassandra-demo-dc2.ns
-        - name: CASSANDRA_CLUSTER_NAME
-          value: cassandra-demo
-        - name: CASSANDRA_AUTO_BOOTSTRAP
-          value: "false"
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: status.podIP
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: spec.nodeName
-        - name: CASSANDRA_DC
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.labels['cassandraclusters.db.orange.com.dc']
-        - name: CASSANDRA_RACK
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-        image: cassandra
-        imagePullPolicy: Always
-        lifecycle:
-          preStop:
+        - image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - /etc/cassandra/pre_stop.sh
+          livenessProbe:
             exec:
               command:
-              - /bin/sh
-              - -c
-              - echo "[KUBERNETES] - Executing PreStop Hook*************************"
-                > /proc/1/fd/1
-              - sleep 60
-              - echo "[KUBERNETES] - The Pod Is going to be Killed" > /proc/1/fd/1
-        livenessProbe:
-          exec:
-            command:
-            - /bin/bash
-            - -c
-            - nodetool status
-          failureThreshold: 3
-          initialDelaySeconds: 5
-          periodSeconds: 40
-          successThreshold: 1
-          timeoutSeconds: 20
-        name: cassandra
-        ports:
-        - containerPort: 7000
-          name: intra-node
-          protocol: TCP
-        - containerPort: 7001
-          name: tls-intra-node
-          protocol: TCP
-        - containerPort: 7199
-          name: jmx
-          protocol: TCP
-        - containerPort: 9042
-          name: cql
-          protocol: TCP
-        - containerPort: 9500
-          name: promjmx
-          protocol: TCP
-        - containerPort: 8778
-          name: jolokia
-          protocol: TCP
-        - containerPort: 9160
-          name: thrift
-          protocol: TCP
-        readinessProbe:
-          exec:
-            command:
-            - /bin/bash
-            - -c
-            - /etc/cassandra/ready-probe.sh
-          failureThreshold: 3
-          initialDelaySeconds: 15
-          periodSeconds: 40
-          successThreshold: 1
-          timeoutSeconds: 20
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        securityContext:
-          capabilities:
-            add:
-            - IPC_LOCK
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /var/lib/cassandra
-          name: data
+                - /bin/bash
+                - -c
+                - /etc/cassandra/liveness-probe.sh
+            failureThreshold: 3
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 20
+          name: cassandra
+          ports:
+            - containerPort: 7000
+              name: intra-node
+              protocol: TCP
+            - containerPort: 7001
+              name: intra-node-tls
+              protocol: TCP
+            - containerPort: 7199
+              name: jmx-port
+              protocol: TCP
+            - containerPort: 9042
+              name: cql
+              protocol: TCP
+            - containerPort: 9500
+              name: promjmx
+              protocol: TCP
+            - containerPort: 8778
+              name: jolokia
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /etc/cassandra/ready-probe.sh
+            failureThreshold: 3
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+            procMount: Default
+            readOnlyRootFilesystem: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/cassandra
+              name: data
+            - mountPath: /configmap
+              name: cassandra-config
+            - mountPath: /etc/cassandra
+              name: bootstrap
+            - mountPath: /extra-lib
+              name: extra-lib
+            - mountPath: /tmp
+              name: tmp
       dnsPolicy: ClusterFirst
-      imagePullSecret:
-        name: advisedev
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - cp -vr /etc/cassandra/* /bootstrap
+          image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11
+          imagePullPolicy: Always
+          name: init-config
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/cassandra
+              name: data
+            - mountPath: /configmap
+              name: cassandra-config
+            - mountPath: /extra-lib
+              name: extra-lib
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /bootstrap
+              name: bootstrap
+        - env:
+            - name: CASSANDRA_MAX_HEAP
+              value: 1024M
+            - name: CASSANDRA_SEEDS
+              value: cassandra-demo-dc1-rack1-0.cassandra-demo.ns cassandra-demo-dc1-rack2-0.cassandra-demo.ns cassandra-demo-dc2-rack1-0.cassandra-demo.ns cassandra-demo-dc2-rack1-1.cassandra-demo.ns
+            - name: CASSANDRA_CLUSTER_NAME
+              value: cassandra-demo
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: SERVICE_NAME
+              value: cassandra-demo-dc1-rack1
+            - name: CASSANDRA_GC_STDOUT
+              value: "false"
+            - name: CASSANDRA_NUM_TOKENS
+              value: "256"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: CASSANDRA_DC
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels['cassandraclusters.db.orange.com.dc']
+            - name: CASSANDRA_RACK
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
+          image: registry.gitlab.si.francetelecom.fr/dfyarchicloud/dfyarchicloud-registry/orangeopensource/cassandra-bootstrap:0.1.2
+          imagePullPolicy: Always
+          name: bootstrap
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/cassandra
+              name: data
+            - mountPath: /configmap
+              name: cassandra-config
+            - mountPath: /etc/cassandra
+              name: bootstrap
+            - mountPath: /extra-lib
+              name: extra-lib
+            - mountPath: /tmp
+              name: tmp
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 300
+      securityContext:
+        fsGroup: 1
+        runAsNonRoot: true
+        runAsUser: 999
+      terminationGracePeriodSeconds: 1800
+      volumes:
+        - emptyDir: {}
+          name: bootstrap
+        - emptyDir: {}
+          name: extra-lib
+        - emptyDir: {}
+          name: tmp
+        - configMap:
+            defaultMode: 493
+            name: cassandra-configmap-v1
+          name: cassandra-config
   updateStrategy:
     rollingUpdate:
       partition: 0
     type: RollingUpdate
   volumeClaimTemplates:
-  - metadata:
-      creationTimestamp: null
-      labels:
-        app: cassandracluster
-        cassandracluster: cassandra-demo
-        cassandraclusters.db.orange.com.dc: dc1
-        cassandraclusters.db.orange.com.rack: rack1
-        cluster: k8s.pic
-        dc-rack: dc1-rack1
-      name: data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 3Gi
-      storageClassName: local-storage
-    status:
-      phase: Pending
+    - metadata:
+        creationTimestamp: null
+        labels:
+          app: cassandracluster
+          cassandracluster: cassandra-demo
+          cassandraclusters.db.orange.com.dc: dc1
+          cassandraclusters.db.orange.com.rack: rack1
+          cluster: casskop
+          dc-rack: dc1-rack1
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: local-storage
+        volumeMode: Filesystem
+      status:
+        phase: Running
 status:
   collisionCount: 0
   currentReplicas: 2
-  currentRevision: cassandra-demo-dc1-rack1-6b769bb8cc
-  observedGeneration: 14
+  currentRevision: cassandra-demo-dc1-rack1-56db5f69c8
+  observedGeneration: 1
   readyReplicas: 2
   replicas: 2
-  updateRevision: cassandra-demo-dc1-rack1-6b769bb8cc
+  updateRevision: cassandra-demo-dc1-rack1-56db5f69c8
+  updatedReplicas: 2

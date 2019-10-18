@@ -289,9 +289,11 @@ func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container
 
 func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
-	for _, env := range ic.Env {
-		if env.Name == "CASSANDRA_SEEDS" {
-			return strings.Split(env.Value, ",")
+	if ic != nil {
+		for _, env := range ic.Env {
+			if env.Name == "CASSANDRA_SEEDS" {
+				return strings.Split(env.Value, ",")
+			}
 		}
 	}
 	return []string{}
