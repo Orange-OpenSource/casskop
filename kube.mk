@@ -29,7 +29,7 @@ ifeq (nodetool,$(firstword $(MAKECMDGOALS)))
   $(eval $(NODETOOL_ARGS):;@:)
 endif
 
-ifeq (kube-namespace,$(firstword $(MAKECMDGOALS)))
+ifeq (kube-set-namespace,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
   KUBENAMESPACE_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   # ...and turn them into do-nothing targets
@@ -71,8 +71,7 @@ ifeq (get,$(firstword $(MAKECMDGOALS)))
   $(eval $(GET_ARGS):;@:)
 endif
 
-.PHONY: nodetool node get
-
+.PHONY: debug watch cc watch-pods get-pods nodetool node get
 
 debug:
 	curl -ssLO https://raw.githubusercontent.com/kubernetes/contrib/master/scratch-debugger/debug.sh
@@ -80,10 +79,10 @@ debug:
 #watch cassandracluster object
 watch:
 	watch 'kubectl get -o yaml cassandracluster $(WATCH_ARGS)'
+
 cc:
 	kubectl get -o yaml cassandracluster $(STATUS_ARGS)
 
-.PHONY: debug watch cc watch-pods get-pods
 watch-pods:
 	watch "kubectl get pods -o=go-template='{{\"NAME NODE IP READY REASON\n\"}}{{range .items}}\
 	{{printf \"%.30s\" .metadata.name}} \
@@ -92,19 +91,18 @@ watch-pods:
 	{{range .status.containerStatuses}}{{.ready}}{{\" \"}}{{if .state.running}}{{\"running\"}}{{else}}{{ .state.waiting.reason}}{{end}}{{end}} \
 	{{\"\n\"}}{{end}}' | column -t"
 
-
 list-app-by-nodes:
 	KUBE_NODES=`kubectl get nodes -l node-role.kubernetes.io/node=true -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for node in $$KUBE_NODES; do \
 	  echo "node $$node" ; \
 	  kubectl describe node $$node | egrep "$(APP)|namespace" ; \
-  done
+	done
 
-#Force kubectl to use the NAMESPACE by default
-kubectl-change-namespace:
-	kubectl config set-context $$(kubectl config current-context) --namespace=$(NAMESPACE)
+# Change current namespace
+kube-set-namespace:
+	kubectl config set-context $$(kubectl config current-context) --namespace=$(KUBENAMESPACE_ARGS)
 
-# Supprime le namespace
+# Delete a namespace
 delete:
 	kubectl delete namespace $(NAMESPACE)
 
@@ -115,7 +113,6 @@ create:
 	kubectl -n $(NAMESPACE) apply -f cassandra-service-metrics.yaml
 	kubectl -n $(NAMESPACE) apply -f cassandra-PodDisruptionBudget.yaml
 	make apply
-
 
 delete-pvc:
 	kubectl get pvc -o jsonpath='{.items[*].metadata.name}' | xargs k delete pvc
@@ -133,7 +130,7 @@ hostname:
 	for pod in $$KUBE_PODS; do kubectl -n $(NAMESPACE) exec -it $$pod -- sh -c 'hostname'; done
 
 # Go into each Cassandra pods, and create a /var/lib/cassandra/name file with the host name
-fullfil:
+fulfill:
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for pod in $$KUBE_PODS; do kubectl -n $(NAMESPACE) exec -it $$pod -- sh -c "echo $$(hostname) > /var/lib/cassandra/$(NAMESPACE)-$$pod"; done
 
@@ -160,7 +157,6 @@ check-seeds-env:
     for x in $$arr; do echo $$x ; done; \
     echo "" ; \
   done
-
 
 # for each cassandra pods, extract the docker image name from metadata
 check-version:
@@ -194,7 +190,6 @@ nodetool-repair-full2:
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -l app=cassandracluster -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
   echo $$KUBE_PODS | xargs -I XX kubectl -n $(NAMESPACE) exec -it XX -- sh -c 'echo "$$HOSTNAME:"; echo nodetool repair -full'
 
-
 pod-repartition:
 	echo to implement
 
@@ -214,7 +209,6 @@ check-pvc:
 	  echo "" ; \
 	done
 
-
 #Usage make node 'ls -la'
 node:
 	KUBE_IPS=`kubectl get nodes -l node-role.kubernetes.io/node=true -o jsonpath='{range .items[*]}{.status.addresses[0].address}{" "}'` ; \
@@ -223,13 +217,11 @@ node:
     ssh -q cloudwatt-k8s "ssh $$x '$(NODE_ARGS)'" ; \
   done;
 
-
 annotate-upgradesstables:
 	make check-annotations
 	KUBE_PODS=`kubectl -n $(NAMESPACE) get pods -o jsonpath='{range .items[*]}{.metadata.name}{" "}'` ; \
 	for x in $$KUBE_PODS; do kubectl -n $(NAMESPACE) annotate --overwrite pods $$x cc-action=upgradesstables; done
 	make check-annotations
-
 
 os:
 	echo $(GOOS)
@@ -237,11 +229,6 @@ os:
 check-env:
 	echo "working on OS type $(GOOS)"
 	echo " Working with docker repository $(REPOSITORY)"
-
-#usage: kube-namespace <mynamespace>
-#permet de changer le namespace par default de kubectl
-kube-namespace:
-	kubectl config set-context $$(kubectl config current-context) --namespace=$(KUBENAMESPACE_ARGS)
 
 #list all resources in current namespace
 list-all:
