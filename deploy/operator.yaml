@@ -21,10 +21,13 @@ spec:
       containers:
         - name: cassandra-k8s-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: jsanda/cassandra-k8s-operator:0.4.1-operator-metrics
           ports:
-          - containerPort: 60000
-            name: metrics
+          - name: http-metrics
+            containerPort: 8383
+          - containerPort: 
+            name: cr-metrics
+            containerPort: 8686
           readinessProbe:
             exec:
               command:
