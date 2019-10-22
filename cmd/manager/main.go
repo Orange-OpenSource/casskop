@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"os"
 	"runtime"
 	"strconv"
@@ -24,6 +25,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
@@ -46,6 +48,7 @@ import (
 var (
 	metricsHost       = "0.0.0.0"
 	metricsPort int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 
 const (
@@ -192,13 +195,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = serveCRMetrics(cfg); err != nil {
+		logrus.Infof("Could not generate and serve custom resource metrics: %s", err)
+	}
+
 	// Create Service object to expose the metrics port.
 	servicePorts := []v1.ServicePort{
 		{Name: "metricsPort", TargetPort: intstr.FromInt(int(metricsPort))},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}
-	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	svc, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		logrus.Info(err.Error())
+	} else {
+		_, err = metrics.CreateServiceMonitors(cfg, namespace, []*v1.Service{svc})
+		if err != nil {
+			logrus.Infof("Failed to create service monitors for metrics service (%s): %s", svc, err)
+		}
 	}
 
 	logrus.Info("Starting the Cmd.")
@@ -208,4 +221,28 @@ func main() {
 		logrus.Error(err, "manager exited non-zero")
 		os.Exit(1)
 	}
+}
+
+// serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
+// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+func serveCRMetrics(cfg *rest.Config) error {
+	// Below function returns filtered operator/CustomResource specific GVKs.
+	// For more control override the below GVK list with your own custom logic.
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+	if err != nil {
+		return err
+	}
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		return err
+	}
+	// To generate metrics in other namespaces, add the values below.
+	ns := []string{operatorNs}
+	// Generate and serve custom resource specific metrics.
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+	if err != nil {
+		return err
+	}
+	return nil
 }
