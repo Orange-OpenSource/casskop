@@ -107,6 +107,15 @@ spec:
                 the cluster will have 6 Cassandra Nodes'
               format: int32
               type: integer
+            pod:
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations specifies the annotations to attach to
+                    headless service the CassKop operator creates
+                  type: object
+              type: object
             readOnlyRootFilesystem:
               description: Make the pod as Readonly
               type: boolean
@@ -140,6 +149,15 @@ spec:
                 image
               format: int64
               type: integer
+            service:
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations specifies the annotations to attach to
+                    headless service the CassKop operator creates
+                  type: object
+              type: object
             topology:
               description: Topology to create Cassandra DC and Racks and to target
                 appropriate Kubernetes Nodes
