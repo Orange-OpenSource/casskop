@@ -452,7 +452,7 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	lastAppliedConfiguration, _ := cc.ComputeLastAppliedConfiguration()
-	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"baseImage":"cassandra","version":"latest","imagepullpolicy":"","bootstrapImage":"","initContainerImage":"","initContainerCmd":"","runAsUser":null,"resources":{"requests":{"cpu":"1","memory":"2Gi"},"limits":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"maxPodUnavailable":0,"dataCapacity":"3Gi","dataStorageClass":"local-storage","imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"numTokens":200},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"numTokens":32}]}},"status":{}}`
+	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:latest","imagepullpolicy":"","bootstrapImage":"","initContainerImage":"","initContainerCmd":"","runAsUser":null,"resources":{"requests":{"cpu":"1","memory":"2Gi"},"limits":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"maxPodUnavailable":0,"dataCapacity":"3Gi","dataStorageClass":"local-storage","imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"numTokens":200},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"numTokens":32}]}},"status":{}}`
 
 	//add info in status
 	assert.Equal(result, string(lastAppliedConfiguration))
@@ -484,12 +484,11 @@ func TestSetDefaults(t *testing.T) {
 	cluster.CheckDefaults()
 
 	assert.Equal(int32(1), cluster.Spec.NodesPerRacks)
-	assert.Equal(defaultBaseImage, cluster.Spec.BaseImage)
-	assert.Equal(defaultVersion, cluster.Spec.Version)
+	assert.Equal(defaultCassandraImage, cluster.Spec.CassandraImage)
 	assert.Equal(defaultImagePullPolicy, cluster.Spec.ImagePullPolicy)
 
 	assert.Equal(defaultBootstrapImage, cluster.Spec.BootstrapImage)
-	assert.Equal(cluster.Spec.BaseImage+":"+cluster.Spec.Version, cluster.Spec.InitContainerImage)
+	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
 	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)

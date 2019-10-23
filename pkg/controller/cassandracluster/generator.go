@@ -571,7 +571,6 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 // createInitConfigContainer allows to copy origin config files from docker image to /bootstrap directory
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
-	cassandraImage := k8s.GetCassandraImage(cc)
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
@@ -581,7 +580,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 
 	return v1.Container{
 		Name:            "init-config",
-		Image:           cassandraImage,
+		Image:           cc.Spec.CassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Command:         []string{"sh", "-c", cc.Spec.InitContainerCmd},
 		VolumeMounts:    volumeMounts,
@@ -626,7 +625,6 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
-	cassandraImage := k8s.GetCassandraImage(cc)
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 
@@ -640,7 +638,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 
 	cassandraContainer := v1.Container{
 		Name:            cassandraContainerName,
-		Image:           cassandraImage,
+		Image:           cc.Spec.CassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Ports: []v1.ContainerPort{
 			v1.ContainerPort{

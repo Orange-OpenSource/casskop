@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
+	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
