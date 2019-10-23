@@ -17,6 +17,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/operator-framework/operator-sdk v0.9.0
+	github.com/prometheus/client_golang v1.0.0
 	github.com/prometheus/common v0.6.0 // indirect
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
