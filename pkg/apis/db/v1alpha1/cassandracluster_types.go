@@ -638,6 +638,7 @@ type CassandraClusterSpec struct {
 	InitContainerCmd string `json:"initContainerCmd,omitempty"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
+	// +kubebuilder:validation:Minimum=1
 	RunAsUser *int64 `json:"runAsUser,omitempty"`
 
 	//Make the pod as Readonly
@@ -685,6 +686,7 @@ type CassandraClusterSpec struct {
 	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	DataCapacity string `json:"dataCapacity,omitempty"`
 
 	//Define StorageClass for Persistent Volume Claims in the local storage.
@@ -773,7 +775,9 @@ type CassandraResources struct {
 
 // CPUAndMem defines how many cpu and ram the container will request/limit
 type CPUAndMem struct {
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	CPU    string `json:"cpu"`
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
 }
 
