@@ -39,6 +39,14 @@ $ helm install --name casskop incubator/cassandra-operator -f values.yaml
 
 ### Installing the Chart
 
+> Helm 3 users
+>
+> You need to manually install the crds beforehand
+>
+> ```console
+> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+> ```
+
 You can make a dry run of the chart before deploying :
 
 ```console 
