@@ -26,10 +26,9 @@ import (
 )
 
 const (
-	defaultBaseImage              string        = "cassandra"
+	defaultCassandraImage         string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
-	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
 	defaultNumTokens                            = 256
@@ -98,12 +97,10 @@ const (
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 
-	if len(ccs.BaseImage) == 0 {
-		ccs.BaseImage = defaultBaseImage
+	if len(ccs.CassandraImage) == 0 {
+		ccs.CassandraImage = defaultCassandraImage
 	}
-	if len(ccs.Version) == 0 {
-		ccs.Version = defaultVersion
-	}
+
 	if len(ccs.ImagePullPolicy) == 0 {
 		ccs.ImagePullPolicy = defaultImagePullPolicy
 	}
@@ -113,7 +110,7 @@ func (cc *CassandraCluster) CheckDefaults() {
 
 	//Init-Container 1 : init-config
 	if len(ccs.InitContainerImage) == 0 {
-		ccs.InitContainerImage = ccs.BaseImage + ":" + ccs.Version
+		ccs.InitContainerImage = ccs.CassandraImage
 	}
 	if len(ccs.InitContainerCmd) == 0 {
 		ccs.InitContainerCmd = InitContainerCmd
@@ -626,11 +623,8 @@ type CassandraClusterSpec struct {
 	// If NodesPerRacks = 2 and there is 3 racks, the cluster will have 6 Cassandra Nodes
 	NodesPerRacks int32 `json:"nodesPerRacks,omitempty"`
 
-	// Base image to use for a Cassandra deployment.
-	BaseImage string `json:"baseImage"`
-
-	// Version of Cassandra to be deployed.
-	Version string `json:"version"`
+	// Image + version to use for Cassandra
+	CassandraImage string `json:"cassandraImage,omitempty"`
 
 	//ImagePullPolicy define the pull poicy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`

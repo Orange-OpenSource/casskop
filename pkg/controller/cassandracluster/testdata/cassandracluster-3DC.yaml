@@ -7,8 +7,7 @@ metadata:
   namespace: ns
 spec:
   nodesPerRacks: 1
-  baseImage: cassandra
-  version: seed-dev
+  cassandraImage: cassandra:seed-dev
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
   rollingPartition: 0
