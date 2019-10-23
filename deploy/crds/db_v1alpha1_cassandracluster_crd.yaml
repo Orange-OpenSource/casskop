@@ -55,6 +55,7 @@ spec:
             dataCapacity:
               description: Define the Capacity for Persistent Volume Claims in the
                 local storage
+              pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
               type: string
             dataStorageClass:
               description: Define StorageClass for Persistent Volume Claims in the
@@ -87,6 +88,10 @@ spec:
               type: object
             imagepullpolicy:
               description: ImagePullPolicy define the pull poicy for C* docker image
+              enum:
+              - Always
+              - Never
+              - IfNotPresent
               type: string
             initContainerCmd:
               description: Command to execute in the initContainer in the targeted
@@ -126,8 +131,10 @@ spec:
                 limits:
                   properties:
                     cpu:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
                       type: string
                     memory:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
                       type: string
                   required:
                   - cpu
@@ -136,8 +143,10 @@ spec:
                 requests:
                   properties:
                     cpu:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
                       type: string
                     memory:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
                       type: string
                   required:
                   - cpu
@@ -148,6 +157,7 @@ spec:
               description: RunAsUser define the id of the user to run in the Cassandra
                 image
               format: int64
+              minimum: 1
               type: integer
             service:
               properties:
