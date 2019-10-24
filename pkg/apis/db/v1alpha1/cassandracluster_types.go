@@ -761,6 +761,8 @@ type Rack struct {
 type PodPolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
+	// Tolerations specifies the tolerations to attach to the pods the CassKop operator creates
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 }
 
 // PodPolicy defines the policy for headless service owned by CassKop operator.
