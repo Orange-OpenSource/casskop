@@ -250,8 +250,10 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 	var annotations = map[string]string{}
+	var tolerations = []v1.Toleration{}
 	if cc.Spec.Pod != nil {
 		annotations = cc.Spec.Pod.Annotations
+		tolerations = cc.Spec.Pod.Tolerations
 	}
 
 	ss := &appsv1.StatefulSet{
@@ -287,6 +289,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						NodeAffinity:    nodeAffinity,
 						PodAntiAffinity: createPodAntiAffinity(cc.Spec.HardAntiAffinity, k8s.LabelsForCassandra(cc)),
 					},
+					Tolerations: tolerations,
 					SecurityContext: &v1.PodSecurityContext{
 						RunAsUser:    cc.Spec.RunAsUser,
 						RunAsNonRoot: func(b bool) *bool { return &b }(true),

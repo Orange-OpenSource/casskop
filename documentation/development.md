@@ -52,9 +52,10 @@ Casskop has been validated with :
 First, checkout and install the operator-sdk CLI:
 
 ```sh
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
+$ mkdir -p $GOPATH/src/github.com/operator-framework/
+$ cd $GOPATH/src/github.com/operator-framework/
+$ git clone git@github.com:operator-framework/operator-sdk.git
 $ git checkout v0.9.0
-$ make dep
 $ make install
 ```
 
@@ -64,8 +65,6 @@ $ make install
 Checkout the project.
 
 ```sh
-$ mkdir -p $GOPATH/src/gitlab.si.francetelecom.fr/kubernetes/
-$ cd $GOPATH/src/gitlab.si.francetelecom.fr/kubernetes/
 $ git clone https://github.com/Orange-OpenSource/cassandra-k8s-operator.git
 $ cd cassandra-k8s-operator
 ```
