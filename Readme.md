@@ -147,15 +147,24 @@ created
 
 > We are looking where to store our helm in the future
 
-If it is the 1rst time you deploy a chart with [Helm](https://helm.sh/), you may need to [install](https://helm.sh/docs/install/) the helm client and tiller, and create the service account for tiller (more informations about how to create a tiller service account [here](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/#use-case-2-enable-helm-in-your-cluster).
+> ##### Helm 2 users
+>
+> If it is the 1rst time you deploy a chart with [Helm](https://helm.sh/), you may need to [install](https://helm.sh/docs/install/) the helm client and tiller, and create the service account for tiller (more informations about how to create a tiller service account [here](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/#use-case-2-enable-helm-in-your-cluster).
+>
+> ```
+> helm init --history-max 200
+> kubectl create serviceaccount tiller --namespace kube-system
+> kubectl create -f tiller-clusterrolebinding.yaml
+> helm init --service-account tiller --upgrade
+> ```
 
-```
-helm init --history-max 200
-kubectl create serviceaccount tiller --namespace kube-system
-kubectl create -f tiller-clusterrolebinding.yaml
-helm init --service-account tiller --upgrade
-```
-
+> ##### Helm 3 users
+>
+> You will need to manually install the crds beforehand
+>
+> ```console
+> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+> ```
 
 Add the Helm incubator repo if you do not already have it:
 
