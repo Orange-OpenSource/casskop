@@ -18,6 +18,10 @@ spec:
   pod:
     annotations:
       exemple.com/test: my.custom.annotation
+    tolerations:
+      - key: my_custom_taint
+        operator: Exists
+        effect: NoSchedule
   dataCapacity: "3Gi"
   dataStorageClass: "local-storage"
   hardAntiAffinity: false
