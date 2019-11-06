@@ -91,6 +91,7 @@ orbs:
 
           - run:
               name: Operator acceptance test
+              no_output_timeout: 3600
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&

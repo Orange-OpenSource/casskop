@@ -193,7 +193,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		cmd := fmt.Sprintf(Strategy2DC, keyspaces[i])
 		_, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd})
 		if err != nil {
-			t.Logf("Error exec change keyspace %s = %v", keyspaces[i], err)
+			t.Fatalf("Error exec change keyspace %s = %v", keyspaces[i], err)
 		}
 	}
 	time.Sleep(2 * time.Second)

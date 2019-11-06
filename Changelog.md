@@ -2,6 +2,26 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.4.1
+
+- MR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue [#96](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/96): cluster stay pending
+- MR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
+  [#126](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/126): update racks in parallel
+- MR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
+  annotations 
+- MR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations  
+
+Examples of annotation needed in the CassandraCluster Spec:
+```
+  service:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: my.custom.domain.com.
+
+```
+
+- MR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
+
+
 ## 0.4.0
 
 - initContainerImage and bootstrapContainerImage used to adapt to official cassandra image.
