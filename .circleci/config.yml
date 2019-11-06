@@ -95,9 +95,7 @@ orbs:
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&
-                date
                 make docker-e2e-test-fix-arg <<parameters.test_name>> || {
-                date
                 kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
                 echo "Show Operator logs:"
                 cat operator.log
