@@ -15,8 +15,7 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 1
-  baseImage: cassandra
-  version: latest
+  cassandraImage: cassandra:latest
   imagePullPolicy: "IfNotPresent"
   imageJolokiaSecret:
     name: jolokia-auth
