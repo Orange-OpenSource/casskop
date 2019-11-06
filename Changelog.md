@@ -8,8 +8,8 @@
 - MR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
   [#126](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/126): update racks in parallel
 - MR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
-  annotations 
-- MR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations  
+  annotations
+- MR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations
 
 Examples of annotation needed in the CassandraCluster Spec:
 ```
