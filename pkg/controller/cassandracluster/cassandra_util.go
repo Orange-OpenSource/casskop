@@ -19,8 +19,8 @@ import (
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 
-	"github.com/sirupsen/logrus"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 )
 

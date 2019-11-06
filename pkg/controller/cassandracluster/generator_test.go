@@ -144,8 +144,8 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		sts.Labels)
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
 	assert.Equal([]v1.Toleration{v1.Toleration{
-		Key: "my_custom_taint",
+		Key:      "my_custom_taint",
 		Operator: v1.TolerationOpExists,
-		Effect: v1.TaintEffectNoSchedule}},
+		Effect:   v1.TaintEffectNoSchedule}},
 		sts.Spec.Template.Spec.Tolerations)
 }
