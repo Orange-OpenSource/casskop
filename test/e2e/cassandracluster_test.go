@@ -4,6 +4,10 @@ import (
 	goctx "context"
 	"errors"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
@@ -17,9 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
-	"testing"
-	"time"
 )
 
 // Run all fonctional tests

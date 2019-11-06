@@ -21,6 +21,8 @@ Examples of annotation needed in the CassandraCluster Spec:
 
 - MR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
 
+- tests now uses default cassandra docker image
+
 
 ## 0.4.0
 
