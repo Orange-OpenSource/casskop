@@ -94,7 +94,7 @@ const (
 	ContinueResyncLoop = false
 )
 
-// CheckDefaults chckes that required fields havent good values
+// CheckDefaults checks that required fields havent good values
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 
@@ -632,7 +632,7 @@ type CassandraClusterSpec struct {
 	// Version of Cassandra to be deployed.
 	Version string `json:"version"`
 
-	//ImagePullPolicy define the pull poicy for C* docker image
+	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
 	// Image used for bootstrapping cluster (use the form : base:version)
@@ -655,7 +655,7 @@ type CassandraClusterSpec struct {
 	Resources CassandraResources `json:"resources,omitempty"`
 
 	// HardAntiAffinity defines if the PodAntiAffinity of the
-	// statefulsets has to be hard (it's soft by default)
+	// statefulset has to be hard (it's soft by default)
 	HardAntiAffinity bool `json:"hardAntiAffinity,omitempty"`
 
 	Pod *PodPolicy `json:"pod,omitempty"`
@@ -685,7 +685,7 @@ type CassandraClusterSpec struct {
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
 
-	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
+	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MaxPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
@@ -718,7 +718,7 @@ type CassandraClusterSpec struct {
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels
 type Topology struct {
-	//Liste of DC defined in the CassandraCluster
+	//List of DC defined in the CassandraCluster
 	DC DCSlice `json:"dc,omitempty"`
 }
 
