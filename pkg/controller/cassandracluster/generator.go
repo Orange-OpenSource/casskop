@@ -698,7 +698,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 				},
 			},
 		},
-		//Env: createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		Env: createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: readinessInitialDelaySeconds,
 			TimeoutSeconds:      readinessHealthCheckTimeout,
