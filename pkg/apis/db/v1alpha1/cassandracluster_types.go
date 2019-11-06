@@ -27,7 +27,7 @@ import (
 
 const (
 	defaultBaseImage              string        = "cassandra"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.2"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
