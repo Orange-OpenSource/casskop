@@ -22,8 +22,8 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"github.com/stretchr/testify/assert"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLabelTime(t *testing.T) {
