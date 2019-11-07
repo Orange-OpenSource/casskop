@@ -11,9 +11,9 @@ import (
 
 	goctx "context"
 
-	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -193,7 +193,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		cmd := fmt.Sprintf(Strategy2DC, keyspaces[i])
 		_, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd})
 		if err != nil {
-			t.Logf("Error exec change keyspace %s = %v", keyspaces[i], err)
+			t.Fatalf("Error exec change keyspace %s = %v", keyspaces[i], err)
 		}
 	}
 	time.Sleep(2 * time.Second)
@@ -230,7 +230,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		cmd := fmt.Sprintf(Strategy1DC, keyspaces[i])
 		_, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd})
 		if err != nil {
-			t.Logf("Error exec change keyspace %s = %v", keyspaces[i], err)
+			t.Fatalf("Error exec change keyspace %s{%s} = %v", keyspaces[i], cmd, err)
 		}
 	}
 	time.Sleep(2 * time.Second)

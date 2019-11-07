@@ -20,12 +20,13 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/api/core/v1"
 
-	"github.com/kylelemons/godebug/pretty"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -159,9 +160,8 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	sts1.Spec.RevisionHistoryLimit = sts2.Spec.RevisionHistoryLimit
 
 	if !apiequality.Semantic.DeepEqual(sts1.Spec, sts2.Spec) {
-		log.Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
-			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.CompareAndPrintDiff(sts1.Spec, sts2.Spec))
 
 		return false
 	}
@@ -220,12 +220,14 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	} else {
 
 		//We need to keep the SeedList from the stored statefulset
-		//TODO: the container may not be at index 0
-		for i, env := range statefulSet.Spec.Template.Spec.Containers[0].Env {
+		//we retrieve it in the Env CASSANDRA_SEEDS of the bootstrap container
+		ic := getBootstrapContainerFromStatefulset(statefulSet)
+		oldIc := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
+		for i, env := range ic.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
-				for _, oldenv := range rcc.storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
+				for _, oldenv := range oldIc.Env {
 					if oldenv.Name == "CASSANDRA_SEEDS" && env.Value != oldenv.Value {
-						statefulSet.Spec.Template.Spec.Containers[0].Env[i].Value = oldenv.Value
+						ic.Env[i].Value = oldenv.Value
 					}
 				}
 			}
@@ -278,12 +280,23 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 }
 
-func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
+func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {
+	for _, ic := range sts.Spec.Template.Spec.InitContainers {
+		if ic.Name == "bootstrap" {
+			return &ic
+		}
+	}
+	return nil
+}
 
-	//TODO: the container may not be at index 0
-	for _, env := range storedStatefulSet.Spec.Template.Spec.Containers[0].Env {
-		if env.Name == "CASSANDRA_SEEDS" {
-			return strings.Split(env.Value, ",")
+func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
+	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
+	//TODO: check if this test is necessary
+	if ic != nil {
+		for _, env := range ic.Env {
+			if env.Name == "CASSANDRA_SEEDS" {
+				return strings.Split(env.Value, ",")
+			}
 		}
 	}
 	return []string{}

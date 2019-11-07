@@ -1,0 +1,27 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ExecuteCleanup" type="GoTestRunConfiguration" factoryName="Go Test" folderName="E2E">
+    <module name="cassandra-k8s-operator" />
+    <working_directory value="$PROJECT_DIR$/test/e2e" />
+    <go_parameters value="-i -kubeconfig -v -parallel=1" />
+    <parameters value="-namespacedMan deploy/e2e-ide/namespaced-manifests.yaml -globalMan deploy/crds/db_v1alpha1_cassandracluster_crd.yaml -root $PROJECT_DIR$ -singleNamespace" />
+    <envs>
+      <env name="KUBERNETES_CONFIG" value="$USER_HOME$/.kube/config" />
+    </envs>
+    <EXTENSION ID="net.ashald.envfile">
+      <option name="IS_ENABLED" value="false" />
+      <option name="IS_SUBST" value="false" />
+      <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+      <option name="IS_IGNORE_MISSING_FILES" value="false" />
+      <ENTRIES>
+        <ENTRY IS_ENABLED="true" PARSER="runconfig" />
+      </ENTRIES>
+    </EXTENSION>
+    <framework value="gotest" />
+    <kind value="PACKAGE" />
+    <package value="github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2e" />
+    <directory value="$PROJECT_DIR$/" />
+    <filePath value="$PROJECT_DIR$/" />
+    <pattern value="^TestCassandraCluster$/^group$/^ExecuteCleanup$" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -99,20 +99,19 @@ func TestGetLastOrFirstPod(t *testing.T) {
 	assertPodIsNotRunning(t, err)
 }
 
-
 func TestAllPodContainerReady(t *testing.T) {
 
 	mkPod := func(id int, containers ...bool) *v1.Pod {
 		containerStatuses := []v1.ContainerStatus{}
 		var containerIndex = 0
-		for _, c := range containers{
+		for _, c := range containers {
 			containerStatus := v1.ContainerStatus{Name: fmt.Sprintf("ns-nm-%02d-%02d", id, containerIndex), Ready: c}
 			containerIndex++
 			containerStatuses = append(containerStatuses, containerStatus)
 		}
 
 		return &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("ns-nm-%02d", id)},
-			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses:containerStatuses}}
+			Status: v1.PodStatus{Phase: v1.PodRunning, ContainerStatuses: containerStatuses}}
 	}
 
 	assert.Equal(t, true, PodContainersReady(mkPod(1, true)))
@@ -126,6 +125,7 @@ func TestAllPodContainerReady(t *testing.T) {
 	assert.Equal(t, false, PodContainersReady(mkPod(1, true, true, false)))
 
 }
+
 /*
 ** Here the Kubernetes Client Mock does not help because we uses the SDK
 ** i'll come back here when https://github.com/operator-framework/operator-sdk/issues/284

@@ -14,19 +14,23 @@
 
 PROJECT_ID?=orangeopensource
 ifeq ($(CI_REGISTRY_IMAGE),)
-	PROJECT?=${PROJECT_ID}/cassandra
+	PROJECT?=${PROJECT_ID}/cassandra-image
 else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
 
 VERSION:=3.11
 TAG?=${VERSION}
-ifeq ($(CIRCLE_BRANCH),master)
-	BRANCH:=latest
-else ifeq ($(CIRCLE_TAG),)
-  BRANCH=$(CIRCLE_BRANCH)
+
+ifdef CIRCLE_BRANCH
+	#removing / for fork which lead to docker error
+	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
 else
-  BRANCH=$(CIRCLE_TAG)
+  ifdef CIRCLE_TAG
+		BRANCH := $(CIRCLE_TAG)
+	else
+		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+	endif
 endif
 
 .PHONY: all build build-cqlsh build-openjre build-openjre-cqlsh push push-cqlsh
@@ -34,9 +38,12 @@ endif
 all: build
 
 params:
-	@echo ${PROJECT} ${BRANCH}
-	@echo $(VERSION) $(JAVA_VERSION) $(CASSANDRA_VERSION)
-	@echo $(TAG)
+	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
+	@echo "CIRCLE_TAG = '$(CIRCLE_TAG)'"
+	@echo "Version = '$(VERSION)'"
+	@echo "Branch = '$(BRANCH)'"
+	@echo "Tag = '$(TAG)'"
+
 
 build: params
 	docker build --pull \
@@ -44,7 +51,7 @@ build: params
 							 -t ${PROJECT}:${TAG} .
 
 push: params
-ifeq ($(CIRCLE_BRANCH),master)
+ifeq ($(BRANCH),master)
 	docker push ${PROJECT}:${TAG}
 endif
 	docker tag ${PROJECT}:${TAG} ${PROJECT}:${BRANCH}

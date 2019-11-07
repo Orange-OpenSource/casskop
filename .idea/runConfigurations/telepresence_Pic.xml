@@ -1,0 +1,40 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="telepresence Pic" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="New Folder">
+    <module name="cassandra-k8s-operator" />
+    <working_directory value="$PROJECT_DIR$/" />
+    <go_parameters value="-i" />
+    <envs>
+      <env name="KUBERNETES_PORT" value="tcp://172.18.0.1:443" />
+      <env name="KUBERNETES_PORT_443_TCP" value="tcp://172.18.0.1:443" />
+      <env name="KUBERNETES_PORT_443_TCP_ADDR" value="172.18.0.1" />
+      <env name="KUBERNETES_PORT_443_TCP_PORT" value="443" />
+      <env name="KUBERNETES_PORT_443_TCP_PROTO" value="tcp" />
+      <env name="KUBERNETES_SERVICE_HOST" value="172.18.0.1" />
+      <env name="KUBERNETES_SERVICE_PORT" value="443" />
+      <env name="KUBERNETES_SERVICE_PORT_HTTPS" value="443" />
+      <env name="LOG_LEVEL" value="Debug" />
+      <env name="OPERATOR_NAME" value="cassandra-k8s-operator" />
+      <env name="POD_NAME" value="cassandra-demo-ca-12ff73b6b8ea45b1bad66cb2fe216115-6d594c9g8wwf" />
+      <env name="TELEPRESENCE_CONTAINER" value="cassandra-k8s-operator" />
+      <env name="TELEPRESENCE_CONTAINER_NAMESPACE" value="cassandra-demo" />
+      <env name="TELEPRESENCE_POD" value="cassandra-demo-ca-12ff73b6b8ea45b1bad66cb2fe216115-6d594c9g8wwf" />
+      <env name="TELEPRESENCE_ROOT" value="/tmp/known" />
+      <env name="WATCH_NAMESPACE" value="cassandra-demo" />
+    </envs>
+    <pass_parent_env value="false" />
+    <EXTENSION ID="net.ashald.envfile">
+      <option name="IS_ENABLED" value="false" />
+      <option name="IS_SUBST" value="false" />
+      <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+      <option name="IS_IGNORE_MISSING_FILES" value="false" />
+      <ENTRIES>
+        <ENTRY IS_ENABLED="true" PARSER="runconfig" />
+      </ENTRIES>
+    </EXTENSION>
+    <kind value="PACKAGE" />
+    <filePath value="$PROJECT_DIR$/" />
+    <package value="github.com/Orange-OpenSource/cassandra-k8s-operator/cmd/manager" />
+    <directory value="$PROJECT_DIR$/" />
+    <method v="2" />
+  </configuration>
+</component>
