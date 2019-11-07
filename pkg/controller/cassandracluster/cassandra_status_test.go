@@ -415,8 +415,8 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 		}
 	}
 
-	//Ask for a change in Docker version
-	rcc.cc.Spec.Version = "new-versionftt"
+	//Ask for a change in CassandraImage version
+	rcc.cc.Spec.CassandraImage = "cassandra:new-versionftt"
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {

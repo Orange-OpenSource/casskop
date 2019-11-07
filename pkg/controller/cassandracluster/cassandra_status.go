@@ -229,7 +229,7 @@ func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName stri
 //UpdateStatusIfDockerImageHasChanged updates CassandraCluster Action Status if it detect a changes in the DockerImage:
 func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
-	desiredDockerImage := cc.Spec.BaseImage + ":" + cc.Spec.Version
+	desiredDockerImage := cc.Spec.CassandraImage
 
 	//This needs to be refactor if we load more than 1 container
 	if storedStatefulSet.Spec.Template.Spec.Containers != nil {

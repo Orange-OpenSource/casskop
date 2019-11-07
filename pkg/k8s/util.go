@@ -138,11 +138,6 @@ func AsOwner(cc *api.CassandraCluster) metav1.OwnerReference {
 	}
 }
 
-// getCassandraImage returns the docker image to used for cassandra
-func GetCassandraImage(cc *api.CassandraCluster) string {
-	return fmt.Sprintf("%s:%s", cc.Spec.BaseImage, cc.Spec.Version)
-}
-
 // LabelTime returns a supported label string containing the current date and time
 func LabelTime() string {
 	t := metav1.Now()
