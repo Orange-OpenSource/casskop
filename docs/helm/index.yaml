@@ -2,8 +2,31 @@ apiVersion: v1
 entries:
   cassandra-operator:
   - apiVersion: v1
+    appVersion: 0.4.1-release
+    created: 2019-11-07T12:35:58.08812+01:00
+    description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
+    digest: 97e81b96370276e85d5cc4a87a49ebcf8a94d3dc36220047d7e8794fedd7ed1c
+    home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
+    keywords:
+    - operator
+    - cassandra
+    - casskop
+    maintainers:
+    - email: sebastien.allamand@orange.com
+      name: allamand
+    - email: cscetbon.ext@orange.com
+      name: Orange-csetbon
+    - email: jeanarmel.luce@orange.com
+      name: jal06
+    name: cassandra-operator
+    sources:
+    - https://github.com/Orange-OpenSource/cassandra-k8s-operator
+    urls:
+    - cassandra-operator-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v1
     appVersion: 0.4.0-release
-    created: 2019-10-07T18:01:42.602592+02:00
+    created: 2019-11-07T12:35:58.083649+01:00
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 8ee47e7fb1328b77af3102686f546f8807f973a0fc5f22929b7915a5a5ca5d12
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -26,7 +49,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.2-release
-    created: 2019-10-07T18:01:42.602149+02:00
+    created: 2019-11-07T12:35:58.083199+01:00
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 3adb84740d75ab1bc9f674e03553cf43aa1dac7661817b6622beee58c1e08aa1
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -49,7 +72,7 @@ entries:
     version: 0.3.2
   - apiVersion: v1
     appVersion: 0.3.1-mater
-    created: 2019-10-07T18:01:42.600829+02:00
+    created: 2019-11-07T12:35:58.082567+01:00
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: d4eb5ebe3de38e2d75184f3734e3f88ef9e82ebb88bc4beb44544f7b5b69702f
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -70,4 +93,4 @@ entries:
     urls:
     - cassandra-operator-0.3.1.tgz
     version: 0.3.1
-generated: 2019-10-07T18:01:42.598838+02:00
+generated: 2019-11-07T12:35:58.081414+01:00

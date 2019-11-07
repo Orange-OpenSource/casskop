@@ -4,7 +4,13 @@
 
 ## 0.4.1
 
-- MR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue [#96](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/96): cluster stay pending
+**Breaking Change in API**
+
+The fields `spec.baseImage` and `spec.version` have been removed in favor for `spec.cassandraImage` witch is a merge of
+both of thems.
+
+- MR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue
+  [#96](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/96): cluster stay pending
 - MR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
   [#126](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/126): update racks in parallel
 - MR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
@@ -20,7 +26,6 @@ Examples of annotation needed in the CassandraCluster Spec:
 ```
 
 - MR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
-
 - tests now uses default cassandra docker image
 
 
