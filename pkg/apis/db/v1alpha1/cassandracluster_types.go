@@ -26,10 +26,9 @@ import (
 )
 
 const (
-	defaultBaseImage              string        = "cassandra"
+  defaultBaseImage              string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.2"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
-	defaultVersion                string        = "latest"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
 	defaultNumTokens                            = 256
@@ -94,16 +93,14 @@ const (
 	ContinueResyncLoop = false
 )
 
-// CheckDefaults chckes that required fields havent good values
+// CheckDefaults checks that required fields havent good values
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 
-	if len(ccs.BaseImage) == 0 {
-		ccs.BaseImage = defaultBaseImage
+	if len(ccs.CassandraImage) == 0 {
+		ccs.CassandraImage = defaultCassandraImage
 	}
-	if len(ccs.Version) == 0 {
-		ccs.Version = defaultVersion
-	}
+
 	if len(ccs.ImagePullPolicy) == 0 {
 		ccs.ImagePullPolicy = defaultImagePullPolicy
 	}
@@ -113,7 +110,7 @@ func (cc *CassandraCluster) CheckDefaults() {
 
 	//Init-Container 1 : init-config
 	if len(ccs.InitContainerImage) == 0 {
-		ccs.InitContainerImage = ccs.BaseImage + ":" + ccs.Version
+		ccs.InitContainerImage = ccs.CassandraImage
 	}
 	if len(ccs.InitContainerCmd) == 0 {
 		ccs.InitContainerCmd = InitContainerCmd
@@ -626,13 +623,10 @@ type CassandraClusterSpec struct {
 	// If NodesPerRacks = 2 and there is 3 racks, the cluster will have 6 Cassandra Nodes
 	NodesPerRacks int32 `json:"nodesPerRacks,omitempty"`
 
-	// Base image to use for a Cassandra deployment.
-	BaseImage string `json:"baseImage"`
+	// Image + version to use for Cassandra
+	CassandraImage string `json:"cassandraImage,omitempty"`
 
-	// Version of Cassandra to be deployed.
-	Version string `json:"version"`
-
-	//ImagePullPolicy define the pull poicy for C* docker image
+	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
 	// Image used for bootstrapping cluster (use the form : base:version)
@@ -655,7 +649,7 @@ type CassandraClusterSpec struct {
 	Resources CassandraResources `json:"resources,omitempty"`
 
 	// HardAntiAffinity defines if the PodAntiAffinity of the
-	// statefulsets has to be hard (it's soft by default)
+	// statefulset has to be hard (it's soft by default)
 	HardAntiAffinity bool `json:"hardAntiAffinity,omitempty"`
 
 	Pod *PodPolicy `json:"pod,omitempty"`
@@ -685,7 +679,7 @@ type CassandraClusterSpec struct {
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
 
-	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MasPodUnavailable used in the PDB
+	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MaxPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
@@ -718,7 +712,7 @@ type CassandraClusterSpec struct {
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels
 type Topology struct {
-	//Liste of DC defined in the CassandraCluster
+	//List of DC defined in the CassandraCluster
 	DC DCSlice `json:"dc,omitempty"`
 }
 

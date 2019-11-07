@@ -15,19 +15,12 @@
 package cassandracluster
 
 import (
-	"fmt"
-
 	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 
 	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 )
-
-func isCassandraVersionMatch(ps v1.PodSpec, ccs api.CassandraClusterSpec) bool {
-	desiredImage := cassandraImage(ccs)
-	return ps.Containers[0].Image == desiredImage
-}
 
 //thereIsNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
 func (rcc *ReconcileCassandraCluster) thereIsPodDisruption() bool {
@@ -62,10 +55,6 @@ func cassandraPodIsReady(pod *v1.Pod) bool {
 		}
 	}
 	return false
-}
-
-func cassandraImage(ccs api.CassandraClusterSpec) string {
-	return fmt.Sprintf("%s:%s", ccs.BaseImage, ccs.Version)
 }
 
 // DeletePVC deletes persistentvolumes of nodes in a rack
