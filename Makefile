@@ -197,9 +197,15 @@ ifdef PUSHLATEST
 	docker push $(BUILD_IMAGE):latest
 endif
 
-.PHONY: build-bootstrap-image
-build-bootstrap-image: deps-development
+build-bootstrap-image:
 	$(MAKE) -C docker/bootstrap build
+push-bootstrap-image:
+	$(MAKE) -C docker/bootstrap push
+
+build-cassandra-image:
+	$(MAKE) -C docker/cassandra build
+push-cassandra-image:
+	$(MAKE) -C docker/cassandra push
 
 
 pipeline:

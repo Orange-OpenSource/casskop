@@ -28,6 +28,7 @@ that :
 
 We have some slides for a [CassKop demo](https://orange-opensource.github.io/cassandra-k8s-operator/slides/index.html?slides=Slides-CassKop-demo.md#1)
 
+You can also play with CassKop on [Katacoda](https://www.katacoda.com/orange)
 
 ## CassKop features
 

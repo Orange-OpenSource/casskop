@@ -27,7 +27,7 @@ import (
 
 const (
 	defaultCassandraImage         string        = "cassandra:latest"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.0"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.2"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -93,7 +93,7 @@ const (
 	ContinueResyncLoop = false
 )
 
-// CheckDefaults checks that required fields havent good values
+// CheckDefaults checks that required fields haven't good values
 func (cc *CassandraCluster) CheckDefaults() {
 	ccs := &cc.Spec
 

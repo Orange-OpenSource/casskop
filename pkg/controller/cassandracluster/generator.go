@@ -634,15 +634,16 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	var command = []string{}
 	if cc.Spec.Debug {
 		//debug: keep container running
-		command = []string{"sh",
-			"-c",
-			"tail -f /dev/null"}
+		command = []string{"sh", "-c", "tail -f /dev/null"}
+	} else {
+		command = []string{"cassandra", "-f"}
 	}
 
 	cassandraContainer := v1.Container{
 		Name:            cassandraContainerName,
 		Image:           cc.Spec.CassandraImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
+		Command:         command,
 		Ports: []v1.ContainerPort{
 			v1.ContainerPort{
 				Name:          cassandraIntraNodeName,
@@ -721,7 +722,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					Command: []string{
 						"/bin/bash",
 						"-c",
-						"nodetool status",
+						"/etc/cassandra/liveness-probe.sh",
 					},
 				},
 			},
@@ -730,9 +731,5 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		Resources:    resources,
 	}
 
-	if command != nil {
-		cassandraContainer.Command = command
-
-	}
 	return cassandraContainer
 }

@@ -150,8 +150,8 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
-	//Simulate the Update of SeedList
-	dc1rack1sts.Spec.Template.Spec.Containers[0].Env[1].Value = cc.GetSeedList(&b)
+	//Simulate the Update of SeedList (field CASSANDRA_SEEDLIST of init-container bootstrap
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
@@ -281,7 +281,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList), "Status: %v", status.SeedList)
 
 	//3. Simulate the Update of SeedList
-	dc1rack1sts.Spec.Template.Spec.Containers[0].Env[1].Value = cc.GetSeedList(&b)
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
 
 	//4. Ask for ScaleDown on dc1
 	cc.Spec.NodesPerRacks = cc.Spec.NodesPerRacks - 1

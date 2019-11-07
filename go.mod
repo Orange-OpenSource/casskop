@@ -5,6 +5,7 @@ go 1.12
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
+	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -14,7 +15,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/jarcoal/httpmock v1.0.4
-	github.com/kylelemons/godebug v1.1.0
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/operator-framework/operator-sdk v0.9.0
 	github.com/prometheus/common v0.6.0 // indirect
