@@ -234,12 +234,14 @@ debug-pod-logs:
 	kubectl logs -f `kubectl get pod -l app=cassandra-k8s-operator -o jsonpath="{.items[0].metadata.name}"`
 
 define debug_telepresence
-	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY)
-	echo "execute : cat cassandra-operator.env"
-	sudo mkdir -p /var/run/secrets/kubernetes.io
-	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/
-	tdep=`kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}'`
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
+	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
+	echo "execute : cat cassandra-operator.env" ; \
+	sudo mkdir -p /var/run/secrets/kubernetes.io ; \
+	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ || true ; \
+	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
+  echo kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}' ; \
+	echo telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2 ; \
+  telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
 endef
 
 debug-telepresence:
