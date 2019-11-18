@@ -2,7 +2,6 @@ package e2e
 
 import (
 	goctx "context"
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -425,22 +424,18 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 		return executed, err
 	}
 
-	checkRack1 := func(cc *api.CassandraCluster) (bool, error) {
-		return conditionFunc(cc, "rack1", 0)
-	}
-
-	checkRack2 := func(cc *api.CassandraCluster) (bool, error) {
-		return conditionFunc(cc, "rack2", 0)
+	checkRack := func(rack string) func(cc *api.CassandraCluster) (bool, error) {
+		return func(cc *api.CassandraCluster) (bool, error) { return conditionFunc(cc, rack, 0) }
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack1\n")
-	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack1)
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack("rack1"))
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack2\n")
-	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack2)
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack("rack2"))
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
@@ -464,7 +459,7 @@ func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, erro
 			return &port, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("Failed to find service port: %s", name))
+	return nil, fmt.Errorf("Failed to find service port: %s", name)
 }
 
 func getStatefulSet(name string, namespace string, f *framework.Framework, t *testing.T) *appsv1.StatefulSet {
