@@ -165,6 +165,83 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList))
 }
 
+func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testing.T) {
+	assert := assert.New(t)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC-ManualSeedlist.yaml")
+	//Allow Update SeedList
+	cc.Spec.AutoUpdateSeedList = false
+
+	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(3, len(cc.Status.CassandraRackStatus))
+
+	//cc.Status.SeedList = cc.InitSeedList()
+
+	var a = []string{
+		"cassandra-demo-dc1-rack1-0.nodomain.com",
+		"cassandra-demo-dc1-rack2-0.nodomain.com",
+		"cassandra-demo-dc2-rack1-0.nodomain.com",
+	}
+
+	assert.Equal(3, len(cc.Status.SeedList))
+	assert.Equal(true, reflect.DeepEqual(a, cc.Status.SeedList))
+
+	//Ask for Scaling
+	//var nodesPerRack int32 = 2
+	//cc.Spec.Topology.DC[1].NodesPerRacks = &nodesPerRack
+	status := cc.Status.DeepCopy()
+
+	// We change the seedlist
+
+	var newSeedList = []string{
+		"cassandra-demo-dc1-rack1-0.nodomain.com",
+		"cassandra-demo-dc1-rack2-0.nodomain.com",
+		"cassandra-demo-dc2-rack1-0.nodomain.com",
+		"cassandra-demo-dc2-rack2-0.nodomain.com",
+	}
+	cc.Status.SeedList = newSeedList
+
+	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
+
+	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
+	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
+	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
+
+	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+
+	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
+	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
+	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
+
+	//UpdateClusterStatus
+	UpdateCassandraClusterStatusPhase(cc, status)
+
+	//Flip with AutoUpdateSeedList= true -> update status
+	FlipCassandraClusterUpdateSeedListStatus(cc, status)
+
+	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
+	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
+	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
+
+	//Simulate the Update of SeedList (field CASSANDRA_SEEDLIST of init-container bootstrap
+	//dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&newSeedList)
+	//UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
+	//UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
+	//UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
+
+	//No status must have been changed
+	//assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
+	//assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
+	//assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
+
+	//assert.Equal(4, len(status.SeedList))
+	//assert.Equal(true, reflect.DeepEqual(newSeedList, status.SeedList))
+}
+
 func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	assert := assert.New(t)
 
