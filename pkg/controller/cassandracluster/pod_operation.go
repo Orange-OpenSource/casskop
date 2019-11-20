@@ -239,14 +239,14 @@ func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, 
 			go rcc.monitorOperation(hostName, cc, dcRackName, pod, operationName)
 			continue
 		}
+		// Add the operatorName to the last pod operation in case the operator pod is replaced
+		status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 		err := rcc.startOperation(cc, status, pod, dcRackName, operationName)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 				"pod": pod.Name, "err": err}).Debug("Failed to start operation on pod")
 			continue
 		}
-		// Add the operatorName to the last pod operation in case the operator pod is replaced
-		status.CassandraRackStatus[dcRackName].PodLastOperation.OperatorName = os.Getenv("POD_NAME")
 		go rcc.runOperation(operationName, hostName, cc, dcRackName, pod, status)
 	}
 }
@@ -535,8 +535,8 @@ func (rcc *ReconcileCassandraCluster) getPodsToWorkOn(cc *api.CassandraCluster, 
 
 	// Operator is different from when the previous operation was started
 	// Set checkOnly to restart the monitoring function to wait until the operation is done
-	if podLastOperation.Name == operationName && podLastOperation.OperatorName != operatorName &&
-		podLastOperation.Status == api.StatusOngoing {
+	if podLastOperation.Name == operationName && podLastOperation.Status == api.StatusOngoing &&
+		podLastOperation.OperatorName != "" && podLastOperation.OperatorName != operatorName {
 		checkOnly = true
 		podLastOperation.OperatorName = operatorName
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
