@@ -27,8 +27,7 @@ func TestPodsSlice(t *testing.T) {
 	assert := assert.New(t)
 
 	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-	status := cc.Status.DeepCopy()
-	rcc.updateCassandraStatus(cc, status)
+	status := &cc.Status
 
 	operatorName := "new-name"
 	oldOperatorName := "old-name"
