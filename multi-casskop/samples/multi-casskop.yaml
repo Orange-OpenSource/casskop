@@ -1,0 +1,71 @@
+apiVersion: db.orange.com/v1alpha1
+kind: MultiCasskop
+metadata:
+  name: multi-casskop-demo
+spec:
+  deleteCassandraCluster: true
+  base: #<-- Specify the base of our CassandraCluster
+    apiVersion: "db.orange.com/v1alpha1"
+    kind: "CassandraCluster"
+    metadata:
+      name: cassandra-demo
+      labels:
+        cluster: casskop
+    spec:
+      cassandraImage: orangeopensource/cassandra-image:3.11
+      bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.2
+      configMapName: cassandra-configmap-v1
+      service:
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: my.zone.dns.net.
+      dataCapacity: "20Gi"
+      dataStorageClass: "local-storage"
+      imagepullpolicy: IfNotPresent
+      hardAntiAffinity: true
+      deletePVC: true
+      autoPilot: true
+      gcStdout: false
+      autoUpdateSeedList: false
+      maxPodUnavailable: 1
+      nodesPerRacks: 1
+      runAsUser: 999
+      resources:         
+        requests:
+          cpu: '2'
+          memory: 4Gi
+        limits:
+          cpu: '2'
+          memory: 4Gi
+    status:
+      seedlist:
+        - cassandra-e2e-dc1-rack1-0.my.zone.dns.net
+        - cassandra-e2e-dc1-rack1-1.my.zone.dns.net
+        - cassandra-e2e-dc2-rack4-0.my.zone.dns.net
+        - cassandra-e2e-dc2-rack4-1.my.zone.dns.net
+
+  override: #<-- Specify overrides of the CassandraCluster depending on the target kubernetes cluster
+    cluster1:
+      spec:
+        pod:
+          annotations:
+            cni.projectcalico.org/ipv4pools: '["routable"]'
+        topology:
+          dc:
+            - name: dc1
+              nodesPerRacks: 2 
+              numTokens: 32
+              rack:
+                - name: rack1
+    cluster2:
+      spec:
+        pod:
+          annotations:
+            cni.projectcalico.org/ipv4pools: '["routable"]'
+        imagepullpolicy: IfNotPresent
+        topology:
+          dc:
+            - name: dc2
+              nodesPerRacks: 2
+              numTokens: 32
+              rack:
+                - name: rack4
