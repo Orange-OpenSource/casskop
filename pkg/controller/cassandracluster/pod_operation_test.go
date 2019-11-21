@@ -70,7 +70,7 @@ func TestPodsSlice(t *testing.T) {
 	rcc.CreatePod(pod)
 
 	podLastOperation.Status = api.StatusOngoing
-	podLastOperation.Pods = []string{"cassandra-demo-dc1-rack1-0"}
+	podLastOperation.Pods = []string{pod.GetName()}
 	// Set the operator name to a different value than the current operator name
 	podLastOperation.OperatorName = oldOperatorName
 
