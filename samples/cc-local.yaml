@@ -4,17 +4,12 @@ metadata:
   name: cassandra-demo
 spec:
   nodesPerRacks: 3
-
-  baseImage: cassandra
-  version: latest
-
+  cassandraImage: cassandra:3.11
   #configMapName: cassandra-jvm-configmap-full
   #imagePullSecret:
   #  name: advisedev # To authenticate on docker registry
   rollingPartition: 0
-
   imagePullPolicy: "IfNotPresent"
-
   dataCapacity: "1Gi"
   dataStorageClass: "local-storage"
   hardAntiAffinity: false
@@ -31,12 +26,5 @@ spec:
   topology:
     dc:
       - name: dc1
-#        labels:
-#          location.dfy.orange.com/site : dc1
         rack:
           - name: rack1
-#            labels: 
-#              location.dfy.orange.com/rack : rack1
-#          - name: rack2
-#            labels: 
-#              location.dfy.orange.com/rack : rack2
