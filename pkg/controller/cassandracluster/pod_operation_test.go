@@ -36,6 +36,8 @@ func TestPodsSlice(t *testing.T) {
 	dcRackName := "dc1-rack1"
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 	podLastOperation.Name = operationName
+
+	// Conditions to return checkOnly set to true with an empty podsSlice
 	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.OperatorName = oldOperatorName
 
@@ -44,6 +46,7 @@ func TestPodsSlice(t *testing.T) {
 	assert.Equal(len(podsSlice), 0)
 	assert.Equal(checkOnly, true)
 
+	// Missing condition sets checkOnly to false
 	podLastOperation.Status = api.StatusDone
 
 	podsSlice, checkOnly = rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
@@ -51,12 +54,7 @@ func TestPodsSlice(t *testing.T) {
 	assert.Equal(len(podsSlice), 0)
 	assert.Equal(checkOnly, false)
 
-	podLastOperation.Status = api.StatusOngoing
-	podLastOperation.OperatorName = operatorName
-	assert.Equal(len(podsSlice), 0)
-	assert.Equal(checkOnly, false)
-
-	//Create the Pods wanted by the statefulset dc2-rack1 (1 node)
+	//Create a pod to have something to put in podsSlice
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
@@ -65,26 +63,18 @@ func TestPodsSlice(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cassandra-demo-dc1-rack1-0",
 			Namespace: "ns",
-			Labels: map[string]string{
-				"app":                                  "cassandracluster",
-				"cassandracluster":                     "cassandra-demo",
-				"cassandraclusters.db.orange.com.dc":   "dc1",
-				"cassandraclusters.db.orange.com.rack": "rack1",
-				"cluster":                              "k8s.pic",
-				"dc-rack":                              "dc1-rack1",
-			},
+			Labels:    map[string]string{"app": "cassandracluster"},
 		},
 	}
 	pod.Status.Phase = v1.PodRunning
 	rcc.CreatePod(pod)
 
+	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.Pods = []string{"cassandra-demo-dc1-rack1-0"}
+	// Set the operator name to a different value than the current operator name
 	podLastOperation.OperatorName = oldOperatorName
 
 	podsSlice, checkOnly = rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
-
 	assert.Equal(podsSlice, []v1.Pod{*pod})
-	assert.Equal(len(podsSlice), 1)
 	assert.Equal(checkOnly, true)
-
 }
