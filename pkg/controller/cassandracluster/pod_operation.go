@@ -512,6 +512,34 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 	return breakResyncLoop, nil
 }
 
+func (rcc *ReconcileCassandraCluster) podsSlice(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	podLastOperation api.PodLastOperation, dcRackName, operationName, operatorName string) ([]v1.Pod, bool) {
+	checkOnly := false
+	podsSlice := make([]v1.Pod, 0)
+	// Operator is different from when the previous operation was started
+	// Set checkOnly to restart the monitoring function to wait until the operation is done
+	if podLastOperation.Name == operationName && podLastOperation.Status == api.StatusOngoing &&
+		podLastOperation.OperatorName != "" && podLastOperation.OperatorName != operatorName {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"podLastOperation.OperatorName": podLastOperation.OperatorName, "operatorName": operatorName,
+			"operation": strings.Title(operationName)}).Info("Operator's name is different, we enable checking routines")
+		podLastOperation.OperatorName = operatorName
+
+		for _, podName := range podLastOperation.Pods {
+			p, err := rcc.GetPod(cc.Namespace, podName)
+			if err != nil || p.Status.Phase != v1.PodRunning || p.DeletionTimestamp != nil {
+				continue
+			}
+			podsSlice = append(podsSlice, *p)
+		}
+		checkOnly = true
+		return podsSlice, checkOnly
+	}
+	dcName, rackName := cc.GetDCAndRackFromDCRackName(dcRackName)
+	podsSlice = rcc.initOperation(cc, status, dcName, rackName, operationName)
+	return podsSlice, checkOnly
+}
+
 // Get pods that need an operation to run on
 // Returns if checking is needed (can happen if the operator has been killed during an operation)
 func (rcc *ReconcileCassandraCluster) getPodsToWorkOn(cc *api.CassandraCluster, dcName, rackName string,
@@ -533,25 +561,7 @@ func (rcc *ReconcileCassandraCluster) getPodsToWorkOn(cc *api.CassandraCluster, 
 		"podLastOperation.OperatorName": podLastOperation.OperatorName,
 		"podLastOperation.Pods":         podLastOperation.Pods}).Debug("Display information about pods")
 
-	// Operator is different from when the previous operation was started
-	// Set checkOnly to restart the monitoring function to wait until the operation is done
-	if podLastOperation.Name == operationName && podLastOperation.Status == api.StatusOngoing &&
-		podLastOperation.OperatorName != "" && podLastOperation.OperatorName != operatorName {
-		checkOnly = true
-		podLastOperation.OperatorName = operatorName
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"operation": strings.Title(operationName)}).Debug("Operator's name is different, we enable checking routines")
-
-		for _, podName := range podLastOperation.Pods {
-			p, err := rcc.GetPod(cc.Namespace, podName)
-			if err != nil || p.Status.Phase != v1.PodRunning || p.DeletionTimestamp != nil {
-				continue
-			}
-			podsSlice = append(podsSlice, *p)
-		}
-	} else {
-		podsSlice = rcc.initOperation(cc, status, dcName, rackName, operationName)
-	}
+	podsSlice, checkOnly = rcc.podsSlice(cc, status, *podLastOperation, dcRackName, operationName, operatorName)
 
 	if checkOnly {
 		if len(podsSlice) == 0 {
