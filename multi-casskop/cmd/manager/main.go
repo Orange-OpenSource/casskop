@@ -20,50 +20,56 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
+
+	"k8s.io/client-go/rest"
 
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"admiralty.io/multicluster-controller/pkg/manager"
 	"admiralty.io/multicluster-service-account/pkg/config"
 	mc "github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/ready"
 	"github.com/sirupsen/logrus"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/sample-controller/pkg/signals"
+	kconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 const (
-	LogLevelEnvVar = "LOG_LEVEL"
+	logLevelEnvVar = "LOG_LEVEL"
 )
 
 func getLogLevel() logrus.Level {
-	logLevel, found := os.LookupEnv(LogLevelEnvVar)
+	logLevel, found := os.LookupEnv(logLevelEnvVar)
 	if !found {
 		return logrus.InfoLevel
 	}
-	switch logLevel {
-	case "Debug":
+	switch strings.ToUpper(logLevel) {
+	case "DEBUG":
 		return logrus.DebugLevel
-	case "Info":
+	case "INFO":
 		return logrus.InfoLevel
-	case "Error":
+	case "ERROR":
 		return logrus.ErrorLevel
-	case "Warn":
+	case "WARN":
 		return logrus.WarnLevel
 	}
 	return logrus.InfoLevel
 }
 
 func main() {
-	flag.Parse()
-	if flag.NArg() < 1 {
-		log.Fatalf("Usage: MultiCasskop cluster-1 cluster-2 .. cluster-n")
-	}
 
 	logType, found := os.LookupEnv("LOG_TYPE")
 	if found && logType == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 	logrus.SetLevel(getLogLevel())
+
+	flag.Parse()
+	if flag.NArg() < 1 {
+		log.Fatalf("Usage: MultiCasskop cluster-1 cluster-2 .. cluster-n")
+	}
 
 	var clusters []mc.Clusters
 
@@ -74,14 +80,30 @@ func main() {
 
 	for i := 0; i < flag.NArg(); i++ {
 		clusterName := flag.Arg(i)
-		logrus.Infof("Configuring Client %d for cluster %s.", i+1, clusterName)
-		cfg, _, err := config.NamedConfigAndNamespace(clusterName)
-		if err != nil {
-			log.Fatal(err)
+		var cfg *rest.Config
+		var err error
+
+		if i == 0 {
+			logrus.Infof("Configuring Client %d for local cluster %s (first in arg list). using local k8s api access",
+				i+1, clusterName)
+			cfg, err = kconfig.GetConfig()
+			if err != nil {
+				logrus.Error(err)
+				os.Exit(1)
+			}
+		} else {
+			logrus.Infof("Configuring Client %d for distant cluster %s. using imported secret of same name", i+1,
+				clusterName)
+			cfg, _, err = config.NamedConfigAndNamespace(clusterName)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 		}
 		clusters = append(clusters,
 			mc.Clusters{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
 				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
+
 	}
 
 	logrus.Info("Creating Controller")
@@ -92,6 +114,18 @@ func main() {
 
 	m := manager.New()
 	m.AddController(co)
+
+	// NewFileReady returns a Ready that uses the presence of a file on disk to
+	// communicate whether the operator is ready. The operator's Pod definition
+	// "stat /tmp/operator-sdk-ready".
+	logrus.Info("Writing ready file.")
+	r := ready.NewFileReady()
+	err = r.Set()
+	if err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+	defer r.Unset()
 
 	logrus.Info("Starting Manager.")
 	if err := m.Start(signals.SetupSignalHandler()); err != nil {

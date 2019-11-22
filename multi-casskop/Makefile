@@ -147,6 +147,7 @@ export PURE:="on"
 .PHONY: build
 build:
 	@echo "Generate zzz-deepcopy objects"
+	go build -o build/_output/bin/health ../tools/health/main.go
 	operator-sdk version
 	operator-sdk generate k8s
 	@echo "Build Cassandra Operator"
@@ -183,11 +184,13 @@ circleci-validate:
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
 	echo "execute : cat multi-casskop.env" ; \
-  sudo mkdir -p /var/run/secrets/kubernetes.io ; \
+  sudo mkdir -p /vear/run/secrets/kubernetes.io ; \
+  sudo mkdir -p /var/run/secrets/admiralty.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
+	sudo ln -s /tmp/known/var/run/secrets/admiralty.io/serviceaccountimports /var/run/secrets/admiralty.io/ ; \
 	tdep=$(shell kubectl get deployment -l app=multi-casskop -o jsonpath='{.items[0].metadata.name}') ; \
-	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file multi-casskop.env \
-	--also-proxy 10.40.0.0/16
+	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file multi-casskop.env 
+#	--also-proxy 10.40.0.0/16
 #	--also-proxy 172.18.0.0/16
 
 

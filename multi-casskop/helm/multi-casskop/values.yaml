@@ -2,14 +2,12 @@
 ##
 image:
   repository: orangeopensource/multi-casskop
-  tag: v0.4.0-release
+  tag: 0.0.1-multi-cluster
+#  tag: 0.0.1-hbx-multi-cluster
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
-#    name:
 
-## Prometheus-operator resource limits & requests
-## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
 resources:
   requests:
     cpu: 10m
@@ -31,3 +29,8 @@ metricService: false
 
 debug:
   enabled: false
+
+command: /usr/local/bin/multi-casskop
+args:
+  - rickaastley-sph
+  - rickaastley-bgl

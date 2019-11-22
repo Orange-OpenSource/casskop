@@ -3,7 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   name: multicasskops.db.orange.com
   labels:
-    app: {{ template "cassandra-operator.name" . }}
+    app: {{ template "multi-casskop.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}

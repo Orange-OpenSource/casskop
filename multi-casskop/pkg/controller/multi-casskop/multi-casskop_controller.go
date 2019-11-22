@@ -155,7 +155,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		//If deletion is asked
 		if r.cmc.DeletionTimestamp != nil {
 			r.deleteCassandraCluster(client, cc)
-			break
+			continue
 		}
 
 		update, storedCC, err := r.CreateOrUpdateCassandraCluster(client, cc)

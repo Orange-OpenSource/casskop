@@ -14,8 +14,11 @@ maintainers:
     email: cscetbon.ext@orange.com
   - name: jal06
     email: jeanarmel.luce@orange.com
+  - name: fdehay
+    email: franck.dehay@orange.com
 keywords:
 - operator
 - cassandra
 - casskop
+- multi-casskop
 - multi-clusters

@@ -18,7 +18,7 @@ spec:
       labels:
         name: {{ template "multi-casskop.name" . }}
         app: {{ template "multi-casskop.name" . }}
-        operator: cassandra
+        operator: {{ template "multi-casskop.name" . }}
         release: {{ .Release.Name }}
     spec:
 {{- if .Values.image.imagePullSecrets.enabled }}
@@ -34,8 +34,14 @@ spec:
       - name: {{ template "multi-casskop.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+{{- if .Values.command }}
         command:
-        - cassandra-k8s-operator
+          - {{ .Values.command }}
+{{- end }}
+        args:
+{{- range .Values.args }}
+          - {{ . }}
+{{- end }}
         readinessProbe:
           exec:
             command:
@@ -60,3 +66,17 @@ spec:
           - name: LOG_LEVEL
             value: Debug
 {{- end }}
+        volumeMounts:
+{{- range .Values.args }}
+        - mountPath: /var/run/secrets/admiralty.io/serviceaccountimports/{{ . }}
+          name: {{ . }}
+          readOnly: true
+{{- end }}
+      volumes:
+{{- range .Values.args }}
+      - name: {{ . }}
+        secret:
+          defaultMode: 420
+          secretName: {{ . }}
+{{- end }}
+
