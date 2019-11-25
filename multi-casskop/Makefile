@@ -137,8 +137,8 @@ clean:
 helm-package:
 	@echo Packaging $(HELM_VERSION)
 	helm package helm/multi-casskop
-	mv multi-casskop-$(HELM_VERSION).tgz docs/helm
-	helm repo index docs/helm/
+	mv multi-casskop-$(HELM_VERSION).tgz ../docs/helm
+	helm repo index ../docs/helm/
 
 # Build cassandra-k8s-operator executable file in local go env
 
@@ -147,7 +147,7 @@ export PURE:="on"
 .PHONY: build
 build:
 	@echo "Generate zzz-deepcopy objects"
-	go build -o build/_output/bin/health ../tools/health/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health ../tools/health/main.go
 	operator-sdk version
 	operator-sdk generate k8s
 	@echo "Build Cassandra Operator"
@@ -163,23 +163,6 @@ build-local:
 	operator-sdk generate k8s
 	@echo "Build Cassandra Operator for $(GOOS)"
 	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/Orange-OpenSource -asmflags all=-trimpath=github.com/Orange-OpenSource github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/cmd/manager
-
-# Run a shell into the development docker image
-.PHONY: docker-build
-docker-build: ## Build the Operator and it's Docker Image
-	echo "Generate zzz-deepcopy objects"
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build --env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
-	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build --env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
-ifdef PUSHLATEST
-	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
-endif
-
-circleci-process:
-	circleci config process .circleci/config.yml
-
-circleci-validate:
-	circleci config validate
 
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
@@ -216,11 +199,6 @@ run-local:
 	./build/_output/bin/multi-casskop-$(GOOS) $(RUN_ARGS)
 
 
-run-docker:
-	docker rm multi-casskop || true
-	docker run --name multi-casskop -d -e KUBECONFIG=/root/.kube/config -e WATCH_NAMESPACE=$(NAMESPACE) -v $(KUBECONFIG):/root/.kube/config $(REPOSITORY):$(VERSION) $(RUN_ARGS)
-	docker logs -f multi-casskop
-
 .PHONY: push
 push:
 	docker push $(REPOSITORY):$(VERSION)
@@ -243,46 +221,4 @@ endif
 
 .PHONY: release
 release: tag image publish
-
-# Test stuff in dev
-.PHONY: docker-unit-test
-docker-unit-test:
-	docker run  --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD); cat test-report.out; $(UNIT_TEST_COVERAGE)'
-.PHONY: docker-unit-test-with-vendor
-docker-unit-test-with-vendor:
-	docker run  --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR)  -v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c '$(UNIT_TEST_CMD_WITH_VENDOR); cat test-report.out; $(UNIT_TEST_COVERAGE)'
-
-.PHONY: unit-test
-unit-test:
-	$(UNIT_TEST_CMD) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
-	$(UNIT_TEST_COVERAGE)
-
-.PHONY: unit-test-with-vendor
-unit-test-with-vendor:
-	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
-	$(UNIT_TEST_COVERAGE)
-
-
-.PHONY: docker-go-lint
-docker-go-lint:
-	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c '$(GO_LINT_CMD)'
-
-# golint is not fully supported by modules yet - https://github.com/golang/lint/issues/409
-.PHONY: go-lint
-go-lint:
-	$(GO_LINT_CMD)
-
-
-.PHONY: deps-development
-# Test if the dependencies we need to run this Makefile are installed
-deps-development:
-ifndef DOCKER
-	@echo "Docker is not available. Please install docker"
-	@exit 1
-endif
-
-
-
 

@@ -39,7 +39,8 @@ spec:
           - {{ .Values.command }}
 {{- end }}
         args:
-{{- range .Values.args }}
+          - {{ .Values.k8s.local }}
+{{- range .Values.k8s.additionals }}
           - {{ . }}
 {{- end }}
         readinessProbe:
@@ -67,13 +68,13 @@ spec:
             value: Debug
 {{- end }}
         volumeMounts:
-{{- range .Values.args }}
+{{- range .Values.k8s.remote }}
         - mountPath: /var/run/secrets/admiralty.io/serviceaccountimports/{{ . }}
           name: {{ . }}
           readOnly: true
 {{- end }}
       volumes:
-{{- range .Values.args }}
+{{- range .Values.k8s.remote }}
       - name: {{ . }}
         secret:
           defaultMode: 420

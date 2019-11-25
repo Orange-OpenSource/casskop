@@ -2,6 +2,16 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.5.0
+
+Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above multiple Kubernetes clusters.
+
+- PR [#145](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/145) - Fix [Issue #142](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/142) PodStatus which rarely fails in
+  unit tests
+- PR [#146](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/146) - Fix [Issue #143](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/143) External update of SeedList was not possible
+
+- PR [#147](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/147) - Introduce Multi-CassKop operator
+
 ## 0.4.1
 
 **Breaking Change in API**
@@ -9,13 +19,13 @@
 The fields `spec.baseImage` and `spec.version` have been removed in favor for `spec.cassandraImage` witch is a merge of
 both of thems.
 
-- MR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue
+- PR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue
   [#96](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/96): cluster stay pending
-- MR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
+- PR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
   [#126](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/126): update racks in parallel
-- MR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
+- PR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
   annotations
-- MR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations
+- PR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations
 
 Examples of annotation needed in the CassandraCluster Spec:
 ```
@@ -25,7 +35,7 @@ Examples of annotation needed in the CassandraCluster Spec:
 
 ```
 
-- MR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
+- PR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
 - tests now uses default cassandra docker image
 
 
@@ -173,7 +183,7 @@ debug:
 ### Features
 
 - [x] Rack Aware Deployment
-    - [x] Pod level get infos for Rack & DC. [MR #33](https://github.com/Orange-OpenSource/cassandra-k8s-operator/merge_requests/33)
+    - [x] Pod level get infos for Rack & DC. [PR #33](https://github.com/Orange-OpenSource/cassandra-k8s-operator/merge_requests/33)
         - Exposes **CASSANDRA_RACK** env var in the Pod from `cassandraclusters.db.orange.com.rack` Pod Labels
         - Exposes **CASSANDRA_DC** env var in the Pod from `cassandraclusters.db.orange.com.dc` Pod Labels
     
