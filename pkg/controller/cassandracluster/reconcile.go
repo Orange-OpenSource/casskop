@@ -585,8 +585,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
 
 	//if global status is not yet  "Configuring", we skip this one
-	if cc.Spec.AutoUpdateSeedList &&
-		status.LastClusterAction == api.ActionUpdateSeedList &&
+	if status.LastClusterAction == api.ActionUpdateSeedList &&
 		status.LastClusterActionStatus == api.StatusConfiguring {
 		var setOperationOngoing = true
 
