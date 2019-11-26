@@ -3,7 +3,6 @@
 image:
   repository: orangeopensource/multi-casskop
   tag: v0.5.0-release
-#  tag: 0.0.1-hbx-multi-cluster
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
@@ -32,7 +31,8 @@ debug:
 
 command: /usr/local/bin/multi-casskop
 
+#this can be surcharge with --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2,k8s-cluster3}
 k8s:
-  local: rickaastley-sph
+  local: k8s-cluster1
   remote:
-  - rickaastley-bgl
+  - k8s-cluster2

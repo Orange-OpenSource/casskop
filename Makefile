@@ -159,6 +159,7 @@ helm-package:
 	helm package helm/cassandra-operator
 	mv cassandra-operator-$(HELM_VERSION).tgz docs/helm
 	helm repo index docs/helm/
+	make -C multi-casskop helm-package
 
 # Build cassandra-k8s-operator executable file in local go env
 .PHONY: build
