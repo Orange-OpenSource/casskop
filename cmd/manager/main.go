@@ -19,6 +19,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -49,8 +50,8 @@ var (
 )
 
 const (
-	LogLevelEnvVar     = "LOG_LEVEL"
-	ResyncPeriodEnvVar = "RESYNC_PERIOD"
+	logLevelEnvVar     = "LOG_LEVEL"
+	resyncPeriodEnvVar = "RESYNC_PERIOD"
 )
 
 //to be set by compilator with -ldflags "-X main.compileDate=`date -u +.%Y%m%d.%H%M%S`"
@@ -67,18 +68,18 @@ func printVersion() {
 }
 
 func getLogLevel() logrus.Level {
-	logLevel, found := os.LookupEnv(LogLevelEnvVar)
+	logLevel, found := os.LookupEnv(logLevelEnvVar)
 	if !found {
 		return logrus.InfoLevel
 	}
-	switch logLevel {
-	case "Debug":
+	switch strings.ToUpper(logLevel) {
+	case "DEBUG":
 		return logrus.DebugLevel
-	case "Info":
+	case "INFO":
 		return logrus.InfoLevel
-	case "Error":
+	case "ERROR":
 		return logrus.ErrorLevel
-	case "Warn":
+	case "WARN":
 		return logrus.WarnLevel
 	}
 	return logrus.InfoLevel
@@ -87,7 +88,7 @@ func getLogLevel() logrus.Level {
 func getResyncPeriod() int {
 	var resyncPeriod int
 	var err error
-	resync, found := os.LookupEnv(ResyncPeriodEnvVar)
+	resync, found := os.LookupEnv(resyncPeriodEnvVar)
 	if !found {
 		resyncPeriod = api.DefaultResyncPeriod
 	} else {
