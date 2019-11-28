@@ -23,7 +23,7 @@ if [ -f ${CONFIGMAP}/pre_run.sh ]; then
 fi
 
 # Bootstrap Cassandra configuration
-echo " == We execute bootstrap srcipt run.sh"
+echo " == We execute bootstrap script run.sh"
 /${BOOTSTRAP_CONF}/run.sh
 
 if [ -f ${CONFIGMAP}/post_run.sh ]; then
