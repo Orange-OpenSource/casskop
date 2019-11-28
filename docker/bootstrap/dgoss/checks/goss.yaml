@@ -9,7 +9,7 @@ addr:
     timeout: 5000
   # cassandra jmx port
   tcp://localhost:7199:
-    reachable: false
+    reachable: true
   tcp://{{.Env.HOSTNAME}}:7199:
     reachable: true
     timeout: 5000
