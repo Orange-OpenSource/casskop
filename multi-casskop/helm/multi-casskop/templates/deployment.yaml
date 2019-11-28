@@ -40,7 +40,7 @@ spec:
 {{- end }}
         args:
           - {{ .Values.k8s.local }}
-{{- range .Values.k8s.additionals }}
+{{- range .Values.k8s.remote }}
           - {{ . }}
 {{- end }}
         readinessProbe:

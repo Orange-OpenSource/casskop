@@ -8,7 +8,7 @@ image:
     enabled: false
 
 resources:
-  requests:
+  requests:x
     cpu: 10m
     memory: 50Mi
   limits:

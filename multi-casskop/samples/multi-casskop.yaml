@@ -17,7 +17,7 @@ spec:
       configMapName: cassandra-configmap-v1
       service:
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: my.zone.dns.net.
+          external-dns.alpha.kubernetes.io/hostname: my.zone.dns.net. #<!-- If using external DNS, change with your current zone
       dataCapacity: "20Gi"
       dataStorageClass: "local-storage"
       imagepullpolicy: IfNotPresent
@@ -37,18 +37,18 @@ spec:
           cpu: '2'
           memory: 4Gi
     status:
-      seedlist:
+      seedlist:   #<-- at this time the seedlist must be fullfilled manually with known predictive name of pods
         - cassandra-e2e-dc1-rack1-0.my.zone.dns.net
         - cassandra-e2e-dc1-rack1-1.my.zone.dns.net
         - cassandra-e2e-dc2-rack4-0.my.zone.dns.net
         - cassandra-e2e-dc2-rack4-1.my.zone.dns.net
 
   override: #<-- Specify overrides of the CassandraCluster depending on the target kubernetes cluster
-    cluster1:
+    k8s-cluster1:
       spec:
         pod:
           annotations:
-            cni.projectcalico.org/ipv4pools: '["routable"]'
+            cni.projectcalico.org/ipv4pools: '["routable"]'  #<-- if using Calico, specify the name of the routable IP pool to uses for the pods
         topology:
           dc:
             - name: dc1
@@ -56,11 +56,11 @@ spec:
               numTokens: 32
               rack:
                 - name: rack1
-    cluster2:
+    k8s-cluster2:
       spec:
         pod:
           annotations:
-            cni.projectcalico.org/ipv4pools: '["routable"]'
+            cni.projectcalico.org/ipv4pools: '["routable"]' #<-- if using Calico, specify the name of the routable IP pool to uses for the pods
         imagepullpolicy: IfNotPresent
         topology:
           dc:
