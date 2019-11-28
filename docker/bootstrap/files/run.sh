@@ -18,8 +18,6 @@ set -e
 
 CASSANDRA_CFG=$CASSANDRA_CONF/cassandra.yaml
 
-
-
 default_value()
 {
     echo $(grep -v '#' ${CASSANDRA_CFG}|grep -i \\b$1|awk '{print $2}')
