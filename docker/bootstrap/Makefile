@@ -19,7 +19,7 @@ else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
 
-VERSION:=0.1.2
+VERSION:=0.1.3
 TAG?=${VERSION}
 ifeq ($(CIRCLE_BRANCH),master)
 	BRANCH:=latest
@@ -33,16 +33,11 @@ endif
 
 all: build
 
-params:
-	@echo ${PROJECT} ${BRANCH}
-	@echo $(VERSION) $(JAVA_VERSION) $(CASSANDRA_VERSION)
-	@echo $(TAG)
-
-build: params
+build:
 	docker build --pull \
-							 --build-arg https_proxy=$(https_proxy) --build-arg http_proxy=$(http_proxy) \
-							 -t ${PROJECT}:${TAG} .
+	             --build-arg https_proxy=$(https_proxy) --build-arg http_proxy=$(http_proxy) \
+	             -t ${PROJECT}:${TAG} .
 
-push: params
+push:
 	docker push ${PROJECT}:${TAG}
 
