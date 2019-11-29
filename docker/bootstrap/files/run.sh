@@ -18,8 +18,6 @@ set -e
 
 CASSANDRA_CFG=$CASSANDRA_CONF/cassandra.yaml
 
-
-
 default_value()
 {
     echo $(grep -v '#' ${CASSANDRA_CFG}|grep -i \\b$1|awk '{print $2}')
@@ -198,9 +196,9 @@ echo "-Dcassandra.ring_delay_ms=${CASSANDRA_RING_DELAY}" >> $CASSANDRA_CONF/jvm.
 
 [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]] && CASSANDRA_ENABLE_JMX=true
 
-if [[ $CASSANDRA_ENABLE_JMX == 'true' ]]; then
-  export LOCAL_JMX=no
-
+if [[ $CASSANDRA_ENABLE_JMX == 'true' ]]
+then
+  sed -ri '/^JMX_PORT=/a LOCAL_JMX=no' $CASSANDRA_CONF/cassandra-env.sh
   sed -ri 's@ -Dcom\.sun\.management\.jmxremote\.authenticate=true@ -Dcom\.sun\.management\.jmxremote\.authenticate=false@' $CASSANDRA_CONF/cassandra-env.sh
   sed -ri 's@ -Dcom\.sun\.management\.jmxremote\.password\.file=/etc/cassandra/jmxremote\.password/@@' $CASSANDRA_CONF/cassandra-env.sh
 

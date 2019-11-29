@@ -12,7 +12,6 @@ createDgossVolumes
 createInitConfigContainer
 createPreRunConfigMapFile
 createCassandraBootstrapContainer 
-#createAndCheckCassandraContainer #comment to go quicker
 
 # check using test specific `goss.yaml`
 GOSS_SLEEP=0 dgoss run \
