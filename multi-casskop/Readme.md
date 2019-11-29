@@ -15,12 +15,32 @@
 <!-- markdown-toc end -->
 
 
+## Intro
+
+CassKop introduces a new Custom Resource Definition, `CassandraCluster` which allows you to describe the Cassandra cluster you want to deploy.
+This works fine within a single Kubernetes cluster, and can allow for instance to deploy Cassandra in a mono-region multi-AZ topology.
+
+But for having more resilience with our Cassandra cluster, we want to be able to spread it on several regions. For doing this with Kubernetes, we need that our Cassandra to spread spread on top of different Kubernetes clusters, deployed independently on different regions.
+
+We introduce [MultiCassKop](https://github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop) a new operator that fits above CassKop. MultiCassKop is a new controler that will be in charge of creating `CassandraClusters` CRD objects in several different Kubernetes clusters and in a manner that all Cassandra nodes will be part of the same ring.
+
+MultiCassKop uses a new custom resource definition, `MultiCasskop` which allows to specify:
+- a base for the CassandraCluster object
+- an override of this base object for each kubernetes cluster we want to deploy on.
+
+Recap:
+Multi-CassKop goal is to bring the ability to deploy a Cassandra cluster within different regions, each of them running
+an independant Kubernetes cluster.
+Multi-Casskop insure that the Cassandra nodes deployed by each local CassKop will be part of the same Cassandra ring by
+managing a coherent creation of CassandraCluster objects from it's own MultiCasskop custom ressource.
+
+
 ## Pre-requisite
 
 In order to have a working Multi-CassKop operator we need to have at least 2 k8s clusters: k8s-cluster-1 and k8s-cluster-2
 
 - k8s >=v1.15 installed on each site, with kubectl configure to access both of thems
-- The pods of each site must be able to reach pods on other sites, this it outside of the scope of Multi-Casskop and can
+- The pods of each site must be able to reach pods on other sites, this is outside of the scope of Multi-Casskop and can
   be achieve by different solutions such as:
   - in our on-premise cluster, we leverage [Calico](https://www.projectcalico.org/why-bgp/) routable IP pool in order to make this possible
   - this can also be done using mesh service such as istio
@@ -54,6 +74,11 @@ This Diagram show how each component is connected:
 
 ![Multi-CassKop](../static/multi-casskop.png)
 
+
+MultiCassKop starts by iterrating on every contexts passed in parameters then it register the controller. 
+The controller needs to be able to interract with MultiCasskop and CassandraCluster CRD objetcs.
+In addition the controller needs to watch for MultiCasskop as it will need to react on any changes that occured on
+thoses objects for the given namespace.
 
 ### Install CassKop
 

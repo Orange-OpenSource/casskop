@@ -12,6 +12,13 @@ Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above
 
 - PR [#147](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/147) - Introduce Multi-CassKop operator
 
+- PR [#149](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/149) - Get rid of env var SERVICE_NAME and
+  keep current hostname in seedlist
+
+- PR [#151](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/151) - Fix [Issue #150](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/150) Makes JMX port remotely available (again)
+    - uses New bootstrap Image 0.1.3 : orangeopensource/cassandra-bootstrap:0.1.3
+
+
 ## 0.4.1
 
 **Breaking Change in API**
