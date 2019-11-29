@@ -11,9 +11,6 @@ createDgossVolumes
 # Add test file to user config map
 createInitConfigContainer
 createCassandraBootstrapContainerNoExtraLib
-#createAndCheckCassandraContainer # already tested
-
-#createCassandraContainer
 
 # check using test specific `goss.yaml`
  GOSS_WAIT_OPTS='-r 90s -s 1s > /dev/null' dgoss run \

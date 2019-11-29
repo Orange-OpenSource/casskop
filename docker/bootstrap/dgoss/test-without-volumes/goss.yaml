@@ -10,7 +10,7 @@ addr:
   tcp://localhost:7199:
     reachable: true
   tcp://{{.Env.HOSTNAME}}:7199:
-    reachable: false
+    reachable: true
     timeout: 5000
   # jolokia rest service
   tcp://{{.Env.HOSTNAME}}:8778:

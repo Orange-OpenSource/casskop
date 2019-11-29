@@ -129,17 +129,16 @@ function createPreRunConfigMapFile {
     docker container create --name dummy -v ${CONFIGMAP_VOLUME}:/configmap hello-world
     docker cp ${testScriptDir}/pre_run.sh dummy:/configmap/pre_run.sh
     docker rm dummy
-#    docker run --rm -v ${CONFIGMAP_VOLUME}:/configmap -v ${testScriptDir}:/tmp --entrypoint=bash ${CASSANDRA_IMAGE} -c "cp -v /tmp/pre_run.sh /configmap"
 }
 
 function createCassandraContainer {
     echo "== createCassandraContainer"
     docker run \
-                   -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
-                   -v ${EXTRA_LIB_VOLUME}:/extra-lib \
-                   -p 9500:9500 \
-                   -p 8778:8778 \
-                   ${CASSANDRA_IMAGE}
+        -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
+        -v ${EXTRA_LIB_VOLUME}:/extra-lib \
+        -p 9500:9500 \
+        -p 8778:8778 \
+        ${CASSANDRA_IMAGE}
 
 }
 
