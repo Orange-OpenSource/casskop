@@ -45,7 +45,7 @@ In order to have a working Multi-CassKop operator we need to have at least 2 k8s
   - in our on-premise cluster, we leverage [Calico](https://www.projectcalico.org/why-bgp/) routable IP pool in order to make this possible
   - this can also be done using mesh service such as istio
   - there may be other solutions as well
-- having casskop installed (With it's ConfigMap) in each namespace see [CassKop installation](#install-casskop)
+- having casskop installed (With its ConfigMap) in each namespace see [CassKop installation](#install-casskop)
 - having [External-DNS](https://github.com/kubernetes-sigs/external-dns) with RFC2136 installed in each namespace to
   manage your DNS sub zone. see [Install external dns](#install-external-dns)
 - You need to create secrets from targeted k8s clusters in current. see[Bootstrap](#bootstrap-api-access-to-k8s-cluster-2-from-k8s-cluster-1)
@@ -57,7 +57,7 @@ In order to have a working Multi-CassKop operator we need to have at least 2 k8s
 
 Multi-Casskop will be deployed in k8s-cluster-1, change your kubectl context to point to this cluster.
 
-In order to allow our Multi-CassKop controller having access to k8s-cluster-2 from k8s-cluster-1, we are going to uses
+In order to allow our Multi-CassKop controller to have access to k8s-cluster-2 from k8s-cluster-1, we are going to use
 [kubemcsa](https://github.com/admiraltyio/multicluster-service-account/releases/tag/v0.6.1) from
 [Admiralty](https://admiralty.io/) to be able to export secret from k8s-cluster-2 to k8s-cluster1
 
@@ -91,7 +91,7 @@ $ helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operat
 $ helm repo update
 ```
 
-Connect to each kubernetes you wants to deploy your Cassandra clusters to and install CassKop:
+Connect to each kubernetes you want to deploy your Cassandra clusters to and install CassKop:
 
 ```console
 $ helm install --name casskop casskop/cassandra-operator
@@ -108,7 +108,7 @@ helm install -f /private/externaldns-values.yaml --name casskop-dns external-dns
 
 ### Install Multi-CassKop
 
-Proceed with Multi-CassKop installation only when [Pre-requisites](#pre-requisites) are fullfilled.
+Proceed with Multi-CassKop installation only when [Pre-requisites](#pre-requisites) are fulfilled.
 
 Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo and semantic version.
 
@@ -218,8 +218,8 @@ time="2019-11-28T15:51:49Z" level=info msg="Cluster is not Ready, we requeue [ph
 
 This is the sequence of operations:
 - MultiCassKop first creates the CassandraCluster in k8s-cluster1. 
-- Then local CassKop started to creates the associated Cassandra Cluster.
-  - When CassKop ended created it's cluster, it updates the CassandraCluster status with the phase=Running meaning that
+- Then local CassKop starts to creates the associated Cassandra Cluster.
+  - When CassKop has created its Cassandra cluster, it updates CassandraCluster object's status with the phase=Running meaning that
   all is ok
 - Then MultiCassKop start creating the other CassandraCluster in k8s-cluster2
 - Then local CassKop started to creates the associated Cassandra Cluster.
