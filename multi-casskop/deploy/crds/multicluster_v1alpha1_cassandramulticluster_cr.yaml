@@ -1,0 +1,51 @@
+apiVersion: db.orange.com/v1alpha1
+kind: MultiCasskop
+metadata:
+  name: MultiCasskop-demo
+spec:
+  # Add fields here
+  base:
+    apiVersion: "db.orange.com/v1alpha1"
+    kind: "CassandraCluster"
+    metadata:
+      name: cassandra-demo
+      namespace: cassandra-demo
+      labels:
+        cluster: casskop
+    spec:
+      resources:         
+        requests:
+          cpu: '0.3'
+          memory: 2Gi
+        limits:
+          cpu: '0.3'
+          memory: 2Gi
+  override:
+    gke_dfy-bac-a-sable_europe-west1-b_istio1:
+      metadata:
+        name: cassandra-demo1
+        namespace: cassandra-demo
+      spec:
+        topology:
+          dc:
+            - name: dc1
+              nodesPerRacks: 1
+              numTokens: 256
+              rack:
+                - name: rack1
+                - name: rack2
+    gke_dfy-bac-a-sable_us-central1-a_istio2:
+      metadata:
+        name: cassandra-demo2
+        namespace: cassandra-demo
+      spec:
+        topology:
+          dc:
+            - name: dc2
+              nodesPerRacks: 1
+              numTokens: 256
+              rack:
+                - name: rack3
+                - name: rack4
+      
+  

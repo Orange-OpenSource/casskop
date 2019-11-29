@@ -1,0 +1,38 @@
+## Cassandra Operator Image
+##
+image:
+  repository: orangeopensource/multi-casskop
+  tag: v0.5.0-release
+  pullPolicy: Always
+  imagePullSecrets:
+    enabled: false
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 50Mi
+  limits:
+    cpu: 1
+    memory: 512Mi
+
+## If true, create & deploy the CRD
+##
+createCustomResource: true
+
+## If true, create & use RBAC resources
+##
+rbacEnable: true
+
+## if true deploy service for metrics access
+metricService: false
+
+debug:
+  enabled: false
+
+command: /usr/local/bin/multi-casskop
+
+#this can be surcharge with --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2,k8s-cluster3}
+k8s:
+  local: k8s-cluster1
+  remote:
+  - k8s-cluster2
