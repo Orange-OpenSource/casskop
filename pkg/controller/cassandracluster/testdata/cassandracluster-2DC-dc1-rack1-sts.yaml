@@ -224,7 +224,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-          image: registry.gitlab.si.francetelecom.fr/dfyarchicloud/dfyarchicloud-registry/orangeopensource/cassandra-bootstrap:0.1.2
+          image: registry.gitlab.si.francetelecom.fr/dfyarchicloud/dfyarchicloud-registry/orangeopensource/cassandra-bootstrap:0.1.3
           imagePullPolicy: Always
           name: bootstrap
           resources:

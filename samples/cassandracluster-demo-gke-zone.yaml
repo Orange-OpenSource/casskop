@@ -14,8 +14,7 @@ metadata:
   labels:
     cluster: k8s.kaas
 spec:
-  baseImage: cassandra
-  version: latest
+  cassandraImage: cassandra:3.11
   configMapName: cassandra-configmap-v1
   dataCapacity: "20Gi"
   dataStorageClass: "standard-wait"
