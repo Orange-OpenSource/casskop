@@ -530,10 +530,6 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 			},
 		},
 		v1.EnvVar{
-			Name:  "SERVICE_NAME",
-			Value: name + "-" + dcRackName,
-		},
-		v1.EnvVar{
 			Name:  "CASSANDRA_GC_STDOUT",
 			Value: strconv.FormatBool(cc.Spec.GCStdout),
 		},

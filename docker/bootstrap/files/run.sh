@@ -24,43 +24,29 @@ default_value()
 }
 
 # we are doing StatefulSet or just setting our seeds
-if [ -z "$CASSANDRA_SEEDS" ]; then
-    HOSTNAME=$(hostname -f)
-    CASSANDRA_SEEDS=$HOSTNAME
-else
+if [ -n "$CASSANDRA_SEEDS" ]; then
     echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
-    HOSTNAME=$POD_NAME.$SERVICE_NAME.$POD_NAMESPACE
-    #If host is in the SeedList we want to remove it
-    if [[ $CASSANDRA_SEEDS =~ $HOSTNAME.* ]]; then
-        CASSANDRA_SEEDS=$(echo $CASSANDRA_SEEDS | sed "s/$HOSTNAME//" | sed -e "s/,$//" -e "s/^,//" -e "s/,,/,/")
-        echo "We've remove host from seedList"
-    else
-        echo "Node $HOSTNAME is not a seed"
-    fi
-
-    #test if this is the first node in the cluster: try to connect to each nodes
+    # Try to connect to each seed and if no one is found then it's the first node
     echo $IFS
     IFS=',' read -a array <<<$CASSANDRA_SEEDS
     firstNode=true
-    for cassandra in ${array[@]}; do
-        echo "Try to connect to $cassandra" ;
-        if nc -z -w5 $cassandra 9042; then
+    for cassandra in ${array[@]}
+    do
+        echo "Try to connect to $cassandra"
+        if nc -z -w5 $cassandra 9042
+        then
             echo "Connected!"
             firstNode=false
             break
         fi
     done
 
-    if [ "$firstNode" = true ]; then
-        CASSANDRA_SEEDS=$(hostname -f);
-        echo "***"
-        echo "Can't connect to first seed, must be first node. We set CASSANDRA_SEED=${CASSANDRA_SEEDS}" ;
-        echo "***"
-    fi
+    [ "$firstNode" = true ] && unset CASSANDRA_SEEDS
 
 fi
 
 echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
+HOSTNAME=$(hostname -f)
 
 # The following vars relate to there counter parts in $CASSANDRA_CFG for instance rpc_address
 CASSANDRA_LISTEN_ADDRESS=${POD_IP:-$HOSTNAME}
@@ -102,29 +88,23 @@ set|grep CASSANDRA
 
 echo "configuring DC/Racks"
 # if DC and RACK are set, use GossipingPropertyFileSnitch
-if [[ $CASSANDRA_DC && $CASSANDRA_RACK ]]; then
+if [[ $CASSANDRA_DC && $CASSANDRA_RACK ]]
+then
   echo "dc=$CASSANDRA_DC" > $CASSANDRA_CONF/cassandra-rackdc.properties
   echo "rack=$CASSANDRA_RACK" >> $CASSANDRA_CONF/cassandra-rackdc.properties
   CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"
 fi
 
-if [ -n "$CASSANDRA_MAX_HEAP" ]; then
+if [ -n "$CASSANDRA_MAX_HEAP" ]
+then
     sed -ri -e "s/^(#)?-Xmx[0-9]+.*/-Xmx$CASSANDRA_MAX_HEAP/"  \
         -e "s/^(#)?-Xms[0-9]+.*/-Xms$CASSANDRA_MAX_HEAP/" "$CASSANDRA_CONF/jvm.options"
 fi
 
-if [ -n "$CASSANDRA_REPLACE_NODE" ]; then
+if [ -n "$CASSANDRA_REPLACE_NODE" ]
+then
    echo "-Dcassandra.replace_address=$CASSANDRA_REPLACE_NODE/" >> "$CASSANDRA_CONF/jvm.options"
 fi
-
-#this code seams to be a doublon
-#for rackdc in dc rack; do
-#  var="CASSANDRA_${rackdc^^}"
-#  val="${!var}"
-#  if [ "$val" ]; then
-#	echo sed -ri 's/^('"$rackdc"'=).*/\1 '"$val"'/' "$CASSANDRA_CONF/cassandra-rackdc.properties"
-#  fi
-#done
 
 echo "apply configuration changes"
 # TODO what else needs to be modified
@@ -153,11 +133,12 @@ for yaml in \
   listen_interface \
   rpc_interface \
   authenticator \
-  authorizer \
-  ; do
+  authorizer
+do
   var="CASSANDRA_${yaml^^}"
   val="${!var}"
-  if [ "$val" ]; then
+  if [ "$val" ]
+  then
     sed -ri 's/^(# )?('"$yaml"':).*/\2 '"$val"'/' "$CASSANDRA_CFG"
   fi
 done
@@ -166,7 +147,8 @@ echo "auto_bootstrap: ${CASSANDRA_AUTO_BOOTSTRAP}" >> $CASSANDRA_CFG
 
 # set the seed to itself.  This is only for the first pod, otherwise
 # it will be able to get seeds from the seed provider
-if [[ $CASSANDRA_SEEDS == 'false' ]]; then
+if [[ $CASSANDRA_SEEDS == 'false' ]]
+then
   sed -ri 's/- seeds:.*/- seeds: "'"$POD_IP"'"/' $CASSANDRA_CFG
 else # if we have seeds set them.  Probably StatefulSet
   sed -ri 's/- seeds:.*/- seeds: "'"$CASSANDRA_SEEDS"'"/' $CASSANDRA_CFG
@@ -174,7 +156,8 @@ fi
 
 sed -ri 's/- class_name: SEED_PROVIDER/- class_name: '"$CASSANDRA_SEED_PROVIDER"'/' $CASSANDRA_CFG
 
-if [[ $CASSANDRA_GC_STDOUT == 'true' ]]; then
+if [[ $CASSANDRA_GC_STDOUT == 'true' ]]
+then
     # send gc to stdout
   sed -ri 's/JVM_OPTS.*-Xloggc:.*//' $CASSANDRA_CONF/cassandra-env.sh
 else
@@ -186,7 +169,8 @@ else
   echo "-XX:GCLogFileSize=10M" >> $CASSANDRA_CONF/jvm.options
 fi
 
-if [[ $CASSANDRA_GC_VERBOSE == 'true' ]]; then
+if [[ $CASSANDRA_GC_VERBOSE == 'true' ]]
+then
   echo "-XX:PrintFLSStatistics=1" >> $CASSANDRA_CONF/jvm.options
 fi
 
@@ -202,10 +186,12 @@ then
   sed -ri 's@ -Dcom\.sun\.management\.jmxremote\.authenticate=true@ -Dcom\.sun\.management\.jmxremote\.authenticate=false@' $CASSANDRA_CONF/cassandra-env.sh
   sed -ri 's@ -Dcom\.sun\.management\.jmxremote\.password\.file=/etc/cassandra/jmxremote\.password/@@' $CASSANDRA_CONF/cassandra-env.sh
 
-  if [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]]; then
+  if [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]]
+  then
       JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
 
-      if [[ $CASSANDRA_AUTH_JOLOKIA == 'true' ]]; then
+      if [[ $CASSANDRA_AUTH_JOLOKIA == 'true' ]]
+      then
 
           [[ -z $JOLOKIA_USER ]] && { echo "Jolokia authentication requires at least JOLOKIA_USER to be set !" >&2; exit 1; }
 
@@ -222,7 +208,8 @@ EOF
   fi
 fi
 
-if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]; then
+if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]
+then
     cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
 
 # Prometheus exporter from Instaclustr
