@@ -1,0 +1,7 @@
+{
+  "google": "346e4303d5e4d6f10c7f7b76ea2e19c6a73861d594c0e706172f6a9ca069fde3",
+  "google-beta": "f86bc9a0b5ff8a8eeac88119766deb44cef21c6d0eb03c78fef692900ccaf4b4",
+  "helm": "39777d8221c1ca44581300d59e2d08ef987e28df8ddb0b0f942883f8865f4b42",
+  "kubernetes": "7ebf3273e622d1adb736e98f6fa5cc7e664c61b9171105b13c3b5ea8f8ebc5ff",
+  "null": "c56285e7bd25a806bf86fcd4893edbe46e621a46e20fe24ef209b6fd0b7cf5fc"
+}
