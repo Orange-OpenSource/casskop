@@ -1,0 +1,116 @@
+###################################################
+##               GKE configuration               ##
+## - Default pool : no nodes                     ##
+## - VPA          : disabled                     ##
+###################################################
+// Define GKE cluster
+resource "google_container_cluster" "cassandra-cluster" {
+    provider = "google-beta"
+    name = "cassandra-${var.cluster_zone}-${var.master_state}"
+    location ="${var.cluster_zone}"
+    description = ""
+    
+    # We can't create a cluster with no node pool defined, but we want to only use
+    # separately managed node pools. So we create the smallest possible default
+    # node pool and immediately delete it.
+    remove_default_node_pool = true
+    initial_node_count = 1
+    
+    master_auth {
+        username = "${var.username}"
+        password = "${var.password}"
+
+        client_certificate_config {
+            issue_client_certificate = false
+        }
+    }
+    
+    node_locations = []
+
+    # The configuration for addons supported by GKE
+    addons_config {
+        horizontal_pod_autoscaling { disabled = false }
+        http_load_balancing { disabled = false }
+        #kubernetes_dashboard { disabled = true }
+        network_policy_config { disabled = true }
+        istio_config { disabled = true }
+        cloudrun_config { disabled = true }
+    }
+
+    # Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to automatically adjust the size of the cluster and create/delete node pools based on the current needs of the cluster's workload
+#    cluster_autoscaling {}
+
+    # If enabled, all container images will be validated by Google Binary Authorization
+    enable_binary_authorization = null
+
+    # Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network
+    enable_intranode_visibility = null
+
+    # Whether to enable Kubernetes Alpha features for this cluster
+    enable_kubernetes_alpha = false
+
+    # Whether the ABAC authorizer is enabled for this cluster. When enabled, identities in the system, including service accounts, nodes, and controllers, will have statically granted permissions beyond those provided by the RBAC configuration or IAM
+    enable_legacy_abac = false
+
+    # Whether to enable Cloud TPU resources in this cluster
+    enable_tpu = null
+
+    # The logging service that the cluster should write logs to. Available options include logging.googleapis.com, logging.googleapis.com/kubernetes, and none
+    logging_service = "logging.googleapis.com/kubernetes"
+
+    # The monitoring service that the cluster should write metrics to
+    monitoring_service = "monitoring.googleapis.com/kubernetes"
+    
+    # The maintenance policy to use for the cluster
+#    maintenance_policy  {}
+
+    # The desired configuration options for master authorized networks
+#    master_authorized_networks_config {}
+    
+    # The minimum version of the master
+    min_master_version = null
+
+    # The name or self_link of the Google Compute Engine network to which the cluster is connected. For Shared VPC, set this to the self link of the shared network
+    network = "projects/poc-rtc/global/networks/default"
+
+    # Configuration options for the NetworkPolicy feature
+    network_policy {
+        enabled = false
+        provider = "PROVIDER_UNSPECIFIED"
+    }
+
+    database_encryption {
+        state = "DECRYPTED"
+        key_name = ""         
+    }
+
+    # The default maximum number of pods per node in this cluster. Note that this does not work on node pools which are "route-based" - that is, node pools belonging to clusters that do not have IP Aliasing enabled
+    # default_max_pods_per_node = 110
+
+    vertical_pod_autoscaling { enabled = false }
+}
+
+data "google_client_config" "current" {}
+
+// GCP personnal account admin role binding 
+#resource "null_resource" "admin-role-binding" {
+#    provisioner "local-exec" {
+#        command = "sudo apt-get update -y && sudo apt-get install -y kubectl && echo 'gcloud container clusters get-credentials ${google_container_cluster.cassandra-cluster.name} --zone ${var.cluster_zone} --project ${var.project}' && kubectl  get clusterrolebinding user-admin-binding &> /dev/null || kubectl create clusterrolebinding user-admin-binding --clusterrole cluster-admin --user $(gcloud config get-value account)"
+#    }
+#}
+
+output "cluster_name" {
+  value = "gke_${google_container_cluster.cassandra-cluster.project}_${google_container_cluster.cassandra-cluster.location}_${google_container_cluster.cassandra-cluster.name}"
+}
+
+output "cluster_ca" {
+  value = "${base64decode(google_container_cluster.cassandra-cluster.master_auth.0.cluster_ca_certificate)}"
+}
+
+output "cluster_zone" {
+  value = "${google_container_cluster.cassandra-cluster.location}"
+}
+
+output "cluster_server" {
+  value = "https://${google_container_cluster.cassandra-cluster.endpoint}"
+}
