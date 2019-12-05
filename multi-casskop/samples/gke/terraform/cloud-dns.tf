@@ -3,8 +3,8 @@
 resource "google_dns_managed_zone" "external-dns-zone" {
     count = var.create_dns ? 1 : 0
 
-    name         = "external-dns-test-gcp-trycatchlearn-fr"
-    dns_name     = "external-dns-test.gcp.trycatchlearn.fr."
+    name         = var.dns_zone_name
+    dns_name     = "${var.dns_name}."
     description  = "Automatically managed zone by kubernetes.io/external-dns"
     labels       = {}
     visibility   = "public"
@@ -13,9 +13,8 @@ resource "google_dns_managed_zone" "external-dns-zone" {
 // Manage DNS record sets for external dns zone.
 resource "google_dns_record_set" "external-dns-record-set" {
     count = var.create_dns ? 1 : 0
-    managed_zone = "tracking-pdb"
-    name         = "external-dns-test.gcp.trycatchlearn.fr."
-    project      = "poc-rtc"
+    managed_zone = var.managed_zone
+    name         = google_dns_managed_zone.external-dns-zone[0].dns_name
     rrdatas      = google_dns_managed_zone.external-dns-zone[0].name_servers
     ttl          = 300
     type         = "NS"
@@ -47,20 +46,21 @@ resource "kubernetes_cluster_role" "external-dns" {
   }
 
   rule {
-      api_groups = ["extensions",]
-      resources  = ["ingresses",]
-      verbs      = ["get", "watch", "list",]
-    }
+    api_groups = ["extensions",]
+    resources  = ["ingresses",]
+    verbs      = ["get", "watch", "list",]
+  }
+  depends_on = [google_container_node_pool.nodes]
 }
 
 // Create service account for external-dns
 resource "kubernetes_service_account" "external-dns" {
-  depends_on = ["google_container_node_pool.nodes"]
   metadata {
     name = "external-dns"
-    namespace = "${kubernetes_namespace.cassandra-demo.metadata.0.name}"
+    namespace = kubernetes_namespace.cassandra-demo.metadata.0.name
   }
   automount_service_account_token = true
+  depends_on = [google_container_node_pool.nodes]
 }
 
 // Binding external-dns cluster role, with the external-dns Service account.
@@ -71,12 +71,12 @@ resource "kubernetes_cluster_role_binding" "external-dns-viewer" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = "${kubernetes_cluster_role.external-dns.metadata.0.name}"
+    name      = kubernetes_cluster_role.external-dns.metadata.0.name
   }
   subject {
     kind      = "ServiceAccount"
-    name      = "${kubernetes_service_account.external-dns.metadata.0.name}"
-    namespace = "${kubernetes_service_account.external-dns.metadata.0.namespace}"
+    name      = kubernetes_service_account.external-dns.metadata.0.name
+    namespace = kubernetes_service_account.external-dns.metadata.0.namespace
   }
 }
 
@@ -88,7 +88,7 @@ resource "kubernetes_deployment" "external-dns" {
       "app" = "external-dns"
     }
     name             = "external-dns"
-    namespace = "${kubernetes_service_account.external-dns.metadata.0.namespace}"
+    namespace = kubernetes_service_account.external-dns.metadata.0.namespace
   }
 
   spec {
@@ -118,7 +118,7 @@ resource "kubernetes_deployment" "external-dns" {
           args = [
             "--source=service",
             "--source=ingress",
-            "--domain-filter=external-dns-test.gcp.trycatchlearn.fr",
+            "--domain-filter=${var.dns_name}",
             "--provider=google",
             "--policy=upsert-only",
             "--registry=txt",

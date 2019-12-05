@@ -3,12 +3,12 @@
 ## - for global services (ex: Istio)             ##
 ###################################################
 resource "google_container_node_pool" "nodes" {
-    provider = "google-beta"
+    provider = google-beta
 
     name = "nodes-pool"
     name_prefix = ""
     location = var.cluster_zone
-    cluster = "${google_container_cluster.cassandra-cluster.name}"
+    cluster = google_container_cluster.cassandra-cluster.name
 
     # Configuration required by cluster autoscaler to adjust the size of the node pool to the current cluster usage
 #    autoscaling {
@@ -105,4 +105,31 @@ resource "google_container_node_pool" "nodes" {
         # Metadata configuration to expose to workloads on the node pool
 #        workload_metadata_config = []
     }
+}
+
+resource "google_compute_firewall" "cassandra-cluster" {
+    count = var.create_dns ? 1 : 0
+
+    direction               = "INGRESS"
+    disabled                = false
+    name                    = "gke-cassandra-cluster"
+    network                 = "https://www.googleapis.com/compute/v1/projects/poc-rtc/global/networks/default"
+    priority                = 1000
+    source_ranges           = [
+        "0.0.0.0/0",
+    ]
+    target_tags             = [
+        "cassandra-cluster",
+    ]
+
+    allow {
+        ports    = []
+        protocol = "tcp"
+    }
+    allow {
+        ports    = []
+        protocol = "udp"
+    }
+
+    depends_on = [google_container_node_pool.nodes]
 }
