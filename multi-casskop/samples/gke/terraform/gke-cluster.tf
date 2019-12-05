@@ -5,9 +5,9 @@
 ###################################################
 // Define GKE cluster
 resource "google_container_cluster" "cassandra-cluster" {
-    provider = "google-beta"
+    provider = google-beta
     name = "cassandra-${var.cluster_zone}-${var.master_state}"
-    location ="${var.cluster_zone}"
+    location =var.cluster_zone
     description = ""
     
     # We can't create a cluster with no node pool defined, but we want to only use
@@ -17,8 +17,8 @@ resource "google_container_cluster" "cassandra-cluster" {
     initial_node_count = 1
     
     master_auth {
-        username = "${var.username}"
-        password = "${var.password}"
+        username = var.username
+        password = var.password
 
         client_certificate_config {
             issue_client_certificate = false
@@ -108,7 +108,7 @@ output "cluster_ca" {
 }
 
 output "cluster_zone" {
-  value = "${google_container_cluster.cassandra-cluster.location}"
+  value = google_container_cluster.cassandra-cluster.location
 }
 
 output "cluster_server" {
