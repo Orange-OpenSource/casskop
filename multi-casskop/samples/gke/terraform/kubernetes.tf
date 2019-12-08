@@ -104,7 +104,7 @@ resource "helm_release" "casskop" {
   disable_webhooks = false
   set {
     name  = "image.tag"
-    value = "v0.5.0-release"
+    value = var.casskop_image_tag
   }
   set {
     name  = "createCustomResource"
