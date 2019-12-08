@@ -29,7 +29,7 @@ To setup the GCP environment we will use terraform provisionning, to instantiate
 Start to set variables needed for the instantiation : 
 
 ```sh
-$ export WORKSPACE=<path to cassandra-k8s-operateur project>
+$ export CASSKOP_WORKSPACE=<path to cassandra-k8s-operateur project>
 $ export PROJECT=<gcp project>
 $ export SERVICE_ACCOUNT_KEY_PATH=<path to service account key>
 $ export NAMESPACE=cassandra-demo
@@ -41,7 +41,7 @@ $ export MANAGED_ZONE=tracking-pdb                                # -> change wi
 ### Setup base infrastructure 
 
 ```sh
-$ cd ${WORKSPACE}/multi-casskop/samples/gke/terraform
+$ cd ${CASSKOP_WORKSPACE}/multi-casskop/samples/gke/terraform
 $ terraform init
 ```
 
@@ -212,7 +212,7 @@ $ helm init --client-only
 $ helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
 $ helm repo update
 # @TODO
-$ cd ${WORKSPACE}
+$ cd ${CASSKOP_WORKSPACE}
 $ helm install --name multi-casskop ./multi-casskop/helm/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
 #$ helm install --name multi-casskop casskop/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
 ```
@@ -289,7 +289,7 @@ $ helm del --purge multi-casskop
 ### Cleaning slave cluster
 
 ```sh
-$ cd ${WORKSPACE}/multi-casskop/samples/gke/terraform
+$ cd ${CASSKOP_WORKSPACE}/multi-casskop/samples/gke/terraform
 $ terraform workspace select slave
 $ terraform destroy \
     -var-file="env/slave.tfvars" \
