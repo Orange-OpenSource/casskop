@@ -65,6 +65,12 @@ variable "managed_zone" {
   type        = string
 }
 
+variable "casskop_image_tag" {
+  description = ""
+  type        = string
+  default     = "v0.5.0-release"
+}
+
 // Provider definition
 provider "google" {
   project = var.project
