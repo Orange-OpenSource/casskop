@@ -10,15 +10,6 @@ resource "google_container_node_pool" "nodes" {
     location = var.cluster_zone
     cluster = google_container_cluster.cassandra-cluster.name
 
-    # Configuration required by cluster autoscaler to adjust the size of the node pool to the current cluster usage
-#    autoscaling {
-#        min_node_count = 0
-#        max_node_count = 100
-#    }
-    
-    # The initial node count for the pool. Changing this will force recreation of the resource
-#    initial_node_count = 1
-
     # he number of nodes per instance group. This field can be used to update the number of nodes per instance group but should not be used alongside autoscaling
     node_count = 4
 
@@ -83,27 +74,11 @@ resource "google_container_node_pool" "nodes" {
             "https://www.googleapis.com/auth/ndev.clouddns.readwrite" # Cloud DNS access scope.
         ]
 
-        # GKE Sandbox configuration. When enabling this feature you must specify 
-#        sandbox_config {}
-
         # The service account to be used by the Node VMs. If not specified, the "default" service account is used. In order to use the configured oauth_scopes for logging and monitoring, the service account being used needs the roles/logging.logWriter and roles/monitoring.metricWriter roles
         service_account = "default"
 
         # The list of instance tags applied to all nodes. Tags are used to identify valid sources or targets for network firewalls.
         tags = ["cassandra-cluster"]
-
-        # List of kubernetes taints to apply to each node : Taints are the opposite – they allow a node to repel a set of pods
-        ## - key : key for taint
-        ## - value : value for taint
-        ## - effect : Effect for taint. Accepted values are NO_SCHEDULE, PREFER_NO_SCHEDULE, and NO_EXECUTE (evicted then re scheduled somewhere else)
-#        taint { 
-#            key = "toto"
-#            value = "tata"
-#            effect = "NO_SCHEDULE"
-#        }
-
-        # Metadata configuration to expose to workloads on the node pool
-#        workload_metadata_config = []
     }
 }
 

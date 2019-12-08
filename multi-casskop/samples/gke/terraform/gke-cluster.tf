@@ -31,14 +31,10 @@ resource "google_container_cluster" "cassandra-cluster" {
     addons_config {
         horizontal_pod_autoscaling { disabled = false }
         http_load_balancing { disabled = false }
-        #kubernetes_dashboard { disabled = true }
         network_policy_config { disabled = true }
         istio_config { disabled = true }
         cloudrun_config { disabled = true }
     }
-
-    # Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to automatically adjust the size of the cluster and create/delete node pools based on the current needs of the cluster's workload
-#    cluster_autoscaling {}
 
     # If enabled, all container images will be validated by Google Binary Authorization
     enable_binary_authorization = null
@@ -61,12 +57,6 @@ resource "google_container_cluster" "cassandra-cluster" {
     # The monitoring service that the cluster should write metrics to
     monitoring_service = "monitoring.googleapis.com/kubernetes"
     
-    # The maintenance policy to use for the cluster
-#    maintenance_policy  {}
-
-    # The desired configuration options for master authorized networks
-#    master_authorized_networks_config {}
-    
     # The minimum version of the master
     min_master_version = null
 
@@ -84,20 +74,10 @@ resource "google_container_cluster" "cassandra-cluster" {
         key_name = ""         
     }
 
-    # The default maximum number of pods per node in this cluster. Note that this does not work on node pools which are "route-based" - that is, node pools belonging to clusters that do not have IP Aliasing enabled
-    # default_max_pods_per_node = 110
-
     vertical_pod_autoscaling { enabled = false }
 }
 
 data "google_client_config" "current" {}
-
-// GCP personnal account admin role binding 
-#resource "null_resource" "admin-role-binding" {
-#    provisioner "local-exec" {
-#        command = "sudo apt-get update -y && sudo apt-get install -y kubectl && echo 'gcloud container clusters get-credentials ${google_container_cluster.cassandra-cluster.name} --zone ${var.cluster_zone} --project ${var.project}' && kubectl  get clusterrolebinding user-admin-binding &> /dev/null || kubectl create clusterrolebinding user-admin-binding --clusterrole cluster-admin --user $(gcloud config get-value account)"
-#    }
-#}
 
 output "cluster_name" {
   value = "gke_${google_container_cluster.cassandra-cluster.project}_${google_container_cluster.cassandra-cluster.location}_${google_container_cluster.cassandra-cluster.name}"

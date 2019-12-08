@@ -102,7 +102,6 @@ resource "helm_release" "casskop" {
   chart            = "cassandra-operator"
   namespace        = kubernetes_namespace.cassandra-demo.metadata[0].name
   disable_webhooks = false
-  #version          = "0.5.0-release"
   set {
     name  = "image.tag"
     value = "v0.5.0-release"
