@@ -48,10 +48,6 @@ LABEL \
     org.label-schema.usage='/README.md'
 
 
-#        libcap2-bin \
-#        procps \
-#        dnsutils && \
-
 RUN mkdir -p $CASSANDRA_DATA  $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS /tmp && \
     set -ex; \
     apt-get update && apt-get -qq -y install --no-install-recommends \
