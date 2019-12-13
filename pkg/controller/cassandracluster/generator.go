@@ -461,17 +461,17 @@ func createNodeAffinity(labels map[string]string) *v1.NodeAffinity {
 }
 
 func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffinity {
+	podAffinityTerm := v1.PodAffinityTerm{
+		TopologyKey: hostnameTopologyKey,
+		LabelSelector: &metav1.LabelSelector{
+			MatchLabels: labels,
+		},
+	}
+
 	if hard {
 		// Return a HARD anti-affinity (no same pods on one node)
 		return &v1.PodAntiAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
-				v1.PodAffinityTerm{
-					TopologyKey: hostnameTopologyKey,
-					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: labels,
-					},
-				},
-			},
+			RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{podAffinityTerm},
 		}
 	}
 
@@ -479,13 +479,8 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 	return &v1.PodAntiAffinity{
 		PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
 			v1.WeightedPodAffinityTerm{
-				Weight: 100,
-				PodAffinityTerm: v1.PodAffinityTerm{
-					TopologyKey: hostnameTopologyKey,
-					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: labels,
-					},
-				},
+				Weight:          100,
+				PodAffinityTerm: podAffinityTerm,
 			},
 		},
 	}
