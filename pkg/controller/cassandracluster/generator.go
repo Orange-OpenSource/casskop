@@ -82,21 +82,6 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 			ClusterIP: v1.ClusterIPNone,
 			Ports: []v1.ServicePort{
 				v1.ServicePort{
-					Port:     cassandraIntraNodePort,
-					Protocol: v1.ProtocolTCP,
-					Name:     cassandraIntraNodeName,
-				},
-				v1.ServicePort{
-					Port:     cassandraIntraNodeTLSPort,
-					Protocol: v1.ProtocolTCP,
-					Name:     cassandraIntraNodeTLSName,
-				},
-				v1.ServicePort{
-					Port:     cassandraJMX,
-					Protocol: v1.ProtocolTCP,
-					Name:     cassandraJMXName,
-				},
-				v1.ServicePort{
 					Port:     cassandraPort,
 					Protocol: v1.ProtocolTCP,
 					Name:     cassandraPortName,
