@@ -80,12 +80,11 @@ func NewController(clusters []Clusters, namespace string) (*controller.Controlle
 	}
 
 	co := controller.New(&reconciler{clients: clients, namespace: namespace}, controller.Options{})
-	for _, value := range clusters {
-		logrus.Info("Configuring Watch for MultiCasskop")
-		if err := co.WatchResourceReconcileObject(value.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
-			controller.WatchOptions{Namespace: namespace}); err != nil {
-			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", value.Name, err)
-		}
+	logrus.Info("Configuring Watch for MultiCasskop")
+	value := clusters[0]
+	if err := co.WatchResourceReconcileObject(value.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+		controller.WatchOptions{Namespace: namespace}); err != nil {
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", value.Name, err)
 	}
 	return co, nil
 }
