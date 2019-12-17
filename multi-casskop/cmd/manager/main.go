@@ -80,10 +80,12 @@ func main() {
 
 	for i := 0; i < flag.NArg(); i++ {
 		clusterName := flag.Arg(i)
+		isMaster := false
 		var cfg *rest.Config
 		var err error
 
 		if i == 0 {
+			isMaster = true
 			logrus.Infof("Configuring Client %d for local cluster %s (first in arg list). using local k8s api access",
 				i+1, clusterName)
 			cfg, err = kconfig.GetConfig()
@@ -101,7 +103,7 @@ func main() {
 
 		}
 		clusters = append(clusters,
-			mc.Clusters{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
+			mc.Clusters{IsMaster: isMaster, Name: clusterName, Cluster: cluster.New(clusterName, cfg,
 				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 
 	}
