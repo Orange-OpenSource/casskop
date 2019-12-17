@@ -41,6 +41,7 @@ import (
 type Clusters struct {
 	Name    string
 	Cluster *cluster.Cluster
+	IsMaster bool
 }
 
 //Client is the k8s client to use to connect to each kubernetes
@@ -80,11 +81,25 @@ func NewController(clusters []Clusters, namespace string) (*controller.Controlle
 	}
 
 	co := controller.New(&reconciler{clients: clients, namespace: namespace}, controller.Options{})
-	logrus.Info("Configuring Watch for MultiCasskop")
-	value := clusters[0]
-	if err := co.WatchResourceReconcileObject(value.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	logrus.Info("Configuring Watch for MultiCasskop on master")
+
+	// Look up for master k8s cluster
+	var masterCluster Clusters
+	for _, cluster := range clusters {
+		if (cluster.IsMaster) {
+			masterCluster = cluster
+		}
+	}
+
+	// Trigger an error, in case where no master is defined
+	if masterCluster.Cluster == nil {
+		return nil, fmt.Errorf("No master cluster defined can't watch MultiCassKop customs resources")
+	}
+
+	// Configure watch for MultiCassKop
+	if err := co.WatchResourceReconcileObject(masterCluster.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
-		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", value.Name, err)
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", masterCluster.Name, err)
 	}
 	return co, nil
 }
