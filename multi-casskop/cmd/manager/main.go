@@ -71,7 +71,7 @@ func main() {
 		log.Fatalf("Usage: MultiCasskop cluster-1 cluster-2 .. cluster-n")
 	}
 
-	var clusters []mc.Clusters
+	var clusters mc.Clusters
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -80,12 +80,10 @@ func main() {
 
 	for i := 0; i < flag.NArg(); i++ {
 		clusterName := flag.Arg(i)
-		isMaster := false
 		var cfg *rest.Config
 		var err error
 
 		if i == 0 {
-			isMaster = true
 			logrus.Infof("Configuring Client %d for local cluster %s (first in arg list). using local k8s api access",
 				i+1, clusterName)
 			cfg, err = kconfig.GetConfig()
@@ -93,6 +91,9 @@ func main() {
 				logrus.Error(err)
 				os.Exit(1)
 			}
+			// Set up master cluster
+			clusters.Master = mc.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
+				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
 		} else {
 			logrus.Infof("Configuring Client %d for distant cluster %s. using imported secret of same name", i+1,
 				clusterName)
@@ -101,10 +102,11 @@ func main() {
 				log.Fatal(err)
 			}
 
+			// Set up Remotes clusters
+			clusters.Remotes = append(clusters.Remotes,
+				mc.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
+					cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 		}
-		clusters = append(clusters,
-			mc.Clusters{IsMaster: isMaster, Name: clusterName, Cluster: cluster.New(clusterName, cfg,
-				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 
 	}
 

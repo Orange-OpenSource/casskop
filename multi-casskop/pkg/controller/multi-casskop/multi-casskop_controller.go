@@ -37,17 +37,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//Clusters defined each kubernetes we want to connect on it
-type Clusters struct {
-	Name    string
+type Cluster struct {
+	Name string
 	Cluster *cluster.Cluster
-	IsMaster bool
 }
 
-//Client is the k8s client to use to connect to each kubernetes
+// Clusters defined each kubernetes we want to connect on it
+type Clusters struct {
+	Master Cluster
+	Remotes []Cluster
+}
+
+// Client is the k8s client to use to connect to each kubernetes
 type Client struct {
 	name   string
 	client client.Client
+}
+
+// Clients
+type Clients struct {
+	Master Client
+	Remotes Client
 }
 
 //reconciler is the base struc to be used for MultiCassKop
@@ -59,10 +69,12 @@ type reconciler struct {
 
 // NewController will create k8s clients for each k8s clusters,
 // and watch for changes to MultiCasskop and CassandraCluster CRD objects
-func NewController(clusters []Clusters, namespace string) (*controller.Controller, error) {
+func NewController(clusters Clusters, namespace string) (*controller.Controller, error) {
 	var clients []*Client
 
-	for i, cluster := range clusters {
+	// Loop on clusters
+	clusterList := append(clusters.Remotes, clusters.Master)
+	for i, cluster := range clusterList {
 		logrus.Infof("Create Client %d for Cluster %s", i+1, cluster.Name)
 		client, err := cluster.Cluster.GetDelegatingClient()
 		if err != nil {
@@ -83,23 +95,16 @@ func NewController(clusters []Clusters, namespace string) (*controller.Controlle
 	co := controller.New(&reconciler{clients: clients, namespace: namespace}, controller.Options{})
 	logrus.Info("Configuring Watch for MultiCasskop on master")
 
-	// Look up for master k8s cluster
-	var masterCluster Clusters
-	for _, cluster := range clusters {
-		if (cluster.IsMaster) {
-			masterCluster = cluster
-		}
-	}
 
 	// Trigger an error, in case where no master is defined
-	if masterCluster.Cluster == nil {
+	if clusters.Master.Cluster == nil {
 		return nil, fmt.Errorf("No master cluster defined can't watch MultiCassKop customs resources")
 	}
 
 	// Configure watch for MultiCassKop
-	if err := co.WatchResourceReconcileObject(masterCluster.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	if err := co.WatchResourceReconcileObject(clusters.Master.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
-		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", masterCluster.Name, err)
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Master.Name, err)
 	}
 	return co, nil
 }
