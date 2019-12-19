@@ -1,6 +1,9 @@
+<img src="static/casskop.png" alt="Logo" width="150"/>
+
 # CassKop - Cassandra Kubernetes operator
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_cassandra-k8s-operator&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_cassandra-k8s-operator)
+[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_cassandra-k8s-operator&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_cassandra-k8s-operator) 
+
 
 ## Project overview
 
@@ -24,7 +27,7 @@ that :
 
 > This adds security between namespaces with a better isolation, and less work for each operator.
 
-## TL;DR - CassKop presentation
+## CassKop presentation
 
 We have some slides for a [CassKop demo](https://orange-opensource.github.io/cassandra-k8s-operator/slides/index.html?slides=Slides-CassKop-demo.md#1)
 
@@ -33,8 +36,7 @@ You can also play with CassKop on [Katacoda](https://www.katacoda.com/orange)
 ## CassKop features
 
 
-At this time of the project, the goal is to deploy a Cassandra cluster in 1 Kubernetes datacenter, but this will 
-change in next versions to deal with Kubernetes in multi-datacenters. 
+CassKop deals with Cassandra clusters on one datacenter. For multi-dacenters deployments, please use [MultiCassKop](multi-casskop/Readme.md) in addition to CassKop. This second operator is part of this same repository.
 
 The following features are supported by CassKop:
 - [x] Deployment of a C* cluster (rack or AZ aware)
