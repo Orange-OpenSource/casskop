@@ -54,14 +54,14 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 	logrus.Info("Configuring Watch for MultiCasskop on master")
 
 	// Trigger an error, in case where no master is defined
-	if clusters.Master.Cluster == nil {
+	if clusters.Local.Cluster == nil {
 		return nil, fmt.Errorf("No master cluster defined can't watch MultiCassKop customs resources")
 	}
 
 	// Configure watch for MultiCassKop on Master only
-	if err := co.WatchResourceReconcileObject(clusters.Master.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	if err := co.WatchResourceReconcileObject(clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
-		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Master.Name, err)
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
 	}
 	return co, nil
 }
@@ -100,9 +100,9 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 
 	// Fetch the MultiCasskop instance
 	// It is stored in the Cluster with index 0 = the first kubernetes cluster given in parameter to multicasskop.
-	masterClient := r.clients.Master.Client
+	localClient := r.clients.Local.Client
 	r.cmc = &cmcv1.MultiCasskop{}
-	err := masterClient.Get(context.TODO(), req.NamespacedName, r.cmc)
+	err := localClient.Get(context.TODO(), req.NamespacedName, r.cmc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -115,7 +115,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	}
 
 	if ok := r.updateDeletetrategy(); ok == true {
-		err := masterClient.Update(context.TODO(), r.cmc)
+		err := localClient.Update(context.TODO(), r.cmc)
 		return requeue, err
 	}
 
@@ -160,7 +160,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	if r.cmc.DeletionTimestamp != nil {
 		//We remove the Finalizer
 		r.preventClusterDeletion(false)
-		err := masterClient.Update(context.TODO(), r.cmc)
+		err := localClient.Update(context.TODO(), r.cmc)
 		return forget, err
 	}
 
