@@ -128,7 +128,7 @@ func main() {
 
 		// Set up Remotes clusters
 		clusters.Remotes = append(clusters.Remotes,
-			models.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
+			&models.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
 				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 	}
 

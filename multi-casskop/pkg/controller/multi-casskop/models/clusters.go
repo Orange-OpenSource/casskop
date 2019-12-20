@@ -31,8 +31,8 @@ type Cluster struct {
 
 // Clusters defined each kubernetes cluster we want to connect on it.
 type Clusters struct {
-	Local Cluster
-	Remotes []Cluster
+	Local *Cluster
+	Remotes []*Cluster
 }
 
 // Apply to a clusters struct, it will proceed to client set up associated to each

@@ -36,7 +36,7 @@ func (r *reconciler) GetCassandraCluster(client *Client, cc *ccv1.CassandraClust
 
 // CreateOrUpdateCassandraCluster
 // create CassandraCluster object in target kubernetes cluster if not exists
-// update it if it already existe
+// update it if it already exist
 func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 	cc *ccv1.CassandraCluster) (bool, *ccv1.CassandraCluster, error) {
 	storedCC := &ccv1.CassandraCluster{}
