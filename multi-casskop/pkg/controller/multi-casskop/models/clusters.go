@@ -51,8 +51,8 @@ func (clusters *Clusters) SetUpClients() (*Clients, error){
 		remotes = append(remotes, &Client{cluster.Name, client})
 	}
 
-	// Init master
-	logrus.Infof("Create Client %d for master Cluster %s", clusters.Local.Name)
+	// Init local
+	logrus.Infof("Create Client %d for local Cluster %s", clusters.Local.Name)
 	client, err := clusters.Local.SetUpClient()
 	if err != nil {
 		return nil, fmt.Errorf("%s", err)

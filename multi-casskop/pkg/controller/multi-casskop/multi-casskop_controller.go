@@ -51,14 +51,14 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 
 	// Create new admiralty controller, for all clients
 	co := controller.New(&reconciler{clients: clients, namespace: namespace}, controller.Options{})
-	logrus.Info("Configuring Watch for MultiCasskop on master")
+	logrus.Info("Configuring Watch for MultiCasskop on local")
 
-	// Trigger an error, in case where no master is defined
+	// Trigger an error, in case where no local is defined
 	if clusters.Local.Cluster == nil {
-		return nil, fmt.Errorf("No master cluster defined can't watch MultiCassKop customs resources")
+		return nil, fmt.Errorf("No local cluster defined can't watch MultiCassKop customs resources")
 	}
 
-	// Configure watch for MultiCassKop on Master only
+	// Configure watch for MultiCassKop on Local only
 	if err := co.WatchResourceReconcileObject(clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
 		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
@@ -121,7 +121,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 
 	//var storedCC *ccv1.CassandraCluster`
 
-	// For all clients (master & remotes)
+	// For all clients (local & remotes)
 	clients := r.clients.FlatClients()
 	for _, client := range clients {
 		var cc *ccv1.CassandraCluster
