@@ -25,13 +25,13 @@ type Client struct {
 
 // Clients defined each client (master & remotes) to access to k8s cluster.
 type Clients struct {
-	Master *Client
+	Master  *Client
 	Remotes []*Client
 }
 
 // Convert master & remotes clients to a merged list.
 // Simplify loop on clients
-func (clients *Clients) FlatClients() ([]*Client) {
-	flatClients := append(clients.Remotes, clients.Master)
+func (clients *Clients) FlatClients() []*Client {
+	flatClients := append([]*Client{clients.Master}, clients.Remotes...)
 	return flatClients
 }
