@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop/models"
 	"log"
 	"os"
 	"strings"
@@ -71,7 +72,7 @@ func main() {
 		log.Fatalf("Usage: MultiCasskop cluster-1 cluster-2 .. cluster-n")
 	}
 
-	var clusters mc.Clusters
+	var clusters models.Clusters
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -92,7 +93,7 @@ func main() {
 				os.Exit(1)
 			}
 			// Set up master cluster
-			clusters.Master = mc.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
+			clusters.Master = models.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
 				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
 		} else {
 			logrus.Infof("Configuring Client %d for distant cluster %s. using imported secret of same name", i+1,
@@ -104,7 +105,7 @@ func main() {
 
 			// Set up Remotes clusters
 			clusters.Remotes = append(clusters.Remotes,
-				mc.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
+				models.Cluster{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
 					cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 		}
 
