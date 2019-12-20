@@ -122,7 +122,10 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	//var storedCC *ccv1.CassandraCluster`
 
 	// For all clients (local & remotes)
-	clients := r.clients.FlatClients()
+	//	clients := r.clients.FlatClients()
+//	clients := r.clients.Remotes
+
+	clients := []*models.Client{r.clients.Local}
 	for _, client := range clients {
 		var cc *ccv1.CassandraCluster
 		var found bool
