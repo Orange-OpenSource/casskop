@@ -40,6 +40,14 @@ type Clusters struct {
 func (clusters *Clusters) SetUpClients() (*Clients, error){
 	var clients *Clients
 
+	// Init local
+	logrus.Infof("Create Client for local Cluster %s", clusters.Local.Name)
+	client, err := clusters.Local.SetUpClient()
+	if err != nil {
+		return nil, fmt.Errorf("%s", err)
+	}
+	local := &Client{clusters.Local.Name, client}
+
 	// Init remotes
 	var remotes []*Client
 	for i, cluster := range clusters.Remotes {
@@ -50,14 +58,6 @@ func (clusters *Clusters) SetUpClients() (*Clients, error){
 		}
 		remotes = append(remotes, &Client{cluster.Name, client})
 	}
-
-	// Init local
-	logrus.Infof("Create Client %d for local Cluster %s", clusters.Local.Name)
-	client, err := clusters.Local.SetUpClient()
-	if err != nil {
-		return nil, fmt.Errorf("%s", err)
-	}
-	local := &Client{clusters.Local.Name, client}
 
 	// Set up clients
 	clients = &Clients{Local: local, Remotes: remotes}
