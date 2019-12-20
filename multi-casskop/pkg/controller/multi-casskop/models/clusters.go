@@ -31,7 +31,7 @@ type Cluster struct {
 
 // Clusters defined each kubernetes cluster we want to connect on it.
 type Clusters struct {
-	Master Cluster
+	Local Cluster
 	Remotes []Cluster
 }
 
@@ -52,15 +52,15 @@ func (clusters *Clusters) SetUpClients() (*Clients, error){
 	}
 
 	// Init master
-	logrus.Infof("Create Client %d for master Cluster %s", clusters.Master.Name)
-	client, err := clusters.Master.SetUpClient()
+	logrus.Infof("Create Client %d for master Cluster %s", clusters.Local.Name)
+	client, err := clusters.Local.SetUpClient()
 	if err != nil {
 		return nil, fmt.Errorf("%s", err)
 	}
-	master := &Client{clusters.Master.Name, client}
+	local := &Client{clusters.Local.Name, client}
 
 	// Set up clients
-	clients = &Clients{Master: master, Remotes: remotes}
+	clients = &Clients{Local: local, Remotes: remotes}
 
 	return clients, nil
 }
