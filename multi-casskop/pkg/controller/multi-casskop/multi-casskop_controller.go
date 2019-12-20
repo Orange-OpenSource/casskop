@@ -15,18 +15,13 @@
 package multicasskop
 
 import (
+	"admiralty.io/multicluster-controller/pkg/reconcile"
 	"context"
 	"fmt"
+	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop/models"
 
-	"admiralty.io/multicluster-controller/pkg/reconcile"
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	"time"
-
-	"admiralty.io/multicluster-controller/pkg/cluster"
 	"admiralty.io/multicluster-controller/pkg/controller"
-	apicmc "github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/apis"
 	cmcv1 "github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/apis/db/v1alpha1"
-	apicc "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
 	ccv1 "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
@@ -34,72 +29,39 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	"time"
 )
 
-//Clusters defined each kubernetes we want to connect on it
-type Clusters struct {
-	Name    string
-	Cluster *cluster.Cluster
-	IsMaster bool
-}
-
-//Client is the k8s client to use to connect to each kubernetes
-type Client struct {
-	name   string
-	client client.Client
-}
-
-//reconciler is the base struc to be used for MultiCassKop
+// Reconciler is the base struc to be used for MultiCassKop
 type reconciler struct {
-	clients   []*Client
+	clients   *models.Clients
 	cmc       *cmcv1.MultiCasskop
 	namespace string
 }
 
 // NewController will create k8s clients for each k8s clusters,
 // and watch for changes to MultiCasskop and CassandraCluster CRD objects
-func NewController(clusters []Clusters, namespace string) (*controller.Controller, error) {
-	var clients []*Client
-
-	for i, cluster := range clusters {
-		logrus.Infof("Create Client %d for Cluster %s", i+1, cluster.Name)
-		client, err := cluster.Cluster.GetDelegatingClient()
-		if err != nil {
-			return nil, fmt.Errorf("getting delegating client %d for Cluster %s Cluster: %v", i, cluster.Name,
-				err)
-		}
-		clients = append(clients, &Client{cluster.Name, client})
-		logrus.Infof("Add CRDs to Cluster %s Scheme", cluster.Name)
-		if err := apicc.AddToScheme(cluster.Cluster.GetScheme()); err != nil {
-			return nil, fmt.Errorf("adding APIs CassandraCluster to Cluster %s Cluster's scheme: %v", cluster.Name, err)
-		}
-		if err := apicmc.AddToScheme(cluster.Cluster.GetScheme()); err != nil {
-			return nil, fmt.Errorf("adding APIs MultiCasskop to Cluster %s Cluster's scheme: %v", cluster.Name,
-				err)
-		}
+func NewController(clusters models.Clusters, namespace string) (*controller.Controller, error) {
+	// Set up clients
+	clients , err := clusters.SetUpClients()
+	if err != nil {
+		return nil, fmt.Errorf("%s", err)
 	}
 
+	// Create new admiralty controller, for all clients
 	co := controller.New(&reconciler{clients: clients, namespace: namespace}, controller.Options{})
-	logrus.Info("Configuring Watch for MultiCasskop on master")
+	logrus.Info("Configuring Watch for MultiCasskop on local")
 
-	// Look up for master k8s cluster
-	var masterCluster Clusters
-	for _, cluster := range clusters {
-		if (cluster.IsMaster) {
-			masterCluster = cluster
-		}
+	// Trigger an error, in case where no local is defined
+	if clusters.Local.Cluster == nil {
+		return nil, fmt.Errorf("No local cluster defined can't watch MultiCassKop customs resources")
 	}
 
-	// Trigger an error, in case where no master is defined
-	if masterCluster.Cluster == nil {
-		return nil, fmt.Errorf("No master cluster defined can't watch MultiCassKop customs resources")
-	}
-
-	// Configure watch for MultiCassKop
-	if err := co.WatchResourceReconcileObject(masterCluster.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	// Configure watch for MultiCassKop on Local only
+	if err := co.WatchResourceReconcileObject(clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
-		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", masterCluster.Name, err)
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
 	}
 	return co, nil
 }
@@ -138,9 +100,9 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 
 	// Fetch the MultiCasskop instance
 	// It is stored in the Cluster with index 0 = the first kubernetes cluster given in parameter to multicasskop.
-	masterClient := r.clients[0].client
+	localClient := r.clients.Local.Client
 	r.cmc = &cmcv1.MultiCasskop{}
-	err := masterClient.Get(context.TODO(), req.NamespacedName, r.cmc)
+	err := localClient.Get(context.TODO(), req.NamespacedName, r.cmc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -153,16 +115,19 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	}
 
 	if ok := r.updateDeletetrategy(); ok == true {
-		err := masterClient.Update(context.TODO(), r.cmc)
+		err := localClient.Update(context.TODO(), r.cmc)
 		return requeue, err
 	}
 
-	//var storedCC *ccv1.CassandraCluster
-	for _, client := range r.clients {
+	//var storedCC *ccv1.CassandraCluster`
+
+	// For all clients (local & remotes)
+	clients := r.clients.FlatClients()
+	for _, client := range clients {
 		var cc *ccv1.CassandraCluster
 		var found bool
 		if found, cc = r.computeCassandraClusterForContext(client); !found {
-			logrus.WithFields(logrus.Fields{"kubernetes": client.name}).Warningf("No Cassandra Cluster defined for context: %v", err)
+			logrus.WithFields(logrus.Fields{"kubernetes": client.Name}).Warningf("No Cassandra Cluster defined for context: %v", err)
 			break
 		}
 
@@ -175,18 +140,18 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		update, storedCC, err := r.CreateOrUpdateCassandraCluster(client, cc)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-				"kubernetes": client.name}).Errorf("error on CassandraCluster %v", err)
+				"kubernetes": client.Name}).Errorf("error on CassandraCluster %v", err)
 			return requeue5, err
 		}
 		if update {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-				"kubernetes": client.name}).Infof("Just Update CassandraCluster, returning for now..")
+				"kubernetes": client.Name}).Infof("Just Update CassandraCluster, returning for now..")
 			return requeue30, err
 		}
 
 		if !r.ReadyCassandraCluster(storedCC) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-				"kubernetes": client.name}).Infof("Cluster is not Ready, "+
+				"kubernetes": client.Name}).Infof("Cluster is not Ready, "+
 				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase, storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
 			return requeue30, err
 		}
@@ -195,7 +160,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	if r.cmc.DeletionTimestamp != nil {
 		//We remove the Finalizer
 		r.preventClusterDeletion(false)
-		err := masterClient.Update(context.TODO(), r.cmc)
+		err := localClient.Update(context.TODO(), r.cmc)
 		return forget, err
 	}
 
@@ -212,10 +177,10 @@ func (r *reconciler) namespacedName(name, namespace string) types.NamespacedName
 //computeCassandraClusterForContext return the CassandraCluster object to create for the current context
 //It merges the base definition, with the override part for the specified context in the MultiCasskop CRD
 //If client.name don't match a kubernetes context name specified in the override section, it does nothing
-func (r *reconciler) computeCassandraClusterForContext(client *Client) (bool, *ccv1.CassandraCluster) {
+func (r *reconciler) computeCassandraClusterForContext(client *models.Client) (bool, *ccv1.CassandraCluster) {
 	base := r.cmc.Spec.Base.DeepCopy()
 	for cmcclName, override := range r.cmc.Spec.Override {
-		if client.name == cmcclName {
+		if client.Name == cmcclName {
 			mergo.Merge(base, override, mergo.WithOverride)
 			//Force default values if missing
 			base.CheckDefaults()
@@ -225,10 +190,10 @@ func (r *reconciler) computeCassandraClusterForContext(client *Client) (bool, *c
 	return false, nil
 }
 
-func (r *reconciler) deleteCassandraCluster(client *Client, cc *ccv1.CassandraCluster) error {
+func (r *reconciler) deleteCassandraCluster(client *models.Client, cc *ccv1.CassandraCluster) error {
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-		"kubernetes": client.name}).Info("Delete CassandraCluster")
-	if err := client.client.Delete(context.TODO(), cc); err != nil {
+		"kubernetes": client.Name}).Info("Delete CassandraCluster")
+	if err := client.Client.Delete(context.TODO(), cc); err != nil {
 		return err
 	}
 	return nil

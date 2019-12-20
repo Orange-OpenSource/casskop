@@ -12,6 +12,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.8
+	github.com/jessevdk/go-flags v1.4.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/operator-framework/operator-sdk v0.10.0
 	github.com/sirupsen/logrus v1.4.2
