@@ -167,7 +167,7 @@ build-local:
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
 	echo "execute : cat multi-casskop.env" ; \
-  sudo mkdir -p /vear/run/secrets/kubernetes.io ; \
+  sudo mkdir -p /var/run/secrets/kubernetes.io ; \
   sudo mkdir -p /var/run/secrets/admiralty.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
 	sudo ln -s /tmp/known/var/run/secrets/admiralty.io/serviceaccountimports /var/run/secrets/admiralty.io/ ; \
