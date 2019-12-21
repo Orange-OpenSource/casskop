@@ -60,7 +60,6 @@ func getLogLevel() logrus.Level {
 	return logrus.InfoLevel
 }
 
-
 type Options struct {
 	// Slice of bool will append 'true' each time the option
 	// is encountered (can be set multiple times, like -vvv)
@@ -75,7 +74,6 @@ type Options struct {
 var opts Options
 
 var parser = flags.NewParser(&opts, flags.Default)
-
 
 func main() {
 
@@ -110,7 +108,7 @@ func main() {
 		os.Exit(1)
 	}
 	// Set up local cluster
-	clusters.Local = models.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
+	clusters.Local = &models.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
 		cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
 
 	// Configuring Remotes clusters

@@ -44,7 +44,7 @@ type reconciler struct {
 // and watch for changes to MultiCasskop and CassandraCluster CRD objects
 func NewController(clusters models.Clusters, namespace string) (*controller.Controller, error) {
 	// Set up clients
-	clients , err := clusters.SetUpClients()
+	clients, err := clusters.SetUpClients()
 	if err != nil {
 		return nil, fmt.Errorf("%s", err)
 	}
@@ -62,6 +62,14 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 	if err := co.WatchResourceReconcileObject(clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
 		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
+	}
+
+	// Configure watch for CassandraCluster on remote (
+	for _, cluster := range clusters.Remotes {
+		if err := co.WatchResourceReconcileObject(cluster.Cluster, &ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+			controller.WatchOptions{Namespace: namespace}); err != nil {
+			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
+		}
 	}
 	return co, nil
 }
@@ -122,10 +130,7 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 	//var storedCC *ccv1.CassandraCluster`
 
 	// For all clients (local & remotes)
-	//	clients := r.clients.FlatClients()
-//	clients := r.clients.Remotes
-
-	clients := []*models.Client{r.clients.Local}
+	clients := r.clients.FlatClients()
 	for _, client := range clients {
 		var cc *ccv1.CassandraCluster
 		var found bool
