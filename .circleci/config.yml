@@ -514,7 +514,7 @@ workflows:
           operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
-            - build-multicasskop
+            - generate-multicasskop
           filters:
             tags:
               only: /.*/
