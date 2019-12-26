@@ -233,6 +233,3 @@ release: tag image publish
 
 unit-test-with-vendor:
 	echo TODO
-#	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-#	cat test-report.out
-#	$(UNIT_TEST_COVERAGE)
