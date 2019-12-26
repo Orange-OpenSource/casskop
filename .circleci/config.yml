@@ -108,7 +108,7 @@ orbs:
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&
-                make docker-e2e-test-fix-arg <<parameters.test_name>> || {
+                make docker-e2e-test-fix-arg << parameters.test_name >> || {
                 kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
                 echo "Show Operator logs:"
                 cat operator.log
@@ -119,7 +119,7 @@ orbs:
 jobs:
   # Build job, which build operator docker image (with operator-sdk build)
   build:
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -128,7 +128,7 @@ jobs:
     - setup_remote_docker # Creates a separate environment for each build for security.
     - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
         keys: # Use checksum of go.sum to version cache.
-          - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+          - << pipeline.parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
     # Build steps
     - run:
         name: Download dependencies
@@ -159,7 +159,7 @@ jobs:
     # Cache configuration
     - save_cache:
         name: Save build artefacts in cache
-        key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+        key: << pipeline.parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
@@ -167,7 +167,7 @@ jobs:
 
   # Unit test job, will execute makefile 'unit-test-with-vendor' step
   unit-test:
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -190,7 +190,7 @@ jobs:
 
   # Dgoss tests job, will execute make 'dgoss-bootstrap'
   docker-dgoss-test:
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -213,7 +213,7 @@ jobs:
 
   # Reporting step, will run sonar report from scan.
   report:
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -241,13 +241,13 @@ jobs:
         name: Sonarcloud Scan
         command: |
           ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
-          -Dsonar.projectName=<< parameters.operatorName >> \
+          -Dsonar.projectName=<< pipeline.parameters.operatorName >> \
           -Dsonar.projectKey=${SONAR_PROJECT} \
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.branch.name=${CIRCLE_BRANCH} \
           -Dsonar.organization=${SONAR_ORGANISATION} \
           -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/<< parameters.workDir >> \
+          -Dsonar.projectBaseDir=/home/circleci/<< pipeline.parameters.workDir >> \
           -Dsonar.sources=. \
           -Dsonar.sources.inclusions="**/**.go" \
           -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
@@ -311,7 +311,7 @@ workflows:
               only: /.*/
             branches:
               # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+              ignore: /pull\/[0-9w]+/
 
       - minikube/e2e-orb:
           name: e2e-test ScaleUp
