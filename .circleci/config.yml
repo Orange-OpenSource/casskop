@@ -66,7 +66,7 @@ orbs:
           # Checkout steps
           - checkout:
               path: /home/circleci/cassandra-k8s-operator
-          - attach_workspace:  # Create artifact from workdir
+          - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
@@ -133,7 +133,7 @@ orbs:
           - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
               keys: # Use checksum of go.sum to version cache.
                 - << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
-          - attach_workspace:  # Create artifact from workdir
+          - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
           # Build steps
           - run:
@@ -184,7 +184,7 @@ orbs:
         - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
             keys: # Use checksum of go.sum to version cache.
               - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
-        - attach_workspace:  # Create artifact from workdir
+        - attach_workspace:  # Attach artifact from workdir
             at: /home/circleci
         # Build steps
         - run:
@@ -235,7 +235,7 @@ orbs:
         # Checkout steps
         - checkout:
             path: /home/circleci/cassandra-k8s-operator
-        - attach_workspace:  # Create artifact from workdir
+        - attach_workspace:  # Attach artifact from workdir
             at: /home/circleci
         # Unit tests steps
         - run:
@@ -270,7 +270,7 @@ orbs:
         - checkout:
             path: /home/circleci/cassandra-k8s-operator
         - setup_remote_docker
-        - attach_workspace:  # Create artifact from workdir
+        - attach_workspace:  # Attach artifact from workdir
             at: /home/circleci
         # Dgoss tests steps
         - run: # Run test wich enable to validate bootstrap image.
@@ -313,14 +313,14 @@ orbs:
         - run:
             name: Download SonarQube Scanner
             command: |
-              chmod +x /home/circleci/cassandra-k8s-operator/install_sonar-scanner.sh
+              chmod +x /home/circleci/<< parameters.operatorDir >>/install_sonar-scanner.sh
               ./.circleci/install_sonar-scanner.sh
         - save_cache: # Cache sonar download
             name: Cache SonarQube Scanner
             key: sonar-scanner-3.3.0.1492-linux
             paths:
               - sonar-scanner-3.3.0.1492-linux
-              - /home/circleci/cassandra-k8s-operator/.sonar
+              - /home/circleci/<< parameters.operatorDir >>/.sonar
         - run: # Run sonar scan
             name: Sonarcloud Scan
             command: |
@@ -350,6 +350,34 @@ orbs:
         - store_test_results: # Store sonar scan reports
             path: reports
 
+
+# Filters anchors
+.everytime_filter : &everytime_filter
+  filters:
+    tags:
+      only: /.*/
+
+.canonical_repo_filter : &canonical_repo_filter
+  filters:
+    tags:
+      only: /.*/
+    branches:
+      # report sonar only from canonical repository
+      only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
+
+.ignore_fork_pr_filter: &ignore_fork_pr_filter
+  filters:
+    tags:
+      only: /.*/
+    branches:
+      # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+      ignore: /pull\/[0-9]+/
+
+# Parameters anchors
+.params_multicasskop: &params_multicasskop
+  operatorDir: cassandra-k8s-operator/multi-casskop
+  operatorName: MultiCassKop
+
 # Workflow definition
 workflows:
   version: 2
@@ -358,175 +386,102 @@ workflows:
     jobs:
       - operator/generate:
           name: generate-casskop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
 
       - operator/unit-test:
           name: unit-test-casskop
           requires:
             - generate-casskop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
 
       - operator/build:
           name: build-casskop
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
 
       - operator/docker-dgoss-test:
           name: docker-dgoss-test-casskop
           requires:
             - build-casskop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
 
       - operator/report:
           name: report-casskop
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # report sonar only from canonical repository 
-              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804 
+          <<: *canonical_repo_filter
 
       - minikube/e2e-orb:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9w]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test CreateOneClusterService
           test_name: CreateOneClusterService
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ExecuteCleanup
           test_name: ExecuteCleanup
           requires:
             - unit-test-casskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+          <<: *ignore_fork_pr_filter
 
   # CassKop operator workflow.
   ci-multicasskop-operator:
     jobs:
       - operator/generate:
           name: generate-casskop
-          operatorDir: cassandra-k8s-operator
-          operatorName: CassKop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
       - operator/generate:
           name: generate-multicasskop
-          operatorDir: cassandra-k8s-operator/multi-casskop
-          operatorName: MultiCassKop
+          <<: *params_multicasskop
           requires:
             - generate-casskop
-          filters:
-            tags:
-              only: /.*/
-#      - operator/unit-test:
-#          name: unit-test-multicasskop
-#          operatorDir: cassandra-k8s-operator/multi-casskop
-#          operatorName: MultiCassKop
-#          requires:
-#            - generate-multicasskop
-#          filters:
-#            tags:
-#              only: /.*/
+          <<: *everytime_filter
       - operator/build:
           name: build-multicasskop
-          operatorDir: cassandra-k8s-operator/multi-casskop
-          operatorName: MultiCassKop
+          <<: *params_multicasskop
           requires:
             - generate-multicasskop
-          filters:
-            tags:
-              only: /.*/
+          <<: *everytime_filter
       - operator/report:
           name: report-multicasskop
-          operatorDir: cassandra-k8s-operator/multi-casskop
-          operatorName: MultiCassKop
+          <<: *params_multicasskop
           requires:
             - build-multicasskop
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # report sonar only from canonical repository
-              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
+          <<: *canonical_repo_filter
