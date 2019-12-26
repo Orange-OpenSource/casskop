@@ -109,7 +109,12 @@ orbs:
 jobs:
   # Build job, which build operator docker image (with operator-sdk build)
   build:
-    working_directory: /home/circleci/cassandra-k8s-operator
+    parameters:
+      workdir:
+        type: string
+        description: relative path where the build must be run
+        default: cassandra-k8s-operator
+    working_directory: /home/circleci/<< parameters.workdir >>
     executor: casskop-build
     # STEPS
     steps:
@@ -374,34 +379,3 @@ workflows:
             branches:
               # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
               ignore: /pull\/[0-9]+/
-
-  ci-multicasskop-operator:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /.*/
-
-      - unit-test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-
-      - docker-dgoss-test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
-
-      - report:
-          requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # report sonar only from canonical repository
-              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
