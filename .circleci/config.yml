@@ -125,7 +125,7 @@ jobs:
         type: string
         description: operator's name
         default: CassKop
-   working_directory: /home/circleci/cassandra-k8s-operator
+    working_directory: /home/circleci/cassandra-k8s-operator
     executor: operator-build
     # STEPS
     steps:
