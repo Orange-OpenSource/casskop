@@ -523,7 +523,7 @@ workflows:
           operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
-            - unit-test-multicasskop
+            - build-multicasskop
           filters:
             tags:
               only: /.*/
