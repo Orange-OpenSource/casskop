@@ -70,7 +70,7 @@ orbs:
               at: /tmp/workspace
           - run:
               name: Copying artifacts
-              command: mv /tmp/workspace/* ./
+              command: if [ -d "/tmp/workspace" ]; then mv /tmp/workspace/* ./; fi
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
               name: Wait for minikube
@@ -140,7 +140,7 @@ orbs:
               at: /tmp/workspace
           - run:
               name: Copying artifacts
-              command: mv /tmp/workspace/* ./
+              command: if [ -d "/tmp/workspace" ]; then mv /tmp/workspace/* ./; fi
           # Build steps
           - run:
               name: Download dependencies
@@ -186,7 +186,7 @@ orbs:
             at: /tmp/workspace
         - run:
             name: Copying artifacts
-            command: mv /tmp/workspace/* ./
+            command: if [ -d "/tmp/workspace" ]; then mv /tmp/workspace/* ./; fi
         # Build steps
         - run:
             name: Build Operator
@@ -240,7 +240,7 @@ orbs:
             at: /tmp/workspace
         - run:
             name: Copying artifacts
-            command: mv /tmp/workspace/* ./
+            command: if [ -d "/tmp/workspace" ]; then mv /tmp/workspace/* ./; fi
         # Unit tests steps
         - run:
             name: Unit Tests
@@ -278,7 +278,7 @@ orbs:
             at: /tmp/workspace
         - run:
             name: Copying artifacts
-            command: mv /tmp/workspace/* ./
+            command: if [ -d "/tmp/workspace" ]; then mv /tmp/workspace/* ./; fi
         # Dgoss tests steps
         - run: # Run test wich enable to validate bootstrap image.
             name: Dgoss tests
