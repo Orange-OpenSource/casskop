@@ -67,10 +67,7 @@ orbs:
           - checkout:
               path: /home/circleci/cassandra-k8s-operator
           - attach_workspace:  # Create artifact from workdir
-              at: /tmp/workspace
-          - run:
-              name: Copying artifacts
-              command: if [[ -d "/tmp/workspace" && "$(ls -A /tmp/workspace)" ]]; then mv /tmp/workspace/* ./; fi
+              at: /home/circleci
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
               name: Wait for minikube
@@ -137,10 +134,7 @@ orbs:
               keys: # Use checksum of go.sum to version cache.
                 - << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
           - attach_workspace:  # Create artifact from workdir
-              at: /tmp/workspace
-          - run:
-              name: Copying artifacts
-              command: if [[ -d "/tmp/workspace" && "$(ls -A /tmp/workspace)" ]]; then mv /tmp/workspace/* ./; fi
+              at: /home/circleci
           # Build steps
           - run:
               name: Download dependencies
@@ -153,11 +147,11 @@ orbs:
               command: make generate
           # Create artifacts
           - persist_to_workspace:
-              root: /tmp/workspace/<< parameters.operatorDir >>
+              root: /home/circleci
               paths:
-                - build/_output
-                - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-                - vendor
+                - << parameters.operatorDir >>/build/_output
+                - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+                - << parameters.operatorDir >>/vendor
 
       # Build job, which build operator docker image (with operator-sdk build)
       build:
@@ -183,21 +177,18 @@ orbs:
             keys: # Use checksum of go.sum to version cache.
               - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         - attach_workspace:  # Create artifact from workdir
-            at: /tmp/workspace
-        - run:
-            name: Copying artifacts
-            command: if [[ -d "/tmp/workspace" && "$(ls -A /tmp/workspace)" ]]; then mv /tmp/workspace/* ./; fi
+            at: /home/circleci
         # Build steps
         - run:
             name: Build Operator
             command: make build
         # Create artifacts
         - persist_to_workspace:
-            root: /tmp/workspace/<< parameters.operatorDir >>
+            root: /home/circleci
             paths:
-              - build/_output
-              - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-              - vendor
+              - << parameters.operatorDir >>/build/_output
+              - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+              - << parameters.operatorDir >>/vendor
         # Deploy steps
         - deploy:
             name: Push image to Docker Hub
@@ -237,10 +228,7 @@ orbs:
         - checkout:
             path: /home/circleci/cassandra-k8s-operator
         - attach_workspace:  # Create artifact from workdir
-            at: /tmp/workspace
-        - run:
-            name: Copying artifacts
-            command: if [[ -d "/tmp/workspace" && "$(ls -A /tmp/workspace)" ]]; then mv /tmp/workspace/* ./; fi
+            at: /home/circleci
         # Unit tests steps
         - run:
             name: Unit Tests
@@ -249,10 +237,10 @@ orbs:
         - store_artifacts: # Store unit test coverage reports
             path: coverage.html
         - persist_to_workspace:
-            root: /tmp/workspace/<< parameters.operatorDir >>
+            root: /home/circleci
             paths:
-              - coverage.out
-              - test-report.out
+              - << parameters.operatorDir >>/coverage.out
+              - << parameters.operatorDir >>/test-report.out
 
       # Dgoss tests job, will execute make 'dgoss-bootstrap'
       docker-dgoss-test:
@@ -275,10 +263,7 @@ orbs:
             path: /home/circleci/cassandra-k8s-operator
         - setup_remote_docker
         - attach_workspace:  # Create artifact from workdir
-            at: /tmp/workspace
-        - run:
-            name: Copying artifacts
-            command: if [[ -d "/tmp/workspace" && "$(ls -A /tmp/workspace)" ]]; then mv /tmp/workspace/* ./; fi
+            at: /home/circleci
         # Dgoss tests steps
         - run: # Run test wich enable to validate bootstrap image.
             name: Dgoss tests
@@ -311,7 +296,7 @@ orbs:
         - checkout:
             path: /home/circleci/cassandra-k8s-operator
         - attach_workspace:
-            at: ./
+            at: /home/circleci
         - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
             name: Restore SonarQube Scanner
             keys:
