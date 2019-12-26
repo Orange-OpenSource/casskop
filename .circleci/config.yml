@@ -143,7 +143,7 @@ orbs:
               name: Vendor dependencies
               command: if [ ! -d vendor ]; then go mod vendor; fi
           - run:
-              name: Build Operator
+              name: Generate k8s
               command: make generate
           # Create artifacts
           - persist_to_workspace:
@@ -152,6 +152,14 @@ orbs:
                 - << parameters.operatorDir >>/build/_output
                 - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
                 - << parameters.operatorDir >>/vendor
+          # Cache configuration
+          - save_cache:
+              name: Save build artefacts in cache
+              key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
+              paths:
+                - build/_output
+                - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+                - vendor
 
       # Build job, which build operator docker image (with operator-sdk build)
       build:
@@ -492,15 +500,15 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - operator/unit-test:
-          name: unit-test-multicasskop
-          operatorDir: cassandra-k8s-operator/multi-casskop
-          operatorName: MultiCassKop
-          requires:
-            - generate-multicasskop
-          filters:
-            tags:
-              only: /.*/
+#      - operator/unit-test:
+#          name: unit-test-multicasskop
+#          operatorDir: cassandra-k8s-operator/multi-casskop
+#          operatorName: MultiCassKop
+#          requires:
+#            - generate-multicasskop
+#          filters:
+#            tags:
+#              only: /.*/
       - operator/build:
           name: build-multicasskop
           operatorDir: cassandra-k8s-operator/multi-casskop
