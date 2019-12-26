@@ -75,7 +75,7 @@ orbs:
               at: ./
           - run:
               name: Change workdir
-              command: cd ${HOME}/<< parameters.operatorDir >>
+              command: cd /home/circleci/<< parameters.operatorDir >>
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
               name: Wait for minikube
@@ -137,7 +137,7 @@ jobs:
           - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
     - run:
         name: Change workdir
-        command: cd ${HOME}/<< parameters.operatorDir >>
+        command: cd /home/circleci/<< parameters.operatorDir >>
     # Build steps
     - run:
         name: Download dependencies
@@ -196,7 +196,7 @@ jobs:
         at: ./
     - run:
         name: Change workdir
-        command: cd ${HOME}/<< parameters.operatorDir >>
+        command: cd /home/circleci/<< parameters.operatorDir >>
     # Unit tests steps
     - run:
         name: Unit Tests
@@ -233,7 +233,7 @@ jobs:
         at: ./
     - run:
         name: Change workdir
-        command: cd ${HOME}/<< parameters.operatorDir >>
+        command: cd /home/circleci/<< parameters.operatorDir >>
     # Dgoss tests steps
     - run: # Run test wich enable to validate bootstrap image.
         name: Dgoss tests
@@ -272,7 +272,7 @@ jobs:
           - sonar-scanner-3.3.0.1492-linux
     - run:
         name: Change workdir
-        command: cd ${HOME}/<< parameters.operatorDir >>
+        command: cd /home/circleci/<< parameters.operatorDir >>
     # Sonar steps
     - run:
         name: Download SonarQube Scanner
