@@ -31,12 +31,12 @@ orbs:
             description: name of the test in e2e code
             type: string
             default: toto
-          workDir:
+          operatorDir:
             type: string
             description: relative path where the build must be run
             default: cassandra-k8s-operator
         executor: vm-classic
-        working_directory: /home/circleci/<< parameters.workDir >>
+        working_directory: /home/circleci/cassandra-k8s-operator
         # ENVIRONMENTS VARIABLES
         environment:
           K8S_VERSION: v1.14.0
@@ -73,6 +73,9 @@ orbs:
           - checkout
           - attach_workspace: # Create artifact from workdir
               at: ./
+          - run:
+              name: Change workdir
+              command: cd ${HOME}/<< parameters.operatorDir >>
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
               name: Wait for minikube
@@ -114,7 +117,7 @@ jobs:
   build:
     # PARAMETERS
     parameters:
-      workDir:
+      operatorDir:
         type: string
         description: relative path where the build must be run
         default: cassandra-k8s-operator
@@ -122,7 +125,7 @@ jobs:
         type: string
         description: operator's name
         default: CassKop
-    working_directory: /home/circleci/<< parameters.workDir >>
+   working_directory: /home/circleci/cassandra-k8s-operator
     executor: operator-build
     # STEPS
     steps:
@@ -132,6 +135,9 @@ jobs:
     - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
         keys: # Use checksum of go.sum to version cache.
           - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+    - run:
+        name: Change workdir
+        command: cd ${HOME}/<< parameters.operatorDir >>
     # Build steps
     - run:
         name: Download dependencies
@@ -141,7 +147,7 @@ jobs:
         command: if [ ! -d vendor ]; then go mod vendor; fi
     - run:
         name: Build Operator
-        command: echo $pwd && ls -la && make build
+        command: ls -la ${CIRCLE_WORKING_DIRECTORY} && ls -la && make build
     # Create artifacts
     - persist_to_workspace:
         root: ./
@@ -172,7 +178,7 @@ jobs:
   unit-test:
     # PARAMETERS
     parameters:
-      workDir:
+      operatorDir:
         type: string
         description: relative path where the build must be run
         default: cassandra-k8s-operator
@@ -180,7 +186,7 @@ jobs:
         type: string
         description: operator's name
         default: CassKop
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/cassandra-k8s-operator
     executor: operator-build
     # STEPS
     steps:
@@ -188,6 +194,9 @@ jobs:
     - checkout
     - attach_workspace:  # Create artifact from workdir
         at: ./
+    - run:
+        name: Change workdir
+        command: cd ${HOME}/<< parameters.operatorDir >>
     # Unit tests steps
     - run:
         name: Unit Tests
@@ -205,7 +214,7 @@ jobs:
   docker-dgoss-test:
     # PARAMETERS
     parameters:
-      workDir:
+      operatorDir:
         type: string
         description: relative path where the build must be run
         default: cassandra-k8s-operator
@@ -213,7 +222,7 @@ jobs:
         type: string
         description: operator's name
         default: CassKop
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/cassandra-k8s-operator
     executor: operator-build
     # STEPS
     steps:
@@ -222,6 +231,9 @@ jobs:
     - setup_remote_docker
     - attach_workspace:  # Create artifact from workdir
         at: ./
+    - run:
+        name: Change workdir
+        command: cd ${HOME}/<< parameters.operatorDir >>
     # Dgoss tests steps
     - run: # Run test wich enable to validate bootstrap image.
         name: Dgoss tests
@@ -238,7 +250,7 @@ jobs:
   report:
     # PARAMETERS
     parameters:
-      workDir:
+      operatorDir:
         type: string
         description: relative path where the build must be run
         default: cassandra-k8s-operator
@@ -246,7 +258,7 @@ jobs:
         type: string
         description: operator's name
         default: CassKop
-    working_directory: /home/circleci/<< parameters.workDir >>
+    working_directory: /home/circleci/cassandra-k8s-operator
     executor: operator-build
     # STEPS
     steps:
@@ -258,11 +270,14 @@ jobs:
         name: Restore SonarQube Scanner
         keys:
           - sonar-scanner-3.3.0.1492-linux
+    - run:
+        name: Change workdir
+        command: cd ${HOME}/<< parameters.operatorDir >>
     # Sonar steps
     - run:
         name: Download SonarQube Scanner
         command: |
-          chmod +x .circleci/install_sonar-scanner.sh
+          chmod +x /home/circleci/cassandra-k8s-operator/install_sonar-scanner.sh
           ./.circleci/install_sonar-scanner.sh
     - save_cache: # Cache sonar download
         name: Cache SonarQube Scanner
@@ -280,7 +295,7 @@ jobs:
           -Dsonar.branch.name=${CIRCLE_BRANCH} \
           -Dsonar.organization=${SONAR_ORGANISATION} \
           -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/<< parameters.workDir >> \
+          -Dsonar.projectBaseDir=/home/circleci/<< parameters.operatorDir >> \
           -Dsonar.sources=. \
           -Dsonar.sources.inclusions="**/**.go" \
           -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
@@ -422,13 +437,13 @@ workflows:
   ci-multicasskop-operator:
     jobs:
       - build:
-          workDir: cassandra-k8s-operator/multi-casskop
+          operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           filters:
             tags:
               only: /.*/
       - unit-test:
-          workDir: cassandra-k8s-operator/multi-casskop
+          operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
             - build
@@ -436,7 +451,7 @@ workflows:
             tags:
               only: /.*/
       - report:
-          workDir: cassandra-k8s-operator/multi-casskop
+          operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
             - unit-test
