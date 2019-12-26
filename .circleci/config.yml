@@ -141,7 +141,7 @@ jobs:
         command: if [ ! -d vendor ]; then go mod vendor; fi
     - run:
         name: Build Operator
-        command: make build
+        command: echo $pwd && ls -la && make build
     # Create artifacts
     - persist_to_workspace:
         root: ./
