@@ -144,6 +144,15 @@ helm-package:
 
 export CGO_ENABLED:=0
 export PURE:="on"
+
+.PHONY: generate
+generate:
+	@echo "Generate zzz-deepcopy objects"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health ../tools/health/main.go
+	echo "Generate zzz-deepcopy objects"
+	operator-sdk version
+	operator-sdk generate k8s
+
 .PHONY: build
 build:
 	@echo "Generate zzz-deepcopy objects"
