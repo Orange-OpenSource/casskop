@@ -1,9 +1,19 @@
 version: 2.1
 
+# PARAMETERS
+parameters:
+  workDir:
+    type: string
+    description: relative path where the build must be run
+    default: cassandra-k8s-operator
+  operatorName:
+    type: string
+    description: operator's name
+    default: CassKop
 
 # Setting up docker executor using casskop-build image.
 executors:
-  casskop-build:
+  operator-build:
     docker:
       - image: orangeopensource/casskop-build:v0.9.0
 
@@ -109,13 +119,8 @@ orbs:
 jobs:
   # Build job, which build operator docker image (with operator-sdk build)
   build:
-    parameters:
-      workdir:
-        type: string
-        description: relative path where the build must be run
-        default: cassandra-k8s-operator
-    working_directory: /home/circleci/<< parameters.workdir >>
-    executor: casskop-build
+    working_directory: /home/circleci/<< parameters.workDir >>
+    executor: operator-build
     # STEPS
     steps:
     # Checkout steps
@@ -123,7 +128,7 @@ jobs:
     - setup_remote_docker # Creates a separate environment for each build for security.
     - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
         keys: # Use checksum of go.sum to version cache.
-          - build-{{ .Branch }}-{{ checksum "go.sum" }}
+          - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
     # Build steps
     - run:
         name: Download dependencies
@@ -132,7 +137,7 @@ jobs:
         name: Vendor dependencies
         command: if [ ! -d vendor ]; then go mod vendor; fi
     - run:
-        name: Build Cassandra Operator
+        name: Build Operator
         command: make build
     # Create artifacts
     - persist_to_workspace:
@@ -154,7 +159,7 @@ jobs:
     # Cache configuration
     - save_cache:
         name: Save build artefacts in cache
-        key: build-{{ .Branch }}-{{ checksum "go.sum" }}
+        key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
@@ -162,8 +167,8 @@ jobs:
 
   # Unit test job, will execute makefile 'unit-test-with-vendor' step
   unit-test:
-    working_directory: /home/circleci/cassandra-k8s-operator
-    executor: casskop-build
+    working_directory: /home/circleci/<< parameters.workDir >>
+    executor: operator-build
     # STEPS
     steps:
     # Checkout steps
@@ -185,8 +190,8 @@ jobs:
 
   # Dgoss tests job, will execute make 'dgoss-bootstrap'
   docker-dgoss-test:
-    working_directory: /home/circleci/cassandra-k8s-operator
-    executor: casskop-build
+    working_directory: /home/circleci/<< parameters.workDir >>
+    executor: operator-build
     # STEPS
     steps:
     # Checkout steps
@@ -208,8 +213,8 @@ jobs:
 
   # Reporting step, will run sonar report from scan.
   report:
-    working_directory: /home/circleci/cassandra-k8s-operator
-    executor: casskop-build
+    working_directory: /home/circleci/<< parameters.workDir >>
+    executor: operator-build
     # STEPS
     steps:
     # Checkout steps
@@ -236,13 +241,13 @@ jobs:
         name: Sonarcloud Scan
         command: |
           ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
-          -Dsonar.projectName=CassKop \
+          -Dsonar.projectName=<< parameters.operatorName >> \
           -Dsonar.projectKey=${SONAR_PROJECT} \
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.branch.name=${CIRCLE_BRANCH} \
           -Dsonar.organization=${SONAR_ORGANISATION} \
           -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/cassandra-k8s-operator \
+          -Dsonar.projectBaseDir=/home/circleci/<< parameters.workDir >> \
           -Dsonar.sources=. \
           -Dsonar.sources.inclusions="**/**.go" \
           -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
@@ -264,7 +269,7 @@ jobs:
 # Workflow definition
 workflows:
   version: 2
-
+  # CassKop operator workflow.
   ci-casskop-operator:
     jobs:
       - build:
