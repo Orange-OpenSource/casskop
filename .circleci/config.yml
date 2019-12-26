@@ -103,6 +103,24 @@ orbs:
                 false;
                 }
   operator:
+    # Parameters anchor
+    .params_operator: &params_operator
+      # PARAMETERS
+      parameters:
+        operatorDir:
+          type: string
+          description: relative path where the build must be run
+          default: cassandra-k8s-operator
+        operatorName:
+          type: string
+          description: operator's name
+          default: CassKop
+      working_directory: /home/circleci/<< parameters.operatorDir >>
+      executor: operator-build
+    # Job anchor
+    .job_operator: &job_operator
+      working_directory: /home/circleci/<< parameters.operatorDir >>
+      executor: operator-build
     # Setting up docker executor using casskop-build image.
     executors:
       operator-build:
@@ -112,18 +130,8 @@ orbs:
     jobs:
       # Build job, which build operator docker image (with operator-sdk build)
       generate:
-        # PARAMETERS
-        parameters:
-          operatorDir:
-            type: string
-            description: relative path where the build must be run
-            default: cassandra-k8s-operator
-          operatorName:
-            type: string
-            description: operator's name
-            default: CassKop
-        working_directory: /home/circleci/<< parameters.operatorDir >>
-        executor: operator-build
+        <<: *params_operator
+        <<: *job_operator
         # STEPS
         steps:
           # Checkout steps
@@ -163,19 +171,8 @@ orbs:
 
       # Build job, which build operator docker image (with operator-sdk build)
       build:
-        # PARAMETERS
-        parameters:
-          operatorDir:
-            type: string
-            description: relative path where the build must be run
-            default: cassandra-k8s-operator
-          operatorName:
-            type: string
-            description: operator's name
-            default: CassKop
-        working_directory: /home/circleci/<< parameters.operatorDir >>
-        executor: operator-build
-        # STEPS
+        <<: *params_operator
+        <<: *job_operator
         steps:
         # Checkout steps
         - checkout:
@@ -218,18 +215,8 @@ orbs:
 
       # Unit test job, will execute makefile 'unit-test-with-vendor' step
       unit-test:
-        # PARAMETERS
-        parameters:
-          operatorDir:
-            type: string
-            description: relative path where the build must be run
-            default: cassandra-k8s-operator
-          operatorName:
-            type: string
-            description: operator's name
-            default: CassKop
-        working_directory: /home/circleci/<< parameters.operatorDir >>
-        executor: operator-build
+        <<: *params_operator
+        <<: *job_operator
         # STEPS
         steps:
         # Checkout steps
@@ -252,18 +239,8 @@ orbs:
 
       # Dgoss tests job, will execute make 'dgoss-bootstrap'
       docker-dgoss-test:
-        # PARAMETERS
-        parameters:
-          operatorDir:
-            type: string
-            description: relative path where the build must be run
-            default: cassandra-k8s-operator
-          operatorName:
-            type: string
-            description: operator's name
-            default: CassKop
-        working_directory: /home/circleci/<< parameters.operatorDir >>
-        executor: operator-build
+        <<: *params_operator
+        <<: *job_operator
         # STEPS
         steps:
         # Checkout steps
@@ -286,18 +263,8 @@ orbs:
 
       # Reporting step, will run sonar report from scan.
       report:
-        # PARAMETERS
-        parameters:
-          operatorDir:
-            type: string
-            description: relative path where the build must be run
-            default: cassandra-k8s-operator
-          operatorName:
-            type: string
-            description: operator's name
-            default: CassKop
-        working_directory: /home/circleci/<< parameters.operatorDir >>
-        executor: operator-build
+        <<: *params_operator
+        <<: *job_operator
         # STEPS
         steps:
         # Checkout steps
@@ -313,8 +280,8 @@ orbs:
         - run:
             name: Download SonarQube Scanner
             command: |
-              chmod +x /home/circleci/<< parameters.operatorDir >>/install_sonar-scanner.sh
-              ./.circleci/install_sonar-scanner.sh
+              chmod +x /home/circleci/cassandra-k8s-operator/.circleci/install_sonar-scanner.sh
+              /home/circleci/cassandra-k8s-operator/.circleci/install_sonar-scanner.sh
         - save_cache: # Cache sonar download
             name: Cache SonarQube Scanner
             key: sonar-scanner-3.3.0.1492-linux
@@ -349,9 +316,8 @@ orbs:
         # Artifacts definitions
         - store_test_results: # Store sonar scan reports
             path: reports
-
-
-# Filters anchors
+# Anchors
+## Filters anchors
 .everytime_filter : &everytime_filter
   filters:
     tags:
@@ -373,7 +339,7 @@ orbs:
       # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
       ignore: /pull\/[0-9]+/
 
-# Parameters anchors
+## Parameters anchors
 .params_multicasskop: &params_multicasskop
   operatorDir: cassandra-k8s-operator/multi-casskop
   operatorName: MultiCassKop
@@ -381,7 +347,7 @@ orbs:
 # Workflow definition
 workflows:
   version: 2
-  # CassKop operator workflow.
+  ## CassKop operator workflow.
   ci-casskop-operator:
     jobs:
       - operator/generate:
@@ -461,7 +427,7 @@ workflows:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-  # CassKop operator workflow.
+  ## CassKop operator workflow.
   ci-multicasskop-operator:
     jobs:
       - operator/generate:
