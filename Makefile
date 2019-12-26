@@ -161,6 +161,13 @@ helm-package:
 	helm repo index docs/helm/
 	make -C multi-casskop helm-package
 
+#
+.PHONY: generate
+generate:
+	echo "Generate zzz-deepcopy objects"
+	operator-sdk version
+	operator-sdk generate k8s
+
 # Build cassandra-k8s-operator executable file in local go env
 .PHONY: build
 build:

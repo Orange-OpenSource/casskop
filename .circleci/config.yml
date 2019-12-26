@@ -1,11 +1,5 @@
 version: 2.1
 
-# Setting up docker executor using casskop-build image.
-executors:
-  operator-build:
-    docker:
-      - image: orangeopensource/casskop-build:v0.9.0
-
 
 experimental:
   notify:
@@ -72,8 +66,11 @@ orbs:
           # Checkout steps
           - checkout:
               path: /home/circleci/cassandra-k8s-operator
-          - attach_workspace: # Create artifact from workdir
-              at: ./
+          - attach_workspace:  # Create artifact from workdir
+              at: /tmp/workspace
+          - run:
+              name: Copying artifacts
+              command: mv /tmp/workspace/* ./
           # Check environment set up correctly
           - run: # Wait until minikube nodes are ready
               name: Wait for minikube
@@ -108,201 +105,257 @@ orbs:
                 cat operator.log
                 false;
                 }
+  operator:
+    # Setting up docker executor using casskop-build image.
+    executors:
+      operator-build:
+        docker:
+          - image: orangeopensource/casskop-build:v0.9.0
+    # Define jobs list
+    jobs:
+      # Build job, which build operator docker image (with operator-sdk build)
+      generate:
+        # PARAMETERS
+        parameters:
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: cassandra-k8s-operator
+          operatorName:
+            type: string
+            description: operator's name
+            default: CassKop
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        executor: operator-build
+        # STEPS
+        steps:
+          # Checkout steps
+          - checkout:
+              path: /home/circleci/cassandra-k8s-operator
+          - setup_remote_docker # Creates a separate environment for each build for security.
+          - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+              keys: # Use checksum of go.sum to version cache.
+                - << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
+          - attach_workspace:  # Create artifact from workdir
+              at: /tmp/workspace
+          - run:
+              name: Copying artifacts
+              command: mv /tmp/workspace/* ./
+          # Build steps
+          - run:
+              name: Download dependencies
+              command: if [ ! -d vendor ]; then go mod download; fi
+          - run:
+              name: Vendor dependencies
+              command: if [ ! -d vendor ]; then go mod vendor; fi
+          - run:
+              name: Build Operator
+              command: make generate
+          # Create artifacts
+          - persist_to_workspace:
+              root: /tmp/workspace/<< parameters.operatorDir >>
+              paths:
+                - build/_output
+                - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+                - vendor
 
-# Define jobs list
-jobs:
-  # Build job, which build operator docker image (with operator-sdk build)
-  build:
-    # PARAMETERS
-    parameters:
-      operatorDir:
-        type: string
-        description: relative path where the build must be run
-        default: cassandra-k8s-operator
-      operatorName:
-        type: string
-        description: operator's name
-        default: CassKop
-    working_directory: /home/circleci/<< parameters.operatorDir >>
-    executor: operator-build
-    # STEPS
-    steps:
-    # Checkout steps
-    - checkout:
-        path: /home/circleci/cassandra-k8s-operator
-    - setup_remote_docker # Creates a separate environment for each build for security.
-    - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
-        keys: # Use checksum of go.sum to version cache.
-          - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
-    # Build steps
-    - run:
-        name: Download dependencies
-        command: if [ ! -d vendor ]; then go mod download; fi
-    - run:
-        name: Vendor dependencies
-        command: if [ ! -d vendor ]; then go mod vendor; fi
-    - run:
-        name: Build Operator
-        command: ls -la ${CIRCLE_WORKING_DIRECTORY} && ls -la && make build
-    # Create artifacts
-    - persist_to_workspace:
-        root: ./
-        paths:
-          - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
-    # Deploy steps
-    - deploy:
-        name: Push image to Docker Hub
-        command: |
-          if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
-            echo "This is a PR, we don't push to Hub."
-          else
-            docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
-            make push
-          fi
-    # Cache configuration
-    - save_cache:
-        name: Save build artefacts in cache
-        key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
-        paths:
-          - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
+      # Build job, which build operator docker image (with operator-sdk build)
+      build:
+        # PARAMETERS
+        parameters:
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: cassandra-k8s-operator
+          operatorName:
+            type: string
+            description: operator's name
+            default: CassKop
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        executor: operator-build
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/cassandra-k8s-operator
+        - setup_remote_docker # Creates a separate environment for each build for security.
+        - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+            keys: # Use checksum of go.sum to version cache.
+              - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+        - attach_workspace:  # Create artifact from workdir
+            at: /tmp/workspace
+        - run:
+            name: Copying artifacts
+            command: mv /tmp/workspace/* ./
+        # Build steps
+        - run:
+            name: Build Operator
+            command: make build
+        # Create artifacts
+        - persist_to_workspace:
+            root: /tmp/workspace/<< parameters.operatorDir >>
+            paths:
+              - build/_output
+              - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+              - vendor
+        # Deploy steps
+        - deploy:
+            name: Push image to Docker Hub
+            command: |
+              if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
+                echo "This is a PR, we don't push to Hub."
+              else
+                docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+                make push
+              fi
+        # Cache configuration
+        - save_cache:
+            name: Save build artefacts in cache
+            key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+            paths:
+              - build/_output
+              - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+              - vendor
 
-  # Unit test job, will execute makefile 'unit-test-with-vendor' step
-  unit-test:
-    # PARAMETERS
-    parameters:
-      operatorDir:
-        type: string
-        description: relative path where the build must be run
-        default: cassandra-k8s-operator
-      operatorName:
-        type: string
-        description: operator's name
-        default: CassKop
-    working_directory: /home/circleci/<< parameters.operatorDir >>
-    executor: operator-build
-    # STEPS
-    steps:
-    # Checkout steps
-    - checkout:
-        path: /home/circleci/cassandra-k8s-operator
-    - attach_workspace:  # Create artifact from workdir
-        at: ./
-    # Unit tests steps
-    - run:
-        name: Unit Tests
-        command: make unit-test-with-vendor
-    # Artifacts definitions
-    - store_artifacts: # Store unit test coverage reports
-        path: coverage.html
-    - persist_to_workspace: # Persist unit tests *.out files
-        root: ./
-        paths:
-          - coverage.out
-          - test-report.out
+      # Unit test job, will execute makefile 'unit-test-with-vendor' step
+      unit-test:
+        # PARAMETERS
+        parameters:
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: cassandra-k8s-operator
+          operatorName:
+            type: string
+            description: operator's name
+            default: CassKop
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        executor: operator-build
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/cassandra-k8s-operator
+        - attach_workspace:  # Create artifact from workdir
+            at: /tmp/workspace
+        - run:
+            name: Copying artifacts
+            command: mv /tmp/workspace/* ./
+        # Unit tests steps
+        - run:
+            name: Unit Tests
+            command: make unit-test-with-vendor
+        # Artifacts definitions
+        - store_artifacts: # Store unit test coverage reports
+            path: coverage.html
+        - persist_to_workspace:
+            root: /tmp/workspace/<< parameters.operatorDir >>
+            paths:
+              - coverage.out
+              - test-report.out
 
-  # Dgoss tests job, will execute make 'dgoss-bootstrap'
-  docker-dgoss-test:
-    # PARAMETERS
-    parameters:
-      operatorDir:
-        type: string
-        description: relative path where the build must be run
-        default: cassandra-k8s-operator
-      operatorName:
-        type: string
-        description: operator's name
-        default: CassKop
-    working_directory: /home/circleci/<< parameters.operatorDir >>
-    executor: operator-build
-    # STEPS
-    steps:
-    # Checkout steps
-    - checkout:
-        path: /home/circleci/cassandra-k8s-operator
-    - setup_remote_docker
-    - attach_workspace:  # Create artifact from workdir
-        at: ./
-    # Dgoss tests steps
-    - run: # Run test wich enable to validate bootstrap image.
-        name: Dgoss tests
-        command: |
-          curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
-          chmod +rx /usr/local/bin/dgoss
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
-          chmod +rx /usr/local/bin/goss
-          export GOSS_PATH=/usr/local/bin/goss
-          export GOSS_FILES_STRATEGY=cp
-          make dgoss-bootstrap
+      # Dgoss tests job, will execute make 'dgoss-bootstrap'
+      docker-dgoss-test:
+        # PARAMETERS
+        parameters:
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: cassandra-k8s-operator
+          operatorName:
+            type: string
+            description: operator's name
+            default: CassKop
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        executor: operator-build
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/cassandra-k8s-operator
+        - setup_remote_docker
+        - attach_workspace:  # Create artifact from workdir
+            at: /tmp/workspace
+        - run:
+            name: Copying artifacts
+            command: mv /tmp/workspace/* ./
+        # Dgoss tests steps
+        - run: # Run test wich enable to validate bootstrap image.
+            name: Dgoss tests
+            command: |
+              curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
+              chmod +rx /usr/local/bin/dgoss
+              curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
+              chmod +rx /usr/local/bin/goss
+              export GOSS_PATH=/usr/local/bin/goss
+              export GOSS_FILES_STRATEGY=cp
+              make dgoss-bootstrap
 
-  # Reporting step, will run sonar report from scan.
-  report:
-    # PARAMETERS
-    parameters:
-      operatorDir:
-        type: string
-        description: relative path where the build must be run
-        default: cassandra-k8s-operator
-      operatorName:
-        type: string
-        description: operator's name
-        default: CassKop
-    working_directory: /home/circleci/<< parameters.operatorDir >>
-    executor: operator-build
-    # STEPS
-    steps:
-    # Checkout steps
-    - checkout:
-        path: /home/circleci/cassandra-k8s-operator
-    - attach_workspace:
-        at: ./
-    - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
-        name: Restore SonarQube Scanner
-        keys:
-          - sonar-scanner-3.3.0.1492-linux
-    # Sonar steps
-    - run:
-        name: Download SonarQube Scanner
-        command: |
-          chmod +x /home/circleci/cassandra-k8s-operator/install_sonar-scanner.sh
-          ./.circleci/install_sonar-scanner.sh
-    - save_cache: # Cache sonar download
-        name: Cache SonarQube Scanner
-        key: sonar-scanner-3.3.0.1492-linux
-        paths:
-          - sonar-scanner-3.3.0.1492-linux
-          - /home/circleci/cassandra-k8s-operator/.sonar
-    - run: # Run sonar scan
-        name: Sonarcloud Scan
-        command: |
-          ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
-          -Dsonar.projectName=<< parameters.operatorName >> \
-          -Dsonar.projectKey=${SONAR_PROJECT} \
-          -Dsonar.login=${SONAR_TOKEN} \
-          -Dsonar.branch.name=${CIRCLE_BRANCH} \
-          -Dsonar.organization=${SONAR_ORGANISATION} \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/<< parameters.operatorDir >> \
-          -Dsonar.sources=. \
-          -Dsonar.sources.inclusions="**/**.go" \
-          -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
-          -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
-          -Dsonar.tests=. \
-          -Dsonar.language=go \
-          -Dsonar.sourceEncoding=UTF-8 \
-          -Dsonar.test.inclusions="**/**_test.go" \
-          -Dsonar.test.exclusions="**/vendor/**" \
-          -Dsonar.go.coverage.reportPaths=coverage.out \
-          -Dsonar.go.tests.reportPaths=test-report.out \
-          -Dsonar.coverage.dtdVerification=false \
-          -Dsonar.log.level=INFO
-          cat -n .scannerwork/report-task.txt
-    # Artifacts definitions
-    - store_test_results: # Store sonar scan reports
-        path: reports
+      # Reporting step, will run sonar report from scan.
+      report:
+        # PARAMETERS
+        parameters:
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: cassandra-k8s-operator
+          operatorName:
+            type: string
+            description: operator's name
+            default: CassKop
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        executor: operator-build
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/cassandra-k8s-operator
+        - attach_workspace:
+            at: ./
+        - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+            name: Restore SonarQube Scanner
+            keys:
+              - sonar-scanner-3.3.0.1492-linux
+        # Sonar steps
+        - run:
+            name: Download SonarQube Scanner
+            command: |
+              chmod +x /home/circleci/cassandra-k8s-operator/install_sonar-scanner.sh
+              ./.circleci/install_sonar-scanner.sh
+        - save_cache: # Cache sonar download
+            name: Cache SonarQube Scanner
+            key: sonar-scanner-3.3.0.1492-linux
+            paths:
+              - sonar-scanner-3.3.0.1492-linux
+              - /home/circleci/cassandra-k8s-operator/.sonar
+        - run: # Run sonar scan
+            name: Sonarcloud Scan
+            command: |
+              ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
+              -Dsonar.projectName=<< parameters.operatorName >> \
+              -Dsonar.projectKey=${SONAR_PROJECT} \
+              -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.branch.name=${CIRCLE_BRANCH} \
+              -Dsonar.organization=${SONAR_ORGANISATION} \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.projectBaseDir=/home/circleci/<< parameters.operatorDir >> \
+              -Dsonar.sources=. \
+              -Dsonar.sources.inclusions="**/**.go" \
+              -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
+              -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
+              -Dsonar.tests=. \
+              -Dsonar.language=go \
+              -Dsonar.sourceEncoding=UTF-8 \
+              -Dsonar.test.inclusions="**/**_test.go" \
+              -Dsonar.test.exclusions="**/vendor/**" \
+              -Dsonar.go.coverage.reportPaths=coverage.out \
+              -Dsonar.go.tests.reportPaths=test-report.out \
+              -Dsonar.coverage.dtdVerification=false \
+              -Dsonar.log.level=INFO
+              cat -n .scannerwork/report-task.txt
+        # Artifacts definitions
+        - store_test_results: # Store sonar scan reports
+            path: reports
 
 # Workflow definition
 workflows:
@@ -310,28 +363,40 @@ workflows:
   # CassKop operator workflow.
   ci-casskop-operator:
     jobs:
-      - build:
+      - operator/generate:
+          name: generate-casskop
           filters:
             tags:
               only: /.*/
 
-      - unit-test:
+      - operator/unit-test:
+          name: unit-test-casskop
           requires:
-            - build
+            - generate-casskop
           filters:
             tags:
               only: /.*/
 
-      - docker-dgoss-test:
+      - operator/build:
+          name: build-casskop
           requires:
-            - build
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
 
-      - report:
+      - operator/docker-dgoss-test:
+          name: docker-dgoss-test-casskop
           requires:
-            - unit-test
+            - build-casskop
+          filters:
+            tags:
+              only: /.*/
+
+      - operator/report:
+          name: report-casskop
+          requires:
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -343,7 +408,7 @@ workflows:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -355,7 +420,7 @@ workflows:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -367,7 +432,7 @@ workflows:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -379,7 +444,7 @@ workflows:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -391,7 +456,7 @@ workflows:
           name: e2e-test CreateOneClusterService
           test_name: CreateOneClusterService
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -403,7 +468,7 @@ workflows:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -415,7 +480,7 @@ workflows:
           name: e2e-test ExecuteCleanup
           test_name: ExecuteCleanup
           requires:
-            - unit-test
+            - unit-test-casskop
           filters:
             tags:
               only: /.*/
@@ -426,25 +491,46 @@ workflows:
   # CassKop operator workflow.
   ci-multicasskop-operator:
     jobs:
-      - build:
-          operatorDir: cassandra-k8s-operator/multi-casskop
-          operatorName: MultiCassKop
+      - operator/generate:
+          name: generate-casskop
+          operatorDir: cassandra-k8s-operator
+          operatorName: CassKop
           filters:
             tags:
               only: /.*/
-      - unit-test:
+      - operator/generate:
+          name: generate-multicasskop
           operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
-            - build
+            - generate-casskop
           filters:
             tags:
               only: /.*/
-      - report:
+      - operator/unit-test:
+          name: unit-test-multicasskop
           operatorDir: cassandra-k8s-operator/multi-casskop
           operatorName: MultiCassKop
           requires:
-            - unit-test
+            - generate-multicasskop
+          filters:
+            tags:
+              only: /.*/
+      - operator/build:
+          name: build-multicasskop
+          operatorDir: cassandra-k8s-operator/multi-casskop
+          operatorName: MultiCassKop
+          requires:
+            - unit-test-multicasskop
+          filters:
+            tags:
+              only: /.*/
+      - operator/report:
+          name: report-multicasskop
+          operatorDir: cassandra-k8s-operator/multi-casskop
+          operatorName: MultiCassKop
+          requires:
+            - unit-test-multicasskop
           filters:
             tags:
               only: /.*/
