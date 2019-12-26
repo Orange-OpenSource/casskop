@@ -1,16 +1,5 @@
 version: 2.1
 
-# PARAMETERS
-parameters:
-  workDir:
-    type: string
-    description: relative path where the build must be run
-    default: cassandra-k8s-operator
-  operatorName:
-    type: string
-    description: operator's name
-    default: CassKop
-
 # Setting up docker executor using casskop-build image.
 executors:
   operator-build:
@@ -123,7 +112,17 @@ orbs:
 jobs:
   # Build job, which build operator docker image (with operator-sdk build)
   build:
-    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
+    # PARAMETERS
+    parameters:
+      workDir:
+        type: string
+        description: relative path where the build must be run
+        default: cassandra-k8s-operator
+      operatorName:
+        type: string
+        description: operator's name
+        default: CassKop
+    working_directory: /home/circleci/<< parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -132,7 +131,7 @@ jobs:
     - setup_remote_docker # Creates a separate environment for each build for security.
     - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
         keys: # Use checksum of go.sum to version cache.
-          - << pipeline.parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+          - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
     # Build steps
     - run:
         name: Download dependencies
@@ -163,7 +162,7 @@ jobs:
     # Cache configuration
     - save_cache:
         name: Save build artefacts in cache
-        key: << pipeline.parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+        key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
@@ -171,7 +170,17 @@ jobs:
 
   # Unit test job, will execute makefile 'unit-test-with-vendor' step
   unit-test:
-    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
+    # PARAMETERS
+    parameters:
+      workDir:
+        type: string
+        description: relative path where the build must be run
+        default: cassandra-k8s-operator
+      operatorName:
+        type: string
+        description: operator's name
+        default: CassKop
+    working_directory: /home/circleci/<< parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -194,7 +203,17 @@ jobs:
 
   # Dgoss tests job, will execute make 'dgoss-bootstrap'
   docker-dgoss-test:
-    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
+    # PARAMETERS
+    parameters:
+      workDir:
+        type: string
+        description: relative path where the build must be run
+        default: cassandra-k8s-operator
+      operatorName:
+        type: string
+        description: operator's name
+        default: CassKop
+    working_directory: /home/circleci/<< parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -217,7 +236,17 @@ jobs:
 
   # Reporting step, will run sonar report from scan.
   report:
-    working_directory: /home/circleci/<< pipeline.parameters.workDir >>
+    # PARAMETERS
+    parameters:
+      workDir:
+        type: string
+        description: relative path where the build must be run
+        default: cassandra-k8s-operator
+      operatorName:
+        type: string
+        description: operator's name
+        default: CassKop
+    working_directory: /home/circleci/<< parameters.workDir >>
     executor: operator-build
     # STEPS
     steps:
@@ -245,13 +274,13 @@ jobs:
         name: Sonarcloud Scan
         command: |
           ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
-          -Dsonar.projectName=<< pipeline.parameters.operatorName >> \
+          -Dsonar.projectName=<< parameters.operatorName >> \
           -Dsonar.projectKey=${SONAR_PROJECT} \
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.branch.name=${CIRCLE_BRANCH} \
           -Dsonar.organization=${SONAR_ORGANISATION} \
           -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/<< pipeline.parameters.workDir >> \
+          -Dsonar.projectBaseDir=/home/circleci/<< parameters.workDir >> \
           -Dsonar.sources=. \
           -Dsonar.sources.inclusions="**/**.go" \
           -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
@@ -388,3 +417,32 @@ workflows:
             branches:
               # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
               ignore: /pull\/[0-9]+/
+
+  # CassKop operator workflow.
+  ci-multicasskop-operator:
+    jobs:
+      - build:
+          workDir: cassandra-k8s-operator/multi-casskop
+          operatorName: MultiCassKop
+          filters:
+            tags:
+              only: /.*/
+      - unit-test:
+          workDir: cassandra-k8s-operator/multi-casskop
+          operatorName: MultiCassKop
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+      - report:
+          workDir: cassandra-k8s-operator/multi-casskop
+          operatorName: MultiCassKop
+          requires:
+            - unit-test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              # report sonar only from canonical repository
+              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
