@@ -1,9 +1,12 @@
 version: 2.1
 
+
+# Setting up docker executor using casskop-build image.
 executors:
   casskop-build:
     docker:
       - image: orangeopensource/casskop-build:v0.9.0
+
 
 experimental:
   notify:
@@ -11,24 +14,27 @@ experimental:
       only:
         - master
 
+# Define shareable packages of configuration
+# elements used into the worflow (= Orbs)
 orbs:
   minikube:
+    # Setting up VM executor for minikube.
     executors:
       vm-classic:
         machine:
           image: circleci/classic:201808-01
-
+    # Setting up job list
     jobs:
-      e2e-orb:
+      e2e-orb: # Define job which execute 'docker-e2e-test-fix-arg' makefile job
+        executor: vm-classic
         working_directory: /home/circleci/cassandra-k8s-operator
+        # PARAMETERS
         parameters:
-          test_name:
+          test_nametest_name:
             description: name of the test in e2e code
             type: string
             default: toto
-        executor: vm-classic
-
-
+        # ENVIRONMENTS VARIABLES
         environment:
           K8S_VERSION: v1.14.0
           KUBECONFIG: /home/circleci/.kube/config
@@ -42,32 +48,30 @@ orbs:
           GO111MODULE: on
           DOCKER_LATEST: 1
           GIN_MODE: release
-
-
+        # STEPS
         steps:
-          - run:
+          # Pre-checkout steps
+          - run: # Install Minikube components to be able to run it.
               name: Setup minikube
               command: |
                 wget -O minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-          - run:
+          - run: # Run minikube with expected parameters
               name: Start minikube
               background: true
               command: |
                 sudo -E minikube start --vm-driver=none --cpus 4 --memory 4096 --kubernetes-version=${K8S_VERSION}
-
-          - run:
+          - run: # Install kubectl cli
               name: Setup kubectl
               command: |
                 wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
                 mkdir -p ${HOME}/.kube
                 touch ${HOME}/.kube/config
-
+          # Checkout steps
           - checkout
-
-          - attach_workspace:
+          - attach_workspace: # Create artifact from workdir
               at: ./
-
-          - run:
+          # Check environment set up correctly
+          - run: # Wait until minikube nodes are ready
               name: Wait for minikube
               command: |
                 timeout 300s bash \<<EOT
@@ -82,14 +86,13 @@ orbs:
                     sleep 1
                   done
                 EOT
-
-          - run:
+          - run: # Check we correctly access to K8s information with kubectl cli
               name: Test k8s
               command: |
                 kubectl get nodes
                 kubectl get pods
-
-          - run:
+          # Acceptance test
+          - run: # Run acceptance test through 'docker-e2e-test-fix-arg' makefile step
               name: Operator acceptance test
               no_output_timeout: 1200
               command: |
@@ -102,39 +105,38 @@ orbs:
                 false;
                 }
 
+# Define jobs list
 jobs:
-
+  # Build job, which build operator docker image (with operator-sdk build)
   build:
     working_directory: /home/circleci/cassandra-k8s-operator
     executor: casskop-build
+    # STEPS
     steps:
+    # Checkout steps
     - checkout
-
-    - setup_remote_docker
-
-    - restore_cache:
-        keys:
+    - setup_remote_docker # Creates a separate environment for each build for security.
+    - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+        keys: # Use checksum of go.sum to version cache.
           - build-{{ .Branch }}-{{ checksum "go.sum" }}
-
+    # Build steps
     - run:
         name: Download dependencies
         command: if [ ! -d vendor ]; then go mod download; fi
-
     - run:
         name: Vendor dependencies
         command: if [ ! -d vendor ]; then go mod vendor; fi
-
     - run:
         name: Build Cassandra Operator
         command: make build
-
+    # Create artifacts
     - persist_to_workspace:
         root: ./
         paths:
           - build/_output
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
-
+    # Deploy steps
     - deploy:
         name: Push image to Docker Hub
         command: |
@@ -144,7 +146,7 @@ jobs:
             docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
             make push
           fi
-
+    # Cache configuration
     - save_cache:
         name: Save build artefacts in cache
         key: build-{{ .Branch }}-{{ checksum "go.sum" }}
@@ -153,40 +155,42 @@ jobs:
           - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
           - vendor
 
+  # Unit test job, will execute makefile 'unit-test-with-vendor' step
   unit-test:
     working_directory: /home/circleci/cassandra-k8s-operator
     executor: casskop-build
+    # STEPS
     steps:
+    # Checkout steps
     - checkout
-
-    - attach_workspace:
+    - attach_workspace:  # Create artifact from workdir
         at: ./
+    # Unit tests steps
     - run:
         name: Unit Tests
         command: make unit-test-with-vendor
-
-    - store_artifacts:
+    # Artifacts definitions
+    - store_artifacts: # Store unit test coverage reports
         path: coverage.html
-
-    - persist_to_workspace:
+    - persist_to_workspace: # Persist unit tests *.out files
         root: ./
         paths:
           - coverage.out
           - test-report.out
 
-
-
+  # Dgoss tests job, will execute make 'dgoss-bootstrap'
   docker-dgoss-test:
     working_directory: /home/circleci/cassandra-k8s-operator
     executor: casskop-build
+    # STEPS
     steps:
+    # Checkout steps
     - checkout
-
     - setup_remote_docker
-
-    - attach_workspace:
+    - attach_workspace:  # Create artifact from workdir
         at: ./
-    - run:
+    # Dgoss tests steps
+    - run: # Run test wich enable to validate bootstrap image.
         name: Dgoss tests
         command: |
           curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
@@ -197,35 +201,33 @@ jobs:
           export GOSS_FILES_STRATEGY=cp
           make dgoss-bootstrap
 
-
+  # Reporting step, will run sonar report from scan.
   report:
     working_directory: /home/circleci/cassandra-k8s-operator
     executor: casskop-build
+    # STEPS
     steps:
+    # Checkout steps
     - checkout
-
     - attach_workspace:
         at: ./
-
-    - restore_cache:
+    - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
         name: Restore SonarQube Scanner
         keys:
           - sonar-scanner-3.3.0.1492-linux
-
+    # Sonar steps
     - run:
         name: Download SonarQube Scanner
         command: |
           chmod +x .circleci/install_sonar-scanner.sh
           ./.circleci/install_sonar-scanner.sh
-
-    - save_cache:
+    - save_cache: # Cache sonar download
         name: Cache SonarQube Scanner
         key: sonar-scanner-3.3.0.1492-linux
         paths:
           - sonar-scanner-3.3.0.1492-linux
           - /home/circleci/cassandra-k8s-operator/.sonar
-
-    - run:
+    - run: # Run sonar scan
         name: Sonarcloud Scan
         command: |
           ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
@@ -250,17 +252,16 @@ jobs:
           -Dsonar.coverage.dtdVerification=false \
           -Dsonar.log.level=INFO
           cat -n .scannerwork/report-task.txt
-
-    - store_test_results:
+    # Artifacts definitions
+    - store_test_results: # Store sonar scan reports
         path: reports
 
-
+# Workflow definition
 workflows:
   version: 2
 
-  master:
+  ci-casskop-operator:
     jobs:
-
       - build:
           filters:
             tags:
@@ -373,3 +374,34 @@ workflows:
             branches:
               # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
               ignore: /pull\/[0-9]+/
+
+  ci-multicasskop-operator:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+
+      - unit-test:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - docker-dgoss-test:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+
+      - report:
+          requires:
+            - unit-test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              # report sonar only from canonical repository
+              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
