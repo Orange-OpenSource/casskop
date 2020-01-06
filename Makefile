@@ -61,7 +61,8 @@ else
 	VERSION := $(BASEVERSION)-${BRANCH}
 endif
 
-HELM_VERSION := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+HELM_TARGET_DIR ?= docs/helm
 
 #si branche master, on pousse le tag latest
 ifeq ($(CIRCLE_BRANCH),master)
@@ -157,9 +158,8 @@ clean:
 helm-package:
 	@echo Packaging $(HELM_VERSION)
 	helm package helm/cassandra-operator
-	mv cassandra-operator-$(HELM_VERSION).tgz docs/helm
-	helm repo index docs/helm/
-	make -C multi-casskop helm-package
+	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
+	helm repo index $(HELM_TARGET_DIR)/
 
 #
 .PHONY: generate
