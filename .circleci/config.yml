@@ -318,6 +318,7 @@ orbs:
             path: reports
 
       publish-helm:
+        <<: *params_operator
         working_directory: /home/circleci/<< parameters.operatorDir >>
         docker:
           - image: google/cloud-sdk
