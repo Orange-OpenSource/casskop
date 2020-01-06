@@ -19,7 +19,6 @@ set -o nounset
 set -o pipefail
 
 HELM_TARGET_DIR=$(pwd)/tmp/incubator
-readonly HELM_VERSION=$(cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $2}')
 readonly HELM_URL=https://storage.googleapis.com/kubernetes-helm
 readonly HELM_TARBALL=helm-v2.9.1-linux-amd64.tar.gz
 #readonly STABLE_REPO_URL=https://orange-kubernetes-charts.storage.googleapis.com/
