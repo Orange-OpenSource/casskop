@@ -66,8 +66,8 @@ else
 	VERSION := $(BASEVERSION)-${BRANCH}
 endif
 
-HELM_VERSION := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
-
+HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+HELM_TARGET_DIR ?= ../docs/helm
 #si branche master, on pousse le tag latest
 ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
@@ -136,9 +136,9 @@ clean:
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)
-	helm package helm/multi-casskop
-	mv multi-casskop-$(HELM_VERSION).tgz ../docs/helm
-	helm repo index ../docs/helm/
+	helm package helm/cassandra-operator
+	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
+	helm repo index $(HELM_TARGET_DIR)/
 
 # Build cassandra-k8s-operator executable file in local go env
 
