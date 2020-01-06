@@ -328,7 +328,7 @@ orbs:
               path: /home/circleci/cassandra-k8s-operator
           - run:
               name: publish-helm
-              command: /home/circleci/cassandra-k8s-operator/tools/publish_helm_gcs.sh
+              command: GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/cassandra-k8s-operator/tools/publish_helm_gcs.sh
 # Anchors
 ## Filters anchors
 .everytime_filter : &everytime_filter
