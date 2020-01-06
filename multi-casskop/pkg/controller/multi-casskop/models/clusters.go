@@ -23,13 +23,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Cluster define k8s clsuter information we need.
+// Cluster defines k8s cluster information we need.
 type Cluster struct {
 	Name string
 	Cluster *cluster.Cluster
 }
 
-// Clusters defined each kubernetes cluster we want to connect on it.
+// Clusters defines each kubernetes cluster we want to connect on it.
 type Clusters struct {
 	Local *Cluster
 	Remotes []*Cluster
