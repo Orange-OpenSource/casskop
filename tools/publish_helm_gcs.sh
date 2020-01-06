@@ -18,7 +18,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-HELM_TARGET_DIR=$(pwd)/incubator
+HELM_TARGET_DIR=$(pwd)/tmp/incubator
 readonly HELM_VERSION=$(cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $2}')
 readonly HELM_URL=https://storage.googleapis.com/kubernetes-helm
 readonly HELM_TARBALL=helm-v2.9.1-linux-amd64.tar.gz
@@ -28,6 +28,7 @@ readonly INCUBATOR_REPO_URL=https://orange-kubernetes-charts-incubator.storage.g
 readonly GCS_BUCKET_INCUBATOR=gs://orange-kubernetes-charts-incubator
 
 main() {
+    mkdir -p tmp
     setup_helm_client
     authenticate
 
@@ -35,7 +36,7 @@ main() {
 #        log_error "Not all stable charts could be packaged and synced!"
 #    fi
     if ! sync_repo ${HELM_TARGET_DIR} "$GCS_BUCKET_INCUBATOR" "$INCUBATOR_REPO_URL"; then
-        log_error "Not all incubator charts could be packaged and synced!"
+        log_error "Not all incubator charts could be packaged and pushed!"
     fi
 }
 
@@ -43,18 +44,17 @@ setup_helm_client() {
     echo "Setting up Helm client..."
 
     curl --user-agent curl-ci-sync -sSL -o "$HELM_TARBALL" "$HELM_URL/$HELM_TARBALL"
-    tar xzfv "$HELM_TARBALL"
+    tar xzfv "$HELM_TARBALL" -C tmp
 
-#    PATH="$(pwd)/linux-amd64/:$PATH"
-    PATH="$(pwd)/darwin-amd64/:$PATH"
+    PATH="$(pwd)/tmp/linux-amd64/:$PATH"
 
     helm init --client-only
-    helm repo add incubator "$INCUBATOR_REPO_URL"
+    helm repo add incubator-orange "$INCUBATOR_REPO_URL"
 }
 
 authenticate() {
     echo "Authenticating with Google Cloud..."
-    gcloud auth activate-service-account --key-file <(base64 --decode <<< "$SYNC_CREDS")
+    gcloud auth activate-service-account --key-file <(base64 --decode <<< "$GCP_SA_CREDS")
 }
 
 sync_repo() {
