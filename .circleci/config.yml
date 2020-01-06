@@ -316,6 +316,18 @@ orbs:
         # Artifacts definitions
         - store_test_results: # Store sonar scan reports
             path: reports
+
+      publish-helm:
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        docker:
+          - image: google/cloud-sdk
+        steps:
+          # Checkout steps
+          - checkout:
+              path: /home/circleci/cassandra-k8s-operator
+          - run:
+              name: publish-helm
+              command: /home/circleci/cassandra-k8s-operator/tools/publish_helm_gcs.sh
 # Anchors
 ## Filters anchors
 .everytime_filter : &everytime_filter
@@ -338,6 +350,14 @@ orbs:
     branches:
       # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
       ignore: /pull\/[0-9]+/
+
+.only_on_release_tag: &only_on_release_tag
+  # ignore any commit on any branch by default
+  branches:
+    ignore: /.*/
+  # only act on version tags
+  tags:
+    only: /v[0-9]+(\.[0-9]+)*-release/
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
@@ -426,6 +446,12 @@ workflows:
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
+      - operator/publish-helm:
+          name: publish-helm-orange-incubator
+          requires:
+            - report-casskop
+ #         <<: *only_on_release_tag
+          <<: *everytime_filter
 
   ## CassKop operator workflow.
   ci-multicasskop-operator:
@@ -451,3 +477,10 @@ workflows:
           requires:
             - build-multicasskop
           <<: *canonical_repo_filter
+      - operator/publish-helm:
+          name: publish-helm-orange-incubator
+          <<: *params_multicasskop
+          requires:
+            - report-multicasskop
+#          <<: *only_on_release_tag
+          <<: *everytime_filter
