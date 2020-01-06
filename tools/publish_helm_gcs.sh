@@ -75,11 +75,7 @@ sync_repo() {
 
     echo "Packaging operators ..."
     if ! HELM_TARGET_DIR=${target_dir} make helm-package; then
-      log_error "Problem packaging casskop operator"
-      exit_code=1
-    fi
-    if ! HELM_TARGET_DIR=${target_dir} make -C multi-casskop helm-package; then
-      log_error "Problem packaging multi-casskop operator"
+      log_error "Problem packaging operator"
       exit_code=1
     fi
 
