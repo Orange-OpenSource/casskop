@@ -449,9 +449,9 @@ workflows:
           <<: *ignore_fork_pr_filter
       - operator/publish-helm:
           name: publish-helm-orange-incubator
-          requires:
-            - report-casskop
- #         <<: *only_on_release_tag
+#          requires:
+#            - report-casskop
+#          <<: *only_on_release_tag
           <<: *everytime_filter
 
   ## CassKop operator workflow.
@@ -481,7 +481,7 @@ workflows:
       - operator/publish-helm:
           name: publish-helm-orange-incubator
           <<: *params_multicasskop
-          requires:
-            - report-multicasskop
+#          requires:
+#            - report-multicasskop
 #          <<: *only_on_release_tag
           <<: *everytime_filter
