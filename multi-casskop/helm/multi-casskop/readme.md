@@ -39,8 +39,8 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Install a multi-casskop release :
 
 ```console
-$ helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
-$ helm install --name multi-casskop casskop/multi-casskop
+$ helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+$ helm install --name multi-casskop orange-incubator/multi-casskop
 ```
 
 ### Listing deployed charts
@@ -111,12 +111,12 @@ In that case you can get an error like :
 
 
 ```
-$ helm install --name multi-casskop casskop/multi-casskop
+$ helm install --name multi-casskop orange-incubator/multi-casskop
 Error: customresourcedefinitions.apiextensions.k8s.io "multicasskop.db.orange.com" already exists
 ```
 
 In this case there si a parameter to say to not uses the hook to install the CRD :
 
 ```
-$ helm install --name multi-casskop casskop/multi-casskop --no-hooks
+$ helm install --name multi-casskop orange-incubator/multi-casskop --no-hooks
 ```
