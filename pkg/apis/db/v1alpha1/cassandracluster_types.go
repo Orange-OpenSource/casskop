@@ -683,7 +683,7 @@ type CassandraClusterSpec struct {
 	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MaxPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
-	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
+	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
@@ -823,7 +823,7 @@ type CassandraLastAction struct {
 	Status string `json:"status,omitempty"`
 
 	// Type d'action a effectuer : UpdateVersion, UpdateBaseImage, UpdateConfigMap..
-	Name string `json:"Name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 	EndTime   *metav1.Time `json:"endTime,omitempty"`
@@ -835,7 +835,7 @@ type CassandraLastAction struct {
 
 // PodLastOperation is managed via labels on Pods set by an administrator
 type PodLastOperation struct {
-	Name string `json:"Name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	Status string `json:"status,omitempty"`
 
