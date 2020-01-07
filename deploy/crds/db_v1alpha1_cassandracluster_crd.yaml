@@ -40,11 +40,11 @@ spec:
                 update the SeedList according to new cluster CRD topology by default
                 a boolean is false
               type: boolean
-            baseImage:
-              description: Base image to use for a Cassandra deployment.
-              type: string
             bootstrapImage:
               description: 'Image used for bootstrapping cluster (use the form : base:version)'
+              type: string
+            cassandraImage:
+              description: Image + version to use for Cassandra
               type: string
             configMapName:
               description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml)
@@ -76,7 +76,7 @@ spec:
               type: boolean
             hardAntiAffinity:
               description: HardAntiAffinity defines if the PodAntiAffinity of the
-                statefulsets has to be hard (it's soft by default)
+                statefulset has to be hard (it's soft by default)
               type: boolean
             imageJolokiaSecret:
               description: JMX Secret if Set is used to set JMX_USER and JMX_PASSWORD
@@ -87,11 +87,7 @@ spec:
                 the imagePullSecrets to the statefulsets
               type: object
             imagepullpolicy:
-              description: ImagePullPolicy define the pull poicy for C* docker image
-              enum:
-              - Always
-              - Never
-              - IfNotPresent
+              description: ImagePullPolicy define the pull policy for C* docker image
               type: string
             initContainerCmd:
               description: Command to execute in the initContainer in the targeted
@@ -120,6 +116,12 @@ spec:
                   description: Annotations specifies the annotations to attach to
                     headless service the CassKop operator creates
                   type: object
+                tolerations:
+                  description: Tolerations specifies the tolerations to attach to
+                    the pods the CassKop operator creates
+                  items:
+                    type: object
+                  type: array
               type: object
             readOnlyRootFilesystem:
               description: Make the pod as Readonly
@@ -173,7 +175,7 @@ spec:
                 appropriate Kubernetes Nodes
               properties:
                 dc:
-                  description: Liste of DC defined in the CassandraCluster
+                  description: List of DC defined in the CassandraCluster
                   items:
                     properties:
                       labels:
@@ -221,9 +223,9 @@ spec:
                     type: object
                   type: array
               type: object
-            version:
-              description: Version of Cassandra to be deployed.
-              type: string
+          required:
+          - imagepullpolicy
+          - maxPodUnavailable
           type: object
         status:
           properties:
