@@ -309,10 +309,8 @@ helm repo update
 helm install --name casskop casskop/cassandra-operator
 ```
 
-It's also possible to decide to temporarily install a developement release :
+It's also possible to decide to temporarily install a developement release by specifying the image tag to use :
 ```
-helm uninstall casskop
-helm repo update
 helm install --name casskop casskop/cassandra-operator --set debug.enabled=true --no-hooks \
 --set image.tag=v0.5.0b-branch1
 ```
