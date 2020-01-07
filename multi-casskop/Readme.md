@@ -87,14 +87,14 @@ CassKop must be deployed on each targeted Kubernetes clusters.
 Add the Helm repository for CassKop
 
 ```console
-$ helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
+$ helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
 $ helm repo update
 ```
 
 Connect to each kubernetes you want to deploy your Cassandra clusters to and install CassKop:
 
 ```console
-$ helm install --name casskop casskop/cassandra-operator
+$ helm install --name casskop orange-incubator/cassandra-operator
 ```
 
 ### Install External-DNS
@@ -113,7 +113,7 @@ Proceed with Multi-CassKop installation only when [Pre-requisites](#pre-requisit
 Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo and semantic version.
 
 ```
-helm install --name multi-casskop casskop/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
 > if you get an error complaining that the CRD already exists, then replay it with `--no-hooks`
