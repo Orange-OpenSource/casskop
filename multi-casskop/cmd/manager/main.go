@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"flag"
+	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop/models"
+	//	"flag"
+	"github.com/jessevdk/go-flags"
 	"log"
 	"os"
 	"strings"
@@ -58,6 +60,21 @@ func getLogLevel() logrus.Level {
 	return logrus.InfoLevel
 }
 
+type Options struct {
+	// Slice of bool will append 'true' each time the option
+	// is encountered (can be set multiple times, like -vvv)
+	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+
+	Local string `short:"l" description:"The local k8s cluster name"`
+
+	// Example of a slice of strings
+	Remotes []string `short:"r" description:"The remotes k8S cluster name list"`
+}
+
+var opts Options
+
+var parser = flags.NewParser(&opts, flags.Default)
+
 func main() {
 
 	logType, found := os.LookupEnv("LOG_TYPE")
@@ -66,44 +83,51 @@ func main() {
 	}
 	logrus.SetLevel(getLogLevel())
 
-	flag.Parse()
-	if flag.NArg() < 1 {
-		log.Fatalf("Usage: MultiCasskop cluster-1 cluster-2 .. cluster-n")
+	if _, err := parser.Parse(); err != nil {
+		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
-	var clusters []mc.Clusters
+	var clusters models.Clusters
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
 	}
 
-	for i := 0; i < flag.NArg(); i++ {
-		clusterName := flag.Arg(i)
+	// Configuring Local cluster
+	logrus.Infof("Configuring Client for local cluster %s. using local k8s api access",
+		opts.Local)
+
+	cfg, err := kconfig.GetConfig()
+	if err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+	// Set up local cluster
+	clusters.Local = &models.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
+		cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
+
+	// Configuring Remotes clusters
+	for i, remote := range opts.Remotes {
+
 		var cfg *rest.Config
 		var err error
 
-		if i == 0 {
-			logrus.Infof("Configuring Client %d for local cluster %s (first in arg list). using local k8s api access",
-				i+1, clusterName)
-			cfg, err = kconfig.GetConfig()
-			if err != nil {
-				logrus.Error(err)
-				os.Exit(1)
-			}
-		} else {
-			logrus.Infof("Configuring Client %d for distant cluster %s. using imported secret of same name", i+1,
-				clusterName)
-			cfg, _, err = config.NamedConfigAndNamespace(clusterName)
-			if err != nil {
-				log.Fatal(err)
-			}
-
+		logrus.Infof("Configuring Client %d for remote cluster %s. using imported secret of same name", i+1,
+			remote)
+		cfg, _, err = config.NamedConfigAndNamespace(remote)
+		if err != nil {
+			log.Fatal(err)
 		}
-		clusters = append(clusters,
-			mc.Clusters{Name: clusterName, Cluster: cluster.New(clusterName, cfg,
-				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 
+		// Set up Remotes clusters
+		clusters.Remotes = append(clusters.Remotes,
+			&models.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
+				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 	}
 
 	logrus.Info("Creating Controller")
