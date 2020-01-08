@@ -724,6 +724,7 @@ type RackSlice []Rack
 // DC allow to configure Cassandra RC according to kubernetes nodeselector labels
 type DC struct {
 	//Name of the CassandraDC
+	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
 	//Labels used to target Kubernetes nodes
 	Labels map[string]string `json:"labels,omitempty"`
@@ -742,6 +743,7 @@ type DC struct {
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
 type Rack struct {
 	//Name of the Rack
+	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
 	// Flag to tell the operator to trigger a rolling restart of the Rack
 	RollingRestart bool `json:"rollingRestart,omitempty"`
@@ -822,7 +824,7 @@ type CassandraLastAction struct {
 	// such as cleanup, upgradesstables..
 	Status string `json:"status,omitempty"`
 
-	// Type d'action a effectuer : UpdateVersion, UpdateBaseImage, UpdateConfigMap..
+	// Type of action to perform : UpdateVersion, UpdateBaseImage, UpdateConfigMap..
 	Name string `json:"name,omitempty"`
 
 	StartTime *metav1.Time `json:"startTime,omitempty"`
