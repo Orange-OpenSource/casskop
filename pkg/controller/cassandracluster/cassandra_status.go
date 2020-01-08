@@ -98,7 +98,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
-	// Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
+	// Meanwhile we allow to check for new changes if unlockNextOperation	 has been set (to recover from problems)
 	if needSpecificChange ||
 		(!rcc.thereIsPodDisruption() &&
 			lastAction.Status != api.StatusOngoing &&
