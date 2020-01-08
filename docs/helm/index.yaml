@@ -3,7 +3,7 @@ entries:
   cassandra-operator:
   - apiVersion: v1
     appVersion: 0.5.0-release
-    created: 2019-11-26T16:53:32.092636+01:00
+    created: "2019-12-26T11:45:37.852045+01:00"
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 801da42b033f90acc9e75d45ce99458b5a07d20de40f790702ed9c842e7367bc
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -26,7 +26,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: 0.4.1-release
-    created: 2019-11-26T16:53:32.092296+01:00
+    created: "2019-12-26T11:45:37.851402+01:00"
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 97e81b96370276e85d5cc4a87a49ebcf8a94d3dc36220047d7e8794fedd7ed1c
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -49,7 +49,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: 0.4.0-release
-    created: 2019-11-26T16:53:32.091962+01:00
+    created: "2019-12-26T11:45:37.850757+01:00"
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 8ee47e7fb1328b77af3102686f546f8807f973a0fc5f22929b7915a5a5ca5d12
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -72,7 +72,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.3.2-release
-    created: 2019-11-26T16:53:32.091606+01:00
+    created: "2019-12-26T11:45:37.850135+01:00"
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: 3adb84740d75ab1bc9f674e03553cf43aa1dac7661817b6622beee58c1e08aa1
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -95,7 +95,7 @@ entries:
     version: 0.3.2
   - apiVersion: v1
     appVersion: 0.3.1-mater
-    created: 2019-11-26T16:53:32.091242+01:00
+    created: "2019-12-26T11:45:37.849472+01:00"
     description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
     digest: d4eb5ebe3de38e2d75184f3734e3f88ef9e82ebb88bc4beb44544f7b5b69702f
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
@@ -119,10 +119,10 @@ entries:
   multi-casskop:
   - apiVersion: v1
     appVersion: 0.5.0-release
-    created: 2019-11-26T16:53:32.093007+01:00
+    created: "2019-12-26T11:45:37.852451+01:00"
     description: A Helm chart for MultiCassKop - the Orange Multiple Cassandra Kubernetes
       operator
-    digest: 40daf27c095f699b01d398d8f21b6489bade52eea55b422ceb70cba6a2e6411d
+    digest: 438ce9afb3888dcb2fa86b97a564b10a3a957115a37729a340a862ff0df2ed99
     home: https://github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop
     keywords:
     - operator
@@ -145,4 +145,4 @@ entries:
     urls:
     - multi-casskop-0.5.0.tgz
     version: 0.5.0
-generated: 2019-11-26T16:53:32.090688+01:00
+generated: "2019-12-26T11:45:37.848111+01:00"
