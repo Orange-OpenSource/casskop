@@ -6,6 +6,7 @@ require (
 	admiralty.io/multicluster-controller v0.2.0 // indirect
 	admiralty.io/multicluster-service-account v0.6.0 // indirect
 	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
+	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/emicklei/go-restful v2.9.6+incompatible // indirect

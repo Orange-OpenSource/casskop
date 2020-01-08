@@ -630,15 +630,16 @@ type CassandraClusterSpec struct {
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
 
 	// Image used for bootstrapping cluster (use the form : base:version)
-	BootstrapImage string `json:"bootstrapImage"`
+	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
 	// Command to execute in the initContainer in the targeted image
-	InitContainerImage string `json:"initContainerImage"`
+	InitContainerImage string `json:"initContainerImage,omitempty"`
 	// Command to execute in the initContainer in the targeted image
-	InitContainerCmd string `json:"initContainerCmd"`
+	InitContainerCmd string `json:"initContainerCmd,omitempty"`
 
 	//RunAsUser define the id of the user to run in the Cassandra image
-	RunAsUser *int64 `json:"runAsUser"`
+	// +kubebuilder:validation:Minimum=1
+	RunAsUser *int64 `json:"runAsUser,omitempty"`
 
 	//Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
@@ -682,9 +683,10 @@ type CassandraClusterSpec struct {
 	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MaxPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
-	UnlockNextOperation bool `json:"_unlockNextOperation,omitempty"`
+	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
 	//Define the Capacity for Persistent Volume Claims in the local storage
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	DataCapacity string `json:"dataCapacity,omitempty"`
 
 	//Define StorageClass for Persistent Volume Claims in the local storage.
@@ -722,6 +724,7 @@ type RackSlice []Rack
 // DC allow to configure Cassandra RC according to kubernetes nodeselector labels
 type DC struct {
 	//Name of the CassandraDC
+	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
 	//Labels used to target Kubernetes nodes
 	Labels map[string]string `json:"labels,omitempty"`
@@ -740,6 +743,7 @@ type DC struct {
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
 type Rack struct {
 	//Name of the Rack
+	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
 	// Flag to tell the operator to trigger a rolling restart of the Rack
 	RollingRestart bool `json:"rollingRestart,omitempty"`
@@ -773,7 +777,9 @@ type CassandraResources struct {
 
 // CPUAndMem defines how many cpu and ram the container will request/limit
 type CPUAndMem struct {
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	CPU    string `json:"cpu"`
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
 }
 
@@ -818,8 +824,8 @@ type CassandraLastAction struct {
 	// such as cleanup, upgradesstables..
 	Status string `json:"status,omitempty"`
 
-	// Type d'action a effectuer : UpdateVersion, UpdateBaseImage, UpdateConfigMap..
-	Name string `json:"Name,omitempty"`
+	// Type of action to perform : UpdateVersion, UpdateBaseImage, UpdateConfigMap..
+	Name string `json:"name,omitempty"`
 
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 	EndTime   *metav1.Time `json:"endTime,omitempty"`
@@ -831,7 +837,7 @@ type CassandraLastAction struct {
 
 // PodLastOperation is managed via labels on Pods set by an administrator
 type PodLastOperation struct {
-	Name string `json:"Name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	Status string `json:"status,omitempty"`
 
