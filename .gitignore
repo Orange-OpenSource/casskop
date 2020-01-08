@@ -113,6 +113,7 @@ debug
 .idea/
 .vscode
 cassandra-operator.env
+multi-casskop/multi-casskop.env
 telepresence.log
 build/_output
 pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
