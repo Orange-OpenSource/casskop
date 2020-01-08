@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Debug" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="true">
-    <module name="cassandra-k8s-operator" />
+    <module name="casskop" />
     <working_directory value="$PROJECT_DIR$" />
     <go_parameters value="-i" />
     <envs>
@@ -21,8 +21,8 @@
       </ENTRIES>
     </EXTENSION>
     <kind value="PACKAGE" />
-    <filePath value="$PROJECT_DIR$/|$PROJECT_DIR$/cmd/cassandra-k8s-operator/main.go|$PROJECT_DIR$/cmd/cassandra-k8s-operator/main.go" />
-    <package value="github.com/Orange-OpenSource/cassandra-k8s-operator/cmd/manager" />
+    <filePath value="$PROJECT_DIR$/|$PROJECT_DIR$/cmd/casskop/main.go|$PROJECT_DIR$/cmd/casskop/main.go" />
+    <package value="github.com/Orange-OpenSource/casskop/cmd/manager" />
     <directory value="$PROJECT_DIR$/" />
     <method v="2" />
   </configuration>

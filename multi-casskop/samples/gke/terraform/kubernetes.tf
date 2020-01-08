@@ -90,7 +90,7 @@ resource "kubernetes_storage_class" "cassandra-standard" {
 // helm repository 
 data "helm_repository" "casskop" {
   name = "casskop"
-  url  = "https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm"
+  url  = "https://Orange-OpenSource.github.io/casskop/helm"
 
   depends_on = [kubernetes_cluster_role_binding.tiller-admin-binding]
 }

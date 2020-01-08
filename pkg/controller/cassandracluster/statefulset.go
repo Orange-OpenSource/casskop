@@ -24,8 +24,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"

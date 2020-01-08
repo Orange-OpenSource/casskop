@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/apis/db/v1alpha1"
 )
 
 func init() {

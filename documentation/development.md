@@ -65,8 +65,8 @@ $ make install
 Checkout the project.
 
 ```sh
-$ git clone https://github.com/Orange-OpenSource/cassandra-k8s-operator.git
-$ cd cassandra-k8s-operator
+$ git clone https://github.com/Orange-OpenSource/casskop.git
+$ cd casskop
 ```
 
 ### Local kubernetes setup
@@ -229,7 +229,7 @@ Install the Helm chart.
 
 ```
 $ helm install ./helm/cassandra-operator \
-    --set-string image.repository=orangeopensource/cassandra-k8s-operator,image.tag=0.4.0-local-dev-helm \
+    --set-string image.repository=orangeopensource/casskop,image.tag=0.4.0-local-dev-helm \
     --name local-dev-helm
 ```
 
@@ -342,7 +342,7 @@ For ease, we have same version for casskop and multi-casskop
 - [ ] generate casskop helm with `make helm-package`
 - [ ] add to git docs/helm, commit & push
 - [ ] once the PR is merged to master, create the release with content of changelog for this version
-    - https://github.com/Orange-OpenSource/cassandra-k8s-operator/releases
+    - https://github.com/Orange-OpenSource/casskop/releases
 
 ## With Helm
 
@@ -410,7 +410,7 @@ We used the SDK to create the repository layout. This command is for memory ;) (
 
 ```
 #old version
- operator-sdk new cassandra-k8s-operator --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+ operator-sdk new casskop --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
 #new version
 operator-sdk new casskop --dep-manager=modules --repo=github.com.Orange-OpenSource/casskop --type=go
 ```

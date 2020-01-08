@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="telepresence KaaS BGL" type="GoApplicationRunConfiguration" factoryName="Go Application">
-    <module name="cassandra-k8s-operator" />
+    <module name="casskop" />
     <working_directory value="$PROJECT_DIR$/" />
     <go_parameters value="-i" />
     <envs>
@@ -41,7 +41,7 @@
     </EXTENSION>
     <kind value="PACKAGE" />
     <filePath value="$PROJECT_DIR$/" />
-    <package value="github.com/Orange-OpenSource/cassandra-k8s-operator/cmd/manager" />
+    <package value="github.com/Orange-OpenSource/casskop/cmd/manager" />
     <directory value="$PROJECT_DIR$/" />
     <method v="2" />
   </configuration>

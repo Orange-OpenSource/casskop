@@ -6,16 +6,16 @@
 
 Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above multiple Kubernetes clusters.
 
-- PR [#145](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/145) - Fix [Issue #142](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/142) PodStatus which rarely fails in
+- PR [#145](https://github.com/Orange-OpenSource/casskop/pull/145) - Fix [Issue #142](https://github.com/Orange-OpenSource/casskop/issues/142) PodStatus which rarely fails in
   unit tests
-- PR [#146](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/146) - Fix [Issue #143](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/143) External update of SeedList was not possible
+- PR [#146](https://github.com/Orange-OpenSource/casskop/pull/146) - Fix [Issue #143](https://github.com/Orange-OpenSource/casskop/issues/143) External update of SeedList was not possible
 
-- PR [#147](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/147) - Introduce Multi-CassKop operator
+- PR [#147](https://github.com/Orange-OpenSource/casskop/pull/147) - Introduce Multi-CassKop operator
 
-- PR [#149](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/149) - Get rid of env var SERVICE_NAME and
+- PR [#149](https://github.com/Orange-OpenSource/casskop/pull/149) - Get rid of env var SERVICE_NAME and
   keep current hostname in seedlist
 
-- PR [#151](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/151) - Fix [Issue #150](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/150) Makes JMX port remotely available (again)
+- PR [#151](https://github.com/Orange-OpenSource/casskop/pull/151) - Fix [Issue #150](https://github.com/Orange-OpenSource/casskop/issues/150) Makes JMX port remotely available (again)
     - uses New bootstrap Image 0.1.3 : orangeopensource/cassandra-bootstrap:0.1.3
 
 
@@ -26,13 +26,13 @@ Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above
 The fields `spec.baseImage` and `spec.version` have been removed in favor for `spec.cassandraImage` witch is a merge of
 both of thems.
 
-- PR [#128](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/128/files) Fix Issue
-  [#96](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/96): cluster stay pending
-- PR [#127](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/127) fix Issue
-  [#126](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/126): update racks in parallel
-- PR [#124](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/124): Add Support for pod & services
+- PR [#128](https://github.com/Orange-OpenSource/casskop/pull/128/files) Fix Issue
+  [#96](https://github.com/Orange-OpenSource/casskop/issues/96): cluster stay pending
+- PR [#127](https://github.com/Orange-OpenSource/casskop/pull/127) fix Issue
+  [#126](https://github.com/Orange-OpenSource/casskop/issues/126): update racks in parallel
+- PR [#124](https://github.com/Orange-OpenSource/casskop/pull/124): Add Support for pod & services
   annotations
-- PR [#138](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/138) Add support for Tolerations
+- PR [#138](https://github.com/Orange-OpenSource/casskop/pull/138) Add support for Tolerations
 
 Examples of annotation needed in the CassandraCluster Spec:
 ```
@@ -42,7 +42,7 @@ Examples of annotation needed in the CassandraCluster Spec:
 
 ```
 
-- PR [#119](https://github.com/Orange-OpenSource/cassandra-k8s-operator/pull/119) Refactoring Makefile
+- PR [#119](https://github.com/Orange-OpenSource/casskop/pull/119) Refactoring Makefile
 - tests now uses default cassandra docker image
 
 
@@ -102,9 +102,9 @@ change on statefulses. we can bypass this by increasing the maxPodUnavailable va
 
 ### Fixes
 
-- Fix [Issue 60](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/60): Error when RollingUpdate on
+- Fix [Issue 60](https://github.com/Orange-OpenSource/casskop/issues/60): Error when RollingUpdate on
   UpdateResource
-- Fix [Issue 59](https://github.com/Orange-OpenSource/cassandra-k8s-operator/issues/59): Error on UpdateConfigMap
+- Fix [Issue 59](https://github.com/Orange-OpenSource/casskop/issues/59): Error on UpdateConfigMap
   vs UpdateStatefulset
 
 ## 0.1.2
@@ -160,7 +160,7 @@ change on statefulses. we can bypass this by increasing the maxPodUnavailable va
 debug:
   enabled: false
   image:
-    repository: orangeopensource/cassandra-k8s-operator
+    repository: orangeopensource/casskop
     tag: 0.1.2-debug
   version: 2
 ```
@@ -190,7 +190,7 @@ debug:
 ### Features
 
 - [x] Rack Aware Deployment
-    - [x] Pod level get infos for Rack & DC. [PR #33](https://github.com/Orange-OpenSource/cassandra-k8s-operator/merge_requests/33)
+    - [x] Pod level get infos for Rack & DC. [PR #33](https://github.com/Orange-OpenSource/casskop/merge_requests/33)
         - Exposes **CASSANDRA_RACK** env var in the Pod from `cassandraclusters.db.orange.com.rack` Pod Labels
         - Exposes **CASSANDRA_DC** env var in the Pod from `cassandraclusters.db.orange.com.dc` Pod Labels
     
