@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cassandra-k8s-operator
+  name: casskop
   labels:
-    app: cassandra-k8s-operator
+    app: casskop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: cassandra-k8s-operator
+      name: casskop
   template:
     metadata:
       labels:
-        name: cassandra-k8s-operator
-        app: cassandra-k8s-operator
+        name: casskop
+        app: casskop
     spec:
-      serviceAccountName: cassandra-k8s-operator
+      serviceAccountName: casskop
       securityContext:
         runAsUser: 1000
       containers:
-        - name: cassandra-k8s-operator
+        - name: casskop
           # Replace this with the built image name
           image: REPLACE_IMAGE
           ports:
@@ -33,7 +33,7 @@ spec:
             initialDelaySeconds: 4
             periodSeconds: 10
           command:
-          - cassandra-k8s-operator
+          - casskop
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -45,4 +45,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "cassandra-k8s-operator"
+              value: "casskop"

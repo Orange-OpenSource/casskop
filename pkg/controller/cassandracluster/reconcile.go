@@ -22,8 +22,8 @@ import (
 	"regexp"
 	"strings"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"

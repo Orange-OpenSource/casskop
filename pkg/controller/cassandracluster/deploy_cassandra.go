@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

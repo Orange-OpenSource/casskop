@@ -35,7 +35,7 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         command:
-        - cassandra-k8s-operator
+        - casskop
         readinessProbe:
           exec:
             command:

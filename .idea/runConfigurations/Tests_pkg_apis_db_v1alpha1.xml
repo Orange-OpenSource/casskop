@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Tests pkg/apis/db/v1alpha1" type="GoTestRunConfiguration" factoryName="Go Test">
-    <module name="cassandra-k8s-operator" />
+    <module name="casskop" />
     <working_directory value="$PROJECT_DIR$/pkg/apis/db/v1alpha1" />
     <go_parameters value="-i" />
     <envs>
@@ -17,7 +17,7 @@
     </EXTENSION>
     <framework value="gotest" />
     <kind value="PACKAGE" />
-    <package value="github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1" />
+    <package value="github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1" />
     <directory value="$PROJECT_DIR$/" />
     <filePath value="$PROJECT_DIR$/" />
     <method v="2" />

@@ -17,7 +17,7 @@ The following tables lists the configurable parameters of the Cassandra Operator
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `orangeopensource/cassandra-k8s-operator` |
+| `image.repository`               | Image                                            | `orangeopensource/casskop` |
 | `image.tag`                      | Image tag                                        | `0.3.1-master`                            |
 | `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
 | `image.imagePullSecrets.enabled` | Enable tue use of secret for docker image        | `false`                                   |
@@ -44,7 +44,7 @@ $ helm install --name casskop incubator/cassandra-operator -f values.yaml
 > You need to manually install the crds beforehand
 >
 > ```console
-> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
 > ```
 
 You can make a dry run of the chart before deploying :

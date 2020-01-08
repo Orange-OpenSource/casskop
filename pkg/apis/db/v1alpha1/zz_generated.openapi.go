@@ -11,7 +11,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1.CassandraCluster": schema_pkg_apis_db_v1alpha1_CassandraCluster(ref),
+		"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1.CassandraCluster": schema_pkg_apis_db_v1alpha1_CassandraCluster(ref),
 	}
 }
 
@@ -42,18 +42,18 @@ func schema_pkg_apis_db_v1alpha1_CassandraCluster(ref common.ReferenceCallback) 
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1.CassandraClusterSpec"),
+							Ref: ref("github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1.CassandraClusterSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1.CassandraClusterStatus"),
+							Ref: ref("github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1.CassandraClusterStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1.CassandraClusterSpec", "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1.CassandraClusterStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1.CassandraClusterSpec", "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1.CassandraClusterStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
