@@ -223,9 +223,6 @@ spec:
                     type: object
                   type: array
               type: object
-          required:
-          - imagepullpolicy
-          - maxPodUnavailable
           type: object
         status:
           properties:
