@@ -15,12 +15,10 @@ spec:
   autoPilot: true
   autoUpdateSeedList: false
   resources:
-    requests:
+    requests: &requests
       cpu: 500m
       memory: 1Gi
-    limits:
-      cpu: 500m
-      memory: 1Gi
+    limits: *requests
   topology:
     dc:
       - name: dc1
