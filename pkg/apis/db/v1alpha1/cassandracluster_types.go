@@ -723,7 +723,7 @@ type RackSlice []Rack
 
 // DC allow to configure Cassandra RC according to kubernetes nodeselector labels
 type DC struct {
-	//Name of the CassandraDC
+	//Name of the DC
 	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
 	//Labels used to target Kubernetes nodes
