@@ -12,6 +12,7 @@ spec:
   scope: Namespaced
   validation:
     openAPIV3Schema:
+      description: CassandraCluster is the Schema for the cassandraclusters API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -26,6 +27,7 @@ spec:
         metadata:
           type: object
         spec:
+          description: CassandraClusterSpec defines the configuration of CassandraCluster
           properties:
             autoPilot:
               description: AutoPilot defines if the Operator can fly alone or if we
@@ -109,6 +111,8 @@ spec:
               format: int32
               type: integer
             pod:
+              description: PodPolicy defines the policy for pods owned by CassKop
+                operator.
               properties:
                 annotations:
                   additionalProperties:
@@ -162,6 +166,8 @@ spec:
               minimum: 1
               type: integer
             service:
+              description: PodPolicy defines the policy for headless service owned
+                by CassKop operator.
               properties:
                 annotations:
                   additionalProperties:
@@ -185,6 +191,7 @@ spec:
                         type: object
                       name:
                         description: Name of the CassandraDC
+                        pattern: ^[^-]+$
                         type: string
                       nodesPerRacks:
                         description: 'Number of nodes to deploy for a Cassandra deployment
@@ -208,6 +215,7 @@ spec:
                               type: object
                             name:
                               description: Name of the Rack
+                              pattern: ^[^-]+$
                               type: string
                             rollingPartition:
                               description: The Partition to control the Statefulset
