@@ -20,7 +20,7 @@ import (
 
 	goctx "context"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -104,8 +104,8 @@ func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework)
 	}
 	// get global framework variables
 	f := framework.Global
-	// wait for cassandra-k8s-operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "cassandra-k8s-operator", 1, RetryInterval, Timeout)
+	// wait for casskop to be ready
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "casskop", 1, RetryInterval, Timeout)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,7 +1,7 @@
 ## Cassandra Operator Image
 ##
 image:
-  repository: orangeopensource/cassandra-k8s-operator
+  repository: orangeopensource/casskop
   tag: v0.5.0-release
   pullPolicy: Always
   imagePullSecrets:

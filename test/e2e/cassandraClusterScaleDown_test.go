@@ -11,8 +11,8 @@ import (
 
 	goctx "context"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	mye2eutil "github.com/Orange-OpenSource/cassandra-k8s-operator/test/e2eutil"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	mye2eutil "github.com/Orange-OpenSource/casskop/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

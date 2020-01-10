@@ -1,4 +1,4 @@
-module github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop
+module github.com/Orange-OpenSource/casskop/multi-casskop
 
 go 1.13
 
@@ -6,7 +6,7 @@ require (
 	admiralty.io/multicluster-controller v0.2.0
 	admiralty.io/multicluster-service-account v0.6.0
 	cloud.google.com/go v0.46.3 // indirect
-	github.com/Orange-OpenSource/cassandra-k8s-operator v0.4.1
+	github.com/Orange-OpenSource/casskop v0.4.1
 	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
@@ -29,7 +29,7 @@ require (
 )
 
 replace (
-	github.com/Orange-OpenSource/cassandra-k8s-operator => ../
+	github.com/Orange-OpenSource/casskop => ../
 	k8s.io/api => k8s.io/api v0.0.0-20190222213804-5cb15d344471
 	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221213512-86fb29eff628
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4

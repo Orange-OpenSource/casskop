@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop/models"
+	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop/models"
 	//	"flag"
 	"github.com/jessevdk/go-flags"
 	"log"
@@ -29,7 +29,7 @@ import (
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"admiralty.io/multicluster-controller/pkg/manager"
 	"admiralty.io/multicluster-service-account/pkg/config"
-	mc "github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop"
+	mc "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	"github.com/sirupsen/logrus"

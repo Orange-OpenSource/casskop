@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	apicc "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	apicc "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
