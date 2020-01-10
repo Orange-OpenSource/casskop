@@ -199,7 +199,7 @@ Deployment with Helm :
 $ kubectx # Switch context on master cluster
 Switched to context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-master".
 $ helm init --client-only
-$ helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
+$ helm repo add casskop https://Orange-OpenSource.github.io/casskop/helm
 $ helm repo update
 # @TODO
 $ cd ${CASSKOP_WORKSPACE}

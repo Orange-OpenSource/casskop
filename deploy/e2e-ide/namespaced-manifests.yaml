@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: cassandra-k8s-operator
+  name: casskop
 
 ---
 
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: cassandra-k8s-operator
+  name: casskop
 rules:
 - apiGroups:
   - db.orange.com
@@ -62,7 +62,7 @@ rules:
   resources:
   - deployments/finalizers
   resourceNames:
-  - cassandra-k8s-operator
+  - casskop
   verbs:
   - "update"
 
@@ -71,13 +71,13 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cassandra-k8s-operator
+  name: casskop
 subjects:
 - kind: ServiceAccount
-  name: cassandra-k8s-operator
+  name: casskop
 roleRef:
   kind: Role
-  name: cassandra-k8s-operator
+  name: casskop
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -87,24 +87,24 @@ kind: Deployment
 metadata:
   creationTimestamp: null
   labels:
-    app: cassandra-k8s-operator
-  name: cassandra-k8s-operator
+    app: casskop
+  name: casskop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: cassandra-k8s-operator
+      name: casskop
   strategy: {}
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: cassandra-k8s-operator
-        name: cassandra-k8s-operator
+        app: casskop
+        name: casskop
     spec:
       containers:
       - command:
-        - cassandra-k8s-operator
+        - casskop
         env:
         - name: WATCH_NAMESPACE
           valueFrom:
@@ -115,10 +115,10 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: OPERATOR_NAME
-          value: cassandra-k8s-operator
-        image: orangeopensource/cassandra-k8s-operator:0.4.0-sidecar
+          value: casskop
+        image: orangeopensource/casskop:0.4.0-sidecar
         imagePullPolicy: Always
-        name: cassandra-k8s-operator
+        name: casskop
         ports:
         - containerPort: 60000
           name: metrics
@@ -132,5 +132,5 @@ spec:
         resources: {}
       securityContext:
         runAsUser: 1000
-      serviceAccountName: cassandra-k8s-operator
+      serviceAccountName: casskop
 status: {}

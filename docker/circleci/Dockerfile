@@ -87,6 +87,6 @@ RUN mkdir -p $GOPATH/src/github.com/operator-framework \
     && rm -rf /root/.cache \
     && rm -rf /go/pkg/dep/sources/
 
-WORKDIR /go/cassandra-k8s-operator
+WORKDIR /go/casskop
 
 CMD ["/bin/sh"]

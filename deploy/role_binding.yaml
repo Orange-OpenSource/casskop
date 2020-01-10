@@ -1,11 +1,11 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cassandra-k8s-operator
+  name: casskop
 subjects:
 - kind: ServiceAccount
-  name: cassandra-k8s-operator
+  name: casskop
 roleRef:
   kind: Role
-  name: cassandra-k8s-operator
+  name: casskop
   apiGroup: rbac.authorization.k8s.io
