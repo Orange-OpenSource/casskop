@@ -20,8 +20,8 @@ import (
 	"strconv"
 	"time"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,7 +98,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// action.status=Continue (which is set when decommission is successful) will be tested to see if we need to
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
-	// Meanwhile we allow to check for new changes if _unlockNextOperation	 has been set (to recover from problems)
+	// Meanwhile we allow to check for new changes if unlockNextOperation	 has been set (to recover from problems)
 	if needSpecificChange ||
 		(!rcc.thereIsPodDisruption() &&
 			lastAction.Status != api.StatusOngoing &&

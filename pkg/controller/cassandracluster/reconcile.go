@@ -22,8 +22,8 @@ import (
 	"regexp"
 	"strings"
 
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -491,7 +491,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
 			}
 			if cc.Spec.UnlockNextOperation {
-				//If we enter specific change we remove _unlockNextOperation from Spec
+				//If we enter specific change we remove unlockNextOperation from Spec
 				cc.Spec.UnlockNextOperation = false
 				needUpdate = true
 			}

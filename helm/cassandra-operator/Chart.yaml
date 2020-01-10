@@ -1,9 +1,9 @@
 apiVersion: v1
 description: A Helm chart for CassKop - the Orange Cassandra Kubernetes operator
 name: cassandra-operator
-home: https://github.com/Orange-OpenSource/cassandra-k8s-operator
+home: https://github.com/Orange-OpenSource/casskop
 sources:
-  - https://github.com/Orange-OpenSource/cassandra-k8s-operator
+  - https://github.com/Orange-OpenSource/casskop
 version: 0.5.0
 appVersion: 0.5.0-release
 icon: 
