@@ -192,6 +192,7 @@ gke-slave-west1-c                Opaque                                5      28
 
 ### Install Multi-CassKop
 
+<<<<<<< HEAD
 @TODO : To correct once the watch object will be fixed
 
 Add MultiCasskop crd on the `slave` cluster : 
@@ -202,6 +203,9 @@ Switched to context "gke_<Project name>_europe-west1-c_cassandra-europe-west1-c-
 $ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/multi-casskop/deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
 ```
 
+=======
+@TODO : To correct once the helm release and docker image will be properly deployed
+>>>>>>> upstream/master
 Deployment with Helm : 
 
 ```sh

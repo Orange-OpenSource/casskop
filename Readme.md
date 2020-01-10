@@ -105,8 +105,6 @@ https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/c
 
 You can find more info in the [developer Section](documentation/development.md)
 
-
-
 ### Cassandra operator
 
 The Cassandra operator image is automatically built and stored on [Docker Hub](https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/cassandra-k8s-operator)
@@ -177,14 +175,20 @@ Get the latest information about charts from the chart repositories.
 
 ```
 helm repo update
-```
-
-Helm is available in the orange helm/charts/incubator:
-
-```
 helm install --name casskop orange-incubator/cassandra-operator
 ```
 
+
+> ##### Helm 3 users
+>
+> Remove --name from the command
+
+you can also add the CassKop repository from Github 
+
+```console
+helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
+>>>>>>> upstream/master
+```
 
 Deploy CassKop:
 
@@ -251,25 +255,20 @@ cassandraclusters.db.orange.com   1h
 ...
 ```
 
-
 ## Deploy a Cassandra cluster
-
 
 ### From local yaml spec
 
 Once the operator is deployed inside a Kubernetes cluster, a new API will be accessible, so 
 you'll be able to create, update and delete cassandraclusters.
 
-In order to deploy a new cassandra cluster a [specification](samples/cassandracluster.yaml) 
-has to be created:
-
-For example :
+In order to deploy a new cassandra cluster a [specification](samples/cassandracluster.yaml) has to be created. As an example :
 
 ```
 kubectl apply -f samples/cassandracluster.yaml
 ```
 
-see pods coming into life :
+See pods coming to life :
 
 ```
 kubectl get pods -w
@@ -298,6 +297,20 @@ You can do a lot of [operations](documentation/operations.md) on your Cassandra 
 If the Cassandra operator restarts, it can recover its previous state thanks to the CRD objects 
 `CassandraClusters` which stored directly in Kubernetes, description and state of the Cassandra cluster.
 
+## Upgrading the operator (no changes of the CRD's structure)
+
+Upgrading the operator consists in uninstalling the current version and installing the new version :
+```
+helm uninstall casskop
+helm repo update
+helm install --name casskop casskop/cassandra-operator
+```
+
+It's also possible to decide to temporarily install a developement release by specifying the image tag to use :
+```
+helm install --name casskop casskop/cassandra-operator --set debug.enabled=true --no-hooks \
+--set image.tag=v0.5.0b-branch1
+```
 
 ## Uninstaling the Charts
 
@@ -377,13 +390,11 @@ spec:
     interval: 15s
 ```
 
-
 Your namespace need to be listed in the `namespaceSelector` section.
 
 #### Add Grafana dashboard for Cassandra
 
 You can import this [dashboard](samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your Cassandra cluster.
-
 
 # Contributing
 
@@ -391,8 +402,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details on submitting patches and the co
 
 # Contacts
 
-You can contact the team with our mailing-list: prj.casskop.support@list.orangeportails.net
-Or on our slack https://casskop.slack.com
+You can contact the team with our mailing-list prj.casskop.support@list.orangeportails.net and join our slack https://casskop.slack.com (request sent to that ML)
 
 # License
 

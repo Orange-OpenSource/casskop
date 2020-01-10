@@ -39,9 +39,9 @@ spec:
           - {{ .Values.command }}
 {{- end }}
         args:
-          - {{ .Values.k8s.local }}
+          - -l{{ .Values.k8s.local }}
 {{- range .Values.k8s.remote }}
-          - {{ . }}
+          - -r{{ . }}
 {{- end }}
         readinessProbe:
           exec:
