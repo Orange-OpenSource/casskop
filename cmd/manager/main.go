@@ -26,10 +26,10 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
-	api "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/controller"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/version"
+	"github.com/Orange-OpenSource/casskop/pkg/apis"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/controller"
+	"github.com/Orange-OpenSource/casskop/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
@@ -61,10 +61,10 @@ func printVersion() {
 	logrus.Infof("Go Version: %s", runtime.Version())
 	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
 	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
-	logrus.Infof("cassandra-k8s-operator Version: %v", version.Version)
-	logrus.Infof("cassandra-k8s-operator Compilation Date: %s", compileDate)
-	logrus.Infof("cassandra-k8s-operator LogLevel: %v", getLogLevel())
-	logrus.Infof("cassandra-k8s-operator ResyncPeriod: %v", getResyncPeriod())
+	logrus.Infof("casskop Version: %v", version.Version)
+	logrus.Infof("casskop Compilation Date: %s", compileDate)
+	logrus.Infof("casskop LogLevel: %v", getLogLevel())
+	logrus.Infof("casskop ResyncPeriod: %v", getResyncPeriod())
 }
 
 func getLogLevel() logrus.Level {
@@ -151,7 +151,7 @@ func main() {
 	ctx := context.TODO()
 
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "cassandra-k8s-operator-lock")
+	err = leader.Become(ctx, "casskop-lock")
 	if err != nil {
 		logrus.Error(err)
 		os.Exit(1)

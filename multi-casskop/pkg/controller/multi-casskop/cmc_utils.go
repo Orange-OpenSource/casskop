@@ -2,9 +2,9 @@ package multicasskop
 
 import (
 	"context"
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/controller/multi-casskop/models"
+	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop/models"
 
-	ccv1 "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis/db/v1alpha1"
+	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"

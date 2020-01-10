@@ -15,7 +15,7 @@
 ################################################################################
 
 # Name of this service/application
-SERVICE_NAME := cassandra-k8s-operator
+SERVICE_NAME := casskop
 DOCKER_REPO_BASE ?= orangeopensource
 DOCKER_REPO_BASE_TEST ?= orangeopensource
 IMAGE_NAME := $(SERVICE_NAME)
@@ -125,7 +125,7 @@ APP_DIR := build/Dockerfile
 
 OPERATOR_SDK_VERSION=v0.9.0
 # workdir
-WORKDIR := /go/cassandra-k8s-operator
+WORKDIR := /go/casskop
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -169,7 +169,7 @@ generate:
 	operator-sdk generate k8s
 	operator-sdk generate openapi
 
-# Build cassandra-k8s-operator executable file in local go env
+# Build casskop executable file in local go env
 .PHONY: build
 build:
 	echo "Generate zzz-deepcopy objects"
@@ -220,7 +220,7 @@ push-cassandra-image:
 
 
 pipeline:
-	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/Orange-OpenSource/cassandra-k8s-operator -w /go/src/github.com/Orange-OpenSource/cassandra-k8s-operator \
+	docker run -ti --rm --privileged -v $(PWD):/go/src/github.com/Orange-OpenSource/casskop -w /go/src/github.com/Orange-OpenSource/casskop \
   --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) bash
 
@@ -239,10 +239,10 @@ shell: docker-dev-build
 	docker run  --env GO111MODULE=on -ti --rm -v ~/.kube:/.kube:ro -v $(PWD):$(WORKDIR) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash
 
 debug-port-forward:
-	kubectl port-forward `kubectl get pod -l app=cassandra-k8s-operator -o jsonpath="{.items[0].metadata.name}"` 40000:40000
+	kubectl port-forward `kubectl get pod -l app=casskop -o jsonpath="{.items[0].metadata.name}"` 40000:40000
 
 debug-pod-logs:
-	kubectl logs -f `kubectl get pod -l app=cassandra-k8s-operator -o jsonpath="{.items[0].metadata.name}"`
+	kubectl logs -f `kubectl get pod -l app=casskop -o jsonpath="{.items[0].metadata.name}"`
 
 define debug_telepresence
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
@@ -267,7 +267,7 @@ debug-kubesquash:
 
 # Run the development environment (in local go env) in the background using local ~/.kube/config
 run:
-	export POD_NAME=cassandra-k8s-operator; \
+	export POD_NAME=casskop; \
 	operator-sdk up local
 
 push:

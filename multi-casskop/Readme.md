@@ -22,7 +22,7 @@ This works fine within a single Kubernetes cluster, and can allow for instance t
 
 But for having more resilience with our Cassandra cluster, we want to be able to spread it on several regions. For doing this with Kubernetes, we need that our Cassandra to spread spread on top of different Kubernetes clusters, deployed independently on different regions.
 
-We introduce [MultiCassKop](https://github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop) a new operator that fits above CassKop. MultiCassKop is a new controler that will be in charge of creating `CassandraClusters` CRD objects in several different Kubernetes clusters and in a manner that all Cassandra nodes will be part of the same ring.
+We introduce [MultiCassKop](https://github.com/Orange-OpenSource/casskop/multi-casskop) a new operator that fits above CassKop. MultiCassKop is a new controler that will be in charge of creating `CassandraClusters` CRD objects in several different Kubernetes clusters and in a manner that all Cassandra nodes will be part of the same ring.
 
 MultiCassKop uses a new custom resource definition, `MultiCasskop` which allows to specify:
 - a base for the CassandraCluster object
@@ -264,9 +264,3 @@ you can see in the MultiCassKop logs
 time="2019-11-28T15:44:00Z" level=info msg="Delete CassandraCluster" cluster=cassandra-e2e kubernetes=k8s-cluster1 namespace=cassandra-e2e
 time="2019-11-28T15:44:00Z" level=info msg="Delete CassandraCluster" cluster=cassandra-e2e kubernetes=k8s-cluster2 namespace=cassandra-e2e
 ```
-
-
-
-
-
-

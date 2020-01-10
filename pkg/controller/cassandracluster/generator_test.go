@@ -17,7 +17,7 @@ package cassandracluster
 import (
 	"testing"
 
-	"github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/k8s"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"

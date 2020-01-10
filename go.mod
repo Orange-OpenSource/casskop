@@ -1,4 +1,4 @@
-module github.com/Orange-OpenSource/cassandra-k8s-operator
+module github.com/Orange-OpenSource/casskop
 
 go 1.12
 
