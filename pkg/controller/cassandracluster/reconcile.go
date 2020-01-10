@@ -491,7 +491,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					"dc-rack": dcRackName}).Errorf("ensureCassandraStatefulSet Error: %v", err)
 			}
 			if cc.Spec.UnlockNextOperation {
-				//If we enter specific change we remove _unlockNextOperation from Spec
+				//If we enter specific change we remove unlockNextOperation from Spec
 				cc.Spec.UnlockNextOperation = false
 				needUpdate = true
 			}
