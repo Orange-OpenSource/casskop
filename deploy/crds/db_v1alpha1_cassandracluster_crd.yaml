@@ -190,7 +190,7 @@ spec:
                         description: Labels used to target Kubernetes nodes
                         type: object
                       name:
-                        description: Name of the CassandraDC
+                        description: Name of the DC
                         pattern: ^[^-]+$
                         type: string
                       nodesPerRacks:
