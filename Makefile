@@ -167,6 +167,7 @@ generate:
 	echo "Generate zzz-deepcopy objects"
 	operator-sdk version
 	operator-sdk generate k8s
+	operator-sdk generate openapi
 
 # Build cassandra-k8s-operator executable file in local go env
 .PHONY: build
