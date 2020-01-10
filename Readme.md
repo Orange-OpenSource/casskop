@@ -183,13 +183,6 @@ helm install --name casskop orange-incubator/cassandra-operator
 >
 > Remove --name from the command
 
-you can also add the CassKop repository from Github 
-
-```console
-helm repo add casskop https://Orange-OpenSource.github.io/cassandra-k8s-operator/helm
->>>>>>> upstream/master
-```
-
 Deploy CassKop:
 
 ```console
