@@ -1,9 +1,9 @@
 apiVersion: v1
 description: A Helm chart for MultiCassKop - the Orange Multiple Cassandra Kubernetes operator
 name: multi-casskop
-home: https://github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop
+home: https://github.com/Orange-OpenSource/casskop/multi-casskop
 sources:
-  - https://github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop
+  - https://github.com/Orange-OpenSource/casskop/multi-casskop
 version: 0.5.0
 appVersion: 0.5.0-release
 icon: 

@@ -1,6 +1,9 @@
+<img src="static/casskop.png" alt="Logo" width="150"/>
+
 # CassKop - Cassandra Kubernetes operator
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_cassandra-k8s-operator&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_cassandra-k8s-operator)
+[![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_casskop&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_casskop)
+
 
 ## Project overview
 
@@ -24,17 +27,16 @@ that :
 
 > This adds security between namespaces with a better isolation, and less work for each operator.
 
-## TL;DR - CassKop presentation
+## CassKop presentation
 
-We have some slides for a [CassKop demo](https://orange-opensource.github.io/cassandra-k8s-operator/slides/index.html?slides=Slides-CassKop-demo.md#1)
+We have some slides for a [CassKop demo](https://orange-opensource.github.io/casskop/slides/index.html?slides=Slides-CassKop-demo.md#1)
 
 You can also play with CassKop on [Katacoda](https://www.katacoda.com/orange)
 
 ## CassKop features
 
 
-At this time of the project, the goal is to deploy a Cassandra cluster in 1 Kubernetes datacenter, but this will 
-change in next versions to deal with Kubernetes in multi-datacenters. 
+CassKop deals with Cassandra clusters on one datacenter. For multi-dacenters deployments, please use [MultiCassKop](multi-casskop/Readme.md) in addition to CassKop. This second operator is part of this same repository.
 
 The following features are supported by CassKop:
 - [x] Deployment of a C* cluster (rack or AZ aware)
@@ -107,9 +109,9 @@ You can find more info in the [developer Section](documentation/development.md)
 
 ### Cassandra operator
 
-The Cassandra operator image is automatically built and stored on [Docker Hub](https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/cassandra-k8s-operator)
+The Cassandra operator image is automatically built and stored on [Docker Hub](https://cloud.docker.com/u/orangeopensource/repository/docker/orangeopensource/casskop)
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/cassandra-k8s-operator)
+[![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop)
 
 ### Associated Cassandra image
 
@@ -162,7 +164,7 @@ created
 > You will need to manually install the crds beforehand
 >
 > ```console
-> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
 > ```
 
 Add the Helm incubator repo if you do not already have it:
@@ -195,27 +197,27 @@ STATUS: DEPLOYED
 RESOURCES:
 ==> v1/ServiceAccount
 NAME                    SECRETS  AGE
-cassandra-k8s-operator  1        0s
+casskop  1        0s
 
 ==> v1beta1/Role
 NAME                    AGE
-cassandra-k8s-operator  0s
+casskop  0s
 
 ==> v1/RoleBinding
 NAME                    AGE
-cassandra-k8s-operator  0s
+casskop  0s
 
 ==> v1/Deployment
 NAME                            DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
-casskop-cassandra-k8s-operator  1        1        1           0          0s
+casskop-casskop  1        1        1           0          0s
 
 ==> v1/Pod(related)
 NAME                                            READY  STATUS             RESTARTS  AGE
-casskop-cassandra-k8s-operator-78786b9bf-cjggg  0/1    ContainerCreating  0
+casskop-casskop-78786b9bf-cjggg  0/1    ContainerCreating  0
 0s
 ```
 
-> You can find more information in the [Cassandra operator Helm readme](helm/cassandra-k8s-operator/readme.md)
+> You can find more information in the [Cassandra operator Helm readme](helm/casskop/readme.md)
 
 > If you have problem you can see [troubleshooting](helm/cassandra-operator/readme.md#Troubleshooting) section
 

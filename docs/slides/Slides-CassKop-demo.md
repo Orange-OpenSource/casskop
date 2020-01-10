@@ -1,7 +1,7 @@
 media: ./assets
 local: ./assets/kubernetes-operators
 layout: true
-gitlab: https://github.com/Orange-OpenSource/cassandra-k8s-operator
+gitlab: https://github.com/Orange-OpenSource/casskop
 editpath: /edit/master/docs/Slides-CassKop-demo.md
 <!-- /!\ pas de commentaires avant les parametres ci-dessus -->
 <!-- /assets fait partie du viewer global a toutes les pres -->
@@ -360,9 +360,9 @@ namespace with the use of thoses capabilities:
 The PSP RoleBinding can be retrieved from  the cassandra namespace
 
 ```console
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/psp-cassie.yaml
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/psp-sa-cassie.yaml
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/cassandra-k8s-operator/master/deploy/clusterRole-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/psp-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/psp-sa-cassie.yaml
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/clusterRole-cassie.yaml
 ```
 
 ---
@@ -407,16 +407,16 @@ $ k logs -l app=cassandra-operator --tail=10
 # Deployment of a C* cluster (rack or AZ aware)
 
 First, we deploy the configmap which contains the Cassandra configuration override files.
-[samples/cassandra-configmap-v1.yaml](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandra-configmap-v1.yaml).
+[samples/cassandra-configmap-v1.yaml](https://github.com/Orange-OpenSource/casskop/blob/master/samples/cassandra-configmap-v1.yaml).
 Then the cassandra cluster :
 
 
 Depending on your k8s cluster topology you may choose or adapt one of the
 following configurations files to deploy a cluster with a 3 nodes ring in 3
 different racks with anti-affinity
-- [samples/cassandracluster.yaml (with no labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster.yaml)
-- [samples/cassandracluster-demo.yaml (with basic labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo.yaml)
-- [samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/cassandracluster-demo-gke.yaml)
+- [samples/cassandracluster.yaml (with no labels)](https://github.com/Orange-OpenSource/casskop/blob/master/samples/cassandracluster.yaml)
+- [samples/cassandracluster-demo.yaml (with basic labels)](https://github.com/Orange-OpenSource/casskop/blob/master/samples/cassandracluster-demo.yaml)
+- [samples/cassandracluster-demo-gke.yaml (with europe-west gke labels)](https://github.com/Orange-OpenSource/casskop/blob/master/samples/cassandracluster-demo-gke.yaml)
 
 
 > On GKE I deploy, using a dedicated storagecless for ssd local-storage on
@@ -781,7 +781,7 @@ compaction_throughput_mb_per_sec: 16 --> compaction_throughput_mb_per_sec: 0
 # stream_throughput_outbound_megabits_per_sec: 200 --> stream_throughput_outbound_megabits_per_sec: 10
 ```
 
-[samples/cassandra-configmap-v2.yaml](https://gitlab.si.francetelecom.fr/kubernetes/cassandra-k8s-operator/blob/master/samples/cassandra-configmap-v2.yaml)
+[samples/cassandra-configmap-v2.yaml](https://gitlab.si.francetelecom.fr/kubernetes/casskop/blob/master/samples/cassandra-configmap-v2.yaml)
 
 ```yaml
 k apply -f samples/cassandra-configmap-v2.yaml
@@ -1193,7 +1193,7 @@ k apply -f samples/prometheus-cassandra-service-monitor.yaml
 
 ## Add Grafana dashboard for Cassandra
 
-You can import this [dashboard](https://github.com/Orange-OpenSource/cassandra-k8s-operator/blob/master/samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your cassandra cluster.
+You can import this [dashboard](https://github.com/Orange-OpenSource/casskop/blob/master/samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your cassandra cluster.
 
 
 ---

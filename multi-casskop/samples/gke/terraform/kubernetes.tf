@@ -91,7 +91,6 @@ resource "kubernetes_storage_class" "cassandra-standard" {
 data "helm_repository" "casskop" {
   name = "orange-incubator"
   url  = "https://orange-charts-incubator.storage.googleapis.com"
-
   depends_on = [kubernetes_cluster_role_binding.tiller-admin-binding]
 }
 

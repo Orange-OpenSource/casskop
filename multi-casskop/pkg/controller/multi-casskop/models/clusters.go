@@ -17,8 +17,8 @@ package models
 import (
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"fmt"
-	apicmc "github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/pkg/apis"
-	apicc "github.com/Orange-OpenSource/cassandra-k8s-operator/pkg/apis"
+	apicmc "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/apis"
+	apicc "github.com/Orange-OpenSource/casskop/pkg/apis"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

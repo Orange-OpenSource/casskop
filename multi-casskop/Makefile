@@ -110,7 +110,7 @@ APP_DIR := build/Dockerfile
 
 OPERATOR_SDK_VERSION=v0.9.0
 # workdir
-WORKDIR := /go/cassandra-k8s-operator
+WORKDIR := /go/casskop
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -140,7 +140,7 @@ helm-package:
 	mv multi-casskop-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
 	helm repo index $(HELM_TARGET_DIR)/
 
-# Build cassandra-k8s-operator executable file in local go env
+# Build casskop executable file in local go env
 
 export CGO_ENABLED:=0
 export PURE:="on"
@@ -171,7 +171,7 @@ build-local:
 	operator-sdk version
 	operator-sdk generate k8s
 	@echo "Build Cassandra Operator for $(GOOS)"
-	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/Orange-OpenSource -asmflags all=-trimpath=github.com/Orange-OpenSource github.com/Orange-OpenSource/cassandra-k8s-operator/multi-casskop/cmd/manager
+	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/Orange-OpenSource -asmflags all=-trimpath=github.com/Orange-OpenSource github.com/Orange-OpenSource/casskop/multi-casskop/cmd/manager
 
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
