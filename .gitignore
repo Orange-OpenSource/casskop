@@ -111,6 +111,7 @@ debug
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 .DS_Store
 .idea/
+.idea/runConfigurations/
 .vscode
 cassandra-operator.env
 multi-casskop/multi-casskop.env

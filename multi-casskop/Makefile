@@ -66,8 +66,8 @@ else
 	VERSION := $(BASEVERSION)-${BRANCH}
 endif
 
-HELM_VERSION := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
-
+HELM_VERSION    := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
+HELM_TARGET_DIR ?= ../docs/helm
 #si branche master, on pousse le tag latest
 ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
@@ -137,13 +137,22 @@ clean:
 helm-package:
 	@echo Packaging $(HELM_VERSION)
 	helm package helm/multi-casskop
-	mv multi-casskop-$(HELM_VERSION).tgz ../docs/helm
-	helm repo index ../docs/helm/
+	mv multi-casskop-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
+	helm repo index $(HELM_TARGET_DIR)/
 
 # Build casskop executable file in local go env
 
 export CGO_ENABLED:=0
 export PURE:="on"
+
+.PHONY: generate
+generate:
+	@echo "Generate zzz-deepcopy objects"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health ../tools/health/main.go
+	echo "Generate zzz-deepcopy objects"
+	operator-sdk version
+	operator-sdk generate k8s
+
 .PHONY: build
 build:
 	@echo "Generate zzz-deepcopy objects"
@@ -222,3 +231,5 @@ endif
 .PHONY: release
 release: tag image publish
 
+unit-test-with-vendor:
+	echo TODO

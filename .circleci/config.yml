@@ -1,34 +1,36 @@
 version: 2.1
 
-executors:
-  casskop-build:
-    docker:
-      - image: orangeopensource/casskop-build:v0.9.0
-
 experimental:
   notify:
     branches:
       only:
         - master
 
+# Define shareable packages of configuration
+# elements used into the worflow (= Orbs)
 orbs:
   minikube:
+    # Setting up VM executor for minikube.
     executors:
       vm-classic:
         machine:
           image: circleci/classic:201808-01
-
+    # Setting up job list
     jobs:
-      e2e-orb:
-        working_directory: /home/circleci/casskop
+      e2e-orb: # Define job which execute 'docker-e2e-test-fix-arg' makefile job
+        # PARAMETERS
         parameters:
           test_name:
             description: name of the test in e2e code
             type: string
             default: toto
+          operatorDir:
+            type: string
+            description: relative path where the build must be run
+            default: casskop
         executor: vm-classic
-
-
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        # ENVIRONMENTS VARIABLES
         environment:
           K8S_VERSION: v1.14.0
           KUBECONFIG: /home/circleci/.kube/config
@@ -42,32 +44,31 @@ orbs:
           GO111MODULE: on
           DOCKER_LATEST: 1
           GIN_MODE: release
-
-
+        # STEPS
         steps:
-          - run:
+          # Pre-checkout steps
+          - run: # Install Minikube components to be able to run it.
               name: Setup minikube
               command: |
                 wget -O minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-          - run:
+          - run: # Run minikube with expected parameters
               name: Start minikube
               background: true
               command: |
                 sudo -E minikube start --vm-driver=none --cpus 4 --memory 4096 --kubernetes-version=${K8S_VERSION}
-
-          - run:
+          - run: # Install kubectl cli
               name: Setup kubectl
               command: |
                 wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
                 mkdir -p ${HOME}/.kube
                 touch ${HOME}/.kube/config
-
-          - checkout
-
-          - attach_workspace:
-              at: ./
-
-          - run:
+          # Checkout steps
+          - checkout:
+              path: /home/circleci/casskop
+          - attach_workspace:  # Attach artifact from workdir
+              at: /home/circleci
+          # Check environment set up correctly
+          - run: # Wait until minikube nodes are ready
               name: Wait for minikube
               command: |
                 timeout 300s bash \<<EOT
@@ -82,294 +83,408 @@ orbs:
                     sleep 1
                   done
                 EOT
-
-          - run:
+          - run: # Check we correctly access to K8s information with kubectl cli
               name: Test k8s
               command: |
                 kubectl get nodes
                 kubectl get pods
-
-          - run:
+          # Acceptance test
+          - run: # Run acceptance test through 'docker-e2e-test-fix-arg' makefile step
               name: Operator acceptance test
               no_output_timeout: 1200
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&
-                make docker-e2e-test-fix-arg <<parameters.test_name>> || {
+                make docker-e2e-test-fix-arg << parameters.test_name >> || {
                 kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
                 echo "Show Operator logs:"
                 cat operator.log
                 false;
                 }
+  operator:
+    # Parameters anchor
+    .params_operator: &params_operator
+      # PARAMETERS
+      parameters:
+        operatorDir:
+          type: string
+          description: relative path where the build must be run
+          default: casskop
+        operatorName:
+          type: string
+          description: operator's name
+          default: CassKop
+      working_directory: /home/circleci/<< parameters.operatorDir >>
+      executor: operator-build
+    # Job anchor
+    .job_operator: &job_operator
+      working_directory: /home/circleci/<< parameters.operatorDir >>
+      executor: operator-build
+    # Setting up docker executor using casskop-build image.
+    executors:
+      operator-build:
+        docker:
+          - image: orangeopensource/casskop-build:v0.9.0
+    # Define jobs list
+    jobs:
+      # Build job, which build operator docker image (with operator-sdk build)
+      generate:
+        <<: *params_operator
+        <<: *job_operator
+        # STEPS
+        steps:
+          # Checkout steps
+          - checkout:
+              path: /home/circleci/casskop
+          - setup_remote_docker # Creates a separate environment for each build for security.
+          - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+              keys: # Use checksum of go.sum to version cache.
+                - << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
+          - attach_workspace:  # Attach artifact from workdir
+              at: /home/circleci
+          # Build steps
+          - run:
+              name: Download dependencies
+              command: if [ ! -d vendor ]; then go mod download; fi
+          - run:
+              name: Vendor dependencies
+              command: if [ ! -d vendor ]; then go mod vendor; fi
+          - run:
+              name: Generate k8s
+              command: make generate
+          # Create artifacts
+          - persist_to_workspace:
+              root: /home/circleci
+              paths:
+                - << parameters.operatorDir >>/build/_output
+                - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+                - << parameters.operatorDir >>/vendor
+          # Cache configuration
+          - save_cache:
+              name: Save build artefacts in cache
+              key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
+              paths:
+                - build/_output
+                - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+                - vendor
 
-jobs:
+      # Build job, which build operator docker image (with operator-sdk build)
+      build:
+        <<: *params_operator
+        <<: *job_operator
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/casskop
+        - setup_remote_docker # Creates a separate environment for each build for security.
+        - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+            keys: # Use checksum of go.sum to version cache.
+              - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+        - attach_workspace:  # Attach artifact from workdir
+            at: /home/circleci
+        # Build steps
+        - run:
+            name: Build Operator
+            command: make build
+        # Create artifacts
+        - persist_to_workspace:
+            root: /home/circleci
+            paths:
+              - << parameters.operatorDir >>/build/_output
+              - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+              - << parameters.operatorDir >>/vendor
+        # Deploy steps
+        - deploy:
+            name: Push image to Docker Hub
+            command: |
+              if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
+                echo "This is a PR, we don't push to Hub."
+              else
+                docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+                make push
+              fi
+        # Cache configuration
+        - save_cache:
+            name: Save build artefacts in cache
+            key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
+            paths:
+              - build/_output
+              - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+              - vendor
 
-  build:
-    working_directory: /home/circleci/casskop
-    executor: casskop-build
-    steps:
-    - checkout
+      # Unit test job, will execute makefile 'unit-test-with-vendor' step
+      unit-test:
+        <<: *params_operator
+        <<: *job_operator
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/casskop
+        - attach_workspace:  # Attach artifact from workdir
+            at: /home/circleci
+        # Unit tests steps
+        - run:
+            name: Unit Tests
+            command: make unit-test-with-vendor
+        # Artifacts definitions
+        - store_artifacts: # Store unit test coverage reports
+            path: coverage.html
+        - persist_to_workspace:
+            root: /home/circleci
+            paths:
+              - << parameters.operatorDir >>/coverage.out
+              - << parameters.operatorDir >>/test-report.out
 
-    - setup_remote_docker
+      # Dgoss tests job, will execute make 'dgoss-bootstrap'
+      docker-dgoss-test:
+        <<: *params_operator
+        <<: *job_operator
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/casskop
+        - setup_remote_docker
+        - attach_workspace:  # Attach artifact from workdir
+            at: /home/circleci
+        # Dgoss tests steps
+        - run: # Run test wich enable to validate bootstrap image.
+            name: Dgoss tests
+            command: |
+              curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
+              chmod +rx /usr/local/bin/dgoss
+              curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
+              chmod +rx /usr/local/bin/goss
+              export GOSS_PATH=/usr/local/bin/goss
+              export GOSS_FILES_STRATEGY=cp
+              make dgoss-bootstrap
 
-    - restore_cache:
-        keys:
-          - build-{{ .Branch }}-{{ checksum "go.sum" }}
+      # Reporting step, will run sonar report from scan.
+      report:
+        <<: *params_operator
+        <<: *job_operator
+        # STEPS
+        steps:
+        # Checkout steps
+        - checkout:
+            path: /home/circleci/casskop
+        - attach_workspace:
+            at: /home/circleci
+        - restore_cache: # If exist, restore dependencies libs download cache, from previous pipeline execution.
+            name: Restore SonarQube Scanner
+            keys:
+              - sonar-scanner-3.3.0.1492-linux
+        # Sonar steps
+        - run:
+            name: Download SonarQube Scanner
+            command: |
+              chmod +x /home/circleci/casskop/.circleci/install_sonar-scanner.sh
+              /home/circleci/casskop/.circleci/install_sonar-scanner.sh
+        - save_cache: # Cache sonar download
+            name: Cache SonarQube Scanner
+            key: sonar-scanner-3.3.0.1492-linux
+            paths:
+              - sonar-scanner-3.3.0.1492-linux
+              - /home/circleci/<< parameters.operatorDir >>/.sonar
+        - run: # Run sonar scan
+            name: Sonarcloud Scan
+            command: |
+              ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
+              -Dsonar.projectName=<< parameters.operatorName >> \
+              -Dsonar.projectKey=${SONAR_PROJECT} \
+              -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.branch.name=${CIRCLE_BRANCH} \
+              -Dsonar.organization=${SONAR_ORGANISATION} \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.projectBaseDir=/home/circleci/<< parameters.operatorDir >> \
+              -Dsonar.sources=. \
+              -Dsonar.sources.inclusions="**/**.go" \
+              -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
+              -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
+              -Dsonar.tests=. \
+              -Dsonar.language=go \
+              -Dsonar.sourceEncoding=UTF-8 \
+              -Dsonar.test.inclusions="**/**_test.go" \
+              -Dsonar.test.exclusions="**/vendor/**" \
+              -Dsonar.go.coverage.reportPaths=coverage.out \
+              -Dsonar.go.tests.reportPaths=test-report.out \
+              -Dsonar.coverage.dtdVerification=false \
+              -Dsonar.log.level=INFO
+              cat -n .scannerwork/report-task.txt
+        # Artifacts definitions
+        - store_test_results: # Store sonar scan reports
+            path: reports
 
-    - run:
-        name: Download dependencies
-        command: if [ ! -d vendor ]; then go mod download; fi
+      publish-helm:
+        <<: *params_operator
+        working_directory: /home/circleci/<< parameters.operatorDir >>
+        docker:
+          - image: google/cloud-sdk
+        steps:
+          # Checkout steps
+          - checkout:
+              path: /home/circleci/casskop
+          - run:
+              name: publish-helm
+              command: |
+                if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
+                  echo "This is a PR, we don't publish to helm repo."
+                else
+                  GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/casskop/tools/publish_helm_gcs.sh
+                fi
+# Anchors
+## Filters anchors
+.everytime_filter : &everytime_filter
+  filters:
+    tags:
+      only: /.*/
 
-    - run:
-        name: Vendor dependencies
-        command: if [ ! -d vendor ]; then go mod vendor; fi
+.canonical_repo_filter : &canonical_repo_filter
+  filters:
+    tags:
+      only: /.*/
+    branches:
+      # report sonar only from canonical repository
+      only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
 
-    - run:
-        name: Build Cassandra Operator
-        command: make build
+.ignore_fork_pr_filter: &ignore_fork_pr_filter
+  filters:
+    tags:
+      only: /.*/
+    branches:
+      # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+      ignore: /pull\/[0-9]+/
 
-    - persist_to_workspace:
-        root: ./
-        paths:
-          - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
+.only_on_release_tag: &only_on_release_tag
+  filters:
+    # ignore any commit on any branch by default
+    branches:
+      ignore: /.*/
+    # only act on version tags
+    tags:
+      only: /v[0-9]+(\.[0-9]+)*-release/
 
-    - deploy:
-        name: Push image to Docker Hub
-        command: |
-          if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
-            echo "This is a PR, we don't push to Hub."
-          else
-            docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
-            make push
-          fi
+## Parameters anchors
+.params_multicasskop: &params_multicasskop
+  operatorDir: casskop/multi-casskop
+  operatorName: MultiCassKop
 
-    - save_cache:
-        name: Save build artefacts in cache
-        key: build-{{ .Branch }}-{{ checksum "go.sum" }}
-        paths:
-          - build/_output
-          - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
-          - vendor
-
-  unit-test:
-    working_directory: /home/circleci/casskop
-    executor: casskop-build
-    steps:
-    - checkout
-
-    - attach_workspace:
-        at: ./
-    - run:
-        name: Unit Tests
-        command: make unit-test-with-vendor
-
-    - store_artifacts:
-        path: coverage.html
-
-    - persist_to_workspace:
-        root: ./
-        paths:
-          - coverage.out
-          - test-report.out
-
-
-
-  docker-dgoss-test:
-    working_directory: /home/circleci/casskop
-    executor: casskop-build
-    steps:
-    - checkout
-
-    - setup_remote_docker
-
-    - attach_workspace:
-        at: ./
-    - run:
-        name: Dgoss tests
-        command: |
-          curl -L https://raw.githubusercontent.com/aelsabbahy/goss/master/extras/dgoss/dgoss -o /usr/local/bin/dgoss
-          chmod +rx /usr/local/bin/dgoss
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.6/goss-linux-amd64 -o /usr/local/bin/goss
-          chmod +rx /usr/local/bin/goss
-          export GOSS_PATH=/usr/local/bin/goss
-          export GOSS_FILES_STRATEGY=cp
-          make dgoss-bootstrap
-
-
-  report:
-    working_directory: /home/circleci/casskop
-    executor: casskop-build
-    steps:
-    - checkout
-
-    - attach_workspace:
-        at: ./
-
-    - restore_cache:
-        name: Restore SonarQube Scanner
-        keys:
-          - sonar-scanner-3.3.0.1492-linux
-
-    - run:
-        name: Download SonarQube Scanner
-        command: |
-          chmod +x .circleci/install_sonar-scanner.sh
-          ./.circleci/install_sonar-scanner.sh
-
-    - save_cache:
-        name: Cache SonarQube Scanner
-        key: sonar-scanner-3.3.0.1492-linux
-        paths:
-          - sonar-scanner-3.3.0.1492-linux
-          - /home/circleci/casskop/.sonar
-
-    - run:
-        name: Sonarcloud Scan
-        command: |
-          ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
-          -Dsonar.projectName=CassKop \
-          -Dsonar.projectKey=${SONAR_PROJECT} \
-          -Dsonar.login=${SONAR_TOKEN} \
-          -Dsonar.branch.name=${CIRCLE_BRANCH} \
-          -Dsonar.organization=${SONAR_ORGANISATION} \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.projectBaseDir=/home/circleci/casskop \
-          -Dsonar.sources=. \
-          -Dsonar.sources.inclusions="**/**.go" \
-          -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
-          -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
-          -Dsonar.tests=. \
-          -Dsonar.language=go \
-          -Dsonar.sourceEncoding=UTF-8 \
-          -Dsonar.test.inclusions="**/**_test.go" \
-          -Dsonar.test.exclusions="**/vendor/**" \
-          -Dsonar.go.coverage.reportPaths=coverage.out \
-          -Dsonar.go.tests.reportPaths=test-report.out \
-          -Dsonar.coverage.dtdVerification=false \
-          -Dsonar.log.level=INFO
-          cat -n .scannerwork/report-task.txt
-
-    - store_test_results:
-        path: reports
-
-
+# Workflow definition
 workflows:
   version: 2
-
-  master:
+  ## CassKop operator workflow.
+  ci-casskop-operator:
     jobs:
+      - operator/generate:
+          name: generate-casskop
+          <<: *everytime_filter
 
-      - build:
-          filters:
-            tags:
-              only: /.*/
-
-      - unit-test:
+      - operator/unit-test:
+          name: unit-test-casskop
           requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
+            - generate-casskop
+          <<: *everytime_filter
 
-      - docker-dgoss-test:
+      - operator/build:
+          name: build-casskop
           requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
+            - unit-test-casskop
+          <<: *everytime_filter
 
-      - report:
+      - operator/docker-dgoss-test:
+          name: docker-dgoss-test-casskop
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # report sonar only from canonical repository 
-              only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804 
+            - build-casskop
+          <<: *everytime_filter
+
+      - operator/report:
+          name: report-casskop
+          requires:
+            - unit-test-casskop
+          <<: *canonical_repo_filter
 
       - minikube/e2e-orb:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test CreateOneClusterService
           test_name: CreateOneClusterService
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
 
       - minikube/e2e-orb:
           name: e2e-test ExecuteCleanup
           test_name: ExecuteCleanup
           requires:
-            - unit-test
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
+            - unit-test-casskop
+          <<: *ignore_fork_pr_filter
+      - operator/publish-helm:
+          name: publish-helm-orange-incubator-casskop
+          requires:
+            - report-casskop
+          <<: *only_on_release_tag
+
+  ## CassKop operator workflow.
+  ci-multicasskop-operator:
+    jobs:
+      - operator/generate:
+          name: generate-casskop
+          <<: *everytime_filter
+      - operator/generate:
+          name: generate-multicasskop
+          <<: *params_multicasskop
+          requires:
+            - generate-casskop
+          <<: *everytime_filter
+      - operator/build:
+          name: build-multicasskop
+          <<: *params_multicasskop
+          requires:
+            - generate-multicasskop
+          <<: *everytime_filter
+      - operator/report:
+          name: report-multicasskop
+          <<: *params_multicasskop
+          requires:
+            - build-multicasskop
+          <<: *canonical_repo_filter
+      - operator/publish-helm:
+          name: publish-helm-orange-incubator-multicasskop
+          <<: *params_multicasskop
+          requires:
+            - report-multicasskop
+          <<: *only_on_release_tag

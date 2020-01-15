@@ -192,19 +192,26 @@ gke-slave-west1-c                Opaque                                5      28
 
 ### Install Multi-CassKop
 
-@TODO : To correct once the helm release and docker image will be properly deployed
+@TODO : To correct once the watch object will be fixed
+
+Add MultiCasskop crd on the `slave` cluster : 
+
+```sh
+$ kubectx # Switch context on slave cluster
+Switched to context "gke_<Project name>_europe-west1-c_cassandra-europe-west1-c-slave".
+$ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/multi-casskop/deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
+```
+
 Deployment with Helm : 
 
 ```sh
 $ kubectx # Switch context on master cluster
 Switched to context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-master".
 $ helm init --client-only
-$ helm repo add casskop https://Orange-OpenSource.github.io/casskop/helm
+$ helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
 $ helm repo update
-# @TODO
 $ cd ${CASSKOP_WORKSPACE}
-$ helm install --name multi-casskop ./multi-casskop/helm/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
-#$ helm install --name multi-casskop casskop/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
+$ helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
 ```
 
 ### Create the MultiCasskop CRD

@@ -170,35 +170,25 @@ created
 Add the Helm incubator repo if you do not already have it:
 
 ```
-helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
 ```
 
 Get the latest information about charts from the chart repositories.
 
 ```
 helm repo update
+helm install --name casskop orange-incubator/cassandra-operator
 ```
 
-Helm is available in the official helm/charts/incubator:
-
-```
-helm install --name casskop incubator/cassandra-operator
-```
 
 > ##### Helm 3 users
 >
 > Remove --name from the command
 
-you can also add the CassKop repository from Github 
-
-```console
-helm repo add casskop https://Orange-OpenSource.github.io/casskop/helm
-```
-
 Deploy CassKop:
 
 ```console
-$ helm install --name casskop casskop/cassandra-operator
+$ helm install --name casskop orange-incubator/cassandra-operator
 NAME:   casskop
 LAST DEPLOYED: Thu May 23 15:34:27 2019
 NAMESPACE: cassandra-demo
