@@ -627,7 +627,7 @@ type CassandraClusterSpec struct {
 	CassandraImage string `json:"cassandraImage,omitempty"`
 
 	//ImagePullPolicy define the pull policy for C* docker image
-	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy"`
+	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
 	// Image used for bootstrapping cluster (use the form : base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
@@ -680,7 +680,7 @@ type CassandraClusterSpec struct {
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
 
-	MaxPodUnavailable int32 `json:"maxPodUnavailable"` //Number of MaxPodUnavailable used in the PDB
+	MaxPodUnavailable int32 `json:"maxPodUnavailable,omitempty"` //Number of MaxPodUnavailable used in the PDB
 
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
@@ -778,7 +778,7 @@ type CassandraResources struct {
 // CPUAndMem defines how many cpu and ram the container will request/limit
 type CPUAndMem struct {
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-	CPU    string `json:"cpu"`
+	CPU string `json:"cpu"`
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
 }
