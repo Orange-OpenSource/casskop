@@ -378,8 +378,8 @@ $ helm install --name casskop incubator/cassandra-operator
 Or You can also add the CassKop repository from Github 
 
 ```yaml
-helm repo add casskop https://Orange-OpenSource.github.io/casskop/helm
-helm install --name casskop casskop/cassandra-operator
+helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+helm install --name casskop orange-incubator/cassandra-operator
 ```
 
 > This deploy the Operator and it's CRD via a helm hook.
@@ -393,7 +393,7 @@ Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.oran
 In this case, add the `--no-hooks` helm cli flag to tell helm not to deploy the CRD hook:
 
 ```yaml
-$ helm install --name casskop casskop/cassandra-operator --no-hooks
+$ helm install --name casskop orange-incubator/cassandra-operator --no-hooks
 ```
 
 Check operator's logs: 
