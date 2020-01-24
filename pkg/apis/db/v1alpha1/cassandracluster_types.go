@@ -430,7 +430,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 	var dcName, rackName string
 	var nbRack int = 0
 
-	cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
+	cc.Status.CassandraRackStatus = make(map[string]CassandraRackStatusPtr)
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
@@ -616,6 +616,9 @@ func (rack *RackSlice) Remove(i int) {
 	*rack = append((*rack)[:i], (*rack)[i+1:]...)
 }
 
+// Workaround : waiting for PR https://github.com/kubernetes-sigs/controller-tools/pull/317
+type CassandraRackStatusPtr *CassandraRackStatus
+
 // CassandraClusterSpec defines the configuration of CassandraCluster
 type CassandraClusterSpec struct {
 	// Number of nodes to deploy for a Cassandra deployment in each Racks.
@@ -738,6 +741,7 @@ type DC struct {
 
 	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
 	NumTokens *int32 `json:"numTokens,omitempty"`
+
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -814,8 +818,8 @@ type CassandraClusterStatus struct {
 	//seeList to be used in Cassandra's Pods (computed by the Operator)
 	SeedList []string `json:"seedlist,omitempty"`
 
-	//CassandraRackStatusList list les Status pour chaque Racks
-	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
+	//CassandraRackStatusList list status for each Racks
+	CassandraRackStatus map[string]CassandraRackStatusPtr `json:"cassandraRackStatus,omitempty"`
 }
 
 // CassandraLastAction defines status of the CassandraStatefulset
@@ -879,3 +883,5 @@ type CassandraClusterList struct {
 func init() {
 	SchemeBuilder.Register(&CassandraCluster{}, &CassandraClusterList{})
 }
+
+
