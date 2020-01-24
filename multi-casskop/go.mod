@@ -11,7 +11,7 @@ require (
 	github.com/imdario/mergo v0.3.8
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/operator-framework/operator-sdk v0.14.0
+	github.com/operator-framework/operator-sdk v0.15.0
 	github.com/sirupsen/logrus v1.4.2
 	go.uber.org/multierr v1.2.0 // indirect
 	k8s.io/apimachinery v0.0.0
