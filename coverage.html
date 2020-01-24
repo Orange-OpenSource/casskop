@@ -54,39 +54,41 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/cassandracluster_types.go (67.9%)</option>
+				<option value="file0">github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/cassandracluster_types.go (68.6%)</option>
 				
-				<option value="file1">github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go (35.2%)</option>
+				<option value="file1">github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go (31.1%)</option>
 				
-				<option value="file2">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandra_status.go (46.9%)</option>
+				<option value="file2">github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/zz_generated.openapi.go (0.0%)</option>
 				
-				<option value="file3">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandra_util.go (33.3%)</option>
+				<option value="file3">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandra_status.go (46.9%)</option>
 				
-				<option value="file4">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandracluster_controller.go (63.6%)</option>
+				<option value="file4">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandra_util.go (33.3%)</option>
 				
-				<option value="file5">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/deploy_cassandra.go (85.2%)</option>
+				<option value="file5">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/cassandracluster_controller.go (63.6%)</option>
 				
-				<option value="file6">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/generator.go (91.7%)</option>
+				<option value="file6">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/deploy_cassandra.go (85.2%)</option>
 				
-				<option value="file7">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/node_operations.go (73.3%)</option>
+				<option value="file7">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/generator.go (91.7%)</option>
 				
-				<option value="file8">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pod.go (34.6%)</option>
+				<option value="file8">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/node_operations.go (73.3%)</option>
 				
-				<option value="file9">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pod_operation.go (12.9%)</option>
+				<option value="file9">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pod.go (34.6%)</option>
 				
-				<option value="file10">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/poddisruptionbudget.go (42.9%)</option>
+				<option value="file10">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pod_operation.go (12.9%)</option>
 				
-				<option value="file11">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pvc.go (0.0%)</option>
+				<option value="file11">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/poddisruptionbudget.go (42.9%)</option>
 				
-				<option value="file12">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/reconcile.go (81.3%)</option>
+				<option value="file12">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/pvc.go (0.0%)</option>
 				
-				<option value="file13">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/service.go (100.0%)</option>
+				<option value="file13">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/reconcile.go (81.3%)</option>
 				
-				<option value="file14">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/statefulset.go (37.4%)</option>
+				<option value="file14">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/service.go (100.0%)</option>
 				
-				<option value="file15">github.com/Orange-OpenSource/casskop/pkg/k8s/client_util.go (0.0%)</option>
+				<option value="file15">github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster/statefulset.go (37.4%)</option>
 				
-				<option value="file16">github.com/Orange-OpenSource/casskop/pkg/k8s/util.go (77.4%)</option>
+				<option value="file16">github.com/Orange-OpenSource/casskop/pkg/k8s/client_util.go (0.0%)</option>
+				
+				<option value="file17">github.com/Orange-OpenSource/casskop/pkg/k8s/util.go (77.4%)</option>
 				
 				</select>
 			</div>
@@ -532,7 +534,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int <span class="cov8" title
         var dcName, rackName string
         var nbRack int = 0
 
-        cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
+        cc.Status.CassandraRackStatus = make(map[string]CassandraRackStatusPtr)
         dcsize := cc.GetDCSize()
 
         if dcsize &lt; 1 </span><span class="cov8" title="1">{
@@ -718,6 +720,47 @@ func (rack *RackSlice) Remove(i int) <span class="cov0" title="0">{
         *rack = append((*rack)[:i], (*rack)[i+1:]...)
 }</span>
 
+//START @TODO Workaround : waiting for PR https://github.com/kubernetes-sigs/controller-tools/pull/317
+type CassandraRackStatusPtr *CassandraRackStatus
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new CassandraClusterStatus.
+func (in *CassandraClusterStatus) DeepCopy() *CassandraClusterStatus <span class="cov8" title="1">{
+        if in == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">out := new(CassandraClusterStatus)
+        in.DeepCopyInto(out)
+        return out</span>
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *CassandraClusterStatus) DeepCopyInto(out *CassandraClusterStatus) <span class="cov8" title="1">{
+        *out = *in
+        if in.SeedList != nil </span><span class="cov0" title="0">{
+                in, out := &amp;in.SeedList, &amp;out.SeedList
+                *out = make([]string, len(*in))
+                copy(*out, *in)
+        }</span>
+        <span class="cov8" title="1">if in.CassandraRackStatus != nil </span><span class="cov8" title="1">{
+                in, out := &amp;in.CassandraRackStatus, &amp;out.CassandraRackStatus
+                *out = make(map[string]CassandraRackStatusPtr, len(*in))
+                for key, val := range *in </span><span class="cov8" title="1">{
+                        var outVal CassandraRackStatusPtr
+                        if val == nil </span><span class="cov0" title="0">{
+                                (*out)[key] = nil
+                        }</span> else<span class="cov8" title="1"> {
+                                in, out := &amp;val, &amp;outVal
+                                *out = new(CassandraRackStatus)
+                                (**in).DeepCopyInto(*out)
+                        }</span>
+                        <span class="cov8" title="1">(*out)[key] = outVal</span>
+                }
+        }
+        <span class="cov8" title="1">return</span>
+}
+
+//END
+
 // CassandraClusterSpec defines the configuration of CassandraCluster
 type CassandraClusterSpec struct {
         // Number of nodes to deploy for a Cassandra deployment in each Racks.
@@ -840,6 +883,7 @@ type DC struct {
 
         //NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
         NumTokens *int32 `json:"numTokens,omitempty"`
+
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -916,8 +960,8 @@ type CassandraClusterStatus struct {
         //seeList to be used in Cassandra's Pods (computed by the Operator)
         SeedList []string `json:"seedlist,omitempty"`
 
-        //CassandraRackStatusList list les Status pour chaque Racks
-        CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
+        //CassandraRackStatusList list status for each Racks
+        CassandraRackStatus map[string]CassandraRackStatusPtr `json:"cassandraRackStatus,omitempty"`
 }
 
 // CassandraLastAction defines status of the CassandraStatefulset
@@ -981,6 +1025,8 @@ type CassandraClusterList struct {
 func init() <span class="cov8" title="1">{
         SchemeBuilder.Register(&amp;CassandraCluster{}, &amp;CassandraClusterList{})
 }</span>
+
+
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">// +build !ignore_autogenerated
@@ -1042,7 +1088,7 @@ func (in *CassandraCluster) DeepCopyObject() runtime.Object <span class="cov0" t
 func (in *CassandraClusterList) DeepCopyInto(out *CassandraClusterList) <span class="cov0" title="0">{
         *out = *in
         out.TypeMeta = in.TypeMeta
-        out.ListMeta = in.ListMeta
+        in.ListMeta.DeepCopyInto(&amp;out.ListMeta)
         if in.Items != nil </span><span class="cov0" title="0">{
                 in, out := &amp;in.Items, &amp;out.Items
                 *out = make([]CassandraCluster, len(*in))
@@ -1107,42 +1153,6 @@ func (in *CassandraClusterSpec) DeepCopy() *CassandraClusterSpec <span class="co
                 return nil
         }</span>
         <span class="cov0" title="0">out := new(CassandraClusterSpec)
-        in.DeepCopyInto(out)
-        return out</span>
-}
-
-// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *CassandraClusterStatus) DeepCopyInto(out *CassandraClusterStatus) <span class="cov8" title="1">{
-        *out = *in
-        if in.SeedList != nil </span><span class="cov0" title="0">{
-                in, out := &amp;in.SeedList, &amp;out.SeedList
-                *out = make([]string, len(*in))
-                copy(*out, *in)
-        }</span>
-        <span class="cov8" title="1">if in.CassandraRackStatus != nil </span><span class="cov8" title="1">{
-                in, out := &amp;in.CassandraRackStatus, &amp;out.CassandraRackStatus
-                *out = make(map[string]*CassandraRackStatus, len(*in))
-                for key, val := range *in </span><span class="cov8" title="1">{
-                        var outVal *CassandraRackStatus
-                        if val == nil </span><span class="cov0" title="0">{
-                                (*out)[key] = nil
-                        }</span> else<span class="cov8" title="1"> {
-                                in, out := &amp;val, &amp;outVal
-                                *out = new(CassandraRackStatus)
-                                (*in).DeepCopyInto(*out)
-                        }</span>
-                        <span class="cov8" title="1">(*out)[key] = outVal</span>
-                }
-        }
-        <span class="cov8" title="1">return</span>
-}
-
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new CassandraClusterStatus.
-func (in *CassandraClusterStatus) DeepCopy() *CassandraClusterStatus <span class="cov8" title="1">{
-        if in == nil </span><span class="cov0" title="0">{
-                return nil
-        }</span>
-        <span class="cov8" title="1">out := new(CassandraClusterStatus)
         in.DeepCopyInto(out)
         return out</span>
 }
@@ -1435,7 +1445,69 @@ func (in *Topology) DeepCopy() *Topology <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file2" style="display: none">// +build !ignore_autogenerated
+
+// This file was autogenerated by openapi-gen. Do not edit it manually!
+
+package v1alpha1
+
+import (
+        spec "github.com/go-openapi/spec"
+        common "k8s.io/kube-openapi/pkg/common"
+)
+
+func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition <span class="cov0" title="0">{
+        return map[string]common.OpenAPIDefinition{
+                "./pkg/apis/db/v1alpha1.CassandraCluster": schema_pkg_apis_db_v1alpha1_CassandraCluster(ref),
+        }
+}</span>
+
+func schema_pkg_apis_db_v1alpha1_CassandraCluster(ref common.ReferenceCallback) common.OpenAPIDefinition <span class="cov0" title="0">{
+        return common.OpenAPIDefinition{
+                Schema: spec.Schema{
+                        SchemaProps: spec.SchemaProps{
+                                Description: "CassandraCluster is the Schema for the cassandraclusters API",
+                                Type:        []string{"object"},
+                                Properties: map[string]spec.Schema{
+                                        "kind": {
+                                                SchemaProps: spec.SchemaProps{
+                                                        Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                                                        Type:        []string{"string"},
+                                                        Format:      "",
+                                                },
+                                        },
+                                        "apiVersion": {
+                                                SchemaProps: spec.SchemaProps{
+                                                        Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                                                        Type:        []string{"string"},
+                                                        Format:      "",
+                                                },
+                                        },
+                                        "metadata": {
+                                                SchemaProps: spec.SchemaProps{
+                                                        Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+                                                },
+                                        },
+                                        "spec": {
+                                                SchemaProps: spec.SchemaProps{
+                                                        Ref: ref("./pkg/apis/db/v1alpha1.CassandraClusterSpec"),
+                                                },
+                                        },
+                                        "status": {
+                                                SchemaProps: spec.SchemaProps{
+                                                        Ref: ref("./pkg/apis/db/v1alpha1.CassandraClusterStatus"),
+                                                },
+                                        },
+                                },
+                        },
+                },
+                Dependencies: []string{
+                        "./pkg/apis/db/v1alpha1.CassandraClusterSpec", "./pkg/apis/db/v1alpha1.CassandraClusterStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1944,7 +2016,7 @@ func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string
 }</span>
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file4" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2021,7 +2093,7 @@ func (rcc *ReconcileCassandraCluster) DeletePVCs(cc *api.CassandraCluster, dcNam
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file5" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2192,7 +2264,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file6" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2296,7 +2368,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraStatefulSet(cc *api.Cassand
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file7" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2583,6 +2655,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
                                                 createInitConfigContainer(cc),
                                                 createCassandraBootstrapContainer(cc, status, dcRackName),
                                         },
+
 
                                         Containers: []v1.Container{
                                                 createCassandraContainer(cc, status, dcRackName),
@@ -2902,6 +2975,7 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount <s
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
         dcRackName string) v1.Container <span class="cov8" title="1">{
+
         resources := getCassandraResources(cc.Spec)
         volumeMounts := generateCassandraVolumeMount(cc)
 
@@ -3009,7 +3083,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file8" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -3353,7 +3427,7 @@ func (jolokiaClient *JolokiaClient) hasKeyspaceDataInDC(keyspace, dc string) (bo
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file9" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -3579,7 +3653,7 @@ func (rcc *ReconcileCassandraCluster) ForceDeletePod(pod *v1.Pod) error <span cl
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file10" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -4457,7 +4531,7 @@ func (rcc *ReconcileCassandraCluster) runCleanup(hostName string, cc *api.Cassan
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file11" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -4561,7 +4635,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdatePodDisruptionBudget(pdb *pol
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file12" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -4628,7 +4702,7 @@ func (rcc *ReconcileCassandraCluster) deletePVC(pvc *v1.PersistentVolumeClaim) e
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file13" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5264,7 +5338,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file14" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5303,7 +5377,7 @@ func (rcc *ReconcileCassandraCluster) DeleteService(namespace, name string) erro
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file15" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5616,7 +5690,7 @@ func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool <span cla
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file16" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -5767,7 +5841,7 @@ func ExecPod(namespace string, pod *corev1.Pod, cmd []string) (string, string, e
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">// Copyright 2019 Orange
+		<pre class="file" id="file17" style="display: none">// Copyright 2019 Orange
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
