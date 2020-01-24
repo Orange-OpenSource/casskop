@@ -104,7 +104,7 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 
 	t.Log("Download statefulset and store current revision")
 	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc1-rack1",
-		metav1.GetOptions{IncludeUninitialized: true})
+		metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Could not download statefulset: %v", err)
 	}
@@ -137,7 +137,7 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 
 	t.Log("Download statefulset and check current revision has been updated")
 	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc1-rack1",
-		metav1.GetOptions{IncludeUninitialized: true})
+		metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Could not download statefulset: %v", err)
 	}
@@ -460,7 +460,7 @@ func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, erro
 }
 
 func getStatefulSet(name string, namespace string, f *framework.Framework, t *testing.T) *appsv1.StatefulSet {
-	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get StatefulSet %s: %v", name, err)
 	}
