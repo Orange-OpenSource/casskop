@@ -142,7 +142,7 @@ function createCassandraContainer {
 function createAndCheckCassandraContainer {
     echo "== createAndCheckCassandraContainer"
     local script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-    GOSS_FILES_PATH=${script_dir}/checks GOSS_WAIT_OPTS='-r 90s -s 1s > /dev/null' dgoss run \
+    GOSS_FILES_PATH=${script_dir}/checks GOSS_SLEEP=5 GOSS_WAIT_OPTS='-r 90s -s 1s > /dev/null' dgoss run \
                    -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
                    -v ${EXTRA_LIB_VOLUME}:/extra-lib \
                    -p 9500:9500 \
