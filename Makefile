@@ -123,7 +123,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.9.0
+OPERATOR_SDK_VERSION=v0.15.0-pr137
 # workdir
 WORKDIR := /go/casskop
 
