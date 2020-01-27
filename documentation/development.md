@@ -40,11 +40,11 @@ and not all steps could be executed.
 Casskop has been validated with :
 
 - [dep](dep_tool) version v0.5.1+.
-- [go](go_tool) version v1.12.4+.
+- [go](go_tool) version v1.13+.
 - [docker](docker_tool) version 18.09+.
 - [kubectl](kubectl_tool) version v1.13.3+.
 - [Helm](https://helm.sh/) version v2.12.2.
-- [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.9.0.
+- Fork from [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.15.0 : [Operator sdk - forked](https://github.com/erdrix/operator-sdk/tree/v0.15.0-pr137)
 
 
 ### Install the Operator SDK CLI
@@ -54,11 +54,13 @@ First, checkout and install the operator-sdk CLI:
 ```sh
 $ mkdir -p $GOPATH/src/github.com/operator-framework/
 $ cd $GOPATH/src/github.com/operator-framework/
-$ git clone git@github.com:operator-framework/operator-sdk.git
-$ git checkout v0.9.0
+$ git clone git@github.com:erdrix/operator-sdk.git
+$ git checkout v0.15.0-pr137
+$ make tidy
 $ make install
 ```
 
+**Note :** Use fork from operator-sdk, waiting for [PR #317](https://github.com/kubernetes-sigs/controller-tools/pull/317/files#diff-8963ad7c8dcbe3931bc61c3e2954ccf2R300-R301) will be merged.
 
 ### Initial setup
 
