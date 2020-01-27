@@ -297,74 +297,8 @@ spec:
           properties:
             cassandraRackStatus:
               additionalProperties:
-                description: CassandraRackStatus defines states of Cassandra for 1
-                  rack (1 statefulset)
-                properties:
-                  cassandraLastAction:
-                    description: 'CassandraLastAction is the set of Cassandra State
-                      & Actions: Active, Standby..'
-                    properties:
-                      endTime:
-                        format: date-time
-                        type: string
-                      name:
-                        description: 'Type of action to perform : UpdateVersion, UpdateBaseImage,
-                          UpdateConfigMap..'
-                        type: string
-                      startTime:
-                        format: date-time
-                        type: string
-                      status:
-                        description: Action is the specific actions that can be done
-                          on a Cassandra Cluster such as cleanup, upgradesstables..
-                        type: string
-                      updatedNodes:
-                        description: PodNames of updated Cassandra nodes. Updated
-                          means the Cassandra container image version matches the
-                          spec's version.
-                        items:
-                          type: string
-                        type: array
-                    type: object
-                  phase:
-                    description: 'Phase indicates the state this Cassandra cluster
-                      jumps in. Phase goes as one way as below:   Initial -> Running
-                      <-> updating'
-                    type: string
-                  podLastOperation:
-                    description: PodLastOperation manage status for Pod Operation
-                      (nodetool cleanup, upgradesstables..)
-                    properties:
-                      endTime:
-                        format: date-time
-                        type: string
-                      name:
-                        type: string
-                      operatorName:
-                        description: Name of operator
-                        type: string
-                      pods:
-                        description: List of pods running an operation
-                        items:
-                          type: string
-                        type: array
-                      podsKO:
-                        description: List of pods that fail to run an operation
-                        items:
-                          type: string
-                        type: array
-                      podsOK:
-                        description: List of pods that run an operation successfully
-                        items:
-                          type: string
-                        type: array
-                      startTime:
-                        format: date-time
-                        type: string
-                      status:
-                        type: string
-                    type: object
-                type: object
+                $ref: '#/definitions/CassandraRackStatus'
+                description: 'START @TODO Workaround : waiting for PR https://github.com/kubernetes-sigs/controller-tools/pull/317'
               description: CassandraRackStatusList list status for each Racks
               type: object
             lastClusterAction:

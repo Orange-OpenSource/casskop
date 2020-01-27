@@ -1,5 +1,5 @@
 #https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/golang/images/1.12.4/Dockerfile
-FROM golang:1.12.4
+FROM golang:1.13
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90circleci \
@@ -78,9 +78,13 @@ RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-am
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION
 RUN mkdir -p $GOPATH/src/github.com/operator-framework \
-    && go get -u github.com/operator-framework/operator-sdk || true \
+    && mkdir -p $GOPATH/src/github.com/erdrix \
+##    && go get -u github.com/operator-framework/operator-sdk || true \
+    && go get -d github.com/erdrix/operator-sdk || true \
+    && mv $GOPATH/src/github.com/erdrix/operator-sdk $GOPATH/src/github.com/operator-framework/operator-sdk \
     && cd $GOPATH/src/github.com/operator-framework/operator-sdk \
     && git checkout $OPERATOR_SDK_VERSION \
+    && make tidy \
     && make install \
     && make clean && rm -rf vendor && rm -rf .git \
     && go clean \
