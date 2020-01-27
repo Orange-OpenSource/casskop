@@ -185,6 +185,7 @@ spec:
                         type: object
                       name:
                         description: Name of the CassandraDC
+                        pattern: ^[^-]+$
                         type: string
                       nodesPerRacks:
                         description: 'Number of nodes to deploy for a Cassandra deployment
@@ -208,6 +209,7 @@ spec:
                               type: object
                             name:
                               description: Name of the Rack
+                              pattern: ^[^-]+$
                               type: string
                             rollingPartition:
                               description: The Partition to control the Statefulset
@@ -223,6 +225,10 @@ spec:
                     type: object
                   type: array
               type: object
+            unlockNextOperation:
+              description: Very special Flag to hack CassKop reconcile loop - use
+                with really good Care
+              type: boolean
           required:
           - imagepullpolicy
           - maxPodUnavailable
@@ -236,12 +242,12 @@ spec:
                     description: 'CassandraLastAction is the set of Cassandra State
                       & Actions: Active, Standby..'
                     properties:
-                      Name:
-                        description: 'Type d''action a effectuer : UpdateVersion,
-                          UpdateBaseImage, UpdateConfigMap..'
-                        type: string
                       endTime:
                         format: date-time
+                        type: string
+                      name:
+                        description: 'Type of action to perform : UpdateVersion, UpdateBaseImage,
+                          UpdateConfigMap..'
                         type: string
                       startTime:
                         format: date-time
@@ -267,10 +273,10 @@ spec:
                     description: PodLastOperation manage status for Pod Operation
                       (nodetool cleanup, upgradesstables..)
                     properties:
-                      Name:
-                        type: string
                       endTime:
                         format: date-time
+                        type: string
+                      name:
                         type: string
                       operatorName:
                         description: Name of operator
