@@ -164,7 +164,7 @@ created
 > You will need to manually install the crds beforehand
 >
 > ```console
-> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db_v1alpha1_cassandracluster_crd.yaml
+> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 > ```
 
 Add the Helm incubator repo if you do not already have it:
