@@ -685,9 +685,9 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 
 	if labelSet != true {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
-	} else if cc.IsValidDC(rebuildFrom) == false {
+	/*} else if cc.IsValidDC(rebuildFrom) == false {
 		err = fmt.Errorf("%s is not an existing datacenter", rebuildFrom)
-	}
+	}*/
 
 	// In case of an error set the status on the pod and skip it
 	if err != nil {
