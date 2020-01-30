@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 
@@ -182,6 +182,26 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	return vm
 }
 
+
+func generateStorageConfigVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
+
+	var pvcs []v1.PersistentVolumeClaim
+
+	for _, storage := range cc.Spec.StorageConfigs {
+		var pvc v1.PersistentVolumeClaim
+		pvc = v1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   storage.Name,
+				Labels: labels,
+			},
+			Spec: *storage.PVCSpec,
+		}
+
+		pvcs = append(pvcs, pvc)
+	}
+	return pvcs
+}
+
 func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
 
 	var pvc []v1.PersistentVolumeClaim
@@ -224,7 +244,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	name := cc.GetName()
 	namespace := cc.Namespace
 	volumes := generateCassandraVolumes(cc)
-	volumeClaimTemplate := generateVolumeClaimTemplate(cc, labels)
+	volumeClaimTemplate := append(generateVolumeClaimTemplate(cc, labels), generateStorageConfigVolumeClaimTemplate(cc, labels)...)
 
 	for _, pvc := range volumeClaimTemplate {
 		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))

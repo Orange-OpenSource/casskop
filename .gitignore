@@ -117,6 +117,6 @@ cassandra-operator.env
 multi-casskop/multi-casskop.env
 telepresence.log
 build/_output
-pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+pkg/apis/db/v1alpha2/zz_generated.deepcopy.go
 multi-casskop/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
 multi-casskop/build/_output

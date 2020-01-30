@@ -12,7 +12,7 @@
 // 	See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha2
 
 import (
 	"encoding/json"
@@ -616,6 +616,7 @@ func (rack *RackSlice) Remove(i int) {
 	*rack = append((*rack)[:i], (*rack)[i+1:]...)
 }
 // CassandraClusterSpec defines the configuration of CassandraCluster
+
 type CassandraClusterSpec struct {
 	// Number of nodes to deploy for a Cassandra deployment in each Racks.
 	// Default: 1.
@@ -859,6 +860,7 @@ type PodLastOperation struct {
 
 // CassandraCluster is the Schema for the cassandraclusters API
 // +k8s:openapi-gen=true
+// +kubebuilder:storageversion
 type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

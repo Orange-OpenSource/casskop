@@ -27,7 +27,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
 	"github.com/Orange-OpenSource/casskop/pkg/controller"
 	"github.com/Orange-OpenSource/casskop/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"

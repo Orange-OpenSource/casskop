@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strings"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/r3labs/diff"
 	"github.com/sirupsen/logrus"
