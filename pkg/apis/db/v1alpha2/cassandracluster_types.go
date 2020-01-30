@@ -692,6 +692,10 @@ type CassandraClusterSpec struct {
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
+	//  StorageConfig defines additional storage configurations
+	Test string `json:"test"`
+	StorageConfig StorageConfig `json:"storageConfig"`
+
 	// Deploy or Not Service that provide access to monitoring metrics
 	//Exporter bool `json:"exporter,omitempty"`
 
@@ -710,6 +714,16 @@ type CassandraClusterSpec struct {
 
 	//Topology to create Cassandra DC and Racks and to target appropriate Kubernetes Nodes
 	Topology Topology `json:"topology,omitempty"`
+}
+
+// StorageConfig defines additional storage configurations
+type StorageConfig struct {
+	// Mount path into cassandra container
+	MountPath string						`json:"mountPath"`
+	// Name of the pvc
+	Name      string						`json:"name"`
+/*	// Persistent volume claim spec
+	PVCSpec   *v1.PersistentVolumeClaimSpec	`json:"pvcSpec"`*/
 }
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels

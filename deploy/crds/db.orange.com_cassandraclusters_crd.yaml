@@ -607,6 +607,22 @@ spec:
                       headless service the CassKop operator creates
                     type: object
                 type: object
+              storageConfig:
+                description: StorageConfig defines additional storage configurations
+                properties:
+                  mountPath:
+                    description: Mount path into cassandra container
+                    type: string
+                  name:
+                    description: Name of the pvc
+                    type: string
+                required:
+                - mountPath
+                - name
+                type: object
+              test:
+                description: ' StorageConfig defines additional storage configurations'
+                type: string
               topology:
                 description: Topology to create Cassandra DC and Racks and to target
                   appropriate Kubernetes Nodes
@@ -670,6 +686,9 @@ spec:
                 description: Very special Flag to hack CassKop reconcile loop - use
                   with really good Care
                 type: boolean
+            required:
+            - storageConfig
+            - test
             type: object
           status:
             description: CassandraClusterStatus defines Global state of CassandraCluster

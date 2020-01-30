@@ -187,7 +187,8 @@ func generateStorageConfigVolumeClaimTemplate(cc *api.CassandraCluster, labels m
 
 	var pvcs []v1.PersistentVolumeClaim
 
-	for _, storage := range cc.Spec.StorageConfigs {
+
+/*	for _, storage := range cc.Spec.StorageConfigs {
 		var pvc v1.PersistentVolumeClaim
 		pvc = v1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
@@ -198,7 +199,7 @@ func generateStorageConfigVolumeClaimTemplate(cc *api.CassandraCluster, labels m
 		}
 
 		pvcs = append(pvcs, pvc)
-	}
+	}*/
 	return pvcs
 }
 
