@@ -54,13 +54,12 @@ First, checkout and install the operator-sdk CLI:
 ```sh
 $ mkdir -p $GOPATH/src/github.com/operator-framework/
 $ cd $GOPATH/src/github.com/operator-framework/
-$ git clone git@github.com:erdrix/operator-sdk.git
-$ git checkout v0.15.0-pr137
+git clone -b v0.15.0-pr137 --single-branch git@github.com:erdrix/operator-sdk.git
 $ make tidy
 $ make install
 ```
 
-**Note :** Use fork from operator-sdk, waiting for [PR #317](https://github.com/kubernetes-sigs/controller-tools/pull/317/files#diff-8963ad7c8dcbe3931bc61c3e2954ccf2R300-R301) will be merged.
+**Note :** Use fork from operator-sdk, waiting for [PR #317](https://github.com/kubernetes-sigs/controller-tools/pull/317/files#diff-8963ad7c8dcbe3931bc61c3e2954ccf2R300-R301) to be merged.
 
 ### Initial setup
 
