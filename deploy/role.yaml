@@ -1,14 +1,16 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  creationTimestamp: null
   name: casskop
 rules:
 - apiGroups:
   - db.orange.com
   resources:
-  - "*"
+  - '*'
+  - cassandraclusters
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - ""
   resources:
@@ -21,7 +23,7 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - ""
   resources:
@@ -36,25 +38,25 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - '*'
 - apiGroups:
   - policy
   resources:
-    - poddisruptionbudgets
+  - poddisruptionbudgets
   verbs:
-    - "*"
+  - '*'
 - apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
   verbs:
-  - "get"
-  - "create"
+  - get
+  - create
 - apiGroups:
   - apps
-  resources:
-  - deployments/finalizers
   resourceNames:
   - casskop
+  resources:
+  - deployments/finalizers
   verbs:
-  - "update"
+  - update
