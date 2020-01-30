@@ -362,7 +362,7 @@ spec:
                         type: string
                     type: object
                 type: object
-              description: CassandraRackStatusList list status for each Racks
+              description: CassandraRackStatusList list status for each Rack
               type: object
             lastClusterAction:
               description: Store last action at cluster level
