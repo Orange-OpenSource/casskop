@@ -693,8 +693,7 @@ type CassandraClusterSpec struct {
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
 	//  StorageConfig defines additional storage configurations
-	Test string `json:"test"`
-	StorageConfig StorageConfig `json:"storageConfig"`
+	StorageConfigs []StorageConfig `json:"storageConfigs,omitempty"`
 
 	// Deploy or Not Service that provide access to monitoring metrics
 	//Exporter bool `json:"exporter,omitempty"`
@@ -721,9 +720,10 @@ type StorageConfig struct {
 	// Mount path into cassandra container
 	MountPath string						`json:"mountPath"`
 	// Name of the pvc
+	// +kubebuilder:validation:Pattern=[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*
 	Name      string						`json:"name"`
-/*	// Persistent volume claim spec
-	PVCSpec   *v1.PersistentVolumeClaimSpec	`json:"pvcSpec"`*/
+	// Persistent volume claim spec
+	PVCSpec   *v1.PersistentVolumeClaimSpec	`json:"pvcSpec"`
 }
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels
