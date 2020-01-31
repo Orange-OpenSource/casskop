@@ -183,7 +183,7 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 }
 
 
-func generateStorageConfigVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
+func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
 
 	var pvcs []v1.PersistentVolumeClaim
 
@@ -244,8 +244,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) *appsv1.StatefulSet {
 	name := cc.GetName()
 	namespace := cc.Namespace
-	volumes := generateCassandraVolumes(cc)
-	volumeClaimTemplate := append(generateVolumeClaimTemplate(cc, labels), generateStorageConfigVolumeClaimTemplate(cc, labels)...)
+	volumes := append(generateCassandraVolumes(cc), generateStorageConfigVolumes(cc, labels)...)
+	volumeClaimTemplate := append(generateVolumeClaimTemplate(cc, labels), generateStorageConfigVolumeClaimTemplates(cc, labels)...)
 
 	for _, pvc := range volumeClaimTemplate {
 		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
