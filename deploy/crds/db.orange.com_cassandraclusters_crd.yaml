@@ -288,9 +288,12 @@ spec:
               description: Very special Flag to hack CassKop reconcile loop - use
                 with really good Care
               type: boolean
+<<<<<<< HEAD:deploy/crds/db.orange.com_cassandraclusters_crd.yaml
           required:
           - imagepullpolicy
           - maxPodUnavailable
+=======
+>>>>>>> d88fc2d33528df4d914102801bf7b780eaf763c9:deploy/crds/db.orange.com_cassandraclusters_crd.yaml
           type: object
         status:
           description: CassandraClusterStatus defines Global state of CassandraCluster
