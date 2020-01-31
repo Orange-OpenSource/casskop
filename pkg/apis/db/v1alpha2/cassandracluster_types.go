@@ -692,8 +692,11 @@ type CassandraClusterSpec struct {
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
-	//  StorageConfig defines additional storage configurations
+	// StorageConfig defines additional storage configurations
 	StorageConfigs []StorageConfig `json:"storageConfigs,omitempty"`
+
+	// SidecarsConfig defines additional sidecar configurations
+	SidecarConfigs []v1.Container `json:"sidecarConfigs,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,2,rep,name=containers"`
 
 	// Deploy or Not Service that provide access to monitoring metrics
 	//Exporter bool `json:"exporter,omitempty"`

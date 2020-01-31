@@ -182,6 +182,15 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	return vm
 }
 
+func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount{
+	var vms []v1.VolumeMount
+	for _, storage := range cc.Spec.StorageConfigs {
+		vms = append(vms, v1.VolumeMount{Name: storage.Name, MountPath: storage.MountPath})
+	}
+
+	return vms
+}
+
 
 func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
 
@@ -236,6 +245,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 		pvc[0].Spec.StorageClassName = &cc.Spec.DataStorageClass
 	}
 
+	pvc = append(pvc, generateStorageConfigVolumeClaimTemplates(cc, labels)...)
+
 	return pvc
 }
 
@@ -244,8 +255,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) *appsv1.StatefulSet {
 	name := cc.GetName()
 	namespace := cc.Namespace
-	volumes := append(generateCassandraVolumes(cc), generateStorageConfigVolumes(cc, labels)...)
-	volumeClaimTemplate := append(generateVolumeClaimTemplate(cc, labels), generateStorageConfigVolumeClaimTemplates(cc, labels)...)
+	volumes := generateCassandraVolumes(cc)
+	volumeClaimTemplate := generateVolumeClaimTemplate(cc, labels)
+	containers := generateContainers(cc, status, dcRackName)
 
 	for _, pvc := range volumeClaimTemplate {
 		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
@@ -308,9 +320,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 
 
-					Containers: []v1.Container{
-						createCassandraContainer(cc, status, dcRackName),
-					},
+					Containers: containers,
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
@@ -622,13 +632,22 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
 	return slice
 }
 
+func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) []v1.Container {
+	var containers []v1.Container
+	containers = append(containers, cc.Spec.SidecarConfigs...)
+	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
+
+	return containers
+}
+
 /* CreateCassandraContainer create the main container for cassandra
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := generateCassandraVolumeMount(cc)
+	volumeMounts := append(generateCassandraVolumeMount(cc), generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
 	if cc.Spec.Debug {
