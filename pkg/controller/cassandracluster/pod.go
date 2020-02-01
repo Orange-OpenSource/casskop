@@ -153,12 +153,17 @@ func (rcc *ReconcileCassandraCluster) hasUnschedulablePod(namespace string, dcNa
 
 func (rcc *ReconcileCassandraCluster) ListPods(namespace string, selector map[string]string) (*v1.PodList, error) {
 
-	opt := &client.ListOptions{
+	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
 		LabelSelector: labels.SelectorFromSet(selector),
 	}
+
+	opt := []client.ListOption{
+		clientOpt,
+	}
+
 	pl := &v1.PodList{}
-	return pl, rcc.client.List(context.TODO(), opt, pl)
+	return pl, rcc.client.List(context.TODO(), pl, opt...)
 }
 
 func (rcc *ReconcileCassandraCluster) CreatePod(pod *v1.Pod) error {

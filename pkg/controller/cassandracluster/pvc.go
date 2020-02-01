@@ -43,7 +43,10 @@ func (rcc *ReconcileCassandraCluster) GetPVC(namespace, name string) (*v1.Persis
 func (rcc *ReconcileCassandraCluster) ListPVC(namespace string,
 	selector map[string]string) (*v1.PersistentVolumeClaimList, error) {
 
-	opt := &client.ListOptions{Namespace: namespace, LabelSelector: labels.SelectorFromSet(selector)}
+	clientOpt := &client.ListOptions{Namespace: namespace, LabelSelector: labels.SelectorFromSet(selector)}
+	opt := []client.ListOption{
+		clientOpt,
+	}
 
 	o := &v1.PersistentVolumeClaimList{
 		TypeMeta: metav1.TypeMeta{
@@ -52,7 +55,7 @@ func (rcc *ReconcileCassandraCluster) ListPVC(namespace string,
 		},
 	}
 
-	return o, rcc.client.List(context.TODO(), opt, o)
+	return o, rcc.client.List(context.TODO(), o, opt...)
 }
 
 func (rcc *ReconcileCassandraCluster) deletePVC(pvc *v1.PersistentVolumeClaim) error {

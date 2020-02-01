@@ -738,6 +738,7 @@ type DC struct {
 
 	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
 	NumTokens *int32 `json:"numTokens,omitempty"`
+
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -814,7 +815,7 @@ type CassandraClusterStatus struct {
 	//seeList to be used in Cassandra's Pods (computed by the Operator)
 	SeedList []string `json:"seedlist,omitempty"`
 
-	//CassandraRackStatusList list les Status pour chaque Racks
+	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
 }
 
@@ -879,3 +880,5 @@ type CassandraClusterList struct {
 func init() {
 	SchemeBuilder.Register(&CassandraCluster{}, &CassandraClusterList{})
 }
+
+

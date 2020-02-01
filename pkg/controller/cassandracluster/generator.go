@@ -286,6 +286,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
 
+
 					Containers: []v1.Container{
 						createCassandraContainer(cc, status, dcRackName),
 					},
@@ -604,6 +605,7 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
+
 	resources := getCassandraResources(cc.Spec)
 	volumeMounts := generateCassandraVolumeMount(cc)
 

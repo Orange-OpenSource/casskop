@@ -1,0 +1,388 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: cassandraclusters.db.orange.com
+spec:
+  group: db.orange.com
+  names:
+    kind: CassandraCluster
+    listKind: CassandraClusterList
+    plural: cassandraclusters
+    singular: cassandracluster
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: CassandraCluster is the Schema for the cassandraclusters API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CassandraClusterSpec defines the configuration of CassandraCluster
+          properties:
+            autoPilot:
+              description: AutoPilot defines if the Operator can fly alone or if we
+                need human action to trigger Actions on specific Cassandra nodes If
+                autoPilot=true, the operator will set labels pod-operation-status=To-Do
+                on Pods which allows him to automatically triggers Action If autoPilot=false,
+                the operator will set labels pod-operation-status=Manual on Pods which
+                won't automatically triggers Action
+              type: boolean
+            autoUpdateSeedList:
+              description: AutoUpdateSeedList defines if the Operator automatically
+                update the SeedList according to new cluster CRD topology by default
+                a boolean is false
+              type: boolean
+            bootstrapImage:
+              description: 'Image used for bootstrapping cluster (use the form : base:version)'
+              type: string
+            cassandraImage:
+              description: Image + version to use for Cassandra
+              type: string
+            configMapName:
+              description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml)
+                If this is empty, operator will uses default cassandra.yaml from the
+                baseImage If this is not empty, operator will uses the cassandra.yaml
+                from the Configmap instead
+              type: string
+            dataCapacity:
+              description: Define the Capacity for Persistent Volume Claims in the
+                local storage
+              pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+              type: string
+            dataStorageClass:
+              description: Define StorageClass for Persistent Volume Claims in the
+                local storage.
+              type: string
+            debug:
+              description: Debug is used to surcharge Cassandra pod command to not
+                directly start cassandra but starts an infinite wait to allow user
+                to connect a bash into the pod to make some diagnoses.
+              type: boolean
+            deletePVC:
+              description: DeletePVC defines if the PVC must be deleted when the cluster
+                is deleted it is false by default
+              type: boolean
+            gcStdout:
+              description: 'GCStdout set the parameter CASSANDRA_GC_STDOUT which configure
+                the JVM -Xloggc: true by default'
+              type: boolean
+            hardAntiAffinity:
+              description: HardAntiAffinity defines if the PodAntiAffinity of the
+                statefulset has to be hard (it's soft by default)
+              type: boolean
+            imageJolokiaSecret:
+              description: JMX Secret if Set is used to set JMX_USER and JMX_PASSWORD
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+            imagePullSecret:
+              description: Name of the secret to uses to authenticate on Docker registries
+                If this is empty, operator do nothing If this is not empty, propagate
+                the imagePullSecrets to the statefulsets
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+            imagepullpolicy:
+              description: ImagePullPolicy define the pull policy for C* docker image
+              type: string
+            initContainerCmd:
+              description: Command to execute in the initContainer in the targeted
+                image
+              type: string
+            initContainerImage:
+              description: Command to execute in the initContainer in the targeted
+                image
+              type: string
+            maxPodUnavailable:
+              format: int32
+              type: integer
+            noCheckStsAreEqual:
+              type: boolean
+            nodesPerRacks:
+              description: 'Number of nodes to deploy for a Cassandra deployment in
+                each Racks. Default: 1. If NodesPerRacks = 2 and there is 3 racks,
+                the cluster will have 6 Cassandra Nodes'
+              format: int32
+              type: integer
+            pod:
+              description: PodPolicy defines the policy for pods owned by CassKop
+                operator.
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations specifies the annotations to attach to
+                    headless service the CassKop operator creates
+                  type: object
+                tolerations:
+                  description: Tolerations specifies the tolerations to attach to
+                    the pods the CassKop operator creates
+                  items:
+                    description: The pod this Toleration is attached to tolerates
+                      any taint that matches the triple <key,value,effect> using the
+                      matching operator <operator>.
+                    properties:
+                      effect:
+                        description: Effect indicates the taint effect to match. Empty
+                          means match all taint effects. When specified, allowed values
+                          are NoSchedule, PreferNoSchedule and NoExecute.
+                        type: string
+                      key:
+                        description: Key is the taint key that the toleration applies
+                          to. Empty means match all taint keys. If the key is empty,
+                          operator must be Exists; this combination means to match
+                          all values and all keys.
+                        type: string
+                      operator:
+                        description: Operator represents a key's relationship to the
+                          value. Valid operators are Exists and Equal. Defaults to
+                          Equal. Exists is equivalent to wildcard for value, so that
+                          a pod can tolerate all taints of a particular category.
+                        type: string
+                      tolerationSeconds:
+                        description: TolerationSeconds represents the period of time
+                          the toleration (which must be of effect NoExecute, otherwise
+                          this field is ignored) tolerates the taint. By default,
+                          it is not set, which means tolerate the taint forever (do
+                          not evict). Zero and negative values will be treated as
+                          0 (evict immediately) by the system.
+                        format: int64
+                        type: integer
+                      value:
+                        description: Value is the taint value the toleration matches
+                          to. If the operator is Exists, the value should be empty,
+                          otherwise just a regular string.
+                        type: string
+                    type: object
+                  type: array
+              type: object
+            readOnlyRootFilesystem:
+              description: Make the pod as Readonly
+              type: boolean
+            resources:
+              description: Pod defines the policy for pods owned by cassandra operator.
+                This field cannot be updated once the CR is created. Pod       *PodPolicy         `json:"pod,omitempty"`
+              properties:
+                limits:
+                  description: CPUAndMem defines how many cpu and ram the container
+                    will request/limit
+                  properties:
+                    cpu:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+                      type: string
+                    memory:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+                      type: string
+                  required:
+                  - cpu
+                  - memory
+                  type: object
+                requests:
+                  description: CPUAndMem defines how many cpu and ram the container
+                    will request/limit
+                  properties:
+                    cpu:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+                      type: string
+                    memory:
+                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+                      type: string
+                  required:
+                  - cpu
+                  - memory
+                  type: object
+              type: object
+            runAsUser:
+              description: RunAsUser define the id of the user to run in the Cassandra
+                image
+              format: int64
+              minimum: 1
+              type: integer
+            service:
+              description: PodPolicy defines the policy for headless service owned
+                by CassKop operator.
+              properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations specifies the annotations to attach to
+                    headless service the CassKop operator creates
+                  type: object
+              type: object
+            topology:
+              description: Topology to create Cassandra DC and Racks and to target
+                appropriate Kubernetes Nodes
+              properties:
+                dc:
+                  description: List of DC defined in the CassandraCluster
+                  items:
+                    description: DC allow to configure Cassandra RC according to kubernetes
+                      nodeselector labels
+                    properties:
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: Labels used to target Kubernetes nodes
+                        type: object
+                      name:
+                        description: Name of the DC
+                        pattern: ^[^-]+$
+                        type: string
+                      nodesPerRacks:
+                        description: 'Number of nodes to deploy for a Cassandra deployment
+                          in each Racks. Default: 1. Optional, if not filled, used
+                          value define in CassandraClusterSpec'
+                        format: int32
+                        type: integer
+                      numTokens:
+                        description: 'NumTokens : configure the CASSANDRA_NUM_TOKENS
+                          parameter which can be different for each DD'
+                        format: int32
+                        type: integer
+                      rack:
+                        description: List of Racks defined in the Cassandra DC
+                        items:
+                          description: Rack allow to configure Cassandra Rack according
+                            to kubernetes nodeselector labels
+                          properties:
+                            labels:
+                              additionalProperties:
+                                type: string
+                              description: Labels used to target Kubernetes nodes
+                              type: object
+                            name:
+                              description: Name of the Rack
+                              pattern: ^[^-]+$
+                              type: string
+                            rollingPartition:
+                              description: The Partition to control the Statefulset
+                                Upgrade
+                              format: int32
+                              type: integer
+                            rollingRestart:
+                              description: Flag to tell the operator to trigger a
+                                rolling restart of the Rack
+                              type: boolean
+                          type: object
+                        type: array
+                    type: object
+                  type: array
+              type: object
+            unlockNextOperation:
+              description: Very special Flag to hack CassKop reconcile loop - use
+                with really good Care
+              type: boolean
+          type: object
+        status:
+          description: CassandraClusterStatus defines Global state of CassandraCluster
+          properties:
+            cassandraRackStatus:
+              additionalProperties:
+                description: CassandraRackStatus defines states of Cassandra for 1
+                  rack (1 statefulset)
+                properties:
+                  cassandraLastAction:
+                    description: 'CassandraLastAction is the set of Cassandra State
+                      & Actions: Active, Standby..'
+                    properties:
+                      endTime:
+                        format: date-time
+                        type: string
+                      name:
+                        description: 'Type of action to perform : UpdateVersion, UpdateBaseImage,
+                          UpdateConfigMap..'
+                        type: string
+                      startTime:
+                        format: date-time
+                        type: string
+                      status:
+                        description: Action is the specific actions that can be done
+                          on a Cassandra Cluster such as cleanup, upgradesstables..
+                        type: string
+                      updatedNodes:
+                        description: PodNames of updated Cassandra nodes. Updated
+                          means the Cassandra container image version matches the
+                          spec's version.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  phase:
+                    description: 'Phase indicates the state this Cassandra cluster
+                      jumps in. Phase goes as one way as below:   Initial -> Running
+                      <-> updating'
+                    type: string
+                  podLastOperation:
+                    description: PodLastOperation manage status for Pod Operation
+                      (nodetool cleanup, upgradesstables..)
+                    properties:
+                      endTime:
+                        format: date-time
+                        type: string
+                      name:
+                        type: string
+                      operatorName:
+                        description: Name of operator
+                        type: string
+                      pods:
+                        description: List of pods running an operation
+                        items:
+                          type: string
+                        type: array
+                      podsKO:
+                        description: List of pods that fail to run an operation
+                        items:
+                          type: string
+                        type: array
+                      podsOK:
+                        description: List of pods that run an operation successfully
+                        items:
+                          type: string
+                        type: array
+                      startTime:
+                        format: date-time
+                        type: string
+                      status:
+                        type: string
+                    type: object
+                type: object
+              description: CassandraRackStatusList list status for each Rack
+              type: object
+            lastClusterAction:
+              description: Store last action at cluster level
+              type: string
+            lastClusterActionStatus:
+              type: string
+            phase:
+              description: 'Phase indicates the state this Cassandra cluster jumps
+                in. Phase goes as one way as below:   Initial -> Running <-> updating'
+              type: string
+            seedlist:
+              description: seeList to be used in Cassandra's Pods (computed by the
+                Operator)
+              items:
+                type: string
+              type: array
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
