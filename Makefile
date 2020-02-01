@@ -123,7 +123,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.9.0
+OPERATOR_SDK_VERSION=v0.15.0-pr137
 # workdir
 WORKDIR := /go/casskop
 
@@ -161,7 +161,7 @@ helm-package:
 	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
 	helm repo index $(HELM_TARGET_DIR)/
 
-#
+#@TODO : `opetator-sdk generate openapî` deprecated
 .PHONY: generate
 generate:
 	echo "Generate zzz-deepcopy objects"
@@ -169,6 +169,7 @@ generate:
 	operator-sdk generate k8s
 	operator-sdk generate openapi
 
+#@TODO : `opetator-sdk generate openapî` deprecated
 # Build casskop executable file in local go env
 .PHONY: build
 build:
@@ -182,6 +183,7 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
+#@TODO : `opetator-sdk generate openapî` deprecated
 # Run a shell into the development docker image
 docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
