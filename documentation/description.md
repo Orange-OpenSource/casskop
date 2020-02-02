@@ -1064,7 +1064,7 @@ Both `livenessProbe` and `readinessProbe` support two additional options:
 - `timeoutSeconds`: defines the timeout of the probe. CassKop uses 20 seconds.
 - `periodSeconds`: the period to wait between each call to a probe: CassKop uses 40 seconds.
 
-> TODO: This is actually not configurable by CassKop: [Issue102](https://github.com/Orange-OpenSource/casskop/issues/102)
+> TODO: This is actually not configurable by CassKop: [Issue 183](https://github.com/Orange-OpenSource/casskop/issues/183)
 
 
 ### Pod lifeCycle
