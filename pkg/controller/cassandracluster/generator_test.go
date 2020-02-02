@@ -20,7 +20,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 func TestCreateNodeAffinity(t *testing.T) {
@@ -97,15 +97,16 @@ func TestDeleteVolumeMount(t *testing.T) {
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	volumeMounts := generateCassandraVolumeMount(cc)
 
-	assert.Equal(t, 4, len(volumeMounts))
+	assert.Equal(t, 5, len(volumeMounts))
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
+	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 
 	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
-	assert.Equal(t, 3, len(volumeMounts))
+	assert.Equal(t, 4, len(volumeMounts))
 	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/else"})
 
-	assert.Equal(t, 4, len(volumeMounts))
+	assert.Equal(t, 5, len(volumeMounts))
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/etc/else", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 
