@@ -49,13 +49,13 @@ LABEL \
     org.label-schema.schema_version="RC1" \
     org.label-schema.usage='/README.md'
 
-RUN mkdir -p $CASSANDRA_DATA  $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS /tmp \
+RUN mkdir -p $CASSANDRA_DATA  $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS $BOOTSTRAP_TOOLS $CASSANDRA_TOOLS /tmp \
     && apt-get update \
     && apt-get -qq -y install --no-install-recommends ca-certificates wget netcat \
     && wget -O ${BOOTSTRAP_LIBS}/cassandra-exporter-agent.jar https://github.com/instaclustr/cassandra-exporter/releases/download/v${EXPORTER_VERSION}/cassandra-exporter-agent-${EXPORTER_VERSION}.jar \
     && wget -O ${BOOTSTRAP_LIBS}/jolokia-agent.jar http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/${JOLOKIA_VERSION}/jolokia-jvm-${JOLOKIA_VERSION}-agent.jar \
     && groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra \
-    && chown -R cassandra:cassandra $CASSANDRA_DATA $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS /tmp \
+    && chown -R cassandra:cassandra $CASSANDRA_DATA $CASSANDRA_CONF $BOOTSTRAP_CONF $BOOTSTRAP_LIBS $CASSANDRA_LIBS $BOOTSTRAP_TOOLS $CASSANDRA_TOOLS /tmp \
     && apt-get -y purge \
     && apt-get -y autoremove \
     && apt-get -y clean \

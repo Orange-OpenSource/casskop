@@ -17,7 +17,7 @@ if [[ -d /${BOOTSTRAP_LIBS} && ! -z `ls -A /${BOOTSTRAP_LIBS}` ]] ; then
     cp -v ${BOOTSTRAP_LIBS}/* $CASSANDRA_LIBS/
    fi
 
-cp -rLv /${BOOTSTRAP_TOOLS}/* $CASSANDRA_TOOLS/
+cp -v /${BOOTSTRAP_TOOLS}/* $CASSANDRA_TOOLS/
 
 if [ -f ${CONFIGMAP}/pre_run.sh ]; then
     echo "We found pre_run.sh script, we execute it"
