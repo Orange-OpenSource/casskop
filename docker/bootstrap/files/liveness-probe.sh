@@ -15,4 +15,16 @@
 # limitations under the License.
 
 # We check when the node is up and in normal state
-nodetool status
+CURL="/opt/bin/curl -s --connect-timeout 0.5"
+BASE_CMD="http://$POD_IP:8778/jolokia/read/org.apache.cassandra.db:type=StorageService"
+
+for cmd in JoiningNodes LeavingNodes MovingNodes UnreachableNodes
+do
+  if $CURL ${BASE_CMD}/$cmd | grep -q $POD_IP; then
+    [[ $DEBUG ]] && echo Not Up
+    exit 1
+  fi
+done
+
+[[ $DEBUG ]] && echo Up
+exit 0

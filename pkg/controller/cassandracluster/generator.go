@@ -136,7 +136,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	var v = []v1.Volume{
 		emptyDir("bootstrap"),
 		emptyDir("extra-lib"),
-		//emptyDir("configuration"),
+		emptyDir("tools"),
 		emptyDir("tmp"),
 	}
 
@@ -165,6 +165,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 // EmptyDirs
 //   - /bootstrap for Cassandra configuration
 //   - /extra-lib for additional jar we want to load
+//   - /opt/bin for additional tools
 //   - /tmp to work with readonly containers
 func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	var vm []v1.VolumeMount
@@ -178,6 +179,7 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	}
 	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
+	vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
 	vm = append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
 	return vm
 }
@@ -548,7 +550,7 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 	}
 }
 
-// createInitConfigContainer allows to copy origin config files from docker image to /bootstrap directory
+// createInitConfigContainer allows to copy origin config files from init-config container to /bootstrap directory
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	resources := getCassandraResources(cc.Spec)
@@ -686,7 +688,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					Command: []string{
 						"/bin/bash",
 						"-c",
-						"/etc/cassandra/ready-probe.sh",
+						"/etc/cassandra/readiness-probe.sh",
 					},
 				},
 			},
