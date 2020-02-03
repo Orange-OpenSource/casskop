@@ -233,7 +233,7 @@ For more information you can run {plugin} <command> --help
             from_pod = available_pod_in_crd(args.crd)
 
         print(f"Trigger {self.remove.__name__} of pod {pod} from pod {from_pod}")
-        set_pod_label(from_pod, self.remove.__name__, f"{args.pod}_{args.previous_ip}")
+        set_pod_label(from_pod, self.remove.__name__, argument=f"{args.pod}_{args.previous_ip}")
 
     def rebuild(self):
         parser = argparse.ArgumentParser(self.rebuild.__name__)
@@ -244,7 +244,7 @@ For more information you can run {plugin} <command> --help
         args = parser.parse_args(sys.argv[2:])
         pods = get_pods(args)
         for pod in pods:
-            set_pod_label(pod, self.rebuild.__name__, args.from_dc)
+            set_pod_label(pod, self.rebuild.__name__, argument=args.from_dc)
 
     def replace(self):
         parser = argparse.ArgumentParser(self.replace.__name__)
