@@ -208,7 +208,7 @@ Deployment with Helm :
 $ kubectx # Switch context on master cluster
 Switched to context "gke_<Project name>_europe-west1-b_cassandra-europe-west1-b-master".
 $ helm init --client-only
-$ helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+$ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
 $ helm repo update
 $ cd ${CASSKOP_WORKSPACE}
 $ helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
