@@ -378,7 +378,7 @@ $ helm install --name casskop incubator/cassandra-operator
 Or You can also add the CassKop repository from Github 
 
 ```yaml
-helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
 helm install --name casskop orange-incubator/cassandra-operator
 ```
 
