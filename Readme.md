@@ -170,7 +170,7 @@ created
 Add the Helm incubator repo if you do not already have it:
 
 ```
-helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
 ```
 
 Get the latest information about charts from the chart repositories.

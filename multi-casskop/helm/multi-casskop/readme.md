@@ -39,7 +39,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Install a multi-casskop release :
 
 ```console
-$ helm repo add orange-incubator https://orange-charts-incubator.storage.googleapis.com
+$ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
 $ helm install --name multi-casskop orange-incubator/multi-casskop
 ```
 
