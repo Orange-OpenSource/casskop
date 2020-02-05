@@ -393,7 +393,7 @@ func TestReplicateData(t *testing.T) {
 
 	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
-	keyspacesWithData, err := jolokiaClient.HasDataInDC("dc2")
+	keyspacesWithData, err := jolokiaClient.NonLocalKeyspacesInDC("dc2")
 
 	if err != nil {
 		t.Errorf("hasData failed with : %s", err)
