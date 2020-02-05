@@ -595,7 +595,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 	rcc.CreatePod(pod)
 
-	//Mock Jolokia Call to HasDataInDC
+	//Mock Jolokia Call to NonLocalKeyspacesInDC
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	keyspacesDescribed := []string{}
