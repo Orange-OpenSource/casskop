@@ -677,17 +677,20 @@ func (rcc *ReconcileCassandraCluster) runUpgradeSSTables(hostName string, cc *ap
 
 func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.CassandraCluster, dcRackName string, pod v1.Pod) error {
 	var err error
+	var keyspaces []string
 	var rebuildFrom, labelSet = pod.GetLabels()["operation-argument"]
 	operation := strings.Title(api.OperationRebuild)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"hostName": hostName, "operation": operation}).Info("Operation start")
 
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
+		cc.Spec.ImageJolokiaSecret, cc.Namespace)
+
 	if labelSet != true {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
-	} else if cc.IsValidDC(rebuildFrom) == false {
-		err = fmt.Errorf("%s is not an existing datacenter", rebuildFrom)
-	}
+	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil  && len(keyspaces) == 0 {
+		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)	}
 
 	// In case of an error set the status on the pod and skip it
 	if err != nil {
@@ -697,8 +700,6 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 		"datacenter": rebuildFrom, "operation": operation}).Info("Execute the Jolokia Operation")
 
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 	if err == nil {
 		err = jolokiaClient.NodeRebuild(rebuildFrom)
 	}

@@ -379,11 +379,11 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 				cc.Spec.ImageJolokiaSecret, cc.Namespace)
 			var keyspacesWithData []string
 			if err == nil {
-				keyspacesWithData, err = jolokiaClient.HasDataInDC(dcName)
+				keyspacesWithData, err = jolokiaClient.NonLocalKeyspacesInDC(dcName)
 			}
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf(
-					"The Operator has refused the ScaleDown (HasDataInDC failed %s). ", err)
+					"The Operator has refused the ScaleDown (NonLocalKeyspacesInDC failed %s). ", err)
 				cc.Spec.Topology = oldCRD.Spec.Topology
 				return true, api.ActionCorrectCRDConfig
 			}

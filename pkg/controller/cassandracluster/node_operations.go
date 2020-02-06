@@ -304,8 +304,8 @@ func (jolokiaClient *JolokiaClient) hasLeavingNodes() (bool, error) {
 	return len(leavingNodes) > 0, nil
 }
 
-/*HasDataInDC checks partition ranges of all non local keyspaces and ensure no data is replicated to the chosen datacenter*/
-func (jolokiaClient *JolokiaClient) HasDataInDC(dc string) ([]string, error) {
+/*NonLocalKeyspacesInDC checks partition ranges of all non local keyspaces and ensure no data is replicated to the chosen datacenter*/
+func (jolokiaClient *JolokiaClient) NonLocalKeyspacesInDC(dc string) ([]string, error) {
 	keyspaces, err := jolokiaClient.nonLocalKeyspaces()
 	keyspacesWithDataInDC := []string{}
 	if err != nil {
