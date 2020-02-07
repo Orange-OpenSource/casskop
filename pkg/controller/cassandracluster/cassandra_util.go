@@ -15,7 +15,7 @@
 package cassandracluster
 
 import (
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"

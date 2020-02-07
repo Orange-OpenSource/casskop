@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	mye2eutil "github.com/Orange-OpenSource/casskop/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"

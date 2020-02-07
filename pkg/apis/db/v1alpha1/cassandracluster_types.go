@@ -616,6 +616,7 @@ func (rack *RackSlice) Remove(i int) {
 	*rack = append((*rack)[:i], (*rack)[i+1:]...)
 }
 // CassandraClusterSpec defines the configuration of CassandraCluster
+
 type CassandraClusterSpec struct {
 	// Number of nodes to deploy for a Cassandra deployment in each Racks.
 	// Default: 1.
@@ -691,6 +692,12 @@ type CassandraClusterSpec struct {
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
+	// StorageConfig defines additional storage configurations
+	StorageConfigs []StorageConfig `json:"storageConfigs,omitempty"`
+
+	// SidecarsConfig defines additional sidecar configurations
+	SidecarConfigs []v1.Container `json:"sidecarConfigs,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,2,rep,name=containers"`
+
 	// Deploy or Not Service that provide access to monitoring metrics
 	//Exporter bool `json:"exporter,omitempty"`
 
@@ -709,6 +716,17 @@ type CassandraClusterSpec struct {
 
 	//Topology to create Cassandra DC and Racks and to target appropriate Kubernetes Nodes
 	Topology Topology `json:"topology,omitempty"`
+}
+
+// StorageConfig defines additional storage configurations
+type StorageConfig struct {
+	// Mount path into cassandra container
+	MountPath string						`json:"mountPath"`
+	// Name of the pvc
+	// +kubebuilder:validation:Pattern=[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*
+	Name      string						`json:"name"`
+	// Persistent volume claim spec
+	PVCSpec   *v1.PersistentVolumeClaimSpec	`json:"pvcSpec"`
 }
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels
@@ -859,6 +877,7 @@ type PodLastOperation struct {
 
 // CassandraCluster is the Schema for the cassandraclusters API
 // +k8s:openapi-gen=true
+// +kubebuilder:storageversion
 type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

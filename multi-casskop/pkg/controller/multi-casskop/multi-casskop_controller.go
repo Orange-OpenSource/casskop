@@ -22,7 +22,7 @@ import (
 
 	"admiralty.io/multicluster-controller/pkg/controller"
 	cmcv1 "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/apis/db/v1alpha1"
-	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
+	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
