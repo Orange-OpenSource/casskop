@@ -2,7 +2,7 @@ module github.com/Orange-OpenSource/casskop
 
 go 1.13
 
-require github.com/Azure/go-autorest v12.2.0+incompatible
+require github.com/Azure/go-autorest v12.2.0+incompatible // indirect
 
 require (
 	admiralty.io/multicluster-controller v0.2.0 // indirect
