@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 

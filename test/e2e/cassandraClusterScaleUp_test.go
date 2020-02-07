@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha2"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	mye2eutil "github.com/Orange-OpenSource/casskop/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
