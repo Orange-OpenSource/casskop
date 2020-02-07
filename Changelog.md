@@ -2,6 +2,11 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+##
+
+- PR #184 - Use Jolokia calls in readiness and liveness probes instead of nodetool
+
+
 ## 0.5.0
 
 Introduce Multi-Casskop, the Operator to manage a single Cassandra Cluster above multiple Kubernetes clusters.

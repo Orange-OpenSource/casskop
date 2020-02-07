@@ -307,6 +307,52 @@ helm install --name casskop casskop/cassandra-operator --set debug.enabled=true 
 --set image.tag=v0.5.0b-branch1
 ```
 
+### Upgrade Casskop 0.1.5+/Bootstrap image to 0.1.4
+
+:triangular_flag_on_post: We made a few breaking changes in that image:
+
+- ready-probe.sh was renamed to readiness-probe.sh
+- /opt/bin contains the curl command to query Jolokia
+
+Because of it upgrading casskop from 0.5.0 to 0.5.1+ requires to the following steps:
+
+- Uninstall casskop (`helm delete casskop`)
+- Edit all statefulsets to manually make those few changes using kubectl edit statefulsets $name-of-your-statefulset
+  * Rename ready-probe.sh to readiness-probe.sh
+  * Upgrade the bootstrap image to 0.1.4+
+  * Add a new emptyDir in the volumes section
+  ```
+        volumes:
+        - emptyDir: {}
+        name: tools
+        ....
+  ```
+  * Mount that new volume in all initcontainers and containers (:bulb: init-config does not really need it, but we need to change it first in the operator #189)
+  ```
+        name: init-config
+        ....
+        volumeMounts:
+        - mountPath: /opt/bin
+          name: tools
+        ....
+        name: bootstrap
+        ....
+        volumeMounts:
+        - mountPath: /opt/bin
+          name: tools
+        ....
+        name: cassandra
+        ...
+        volumeMounts:
+        - mountPath: /opt/bin
+          name: tools
+        ....
+  ```
+
+- Do exactly all the same changes in the annotation banzaicloud.com/last-applied
+- Upgrade the version bootstrap image in your cassandracluster object (kubectl edit cassandraclusters *YOUR_OBJECT*)
+- Install new version of casskop
+
 ## Uninstaling the Charts
 
 If you want to delete the operator from your Kubernetes cluster, the operator deployment 
@@ -324,12 +370,7 @@ Manually delete the CRD:
 kubectl delete crd cassandraclusters.dfy.orange.com
 ```
 
-> **!!!!!!!!WARNING!!!!!!!!**
->
-> If you delete the CRD then **!!!!!!WAAAARRRRNNIIIIINNG!!!!!!**
->
-> It will delete **ALL** Clusters that has been created using this CRD!!!
->
+> :triangular_flag_on_post: If you delete the CRD then it will delete **ALL** Clusters that has been created using this CRD!!!
 > Please never delete a CRD without very very good care
 
 ### Operator SDK
