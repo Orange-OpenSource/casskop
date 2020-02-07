@@ -4,7 +4,7 @@
 
 ##
 
-- PR #184 - Use Jolokia calls in readiness and liveness probes instead of nodetool
+- PR [#184](https://github.com/Orange-OpenSource/casskop/pull/184) - Use Jolokia calls in readiness and liveness probes instead of nodetool
 
 
 ## 0.5.0
