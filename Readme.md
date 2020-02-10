@@ -348,8 +348,6 @@ Because of it upgrading casskop from 0.5.0 to 0.5.1+ requires to the following s
           name: tools
         ....
   ```
-
-- Do exactly all the same changes in the annotation banzaicloud.com/last-applied
 - Upgrade the version bootstrap image in your cassandracluster object (kubectl edit cassandraclusters *YOUR_OBJECT*)
 - Install new version of casskop
 
