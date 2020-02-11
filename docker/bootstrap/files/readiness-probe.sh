@@ -15,10 +15,13 @@
 # limitations under the License.
 
 # We check when the node is up and in normal state
-if [[ $(nodetool status | egrep "^UN[[:space:]]+$POD_IP") ]]; then
-  if [[ $DEBUG ]]; then echo "Up"; fi
+CURL="/opt/bin/curl -s --connect-timeout 0.5"
+BASE_CMD="http://$POD_IP:8778/jolokia/read/org.apache.cassandra.db:type=StorageService"
+
+if $CURL ${BASE_CMD}/LiveNodes | grep -q $POD_IP; then
+  [[ $DEBUG ]] && echo Up
   exit 0
-else
-  if [[ $DEBUG ]]; then echo "Not Up"; fi
-  exit 1
 fi
+
+[[ $DEBUG ]] && echo Not Up
+exit 1
