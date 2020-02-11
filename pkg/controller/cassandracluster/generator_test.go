@@ -15,6 +15,8 @@
 package cassandracluster
 
 import (
+	"fmt"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
@@ -131,6 +133,9 @@ func TestGenerateCassandraService(t *testing.T) {
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert := assert.New(t)
+	dcName 	   := "dc1"
+	rackName   := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
 	expectedLabels := map[string]string{
 		"app":                                  "cassandracluster",
@@ -141,7 +146,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		"cluster":                              "k8s.pic"}
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
-	sts := generateCassandraStatefulSet(cc, &cc.Status, "dc1", "dc1-rack1", labels, nodeSelector, nil)
+	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
 	assert.Equal(expectedLabels,sts.Labels)
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
@@ -153,6 +158,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	checkVolumeClaimTemplates(t,labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t,sts.Spec.Template.Spec.Containers)
+	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 }
 
 
@@ -264,11 +270,11 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		for _, volumeMount := range container.VolumeMounts{
 			switch container.Name {
 			case "cassandra":
-				assert.True(t, contains(append(generateCassandraVolumeMounts(), generateCassandraStorageConfigVolumeMounts()...),volumeMount))
+				assert.True(t, volumesContains(append(generateCassandraVolumeMounts(), generateCassandraStorageConfigVolumeMounts()...),volumeMount))
 			case "gc-logs":
-				assert.True(t, contains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}},volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}},volumeMount))
 			case "cassandra-logs":
-				assert.True(t, contains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}},volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}},volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
@@ -276,7 +282,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 	}
 }
 
-func contains(vms []v1.VolumeMount, mount v1.VolumeMount) bool{
+func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool{
 	for _, vm := range vms {
 		if mount == vm {
 			return true
@@ -307,3 +313,22 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 	return vms
 }
 
+func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string)  {
+	resources := getCassandraResources(cc.Spec)
+	envs := createEnvVarForCassandraContainer(cc, &cc.Status, resources, dcRackName)
+
+	for _, container := range containers {
+		for _, env := range envs {
+			assert.True(t, envsContains(container.Env, env))
+		}
+	}
+}
+
+func envsContains(envs []v1.EnvVar, searchedEnv v1.EnvVar) bool{
+	for _, env := range envs {
+		if searchedEnv.Name == env.Name && searchedEnv.Value == env.Value {
+			return true
+		}
+	}
+	return false
+}
