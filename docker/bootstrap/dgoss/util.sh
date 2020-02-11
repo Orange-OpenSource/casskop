@@ -7,17 +7,19 @@ CASSANDRA_UID=1000
 BOOTSTRAP_VOLUME=dgoss-bootstrap-vol
 EXTRA_LIB_VOLUME=dgoss-extralib-vol
 CONFIGMAP_VOLUME=dgoss-configmap-vol
+TOOLS_VOLUME=dgoss-tools-vol
 
 function createDgossVolumes {
     echo "== createDgossVolumes"
     docker volume create ${BOOTSTRAP_VOLUME}
     docker volume create ${EXTRA_LIB_VOLUME}
     docker volume create ${CONFIGMAP_VOLUME}
+    docker volume create ${TOOLS_VOLUME}
 }
 
 function deleteDgossVolumes {
     echo "== deleteDgossVolumes"
-    docker volume rm ${BOOTSTRAP_VOLUME} ${EXTRA_LIB_VOLUME} ${CONFIGMAP_VOLUME}
+    docker volume rm ${BOOTSTRAP_VOLUME} ${EXTRA_LIB_VOLUME} ${CONFIGMAP_VOLUME} ${TOOLS_VOLUME}
 }
 
 
@@ -60,6 +62,7 @@ function createCassandraBootstrapContainer {
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
            -v ${CONFIGMAP_VOLUME}:/configmap \
            -v ${EXTRA_LIB_VOLUME}:/extra-lib/ \
+           -v ${TOOLS_VOLUME}:/opt/bin/ \
            ${IMAGE_TO_TEST} 
 }
 
@@ -133,6 +136,7 @@ function createCassandraContainer {
     docker run \
         -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
         -v ${EXTRA_LIB_VOLUME}:/extra-lib \
+        -v ${TOOLS_VOLUME}:/opt/bin/ \
         -p 9500:9500 \
         -p 8778:8778 \
         ${CASSANDRA_IMAGE}
@@ -145,6 +149,7 @@ function createAndCheckCassandraContainer {
     GOSS_FILES_PATH=${script_dir}/checks GOSS_SLEEP=5 GOSS_WAIT_OPTS='-r 90s -s 1s > /dev/null' dgoss run \
                    -v ${BOOTSTRAP_VOLUME}:/etc/cassandra \
                    -v ${EXTRA_LIB_VOLUME}:/extra-lib \
+                   -v ${TOOLS_VOLUME}:/opt/bin/ \
                    -p 9500:9500 \
                    -p 8778:8778 \
                    ${CASSANDRA_IMAGE}

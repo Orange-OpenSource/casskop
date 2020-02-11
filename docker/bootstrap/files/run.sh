@@ -23,6 +23,8 @@ default_value()
     echo $(grep -v '#' ${CASSANDRA_CFG}|grep -i \\b$1|awk '{print $2}')
 }
 
+HOSTNAME=$(hostname -f)
+
 # we are doing StatefulSet or just setting our seeds
 if [ -n "$CASSANDRA_SEEDS" ]; then
     echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
@@ -41,12 +43,11 @@ if [ -n "$CASSANDRA_SEEDS" ]; then
         fi
     done
 
-    [ "$firstNode" = true ] && unset CASSANDRA_SEEDS
+    [ "$firstNode" = true ] && CASSANDRA_SEEDS=$HOSTNAME
 
 fi
 
 echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
-HOSTNAME=$(hostname -f)
 
 # The following vars relate to there counter parts in $CASSANDRA_CFG for instance rpc_address
 CASSANDRA_LISTEN_ADDRESS=${POD_IP:-$HOSTNAME}
