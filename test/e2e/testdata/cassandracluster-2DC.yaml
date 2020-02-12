@@ -7,8 +7,6 @@ metadata:
 spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
-  imagePullPolicy: "IfNotPresent"
-  rollingPartition: 0
   dataCapacity: "1Gi"
   hardAntiAffinity: false
   deletePVC: false
