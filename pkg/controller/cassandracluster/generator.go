@@ -641,13 +641,6 @@ func getPos(slice []v1.VolumeMount, value string) int {
 	}
 	return -1
 }
-func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
-	if i := getPos(slice, value); i >= 0 {
-		slice = append(slice[:i], slice[i+1:]...)
-		return slice
-	}
-	return slice
-}
 
 func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) []v1.Container {
