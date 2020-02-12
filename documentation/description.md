@@ -29,6 +29,7 @@
     - [Cassandra storage](#cassandra-storage)
         - [Configuration](#configuration)
         - [Persistent volume claim](#persistent-volume-claim)
+        - [Additionnals storages configurations](#additionnals-storages-configurations)
     - [Kubernetes objects](#kubernetes-objects)
         - [Services](#services)
         - [Statefulset](#statefulset)
@@ -416,6 +417,94 @@ Persistent Volume Claim for the volume used for storing data to the cluster `<cl
 > Cassandra node to a new kubernetes node, you will need at some point to manually delete the associate PVC so that the
 > scheduler can choose another Node for scheduling. This is cover in the Operation document.
 
+
+### Additionnals storages configuration
+
+For extra needed not covered by the defaults volumes managed through the CassandraCluster CR, we are allowing you to define your own storage configurations.
+To do this, you will configure the `storageConfigs` property in `CassandraCluster.Spec`.
+
+CassandraCluster fragment for dynamic persistent storage definition : 
+
+```yaml
+# ...
+     storageConfigs:
+        - mountPath: "/var/lib/cassandra/log"
+          name: "gc-logs"
+          pvcSpec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: local-storage
+            resources:
+              requests:
+                storage: 5Gi
+        - mountPath: "/var/log/cassandra"
+          name: "cassandra-logs"
+          pvcSpec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: local-storage
+            resources:
+              requests:
+                storage: 10Gi
+# ...
+```
+
+- `storageConfigs` *(required)* : Defines the list of storage config object, which will instantiate `Persitence Volume Claim` and associate volume to pod of cassandra node.
+    - `mountPath` *(required)* : Defines the path into `cassandra container` where the volume will be mounted.
+    - `name` *(required)* : Used to define the `PVC` and `VolumeMount` names.
+    - `pvcSpec` *(required)* : pvcSpec describes the PVC used for the mountPath described above it requires a kubernetes PVC spec.
+    
+With the above configuration, the following configuration will be added to the `rack statefulset` definition : 
+
+```yaml
+# ...
+  volumeMounts:
+  #...
+  - mountPath: /var/lib/cassandra/log
+    name: gc-logs
+  - mountPath: /var/log/cassandra
+    name: cassandra-logs
+  #...
+# ...
+  volumeClaimTemplates:
+  #...
+  - metadata:
+      name: gc-logs
+      labels:
+        app: cassandracluster
+        cassandracluster: cassandra-demo
+        cassandraclusters.db.orange.com.dc: dcsts
+        cassandraclusters.db.orange.com.rack: rack1
+        cluster: casskop
+        dc-rack: dcsts-rack1
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - metadata:
+      name: cassandra-logs
+      labels:
+        app: cassandracluster
+        cassandracluster: cassandra-demo
+        cassandraclusters.db.orange.com.dc: dcsts
+        cassandraclusters.db.orange.com.rack: rack1
+        cluster: casskop
+        dc-rack: dcsts-rack1
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  #...
+# ...
+```
 
 ## Kubernetes objects
 
