@@ -96,24 +96,26 @@ func TestCreatePodAntiAffinityHard(t *testing.T) {
 	assert.Equal(podAntiAffinityHard.RequiredDuringSchedulingIgnoredDuringExecution[0].LabelSelector.MatchLabels, labels)
 }
 
-func TestDeleteVolumeMount(t *testing.T) {
-
+func TestVolumeMounts(t *testing.T) {
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-	volumeMounts := generateCassandraVolumeMount(cc)
 
-	assert.Equal(t, 5, len(volumeMounts))
-	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
+	volumeMounts := generateContainerVolumeMount(cc, initContainer)
+	assert.Equal(t, 1, len(volumeMounts))
+	assert.Equal(t, "/bootstrap", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
+
+	volumeMounts = generateContainerVolumeMount(cc, bootstrapContainer)
+	assert.Equal(t, 3, len(volumeMounts))
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
+	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 
-	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
-	assert.Equal(t, 4, len(volumeMounts))
-	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/else"})
-
+	volumeMounts = generateContainerVolumeMount(cc, cassandraContainer)
 	assert.Equal(t, 5, len(volumeMounts))
+	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
-	assert.Equal(t, "/etc/else", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
-
+	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
+	assert.Equal(t, "/tmp", volumeMounts[getPos(volumeMounts, "tmp")].MountPath)
+	assert.Equal(t, "/var/lib/cassandra", volumeMounts[getPos(volumeMounts, "data")].MountPath)
 }
 
 func TestGenerateCassandraService(t *testing.T) {
