@@ -22,7 +22,6 @@ function deleteDgossVolumes {
     docker volume rm ${BOOTSTRAP_VOLUME} ${EXTRA_LIB_VOLUME} ${CONFIGMAP_VOLUME} ${TOOLS_VOLUME}
 }
 
-
 function createInitConfigContainer {
     echo "== createInitConfigContainer"
     docker run --rm \
@@ -30,7 +29,7 @@ function createInitConfigContainer {
            -v ${EXTRA_LIB_VOLUME}:/extra-lib \
            --entrypoint=bash \
            ${CASSANDRA_IMAGE} \
-           -c "cp -vr /etc/cassandra/* /bootstrap && chown -R cassandra: /bootstrap && chown -R cassandra: /extra-lib"
+           -c "cp -vr /etc/cassandra/* /bootstrap && chown -R cassandra: /bootstrap /extra-lib"
 }
 
 function checkDgossVolumes {
@@ -89,7 +88,6 @@ function createCassandraBootstrapContainerNoExtraLib {
            ${IMAGE_TO_TEST} 
 }
 
-
 function createCassandraBootstrapContainerWithConfigMap {
     echo "== createCassandraBootstrapContainer"
     docker run \
@@ -111,7 +109,6 @@ function createCassandraBootstrapContainerWithConfigMap {
            -v ${EXTRA_LIB_VOLUME}:/extra-lib/ \
            ${IMAGE_TO_TEST} 
 }
-
 
 function createSimpleConfigMapFile {
     echo "== createSimpleConfigMapFile"
