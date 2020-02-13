@@ -658,7 +658,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	dcRackName string) v1.Container {
 
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := append(generateCassandraVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
+	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
 	if cc.Spec.Debug {
