@@ -27,7 +27,7 @@ import (
 
 const (
 	defaultCassandraImage         string        = "cassandra:latest"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.3"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -832,7 +832,7 @@ type CassandraClusterStatus struct {
 	//seeList to be used in Cassandra's Pods (computed by the Operator)
 	SeedList []string `json:"seedlist,omitempty"`
 
-	//CassandraRackStatusList list status for each Racks
+	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
 }
 

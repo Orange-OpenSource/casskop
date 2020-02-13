@@ -13,9 +13,11 @@ fi
 
 # Copies any extra libraries from this bootstrapper image to the extra-lib empty-dir
 if [[ -d /${BOOTSTRAP_LIBS} && ! -z `ls -A /${BOOTSTRAP_LIBS}` ]] ; then
-    echo "We have a Additional libs, we surcharge default configuration files"
+    echo "We have additional libraries, we copy them over"
     cp -v ${BOOTSTRAP_LIBS}/* $CASSANDRA_LIBS/
    fi
+
+cp -v /${BOOTSTRAP_TOOLS}/* $CASSANDRA_TOOLS/
 
 if [ -f ${CONFIGMAP}/pre_run.sh ]; then
     echo "We found pre_run.sh script, we execute it"
