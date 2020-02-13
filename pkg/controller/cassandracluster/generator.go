@@ -58,6 +58,14 @@ const (
 	readinessHealthCheckPeriod   int32 = 10
 )
 
+type containerType int
+
+const (
+	initContainer containerType = iota
+	bootstrapContainer
+	cassandraContainer
+)
+
 func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
 
 	var annotations = map[string]string{}
@@ -157,7 +165,7 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 	return v
 }
 
-// generateCassandraVolumeMount generate volumemounts for cassandra containers
+// generateContainerVolumeMount generate volumemounts for cassandra containers
 // Volume Claim
 //  - /var/lib/cassandra for Cassandra data
 // ConfigMap
@@ -167,24 +175,33 @@ func generateCassandraVolumes(cc *api.CassandraCluster) []v1.Volume {
 //   - /extra-lib for additional jar we want to load
 //   - /opt/bin for additional tools
 //   - /tmp to work with readonly containers
-func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
+func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []v1.VolumeMount {
 	var vm []v1.VolumeMount
 
+	if ct == initContainer {
+		return append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/bootstrap"})
+	}
+
+	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
+	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
+	vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
+
+	if ct == bootstrapContainer {
+		if cc.Spec.ConfigMapName != "" {
+			vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
+		}
+		return vm
+	}
+
+	// current container is Cassandra container
 	if cc.Spec.DataCapacity != "" {
 		vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
 	}
 
-	if cc.Spec.ConfigMapName != "" {
-		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
-	}
-	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
-	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
-	vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
-	vm = append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
-	return vm
+	return append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
 }
 
-func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount{
+func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	var vms []v1.VolumeMount
 	for _, storage := range cc.Spec.StorageConfigs {
 		vms = append(vms, v1.VolumeMount{Name: storage.Name, MountPath: storage.MountPath})
@@ -242,7 +259,7 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 		pvc[0].Spec.StorageClassName = &cc.Spec.DataStorageClass
 	}
 
-	pvc = append(pvc,  generateStorageConfigVolumeClaimTemplates(cc, labels)...)
+	pvc = append(pvc, generateStorageConfigVolumeClaimTemplates(cc, labels)...)
 
 	return pvc
 }
@@ -316,8 +333,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
 
-
-					Containers: containers,
+					Containers:                    containers,
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
@@ -589,11 +605,7 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := generateCassandraVolumeMount(cc)
-
-	//we want to mount boostrap volume to backup /etc/cassandra directory
-	volumeMounts = deleteVolumeMount(volumeMounts, "bootstrap")
-	volumeMounts = append(volumeMounts, v1.VolumeMount{Name: "bootstrap", MountPath: "/bootstrap"})
+	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 
 	return v1.Container{
 		Name:            "init-config",
@@ -610,7 +622,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := generateCassandraVolumeMount(cc)
+	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
 
 	return v1.Container{
 		Name:            "bootstrap",
@@ -630,13 +642,6 @@ func getPos(slice []v1.VolumeMount, value string) int {
 	}
 	return -1
 }
-func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
-	if i := getPos(slice, value); i >= 0 {
-		slice = append(slice[:i], slice[i+1:]...)
-		return slice
-	}
-	return slice
-}
 
 func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) []v1.Container {
@@ -653,7 +658,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	dcRackName string) v1.Container {
 
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := append(generateCassandraVolumeMount(cc), generateStorageConfigVolumesMount(cc)...)
+	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
 	if cc.Spec.Debug {

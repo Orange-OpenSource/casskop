@@ -16,10 +16,8 @@ metadata:
 spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
-  imagePullPolicy: "IfNotPresent"
   imageJolokiaSecret:
     name: jolokia-auth
-  rollingPartition: 0
   dataCapacity: "1Gi"
   hardAntiAffinity: false
   deletePVC: false
