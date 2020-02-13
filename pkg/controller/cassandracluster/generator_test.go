@@ -137,18 +137,20 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	rackName   := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	expectedLabels := map[string]string{
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+
+	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
 		"cassandraclusters.db.orange.com.dc":   "dc1",
 		"cassandraclusters.db.orange.com.rack": "rack1",
 		"dc-rack":                              "dc1-rack1",
-		"cluster":                              "k8s.pic"}
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
-	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+		"cluster":                              "k8s.pic",
+	},sts.Labels)
 
-	assert.Equal(expectedLabels,sts.Labels)
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
 	assert.Equal([]v1.Toleration{v1.Toleration{
 		Key:      "my_custom_taint",
@@ -297,7 +299,6 @@ func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool{
 func generateCassandraVolumeMounts() []v1.VolumeMount {
 	var vms []v1.VolumeMount
 	vms = append(vms, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
-	//vms = append(vms, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
 	vms = append(vms, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 	vms = append(vms, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
 	vms = append(vms, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})

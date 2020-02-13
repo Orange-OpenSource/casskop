@@ -46,10 +46,10 @@ spec:
             storage: 10Gi
   sidecarConfigs:
     - args: ["tail", "-F", "/var/log/cassandra/system.log"]
-      image: ez123/alpine-tini
+      image: alpine
       imagePullPolicy: Always
       name: cassandra-logs
-      resources:
+      resources: &sidecar_resources
         limits:
           cpu: 50m
           memory: 50Mi
@@ -60,16 +60,10 @@ spec:
         - mountPath: /var/log/cassandra
           name: cassandra-logs
     - args: ["tail", "-F", "/var/log/cassandra/gc.log.0.current"]
-      image: ez123/alpine-tini
+      image: alpine
       imagePullPolicy: Always
       name: gc-logs
-      resources:
-        limits:
-          cpu: 50m
-          memory: 50Mi
-        requests:
-          cpu: 10m
-          memory: 10Mi
+      <<: *sidecar_resources
       volumeMounts:
         - mountPath: /var/log/cassandra
           name: gc-logs
