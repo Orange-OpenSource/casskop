@@ -1055,7 +1055,7 @@ In this case we may have 2 solutions that will require some manual actions :
 1. In this case we will use CassKop client to schedule a cassandra removenode for the failing node.
 
 ```
-$ kubectl casskop removenode --pod <node-id>
+$ kubectl casskop remove --pod <pod_name> [--previous-ip <previous_ip_pod>] {--from-pod <pod_name> | --crd <crd_name>}
 ```
 
 This will trigger the PodOperation removenode by setting the appropriate labels on a cassandra Pod.
@@ -1200,7 +1200,7 @@ This operation operates on multiple nodes in the cluster. Use this operation whe
 existing cluster.
 
 ```
-$ kubectl casskop rebuild start --from=dc1
+$ kubectl casskop rebuild {--pod <pod_name> | --prefix <prefix_pod_name>} <from-dc_name>           
 ```
 
 In the background this command is equivalent to set labels on each pods like :

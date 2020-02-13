@@ -897,7 +897,7 @@ This Tells that we **Require** not deploy to a node if a pod already exists with
 Cluster administrators can mark selected kubernetes nodes as tainted. Nodes with taints are excluded from regular
 scheduling and normal pods will not be scheduled to run on them. Only services which can tolerate the taint set on the
 node can be scheduled on it. The only other services running on such nodes will be kubernetes system services such  as
-log collectors or software  defined networks
+log collectors or software defined networks
 
 Taints can be used to create dedicated nodes. Running Cassandra on dedicated nodes can have many advantages. There will
 be no other applications running on the same nodes which could cause disturbance or consume the resources needed  for
@@ -915,21 +915,23 @@ Additionally, add a label to the selected nodes as well
 kubectl label node <your-node> dedicated=Cassandra
 ```
 
-The `toleration` must be applied on the statefulset at the same level as `affinity`.
+Pod tolerations like pod annotations can be added to created pods by using the pod entry in the spec section of the cassandracluster object as below :
 
 ```
+kind: "CassandraCluster"
 ...
+spec:
+  ...
+  pod:
     tolerations:
-      - key: "dedicated"
-        operator: "Equal"
-        value: "Cassandra"
-        effect: "NoSchedule"
+    - key: "dedicated"
+      operator: "Equal"
+      value: "Cassandra"
+      effect: "NoSchedule"
 ...
 ```
 
 > **IMPORTANT:** toleration must be used with node affinity on the same labels
-> TODO: actually the toleration is not implemented in CassKop
-
 
 #### Configuring hard antiAffinity in Cassandra cluster
 
@@ -1242,7 +1244,7 @@ Both `livenessProbe` and `readinessProbe` support two additional options:
 - `timeoutSeconds`: defines the timeout of the probe. CassKop uses 20 seconds.
 - `periodSeconds`: the period to wait between each call to a probe: CassKop uses 40 seconds.
 
-> TODO: This is actually not configurable by CassKop: [Issue102](https://github.com/Orange-OpenSource/casskop/issues/102)
+> TODO: This is actually not configurable by CassKop: [Issue 183](https://github.com/Orange-OpenSource/casskop/issues/183)
 
 
 ### Pod lifeCycle
