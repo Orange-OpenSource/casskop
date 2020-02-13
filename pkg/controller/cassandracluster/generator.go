@@ -184,6 +184,31 @@ func generateCassandraVolumeMount(cc *api.CassandraCluster) []v1.VolumeMount {
 	return vm
 }
 
+func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount{
+	var vms []v1.VolumeMount
+	for _, storage := range cc.Spec.StorageConfigs {
+		vms = append(vms, v1.VolumeMount{Name: storage.Name, MountPath: storage.MountPath})
+	}
+	return vms
+}
+
+func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
+	var pvcs []v1.PersistentVolumeClaim
+
+	for _, storage := range cc.Spec.StorageConfigs {
+		pvc := v1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   storage.Name,
+				Labels: labels,
+			},
+			Spec: *storage.PVCSpec,
+		}
+
+		pvcs = append(pvcs, pvc)
+	}
+	return pvcs
+}
+
 func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
 
 	var pvc []v1.PersistentVolumeClaim
@@ -217,6 +242,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 		pvc[0].Spec.StorageClassName = &cc.Spec.DataStorageClass
 	}
 
+	pvc = append(pvc,  generateStorageConfigVolumeClaimTemplates(cc, labels)...)
+
 	return pvc
 }
 
@@ -227,6 +254,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	namespace := cc.Namespace
 	volumes := generateCassandraVolumes(cc)
 	volumeClaimTemplate := generateVolumeClaimTemplate(cc, labels)
+	containers := generateContainers(cc, status, dcRackName)
 
 	for _, pvc := range volumeClaimTemplate {
 		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
@@ -289,9 +317,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 
 
-					Containers: []v1.Container{
-						createCassandraContainer(cc, status, dcRackName),
-					},
+					Containers: containers,
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
@@ -307,9 +333,11 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		ss.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{cc.Spec.ImagePullSecret}
 	}
 
-	if (cc.Spec.ImageJolokiaSecret != v1.LocalObjectReference{}) {
-		for idx, container := range ss.Spec.Template.Spec.Containers {
-			if container.Name == cassandraContainerName {
+	var cassandraContainer v1.Container
+	for idx, container := range ss.Spec.Template.Spec.Containers {
+		if container.Name == cassandraContainerName {
+			cassandraContainer = container
+			if (cc.Spec.ImageJolokiaSecret != v1.LocalObjectReference{}) {
 				ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env,
 					v1.EnvVar{
 						Name: "JOLOKIA_USER",
@@ -333,6 +361,13 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						Name:  "CASSANDRA_AUTH_JOLOKIA",
 						Value: "true"})
 			}
+		}
+	}
+
+	// Merge cassandra main container environment variables into sidecars.
+	for idx, container := range ss.Spec.Template.Spec.Containers {
+		if container.Name != cassandraContainerName {
+			ss.Spec.Template.Spec.Containers[idx].Env = append(ss.Spec.Template.Spec.Containers[idx].Env, cassandraContainer.Env...)
 		}
 	}
 
@@ -603,13 +638,22 @@ func deleteVolumeMount(slice []v1.VolumeMount, value string) []v1.VolumeMount {
 	return slice
 }
 
+func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) []v1.Container {
+	var containers []v1.Container
+	containers = append(containers, cc.Spec.SidecarConfigs...)
+	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
+
+	return containers
+}
+
 /* CreateCassandraContainer create the main container for cassandra
  */
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 
 	resources := getCassandraResources(cc.Spec)
-	volumeMounts := generateCassandraVolumeMount(cc)
+	volumeMounts := append(generateCassandraVolumeMount(cc), generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
 	if cc.Spec.Debug {
