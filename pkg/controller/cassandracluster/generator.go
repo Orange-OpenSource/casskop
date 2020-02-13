@@ -186,18 +186,19 @@ func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []
 	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
 	vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
 
-	if ct == bootstrapContainer && cc.Spec.ConfigMapName != "" {
-		vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
-	}
-
-	if ct == cassandraContainer {
-		if cc.Spec.DataCapacity != "" {
-			vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
+	if ct == bootstrapContainer {
+		if cc.Spec.ConfigMapName != "" {
+			vm = append(vm, v1.VolumeMount{Name: "cassandra-config", MountPath: "/configmap"})
 		}
-		return append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
+		return vm
 	}
 
-	return vm
+	// current container is Cassandra container
+	if cc.Spec.DataCapacity != "" {
+		vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
+	}
+
+	return append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
 }
 
 func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount {
