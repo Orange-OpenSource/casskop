@@ -25,6 +25,48 @@ spec:
   dataStorageClass: "local-storage"
   hardAntiAffinity: false
   deletePVC: true
+  storageConfigs:
+    - mountPath: "/var/lib/cassandra/log"
+      name: "gc-logs"
+      pvcSpec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard-wait
+        resources:
+          requests:
+            storage: 10Gi
+    - mountPath: "/var/log/cassandra"
+      name: "cassandra-logs"
+      pvcSpec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard-wait
+        resources:
+          requests:
+            storage: 10Gi
+  sidecarConfigs:
+    - args: ["tail", "-F", "/var/log/cassandra/system.log"]
+      image: alpine
+      imagePullPolicy: Always
+      name: cassandra-logs
+      resources: &sidecar_resources
+        limits:
+          cpu: 50m
+          memory: 50Mi
+        requests:
+          cpu: 10m
+          memory: 10Mi
+      volumeMounts:
+        - mountPath: /var/log/cassandra
+          name: cassandra-logs
+    - args: ["tail", "-F", "/var/log/cassandra/gc.log.0.current"]
+      image: alpine
+      imagePullPolicy: Always
+      name: gc-logs
+      <<: *sidecar_resources
+      volumeMounts:
+        - mountPath: /var/log/cassandra
+          name: gc-logs
   autoPilot: true
   resources:         
     requests:

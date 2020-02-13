@@ -15,6 +15,10 @@
 package cassandracluster
 
 import (
+	"fmt"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
@@ -130,10 +134,14 @@ func TestGenerateCassandraService(t *testing.T) {
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert := assert.New(t)
+	dcName 	   := "dc1"
+	rackName   := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
-	sts := generateCassandraStatefulSet(cc, &cc.Status, "dc1", "dc1-rack1", labels, nodeSelector, nil)
+	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
@@ -141,12 +149,189 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		"cassandraclusters.db.orange.com.dc":   "dc1",
 		"cassandraclusters.db.orange.com.rack": "rack1",
 		"dc-rack":                              "dc1-rack1",
-		"cluster":                              "k8s.pic"},
-		sts.Labels)
+		"cluster":                              "k8s.pic",
+	},sts.Labels)
+
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
 	assert.Equal([]v1.Toleration{v1.Toleration{
 		Key:      "my_custom_taint",
 		Operator: v1.TolerationOpExists,
 		Effect:   v1.TaintEffectNoSchedule}},
 		sts.Spec.Template.Spec.Tolerations)
+
+	checkVolumeClaimTemplates(t,labels, sts.Spec.VolumeClaimTemplates)
+	checkVolumeMount(t,sts.Spec.Template.Spec.Containers)
+	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+}
+
+
+ func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
+ 	assert.Equal(t, len(pvcs), 3)
+	for _, pvc := range pvcs {
+		switch pvc.Name {
+		case "data":
+			assert.Equal(t, generateExpectedDataStoragePVC(expectedlabels), pvc)
+		case "gc-logs":
+			assert.Equal(t, generateExpectedGcLogsStoragePVC(expectedlabels), pvc)
+		case "cassandra-logs":
+			assert.Equal(t, generateExpectedCassandraLogsStoragePVC(expectedlabels), pvc)
+		default:
+			t.Errorf("unexpected pvc name: %s.", pvc.Name)
+		}
+	}
+ }
+
+ func generateExpectedDataStoragePVC(expectedlabels map[string]string) v1.PersistentVolumeClaim {
+
+	expectedDataStorageQuantity, _ := resource.ParseQuantity("3Gi")
+	expectedDataStorageClassName := "local-storage"
+
+	return v1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "data",
+			Labels: expectedlabels,
+		},
+		Spec: v1.PersistentVolumeClaimSpec{
+			AccessModes: []v1.PersistentVolumeAccessMode{
+				v1.ReadWriteOnce,
+			},
+
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					"storage": expectedDataStorageQuantity,
+				},
+			},
+			StorageClassName: &expectedDataStorageClassName,
+		},
+	}
+}
+
+func generateExpectedGcLogsStoragePVC(expectedlabels map[string]string) v1.PersistentVolumeClaim {
+
+	expectedDataStorageQuantity, _ := resource.ParseQuantity("10Gi")
+	expectedDataStorageClassName := "standard-wait"
+
+	return v1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "gc-logs",
+			Labels: expectedlabels,
+		},
+		Spec: v1.PersistentVolumeClaimSpec{
+			AccessModes: []v1.PersistentVolumeAccessMode{
+				v1.ReadWriteOnce,
+			},
+
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					"storage": expectedDataStorageQuantity,
+				},
+			},
+			StorageClassName: &expectedDataStorageClassName,
+		},
+	}
+}
+
+func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v1.PersistentVolumeClaim {
+
+	expectedDataStorageQuantity, _ := resource.ParseQuantity("10Gi")
+	expectedDataStorageClassName := "standard-wait"
+
+	return v1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "cassandra-logs",
+			Labels: expectedlabels,
+		},
+		Spec: v1.PersistentVolumeClaimSpec{
+			AccessModes: []v1.PersistentVolumeAccessMode{
+				v1.ReadWriteOnce,
+			},
+
+			Resources: v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					"storage": expectedDataStorageQuantity,
+				},
+			},
+			StorageClassName: &expectedDataStorageClassName,
+		},
+	}
+}
+
+func checkVolumeMount(t *testing.T, containers []v1.Container) {
+	assert.Equal(t, len(containers), 3)
+	for _, container := range containers {
+		switch container.Name {
+		case "cassandra":
+			assert.Equal(t, len(container.VolumeMounts), 7)
+		case "gc-logs":
+			assert.Equal(t, len(container.VolumeMounts), 1)
+		case "cassandra-logs":
+			assert.Equal(t, len(container.VolumeMounts), 1)
+		default:
+			t.Errorf("unexpected container: %s.", container.Name)
+		}
+
+		for _, volumeMount := range container.VolumeMounts{
+			switch container.Name {
+			case "cassandra":
+				assert.True(t, volumesContains(append(generateCassandraVolumeMounts(), generateCassandraStorageConfigVolumeMounts()...),volumeMount))
+			case "gc-logs":
+				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}},volumeMount))
+			case "cassandra-logs":
+				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}},volumeMount))
+			default:
+				t.Errorf("unexpected container: %s.", container.Name)
+			}
+		}
+	}
+}
+
+func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool{
+	for _, vm := range vms {
+		if mount == vm {
+			return true
+		}
+	}
+	return false
+}
+
+/**
+ Generate volume list
+ */
+func generateCassandraVolumeMounts() []v1.VolumeMount {
+	var vms []v1.VolumeMount
+	vms = append(vms, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
+	vms = append(vms, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
+	vms = append(vms, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
+	vms = append(vms, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
+	vms = append(vms, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
+
+	return vms
+}
+
+func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
+	var vms []v1.VolumeMount
+	vms = append(vms, v1.VolumeMount{Name: "gc-logs", MountPath: "/var/lib/cassandra/log"})
+	vms = append(vms, v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"})
+
+	return vms
+}
+
+func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string)  {
+	resources := getCassandraResources(cc.Spec)
+	envs := createEnvVarForCassandraContainer(cc, &cc.Status, resources, dcRackName)
+
+	for _, container := range containers {
+		for _, env := range envs {
+			assert.True(t, envsContains(container.Env, env))
+		}
+	}
+}
+
+func envsContains(envs []v1.EnvVar, searchedEnv v1.EnvVar) bool{
+	for _, env := range envs {
+		if searchedEnv.Name == env.Name && searchedEnv.Value == env.Value {
+			return true
+		}
+	}
+	return false
 }
