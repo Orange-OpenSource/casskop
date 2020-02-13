@@ -261,7 +261,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
-			assert.Equal(t, len(container.VolumeMounts), 6)
+			assert.Equal(t, len(container.VolumeMounts), 7)
 		case "gc-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
@@ -300,6 +300,7 @@ func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool{
 func generateCassandraVolumeMounts() []v1.VolumeMount {
 	var vms []v1.VolumeMount
 	vms = append(vms, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
+	vms = append(vms, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
 	vms = append(vms, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 	vms = append(vms, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
 	vms = append(vms, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
