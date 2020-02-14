@@ -2,9 +2,31 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
-##
+## 0.5.1
 
-- PR [#184](https://github.com/Orange-OpenSource/casskop/pull/184) - Use Jolokia calls in readiness and liveness probes instead of nodetool
+**Breaking Change in the bootstrap image**
+See [Upgrade section](Readme.md#upgrade-casskop-015bootstrap-image-to-014)
+
+- PR [#190](https://github.com/Orange-OpenSource/casskop/pull/190) - Fix [Issue #189](https://github.com/Orange-OpenSource/casskop/issues/189)  Handle volumemounts per container
+- PR [#187](https://github.com/Orange-OpenSource/casskop/pull/187) - Fix helm repo url
+- PR [#185](https://github.com/Orange-OpenSource/casskop/pull/185) - Add the support of sidecars
+- PR [#184](https://github.com/Orange-OpenSource/casskop/pull/184) - Use Jolokia calls instead of nodetool in readiness and liveness probes
+- PR [#179](https://github.com/Orange-OpenSource/casskop/pull/179) - Fix [Issue #168](https://github.com/Orange-OpenSource/casskop/issues/168) Do not check toplogy in CassKop (does not work with MultiCassKop) during rebuild but using Cassandra 
+- PR [#177](https://github.com/Orange-OpenSource/casskop/pull/177) - Add documentation on how to add tolerations
+- PR [#175](https://github.com/Orange-OpenSource/casskop/pull/175) - Fix dgoss tests
+- PR [#174](https://github.com/Orange-OpenSource/casskop/pull/174) - Upgrade operator sdk
+- PR [#173](https://github.com/Orange-OpenSource/casskop/pull/173) - Fix documentation
+- PR [#167](https://github.com/Orange-OpenSource/casskop/pull/167) - Fix plugin remove command
+- PR [#165](https://github.com/Orange-OpenSource/casskop/pull/165) - Fix OpenAPI v3.0 schema validation
+- PR [#164](https://github.com/Orange-OpenSource/casskop/pull/164) - Rename repository
+- PR [#163](https://github.com/Orange-OpenSource/casskop/pull/163) - Add documentation regarding the upgrade of the operator
+- PR [#162](https://github.com/Orange-OpenSource/casskop/pull/162) - Adapt CI pipeline for multi-CassKop
+- PR [#161](https://github.com/Orange-OpenSource/casskop/pull/161) - Fix helm chart
+- PR [#157](https://github.com/Orange-OpenSource/casskop/pull/157) - Add logo for CassKop
+- PR [#156](https://github.com/Orange-OpenSource/casskop/pull/156) - Watch only first cluster in MultiCassKop
+- PR [#155](https://github.com/Orange-OpenSource/casskop/pull/155) - Refactor PodAffinityTerm
+- PR [#153](https://github.com/Orange-OpenSource/casskop/pull/153) - Allow Istio to work with Cassandra and encrypt native connections
+- PR [#152](https://github.com/Orange-OpenSource/casskop/pull/152) - Add GKE example
 
 
 ## 0.5.0
@@ -33,7 +55,7 @@ both of thems.
 
 - PR [#128](https://github.com/Orange-OpenSource/casskop/pull/128/files) Fix Issue
   [#96](https://github.com/Orange-OpenSource/casskop/issues/96): cluster stay pending
-- PR [#127](https://github.com/Orange-OpenSource/casskop/pull/127) fix Issue
+- PR [#127](https://github.com/Orange-OpenSource/casskop/pull/127) Fix Issue
   [#126](https://github.com/Orange-OpenSource/casskop/issues/126): update racks in parallel
 - PR [#124](https://github.com/Orange-OpenSource/casskop/pull/124): Add Support for pod & services
   annotations
