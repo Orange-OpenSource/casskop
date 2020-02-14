@@ -8,11 +8,11 @@
 See [Upgrade section](Readme.md#upgrade-casskop-015bootstrap-image-to-014)
 
 - PR [#190](https://github.com/Orange-OpenSource/casskop/pull/190) - Fix [Issue #189](https://github.com/Orange-OpenSource/casskop/issues/189)  Handle volumemounts per container
-- PR [#187](https://github.com/Orange-OpenSource/casskop/pull/187) - Fix helm repo url
-- PR [#185](https://github.com/Orange-OpenSource/casskop/pull/185) - Add the support of sidecars
+- PR [#187](https://github.com/Orange-OpenSource/casskop/pull/187) - Fix helm repo [url](Readme.md#deploy-the-cassandra-operator-and-its-crd-with-helm)
+- PR [#185](https://github.com/Orange-OpenSource/casskop/pull/185) - Add the support of [sidecars](documentation/description.md#sidecars-configuration)
 - PR [#184](https://github.com/Orange-OpenSource/casskop/pull/184) - Use Jolokia calls instead of nodetool in readiness and liveness probes
 - PR [#179](https://github.com/Orange-OpenSource/casskop/pull/179) - Fix [Issue #168](https://github.com/Orange-OpenSource/casskop/issues/168) Do not check toplogy in CassKop (does not work with MultiCassKop) during rebuild but using Cassandra 
-- PR [#177](https://github.com/Orange-OpenSource/casskop/pull/177) - Add documentation on how to add tolerations
+- PR [#177](https://github.com/Orange-OpenSource/casskop/pull/177) - Add documentation on how to add [tolerations](documentation/description.md#using-dedicated-nodes)
 - PR [#175](https://github.com/Orange-OpenSource/casskop/pull/175) - Fix dgoss tests
 - PR [#174](https://github.com/Orange-OpenSource/casskop/pull/174) - Upgrade operator sdk
 - PR [#173](https://github.com/Orange-OpenSource/casskop/pull/173) - Fix documentation
