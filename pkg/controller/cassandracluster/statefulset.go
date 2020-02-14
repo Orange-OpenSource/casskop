@@ -136,8 +136,18 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 			return false
 		}
 	*/
+	containersSpecSts1Len := len(sts1.Spec.Template.Spec.Containers)
+	containersSpecSts2Len := len(sts2.Spec.Template.Spec.Containers)
+	if containersSpecSts1Len != containersSpecSts2Len{
+		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
+			"namespace": sts1.Namespace}).Info(fmt.Sprintf("Template is different, the number of containers are not the same: len(sts1.Spec.Template.Spec.Containers) = %d, len(sts2.Spec.Template.Spec.Containers) = %d", containersSpecSts1Len,containersSpecSts2Len))
+		return false
+	}
+
 	sts1.Spec.Template.Spec.SchedulerName = sts2.Spec.Template.Spec.SchedulerName
 	sts1.Spec.Template.Spec.DNSPolicy = sts2.Spec.Template.Spec.DNSPolicy // ClusterFirst
+
+
 	for i := 0; i < len(sts1.Spec.Template.Spec.Containers); i++ {
 		sts1.Spec.Template.Spec.Containers[i].LivenessProbe = sts2.Spec.Template.Spec.Containers[i].LivenessProbe
 		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe
