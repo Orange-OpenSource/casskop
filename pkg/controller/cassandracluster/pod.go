@@ -72,9 +72,9 @@ func GetLastOrFirstPod(podsList *v1.PodList, last bool) (*v1.Pod, error) {
 }
 
 // GetLastOrFirstPodReady returns the las or first pod that is ready
-func GetLastOrFirstPodReady(podsList *v1.PodList, last bool) (*v1.Pod, error) {
+func GetLastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 	var readyPods []v1.Pod
-	for _, pod := range podsList.Items {
+	for _, pod := range podsList {
 		if cassandraPodIsReady(&pod) {
 				readyPods = append(readyPods, pod)
 		}
@@ -133,7 +133,7 @@ func (rcc *ReconcileCassandraCluster) GetFirstPodReady(namespace string, selecto
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
-	return GetLastOrFirstPodReady(podsList, first)
+	return GetLastOrFirstPodReady(podsList.Items, first)
 }
 
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
@@ -142,7 +142,7 @@ func (rcc *ReconcileCassandraCluster) GetLastPodReady(namespace string, selector
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
-	return GetLastOrFirstPodReady(podsList, last)
+	return GetLastOrFirstPodReady(podsList.Items, last)
 }
 
 func (rcc *ReconcileCassandraCluster) UpdatePodLabel(pod *v1.Pod, label map[string]string) error {
