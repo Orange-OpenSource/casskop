@@ -712,7 +712,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 				hostId, keyFound := hostIDMap[pod.Status.PodIP]
 				statusHostId := status.CassandraNodesStatus[pod.Name].HostId
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "pod": pod.Name,
-					"err": err}).Debug(fmt.Sprintf("Test Keyfound %b, statusHostId : %s, hostId: %s", keyFound, statusHostId, hostId))
+					"err": err}).Debug(fmt.Sprintf("Test Keyfound %t, statusHostId : %s, hostId: %s", keyFound, statusHostId, hostId))
 				// If the hostId associated to the pod in the status is not the same one
 				// that the one associated into cassandra for the same IP, so we are in IP cross cases.
 				if keyFound == true && statusHostId != hostId {
