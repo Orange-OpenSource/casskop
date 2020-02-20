@@ -646,6 +646,9 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 				return fmt.Errorf("Name uses for DC and/or Rack are not good")
 			}
 
+			if  status.CassandraRackStatus == nil || status.CassandraRackStatus[dcRackName] == nil {
+				continue
+			}
 			if status.CassandraRackStatus[dcRackName].CassandraNodesStatus == nil {
 				status.CassandraRackStatus[dcRackName].CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 			}
@@ -674,7 +677,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 				"err": err}).Info(fmt.Sprintf("We will request : %s to catch hostIdMap", hostName))
 
-			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+/*			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 			if err != nil {
 				return err
 			}
@@ -724,7 +727,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 						"err": err}).Info(fmt.Sprintf("Find hostId : %s, based on ip : %s"), hostId, pod.Status.PodIP)
 					status.CassandraRackStatus[dcRackName].CassandraNodesStatus[pod.Name] = api.CassandraNodeStatus{HostId: hostId, NodeIp: pod.Status.PodIP}
 				}
-			}
+			}*/
 		}
 	}
 	return nil
