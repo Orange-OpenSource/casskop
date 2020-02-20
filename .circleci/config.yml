@@ -151,13 +151,14 @@ orbs:
               command: if [ ! -d vendor ]; then go mod vendor; fi
           - run:
               name: Generate k8s
-              command: make generate
+              command: |
+                make generate
+                [ "$(git ls-files -m |grep -c zz_generated)" -eq 0 ]
           # Create artifacts
           - persist_to_workspace:
               root: /home/circleci
               paths:
                 - << parameters.operatorDir >>/build/_output
-                - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
                 - << parameters.operatorDir >>/vendor
           # Cache configuration
           - save_cache:
@@ -165,7 +166,6 @@ orbs:
               key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
               paths:
                 - build/_output
-                - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
                 - vendor
 
       # Build job, which build operator docker image (with operator-sdk build)
@@ -191,7 +191,6 @@ orbs:
             root: /home/circleci
             paths:
               - << parameters.operatorDir >>/build/_output
-              - << parameters.operatorDir >>/pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
               - << parameters.operatorDir >>/vendor
         # Deploy steps
         - deploy:
@@ -209,7 +208,6 @@ orbs:
             key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
             paths:
               - build/_output
-              - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
               - vendor
 
       # Unit test job, will execute makefile 'unit-test-with-vendor' step
@@ -300,7 +298,7 @@ orbs:
               -Dsonar.projectBaseDir=/home/circleci/<< parameters.operatorDir >> \
               -Dsonar.sources=. \
               -Dsonar.sources.inclusions="**/**.go" \
-              -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**,**/**/zz_generated*" \
+              -Dsonar.exclusions="**/*_test.go,**/vendor/**,**/sonar-scanner-3.3.0.1492-linux/**,**docs/**" \
               -Dsonar.coverage.exclusions="**/vendor/**,**/test/**,**docs/**" \
               -Dsonar.tests=. \
               -Dsonar.language=go \
