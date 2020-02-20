@@ -819,9 +819,6 @@ type CassandraRackStatus struct {
 
 	// PodLastOperation manage status for Pod Operation (nodetool cleanup, upgradesstables..)
 	PodLastOperation PodLastOperation `json:"podLastOperation,omitempty"`
-
-	//
-	CassandraNodesStatus map[string]CassandraNodeStatus `json:"cassandraNodeStatus,omitempty"`
 }
 
 //CassandraClusterStatus defines Global state of CassandraCluster
@@ -841,6 +838,9 @@ type CassandraClusterStatus struct {
 	//seeList to be used in Cassandra's Pods (computed by the Operator)
 	SeedList []string `json:"seedlist,omitempty"`
 
+	//
+	CassandraNodesStatus map[string]CassandraNodeStatus `json:"cassandraNodeStatus,omitempty"`
+	
 	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
 }

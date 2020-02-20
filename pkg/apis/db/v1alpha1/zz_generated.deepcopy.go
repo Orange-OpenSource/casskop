@@ -148,6 +148,13 @@ func (in *CassandraClusterStatus) DeepCopyInto(out *CassandraClusterStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.CassandraNodesStatus != nil {
+		in, out := &in.CassandraNodesStatus, &out.CassandraNodesStatus
+		*out = make(map[string]CassandraNodeStatus, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.CassandraRackStatus != nil {
 		in, out := &in.CassandraRackStatus, &out.CassandraRackStatus
 		*out = make(map[string]*CassandraRackStatus, len(*in))
@@ -226,13 +233,6 @@ func (in *CassandraRackStatus) DeepCopyInto(out *CassandraRackStatus) {
 	*out = *in
 	in.CassandraLastAction.DeepCopyInto(&out.CassandraLastAction)
 	in.PodLastOperation.DeepCopyInto(&out.PodLastOperation)
-	if in.CassandraNodesStatus != nil {
-		in, out := &in.CassandraNodesStatus, &out.CassandraNodesStatus
-		*out = make(map[string]CassandraNodeStatus, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	return
 }
 

@@ -1467,6 +1467,15 @@ spec:
         status:
           description: CassandraClusterStatus defines Global state of CassandraCluster
           properties:
+            cassandraNodeStatus:
+              additionalProperties:
+                properties:
+                  hostId:
+                    type: string
+                  nodeIp:
+                    type: string
+                type: object
+              type: object
             cassandraRackStatus:
               additionalProperties:
                 description: CassandraRackStatus defines states of Cassandra for 1
@@ -1497,15 +1506,6 @@ spec:
                         items:
                           type: string
                         type: array
-                    type: object
-                  cassandraNodeStatus:
-                    additionalProperties:
-                      properties:
-                        hostId:
-                          type: string
-                        nodeIp:
-                          type: string
-                      type: object
                     type: object
                   phase:
                     description: 'Phase indicates the state this Cassandra cluster
