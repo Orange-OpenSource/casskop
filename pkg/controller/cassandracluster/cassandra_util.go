@@ -48,8 +48,8 @@ func (rcc *ReconcileCassandraCluster) weAreScalingDown(dcRackStatus *api.Cassand
 
 func cassandraPodIsReady(pod *v1.Pod) bool {
 	for i := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[i].Name == "cassandra" &&
-			pod.Status.Phase == "Running" &&
+		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName &&
+			pod.Status.Phase == v1.PodRunning &&
 			pod.Status.ContainerStatuses[i].Ready {
 			return true
 		}

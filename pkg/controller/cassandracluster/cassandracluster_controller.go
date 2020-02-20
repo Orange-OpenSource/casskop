@@ -152,6 +152,11 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraPodDisruptionBudget Error: %v", err)
 	}
 
+	// check pods status
+	if err = rcc.CheckPodsState(cc, status); err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("CheckPodsState Error: %v", err)
+	}
+
 	//ReconcileRack will also add and initiate new racks, we must not go through racks before this method
 	err = rcc.ReconcileRack(cc, status)
 	if err != nil {

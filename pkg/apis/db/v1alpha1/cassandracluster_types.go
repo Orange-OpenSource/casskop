@@ -26,6 +26,7 @@ import (
 )
 
 const (
+
 	defaultCassandraImage         string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
@@ -682,6 +683,11 @@ type CassandraClusterSpec struct {
 
 	MaxPodUnavailable int32 `json:"maxPodUnavailable,omitempty"` //Number of MaxPodUnavailable used in the PDB
 
+	// RestartCountBeforePodDeletion defines number of restart for the cassandra container allowed before
+	// performing a pod deletion to force restart from scratch for a cassandra node, if set to 0 or omit,
+	// no action will be performed based on restart count.
+	RestartCountBeforePodDeletion	int32	`json:"restartCountBeforePodDeletion,omitempty"`
+
 	//Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
@@ -813,6 +819,9 @@ type CassandraRackStatus struct {
 
 	// PodLastOperation manage status for Pod Operation (nodetool cleanup, upgradesstables..)
 	PodLastOperation PodLastOperation `json:"podLastOperation,omitempty"`
+
+	//
+	CassandraNodesStatus map[string]CassandraNodeStatus `json:"cassandraNodeStatus,omitempty"`
 }
 
 //CassandraClusterStatus defines Global state of CassandraCluster
@@ -871,6 +880,11 @@ type PodLastOperation struct {
 
 	// Name of operator
 	OperatorName string `json:"operatorName,omitempty"`
+}
+
+type CassandraNodeStatus struct {
+	HostId string `json:"hostId,omitempty"`
+	NodeIp string `json:"nodeIp,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
