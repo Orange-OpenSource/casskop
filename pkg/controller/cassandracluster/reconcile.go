@@ -690,8 +690,6 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 
 	hostIDMap := make(map[string]string)
 	hostIDMap, err = jolokiaClient.hostIDMap()
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-		"err": err}).Info(fmt.Sprintf("HostIdMap get", hostIDMap))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 			"err": err}).Errorf("Failed to call %s to get hostIdMap", hostName)
