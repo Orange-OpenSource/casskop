@@ -708,15 +708,6 @@ func TestHasChange(t *testing.T) {
 
 }
 
-
-/*func TestCheckPods(t *testing.T) {
-	assert := assert.New(t)
-
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-
-
-}*/
-
 // hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus
 func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 	hostIDMap := make(map[string]string)
