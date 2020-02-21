@@ -722,13 +722,13 @@ func processingPods(hostIDMap map[string]string, restartCountBeforePodDeletion i
 			logrus.WithFields(logrus.Fields{"pod": pod.Name}).Debug(fmt.Sprintf("Pod found in restart status with %d restart", restartCountBeforePodDeletion))
 			return checkPodCrossIpUseCaseForPod(hostIDMap, &pod, status)
 		}
-		UpdateCassandraNodesStatusForPod(hostIDMap, &pod, status)
+		updateCassandraNodesStatusForPod(hostIDMap, &pod, status)
 	}
 
 	return nil, nil
 }
 
-func UpdateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) {
+func updateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) {
 
 	// Update Pod, HostId, Ip couple cached into status
 	hostId, keyFound := hostIDMap[pod.Status.PodIP]
