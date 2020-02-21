@@ -57,6 +57,17 @@ func cassandraPodIsReady(pod *v1.Pod) bool {
 	return false
 }
 
+func cassandraPodRestartCount(pod *v1.Pod) int32 {
+	for i := range pod.Status.ContainerStatuses {
+		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName {
+			return pod.Status.ContainerStatuses[i].RestartCount
+		}
+	}
+	return 0
+}
+
+
+
 // DeletePVC deletes persistentvolumes of nodes in a rack
 func (rcc *ReconcileCassandraCluster) DeletePVCs(cc *api.CassandraCluster, dcName string, rackName string) {
 	lpvc, err := rcc.ListPVC(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))

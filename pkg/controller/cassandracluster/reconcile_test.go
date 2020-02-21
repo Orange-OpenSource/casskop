@@ -707,3 +707,12 @@ func TestHasChange(t *testing.T) {
 	assert.False(hasChange(changelog, diff.UPDATE, "DC.Rack"))
 
 }
+
+
+/*func TestCheckPods(t *testing.T) {
+	assert := assert.New(t)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+
+
+}*/
