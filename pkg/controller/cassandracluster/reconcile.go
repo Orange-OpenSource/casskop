@@ -667,8 +667,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 
-	hostIDMap := make(map[string]string)
-	hostIDMap, err = jolokiaClient.hostIDMap()
+	hostIDMap, err := jolokiaClient.hostIDMap()
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 			"err": err}).Errorf("Failed to call %s to get hostIdMap", hostName)
@@ -689,7 +688,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 func (rcc *ReconcileCassandraCluster) ListCassandraClusterPods(cc *api.CassandraCluster) ([]v1.Pod, error) {
 	var podsList []v1.Pod
 
-	// We loop on each DC and Rack for the CassandraCluster
+	// We loop on each DC and Rack of the CassandraCluster
 	for dc := 0; dc < cc.GetDCSize(); dc++ {
 		dcName := cc.GetDCName(dc)
 		for rack := 0; rack < cc.GetRackSize(dc); rack++ {

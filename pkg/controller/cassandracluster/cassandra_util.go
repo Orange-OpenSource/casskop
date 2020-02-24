@@ -58,9 +58,9 @@ func cassandraPodIsReady(pod *v1.Pod) bool {
 }
 
 func cassandraPodRestartCount(pod *v1.Pod) int32 {
-	for i := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName {
-			return pod.Status.ContainerStatuses[i].RestartCount
+	for idx := range pod.Status.ContainerStatuses {
+		if pod.Status.ContainerStatuses[idx].Name == cassandraContainerName {
+			return pod.Status.ContainerStatuses[idx].RestartCount
 		}
 	}
 	return 0
