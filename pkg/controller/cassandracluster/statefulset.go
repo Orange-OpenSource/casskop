@@ -149,7 +149,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 			"namespace": sts1.Namespace}).Info(
 			fmt.Sprintf("Template is different, the number of containers are not the same: len(sts1.Spec.Template.Spec.Containers) = %d, " +
 				"len(sts2.Spec.Template.Spec.Containers) = %d",
-				containersSpecSts1Len,containersSpecSts2Len))
+				containersSpecSts1Len, containersSpecSts2Len))
 		return false
 	}
 

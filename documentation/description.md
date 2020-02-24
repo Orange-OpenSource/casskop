@@ -1267,12 +1267,12 @@ In the case of Project Calico usage, this allow to force the pod to get another 
 ### Ip Cross situation detection
 
 To detect that we are in a Ip cross situation, we add a new status field `CassandraNodeStatus` which will maintain a cache about the map of *Ip node* and his *hostId*, 
-based on Jolokia response, for all ready pods.
+for all ready pods.
 
 > Note: to have more information about this status field, you can check [CassandraCluster Status](#cassandracluster-status)
 
-So when we check pods, we are perfoming a call to Jolokia to get map of Ip and HostId for each node.
-If a pod is in restart situtation with the constraints described previously, we will compare the hostId associated to the Pod ip returned by Jolokia, and the hostId
+So when we check pods, we are perfoming a Jolokia call to get a map of the cluster nodes IPs with their corresponding HostId.
+If a pod is failing with the constraints described above, we compare the hostId associated to the Pod's IP, and the hostId
 associated to the Pod name stored into the `CassandraNodeStatus` : 
 
 - if they match, or there are no match for the pod Ip into the map returned by Jolokia, we are not in a Ip cross situation,
