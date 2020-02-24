@@ -136,22 +136,37 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 			return false
 		}
 	*/
-	sts1.Spec.Template.Spec.SchedulerName = sts2.Spec.Template.Spec.SchedulerName
-	sts1.Spec.Template.Spec.DNSPolicy = sts2.Spec.Template.Spec.DNSPolicy // ClusterFirst
-	for i := 0; i < len(sts1.Spec.Template.Spec.Containers); i++ {
-		sts1.Spec.Template.Spec.Containers[i].LivenessProbe = sts2.Spec.Template.Spec.Containers[i].LivenessProbe
-		sts1.Spec.Template.Spec.Containers[i].ReadinessProbe = sts2.Spec.Template.Spec.Containers[i].ReadinessProbe
+	sts1Spec := &sts1.Spec.Template.Spec
+	sts2Spec := &sts2.Spec.Template.Spec
 
-		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePath = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePath
-		sts1.Spec.Template.Spec.Containers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.Containers[i].TerminationMessagePolicy
+	sts1Spec.SchedulerName = sts2Spec.SchedulerName
+	sts1Spec.DNSPolicy = sts2Spec.DNSPolicy // ClusterFirst
+
+	containersSpecSts1Len := len(sts1Spec.Containers)
+	containersSpecSts2Len := len(sts2Spec.Containers)
+	if containersSpecSts1Len != containersSpecSts2Len{
+		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
+			"namespace": sts1.Namespace}).Info(
+			fmt.Sprintf("Template is different, the number of containers are not the same: len(sts1.Spec.Template.Spec.Containers) = %d, " +
+				"len(sts2.Spec.Template.Spec.Containers) = %d",
+				containersSpecSts1Len,containersSpecSts2Len))
+		return false
+	}
+
+	for i := 0; i < len(sts1Spec.Containers); i++ {
+		sts1Spec.Containers[i].LivenessProbe = sts2Spec.Containers[i].LivenessProbe
+		sts1Spec.Containers[i].ReadinessProbe = sts2Spec.Containers[i].ReadinessProbe
+
+		sts1Spec.Containers[i].TerminationMessagePath = sts2Spec.Containers[i].TerminationMessagePath
+		sts1Spec.Containers[i].TerminationMessagePolicy = sts2Spec.Containers[i].TerminationMessagePolicy
 	}
 
 	for i := 0; i < len(sts1.Spec.Template.Spec.InitContainers); i++ {
-		sts1.Spec.Template.Spec.InitContainers[i].LivenessProbe = sts2.Spec.Template.Spec.InitContainers[i].LivenessProbe
-		sts1.Spec.Template.Spec.InitContainers[i].ReadinessProbe = sts2.Spec.Template.Spec.InitContainers[i].ReadinessProbe
+		sts1Spec.InitContainers[i].LivenessProbe = sts2Spec.InitContainers[i].LivenessProbe
+		sts1Spec.InitContainers[i].ReadinessProbe = sts2Spec.InitContainers[i].ReadinessProbe
 
-		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePath = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePath
-		sts1.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy = sts2.Spec.Template.Spec.InitContainers[i].TerminationMessagePolicy
+		sts1Spec.InitContainers[i].TerminationMessagePath = sts2Spec.InitContainers[i].TerminationMessagePath
+		sts1Spec.InitContainers[i].TerminationMessagePolicy = sts2Spec.InitContainers[i].TerminationMessagePolicy
 	}
 
 	//some defaultMode changes make falsepositif, so we bypass this, we already have check on configmap changes
