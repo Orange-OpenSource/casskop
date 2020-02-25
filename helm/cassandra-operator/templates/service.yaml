@@ -14,6 +14,6 @@ spec:
     app: {{ template "cassandra-operator.name" . }}
   ports:
   - name: metrics
-    port: 9710
+    port: 9500
     protocol: TCP
 {{- end }}

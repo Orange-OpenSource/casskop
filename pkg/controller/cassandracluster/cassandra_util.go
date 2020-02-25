@@ -16,10 +16,10 @@ package cassandracluster
 
 import (
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
 )
 
 //thereIsNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
@@ -37,7 +37,7 @@ func (rcc *ReconcileCassandraCluster) hasOneDisruptedPod() bool {
 
 //weAreScalingDown return true if we are Scaling Down the provided dc-rack
 func (rcc *ReconcileCassandraCluster) weAreScalingDown(dcRackStatus *api.CassandraRackStatus) bool {
-	if dcRackStatus.CassandraLastAction.Name == api.ActionScaleDown &&
+	if dcRackStatus.CassandraLastAction.Name == string(api.ActionScaleDown) &&
 		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
 			dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 			dcRackStatus.CassandraLastAction.Status == api.StatusContinue) {

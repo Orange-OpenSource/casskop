@@ -51,12 +51,56 @@ const (
 	DefaultUserID int64 = 999
 )
 
+type ClusterPhase string
+
+const (
+	ClusterPhaseInitial ClusterPhase = "Initializing"
+	ClusterPhaseRunning ClusterPhase = "Running"
+	ClusterPhasePending ClusterPhase = "Pending"
+)
+
+// type ClusterPhase int
+
+// const (
+// 	ClusterPhaseInitializing ClusterPhase = iota
+// 	ClusterPhaseRunning
+// 	ClusterPending
+// )
+
+type ClusterAction string
+
+const (
+	ActionUpdateConfigMap   ClusterAction = "UpdateConfigMap"
+	ActionUpdateDockerImage ClusterAction = "UpdateDockerImage"
+	ActionUpdateSeedList    ClusterAction = "UpdateSeedList"
+	ActionRollingRestart    ClusterAction = "RollingRestart"
+	ActionUpdateResources   ClusterAction = "UpdateResources"
+	ActionUpdateStatefulSet ClusterAction = "UpdateStatefulSet"
+	ActionScaleUp           ClusterAction = "ScaleUp"
+	ActionScaleDown         ClusterAction = "ScaleDown"
+	ActionDeleteDC          ClusterAction = "ActionDeleteDC"
+	ActionDeleteRack        ClusterAction = "ActionDeleteRack"
+	ActionCorrectCRDConfig  ClusterAction = "CorrectCRDConfig"
+
+// 	ActionUpdateConfigMap ClusterAction = iota
+// 	ActionUpdateDockerImage
+// 	ActionUpdateSeedList
+// 	ActionRollingRestart
+// 	ActionUpdateResources
+// 	ActionUpdateStatefulSet
+// 	ActionScaleUp
+// 	ActionScaleDown
+// 	ActionDeleteDC
+// 	ActionDeleteRack
+// 	ActionCorrectCRDConfig
+)
+
 const (
 	AnnotationLastApplied string = "cassandraclusters.db.orange.com/last-applied-configuration"
 	//Phase du Cluster
-	ClusterPhaseInitial string = "Initializing"
-	ClusterPhaseRunning string = "Running"
-	ClusterPhasePending string = "Pending"
+	// ClusterPhaseInitial string = "Initializing"
+	// ClusterPhaseRunning string = "Running"
+	// ClusterPhasePending string = "Pending"
 
 	StatusOngoing     string = "Ongoing"    // The Action is Ongoing
 	StatusDone        string = "Done"       // The Action id Done
@@ -68,19 +112,19 @@ const (
 	StatusError       string = "Error"
 
 	//Available actions
-	ActionUpdateConfigMap   string = "UpdateConfigMap"
-	ActionUpdateDockerImage string = "UpdateDockerImage"
-	ActionUpdateSeedList    string = "UpdateSeedList"
-	ActionRollingRestart    string = "RollingRestart"
-	ActionUpdateResources   string = "UpdateResources"
-	ActionUpdateStatefulSet string = "UpdateStatefulSet"
-	ActionScaleUp           string = "ScaleUp"
-	ActionScaleDown         string = "ScaleDown"
+	// ActionUpdateConfigMap   string = "UpdateConfigMap"
+	// ActionUpdateDockerImage string = "UpdateDockerImage"
+	// ActionUpdateSeedList    string = "UpdateSeedList"
+	// ActionRollingRestart    string = "RollingRestart"
+	// ActionUpdateResources   string = "UpdateResources"
+	// ActionUpdateStatefulSet string = "UpdateStatefulSet"
+	// ActionScaleUp           string = "ScaleUp"
+	// ActionScaleDown         string = "ScaleDown"
 
-	ActionDeleteDC   string = "ActionDeleteDC"
-	ActionDeleteRack string = "ActionDeleteRack"
+	// ActionDeleteDC   string = "ActionDeleteDC"
+	// ActionDeleteRack string = "ActionDeleteRack"
 
-	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
+	// ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
 	//List of Pods Operations
 	OperationUpgradeSSTables string = "upgradesstables"
@@ -92,6 +136,31 @@ const (
 	BreakResyncLoop    = true
 	ContinueResyncLoop = false
 )
+
+func index(slice []string, item string) int {
+	for i := range slice {
+		if slice[i] == item {
+			return i
+		}
+	}
+	return -1
+}
+
+// Int returns corresponding int value
+func (clusterPhase ClusterPhase) Int() float64 {
+	return float64(
+		index([]string{"Initializing", "Running", "Pending"}, string(clusterPhase)),
+	)
+}
+
+// Int returns corresponding int value
+func (clusterAction ClusterAction) Int() float64 {
+	return float64(
+		index([]string{"UpdateConfigMap", "UpdateDockerImage", "UpdateSeedList", "RollingRestart", "UpdateResources",
+			"UpdateStatefulSet", "ScaleUp", "ScaleDown", "ActionDeleteDC", "ActionDeleteRack",
+			"CorrectCRDConfig"}, string(clusterAction)),
+	)
+}
 
 // CheckDefaults checks that required fields haven't good values
 func (cc *CassandraCluster) CheckDefaults() {
@@ -134,7 +203,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		changed = true
 	}
 	if len(cc.Status.Phase) == 0 {
-		cc.Status.Phase = ClusterPhaseInitial
+		cc.Status.Phase = string(ClusterPhaseInitial)
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
@@ -281,9 +350,9 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	var rackStatus = CassandraRackStatus{
-		Phase: ClusterPhaseInitial,
+		Phase: string(ClusterPhaseInitial),
 		CassandraLastAction: CassandraLastAction{
-			Name:   ClusterPhaseInitial,
+			Name:   string(ClusterPhaseInitial),
 			Status: StatusOngoing,
 		},
 	}
@@ -299,9 +368,9 @@ func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
 func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	var rackStatus CassandraRackStatus = CassandraRackStatus{
-		Phase: ClusterPhaseInitial,
+		Phase: string(ClusterPhaseInitial),
 		CassandraLastAction: CassandraLastAction{
-			Name:   ClusterPhaseInitial,
+			Name:   string(ClusterPhaseInitial),
 			Status: StatusOngoing,
 		},
 	}
@@ -615,6 +684,7 @@ func (dc *DCSlice) Remove(i int) {
 func (rack *RackSlice) Remove(i int) {
 	*rack = append((*rack)[:i], (*rack)[i+1:]...)
 }
+
 // CassandraClusterSpec defines the configuration of CassandraCluster
 
 type CassandraClusterSpec struct {
@@ -721,12 +791,12 @@ type CassandraClusterSpec struct {
 // StorageConfig defines additional storage configurations
 type StorageConfig struct {
 	// Mount path into cassandra container
-	MountPath string						`json:"mountPath"`
+	MountPath string `json:"mountPath"`
 	// Name of the pvc
 	// +kubebuilder:validation:Pattern=[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*
-	Name      string						`json:"name"`
+	Name string `json:"name"`
 	// Persistent volume claim spec
-	PVCSpec   *v1.PersistentVolumeClaimSpec	`json:"pvcSpec"`
+	PVCSpec *v1.PersistentVolumeClaimSpec `json:"pvcSpec"`
 }
 
 // Topology allow to configure the Cassandra Topology according to kubernetes Nodes labels
@@ -755,7 +825,6 @@ type DC struct {
 
 	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
 	NumTokens *int32 `json:"numTokens,omitempty"`
-
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -898,5 +967,3 @@ type CassandraClusterList struct {
 func init() {
 	SchemeBuilder.Register(&CassandraCluster{}, &CassandraClusterList{})
 }
-
-
