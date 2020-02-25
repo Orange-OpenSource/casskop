@@ -1231,7 +1231,7 @@ disruption ongoing. We can tune this by updating the `spec.maxPodUnavailable` pa
 
 #### Global mecanism
 
-Cassandra works on IPs and not on hostname, so in a case where two cassandra cross their Ips, the cassandra node will not being able to run properly and will loop on the following error :
+Cassandra works on IPs and not on hostname, so in a case where two cassandra cross their Ips, no Cassandra will be able to run properly and will loop on the following error :
 
 ```log
 cassandra Exception (java.lang.RuntimeException) encountered during startup: A node with address /10.100.150.35 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node.
@@ -1262,7 +1262,7 @@ To manage this case we introduced the `restartCountBeforePodDeletion` CassandraC
 
 In setting this field, the cassandra operator will check for each `CassandraCluster` if a pod is in a restart situation (based on restart count of the cassandra container inside the pod).
 In the case where the restartCount of the pod is greater than the value of `restartCountBeforePodDeletion` field and if we are in a Ip cross situation, we will delete the pod, which will be recreated by the Statefulset. 
-In the case of Project Calico usage, this allow to force the pod to get another available IP, which fix our bug. 
+In the case of Project Calico usage, this force the pod to get another available IP, which fixes our bug. 
 
 ### Ip Cross situation detection
 
@@ -1271,7 +1271,7 @@ for all ready pods.
 
 > Note: to have more information about this status field, you can check [CassandraCluster Status](#cassandracluster-status)
 
-So when we check pods, we are perfoming a Jolokia call to get a map of the cluster nodes IPs with their corresponding HostId.
+So when we check pods, we perform a Jolokia call to get a map of the cluster nodes IPs with their corresponding HostId.
 If a pod is failing with the constraints described above, we compare the hostId associated to the Pod's IP, and the hostId
 associated to the Pod name stored into the `CassandraNodeStatus` : 
 
