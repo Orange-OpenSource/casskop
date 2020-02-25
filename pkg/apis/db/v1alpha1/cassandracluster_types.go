@@ -104,18 +104,18 @@ func index(slice []string, item string) int {
 }
 
 // ClusterPhaseVal returns corresponding float64 value
-func ClusterPhaseVal() float64 {
+func ClusterPhaseVal(clusterPhase string) float64 {
 	return float64(
-		index([]string{ClusterPhaseInitial, ClusterPhaseRunning, ClusterPhasePending}, string(clusterPhase)),
+		index([]string{ClusterPhaseInitial, ClusterPhaseRunning, ClusterPhasePending}, clusterPhase),
 	)
 }
 
 // ClusterActionVal returns corresponding float64 value
-func ClusterActionVal() float64 {
+func ClusterActionVal(clusterAction string) float64 {
 	return float64(
 		index([]string{ActionUpdateConfigMap, ActionUpdateDockerImage, ActionUpdateSeedList, ActionRollingRestart,
 			ActionUpdateResources, ActionUpdateStatefulSet, ActionScaleUp, ActionScaleDown, ActionDeleteDC,
-			ActionDeleteRack, ActionCorrectCRDConfig}, string(clusterAction)),
+			ActionDeleteRack, ActionCorrectCRDConfig}, clusterAction),
 	)
 }
 

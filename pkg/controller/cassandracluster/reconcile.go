@@ -149,7 +149,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 		status.LastClusterAction = api.ActionCorrectCRDConfig
 		ClusterAction.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ActionCorrectCRDConfig))
+		).Set(api.ClusterActionVal(api.ActionCorrectCRDConfig))
 		return true
 	}
 
@@ -162,7 +162,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 			cc.Spec.Topology = (&oldCRD).Spec.Topology
 			ClusterAction.With(
 				prometheus.Labels{"cluster": cc.Name},
-			).Set(ClusterAction(api.ActionCorrectCRDConfig))
+			).Set(api.ClusterActionVal(api.ActionCorrectCRDConfig))
 		}
 
 		return true
@@ -171,14 +171,14 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 	if updateStatus == api.ActionDeleteRack {
 		ClusterAction.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ActionDeleteRack))
+		).Set(api.ClusterActionVal(api.ActionDeleteRack))
 		return true
 	}
 
 	if needUpdate = rcc.CheckNonAllowedScaleDown(cc, status, &oldCRD); needUpdate {
 		ClusterAction.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ActionCorrectCRDConfig)
+		).Set(api.ClusterActionVal(api.ActionCorrectCRDConfig))
 		status.LastClusterAction = api.ActionCorrectCRDConfig
 		return true
 	}
@@ -201,7 +201,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 				dcRackStatus.CassandraLastAction.Name = api.ActionUpdateResources
 				ClusterAction.With(
 					prometheus.Labels{"cluster": cc.Name},
-				).Set(ClusterAction(api.ActionUpdateResources))
+				).Set(api.ClusterActionVal(api.ActionUpdateResources))
 				dcRackStatus.CassandraLastAction.Status = api.StatusToDo
 				now := metav1.Now()
 				status.CassandraRackStatus[dcRackName].CassandraLastAction.StartTime = &now
@@ -318,7 +318,7 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
 				Warningf(topologyChangeRefused +
 					"You must wait to the end of ScaleDown to 0 before deleting a DC")
-			return true, api.ActionCorrectCRDConfig)
+			return true, api.ActionCorrectCRDConfig
 
 		}
 
@@ -371,7 +371,7 @@ func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
 		}
 		ClusterAction.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ActionDeleteDC))
+		).Set(api.ClusterActionVal(api.ActionDeleteDC))
 		return true, api.ActionDeleteDC
 	}
 	return false, ""
@@ -513,7 +513,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				}
 				ClusterPhase.With(
 					prometheus.Labels{"cluster": cc.Name},
-				).Set(ClusterAction(api.ClusterPhaseInitial))
+				).Set(api.ClusterActionVal(api.ClusterPhaseInitial))
 
 			}
 			if err = rcc.ensureCassandraService(cc); err != nil {
@@ -613,7 +613,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 		status.Phase = api.ClusterPhaseRunning
 		ClusterPhase.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ClusterPhaseRunning))
+		).Set(api.ClusterActionVal(api.ClusterPhaseRunning))
 	}
 
 	//If cluster phase id not running, we update it
@@ -622,7 +622,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 		status.Phase = api.ClusterPhaseRunning
 		ClusterPhase.With(
 			prometheus.Labels{"cluster": cc.Name},
-		).Set(ClusterAction(api.ClusterPhaseRunning))
+		).Set(api.ClusterActionVal(api.ClusterPhaseRunning))
 	}
 
 	return
@@ -672,7 +672,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 					dcRackStatus.CassandraLastAction.Name = api.ActionUpdateSeedList
 					ClusterAction.With(
 						prometheus.Labels{"cluster": cc.Name},
-					).Set(ClusterAction(api.ActionUpdateSeedList))
+					).Set(api.ClusterActionVal(api.ActionUpdateSeedList))
 					dcRackStatus.CassandraLastAction.Status = api.StatusToDo
 				}
 			}
