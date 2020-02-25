@@ -51,56 +51,13 @@ const (
 	DefaultUserID int64 = 999
 )
 
-type ClusterPhase string
-
-const (
-	ClusterPhaseInitial ClusterPhase = "Initializing"
-	ClusterPhaseRunning ClusterPhase = "Running"
-	ClusterPhasePending ClusterPhase = "Pending"
-)
-
-// type ClusterPhase int
-
-// const (
-// 	ClusterPhaseInitializing ClusterPhase = iota
-// 	ClusterPhaseRunning
-// 	ClusterPending
-// )
-
-type ClusterAction string
-
-const (
-	ActionUpdateConfigMap   ClusterAction = "UpdateConfigMap"
-	ActionUpdateDockerImage ClusterAction = "UpdateDockerImage"
-	ActionUpdateSeedList    ClusterAction = "UpdateSeedList"
-	ActionRollingRestart    ClusterAction = "RollingRestart"
-	ActionUpdateResources   ClusterAction = "UpdateResources"
-	ActionUpdateStatefulSet ClusterAction = "UpdateStatefulSet"
-	ActionScaleUp           ClusterAction = "ScaleUp"
-	ActionScaleDown         ClusterAction = "ScaleDown"
-	ActionDeleteDC          ClusterAction = "ActionDeleteDC"
-	ActionDeleteRack        ClusterAction = "ActionDeleteRack"
-	ActionCorrectCRDConfig  ClusterAction = "CorrectCRDConfig"
-
-// 	ActionUpdateConfigMap ClusterAction = iota
-// 	ActionUpdateDockerImage
-// 	ActionUpdateSeedList
-// 	ActionRollingRestart
-// 	ActionUpdateResources
-// 	ActionUpdateStatefulSet
-// 	ActionScaleUp
-// 	ActionScaleDown
-// 	ActionDeleteDC
-// 	ActionDeleteRack
-// 	ActionCorrectCRDConfig
-)
-
 const (
 	AnnotationLastApplied string = "cassandraclusters.db.orange.com/last-applied-configuration"
-	//Phase du Cluster
-	// ClusterPhaseInitial string = "Initializing"
-	// ClusterPhaseRunning string = "Running"
-	// ClusterPhasePending string = "Pending"
+
+	//Cluster phases
+	ClusterPhaseInitial string = "Initializing"
+	ClusterPhaseRunning string = "Running"
+	ClusterPhasePending string = "Pending"
 
 	StatusOngoing     string = "Ongoing"    // The Action is Ongoing
 	StatusDone        string = "Done"       // The Action id Done
@@ -112,19 +69,19 @@ const (
 	StatusError       string = "Error"
 
 	//Available actions
-	// ActionUpdateConfigMap   string = "UpdateConfigMap"
-	// ActionUpdateDockerImage string = "UpdateDockerImage"
-	// ActionUpdateSeedList    string = "UpdateSeedList"
-	// ActionRollingRestart    string = "RollingRestart"
-	// ActionUpdateResources   string = "UpdateResources"
-	// ActionUpdateStatefulSet string = "UpdateStatefulSet"
-	// ActionScaleUp           string = "ScaleUp"
-	// ActionScaleDown         string = "ScaleDown"
+	ActionUpdateConfigMap   string = "UpdateConfigMap"
+	ActionUpdateDockerImage string = "UpdateDockerImage"
+	ActionUpdateSeedList    string = "UpdateSeedList"
+	ActionRollingRestart    string = "RollingRestart"
+	ActionUpdateResources   string = "UpdateResources"
+	ActionUpdateStatefulSet string = "UpdateStatefulSet"
+	ActionScaleUp           string = "ScaleUp"
+	ActionScaleDown         string = "ScaleDown"
 
-	// ActionDeleteDC   string = "ActionDeleteDC"
-	// ActionDeleteRack string = "ActionDeleteRack"
+	ActionDeleteDC   string = "ActionDeleteDC"
+	ActionDeleteRack string = "ActionDeleteRack"
 
-	// ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
+	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
 	//List of Pods Operations
 	OperationUpgradeSSTables string = "upgradesstables"
@@ -146,19 +103,19 @@ func index(slice []string, item string) int {
 	return -1
 }
 
-// Int returns corresponding int value
-func (clusterPhase ClusterPhase) Int() float64 {
+// ClusterPhaseVal returns corresponding float64 value
+func ClusterPhaseVal() float64 {
 	return float64(
-		index([]string{"Initializing", "Running", "Pending"}, string(clusterPhase)),
+		index([]string{ClusterPhaseInitial, ClusterPhaseRunning, ClusterPhasePending}, string(clusterPhase)),
 	)
 }
 
-// Int returns corresponding int value
-func (clusterAction ClusterAction) Int() float64 {
+// ClusterActionVal returns corresponding float64 value
+func ClusterActionVal() float64 {
 	return float64(
-		index([]string{"UpdateConfigMap", "UpdateDockerImage", "UpdateSeedList", "RollingRestart", "UpdateResources",
-			"UpdateStatefulSet", "ScaleUp", "ScaleDown", "ActionDeleteDC", "ActionDeleteRack",
-			"CorrectCRDConfig"}, string(clusterAction)),
+		index([]string{ActionUpdateConfigMap, ActionUpdateDockerImage, ActionUpdateSeedList, ActionRollingRestart,
+			ActionUpdateResources, ActionUpdateStatefulSet, ActionScaleUp, ActionScaleDown, ActionDeleteDC,
+			ActionDeleteRack, ActionCorrectCRDConfig}, string(clusterAction)),
 	)
 }
 

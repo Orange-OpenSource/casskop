@@ -37,7 +37,7 @@ func (rcc *ReconcileCassandraCluster) hasOneDisruptedPod() bool {
 
 //weAreScalingDown return true if we are Scaling Down the provided dc-rack
 func (rcc *ReconcileCassandraCluster) weAreScalingDown(dcRackStatus *api.CassandraRackStatus) bool {
-	if dcRackStatus.CassandraLastAction.Name == string(api.ActionScaleDown) &&
+	if dcRackStatus.CassandraLastAction.Name == api.ActionScaleDown &&
 		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
 			dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 			dcRackStatus.CassandraLastAction.Status == api.StatusContinue) {
