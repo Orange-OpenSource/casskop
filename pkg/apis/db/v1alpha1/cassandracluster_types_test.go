@@ -287,7 +287,7 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	assert.Equal(nb, cc.GetDCRackSize())
 
 	//add info in status
-	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = string(ActionUpdateSeedList)
+	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = ActionUpdateSeedList
 	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList)
 
 	//Remove 1 dc
@@ -455,7 +455,7 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:latest","resources":{"requests":{"cpu":"1","memory":"2Gi"},"limits":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"dataCapacity":"3Gi","dataStorageClass":"local-storage","imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"numTokens":200},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"numTokens":32}]}},"status":{}}`
 
 	//add info in status
-	assert.Equal(result, string(lastAppliedConfiguration))
+	assert.Equal(result, lastAppliedConfiguration)
 }
 
 func TestSetDefaults(t *testing.T) {
