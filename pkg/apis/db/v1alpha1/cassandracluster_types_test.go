@@ -287,7 +287,7 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	assert.Equal(nb, cc.GetDCRackSize())
 
 	//add info in status
-	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = ActionUpdateSeedList
+	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = string(ActionUpdateSeedList)
 	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList)
 
 	//Remove 1 dc

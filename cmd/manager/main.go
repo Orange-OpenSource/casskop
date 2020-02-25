@@ -29,6 +29,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis"
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/controller"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster"
 	"github.com/Orange-OpenSource/casskop/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -37,6 +38,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	prometheusMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -46,7 +48,7 @@ import (
 // Change below variables to serve metrics on different host or port.
 var (
 	metricsHost       = "0.0.0.0"
-	metricsPort int32 = 8383
+	metricsPort int32 = 9500
 )
 
 const (
@@ -180,6 +182,8 @@ func main() {
 	}
 
 	logrus.Info("Registering Components.")
+
+	prometheusMetrics.Registry.MustRegister(cassandracluster.ClusterPhase, cassandracluster.ClusterAction)
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
