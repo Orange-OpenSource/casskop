@@ -683,8 +683,8 @@ type CassandraClusterSpec struct {
 
 	MaxPodUnavailable int32 `json:"maxPodUnavailable,omitempty"` //Number of MaxPodUnavailable used in the PDB
 
-	// RestartCountBeforePodDeletion defines number of restart for the cassandra container allowed before
-	// performing a pod deletion to force restart from scratch for a cassandra node, if set to 0 or omit,
+	// RestartCountBeforePodDeletion defines the number of restart allowed for a cassandra container allowed before
+	// deleting the pod  to force its restart from scratch. if set to 0 or omit,
 	// no action will be performed based on restart count.
 	RestartCountBeforePodDeletion	int32	`json:"restartCountBeforePodDeletion,omitempty"`
 
