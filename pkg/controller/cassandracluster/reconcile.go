@@ -632,3 +632,125 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 	}
 	return
 }
+
+func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
+	status *api.CassandraClusterStatus) (err error) {
+
+	podsList, err := rcc.ListCassandraClusterPods(cc)
+	if err != nil {
+		return err
+	}
+
+	if status.CassandraNodesStatus == nil {
+		status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
+	}
+
+	if len(podsList) < 1 {
+		return nil
+	}
+
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+		"err": err}).Info("We will get first available pod")
+
+	firstPod, err := GetLastOrFirstPodReady(podsList, true)
+	if err != nil {
+		return err
+	}
+
+	hostName := fmt.Sprintf("%s.%s", firstPod.Spec.Hostname, firstPod.Spec.Subdomain)
+
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+		"err": err}).Info(fmt.Sprintf("We will request : %s to catch hostIdMap", hostName))
+
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	if err != nil {
+		return err
+	}
+
+	hostIDMap, err := jolokiaClient.hostIDMap()
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"err": err}).Errorf("Failed to call %s to get hostIdMap", hostName)
+		return err
+	}
+
+	podToDelete, err := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion , podsList, status)
+	if err != nil {
+		return err
+	}
+	if podToDelete != nil {
+		return rcc.client.Delete(context.TODO(), podToDelete)
+	}
+
+	return nil
+}
+
+func (rcc *ReconcileCassandraCluster) ListCassandraClusterPods(cc *api.CassandraCluster) ([]v1.Pod, error) {
+	var podsList []v1.Pod
+
+	// We loop on each DC and Rack of the CassandraCluster
+	for dc := 0; dc < cc.GetDCSize(); dc++ {
+		dcName := cc.GetDCName(dc)
+		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
+			rackName := cc.GetRackName(dc, rack)
+			dcRackName := cc.GetDCRackName(dcName, rackName)
+			if dcRackName == "" {
+				return nil, fmt.Errorf("Name uses for DC and/or Rack are not good")
+			}
+
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Info("We will list available pods")
+			pods, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+			if err != nil {
+				return nil, err
+			}
+
+			podsList = append(podsList, pods.Items...)
+		}
+	}
+	return podsList, nil
+}
+
+func processingPods(hostIDMap map[string]string, restartCountBeforePodDeletion int32, podsList []v1.Pod,
+	status *api.CassandraClusterStatus) (*v1.Pod, error) {
+
+	// For each pod
+	for _, pod := range podsList {
+		cassandraPodRestartCount := cassandraPodRestartCount(&pod)
+		// If the cassandra container has performed more restart than allowed
+		if restartCountBeforePodDeletion > 0 && cassandraPodRestartCount > restartCountBeforePodDeletion {
+			logrus.WithFields(logrus.Fields{"pod": pod.Name}).Debug(fmt.Sprintf("Pod found in restart status with %d restart", restartCountBeforePodDeletion))
+			return checkPodCrossIpUseCaseForPod(hostIDMap, &pod, status)
+		}
+		updateCassandraNodesStatusForPod(hostIDMap, &pod, status)
+	}
+
+	return nil, nil
+}
+
+func updateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) {
+
+	// Update Pod, HostId, Ip couple cached into status
+	hostId, keyFound := hostIDMap[pod.Status.PodIP]
+	if keyFound == true && cassandraPodIsReady(pod){
+		status.CassandraNodesStatus[pod.Name] = api.CassandraNodeStatus{HostId: hostId, NodeIp: pod.Status.PodIP}
+	}
+}
+
+func checkPodCrossIpUseCaseForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) (*v1.Pod, error){
+
+	// We compare the hostId associated to the pod (cached into the resource status) and the one associated
+	// to the podIp into the cassandra cluster.
+	hostId, keyFound := hostIDMap[pod.Status.PodIP]
+	statusHostId := status.CassandraNodesStatus[pod.Name].HostId
+	logrus.WithFields(logrus.Fields{"pod": pod.Name}).Debug(fmt.Sprintf("Test Keyfound %t, statusHostId : %s, hostId: %s", keyFound, statusHostId, hostId))
+
+	// If the hostId associated to the pod in the status is not the same one
+	// that the one associated into cassandra for the same IP, so we are in IP cross cases.
+	if keyFound == true && statusHostId != hostId {
+		logrus.WithFields(logrus.Fields{"pod": pod.Name}).
+			Info(fmt.Sprintf("Pod %s, have a cross Ip situation. The pod have ip : %s, with hostId : %s, " +
+				"but this ip is already associated to the hostId : %s. We force delete of the pod", pod.Name, pod.Status.PodIP, statusHostId, hostId))
+		return pod, nil
+	}
+	return nil, nil
+}

@@ -48,14 +48,25 @@ func (rcc *ReconcileCassandraCluster) weAreScalingDown(dcRackStatus *api.Cassand
 
 func cassandraPodIsReady(pod *v1.Pod) bool {
 	for i := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[i].Name == "cassandra" &&
-			pod.Status.Phase == "Running" &&
+		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName &&
+			pod.Status.Phase == v1.PodRunning &&
 			pod.Status.ContainerStatuses[i].Ready {
 			return true
 		}
 	}
 	return false
 }
+
+func cassandraPodRestartCount(pod *v1.Pod) int32 {
+	for idx := range pod.Status.ContainerStatuses {
+		if pod.Status.ContainerStatuses[idx].Name == cassandraContainerName {
+			return pod.Status.ContainerStatuses[idx].RestartCount
+		}
+	}
+	return 0
+}
+
+
 
 // DeletePVC deletes persistentvolumes of nodes in a rack
 func (rcc *ReconcileCassandraCluster) DeletePVCs(cc *api.CassandraCluster, dcName string, rackName string) {

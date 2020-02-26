@@ -29,7 +29,8 @@
     - [Cassandra storage](#cassandra-storage)
         - [Configuration](#configuration)
         - [Persistent volume claim](#persistent-volume-claim)
-        - [Additionnals storages configurations](#additionnals-storages-configurations)
+        - [Additionnals storages configuration](#additionnals-storages-configuration)
+    - [Sidecars configuration](#sidecars-configuration)
     - [Kubernetes objects](#kubernetes-objects)
         - [Services](#services)
         - [Statefulset](#statefulset)
@@ -60,6 +61,7 @@
     - [Advanced configuration](#advanced-configuration)
         - [Docker login for private registry](#docker-login-for-private-registry)
         - [Management of allowed Cassandra nodes disruption](#management-of-allowed-cassandra-nodes-disruption)
+        - [Cross Ip Management](#cross-ip-management)
     - [Cassandra nodes management](#cassandra-nodes-management)
         - [HealthChecks](#healthchecks)
         - [Pod lifeCycle](#pod-lifecycle)
@@ -1225,6 +1227,57 @@ disruption ongoing. We can tune this by updating the `spec.maxPodUnavailable` pa
 
 > **IMPORTANT:** it is recommended to not touch this parameter unless you know what you are doing.
 
+### Cross Ip Management
+
+#### Global mecanism
+
+Cassandra works on IPs and not on hostname, so in a case where two cassandra cross their Ips, no Cassandra will be able to run properly and will loop on the following error :
+
+```log
+cassandra Exception (java.lang.RuntimeException) encountered during startup: A node with address /10.100.150.35 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node.
+cassandra java.lang.RuntimeException: A node with address /10.100.150.35 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node.
+cassandra     at org.apache.cassandra.service.StorageService.checkForEndpointCollision(StorageService.java:577)
+cassandra     at org.apache.cassandra.service.StorageService.prepareToJoin(StorageService.java:823)
+cassandra     at org.apache.cassandra.service.StorageService.initServer(StorageService.java:683)
+cassandra     at org.apache.cassandra.service.StorageService.initServer(StorageService.java:632)
+cassandra     at org.apache.cassandra.service.CassandraDaemon.setup(CassandraDaemon.java:388)
+cassandra     at org.apache.cassandra.service.CassandraDaemon.activate(CassandraDaemon.java:620)
+cassandra     at org.apache.cassandra.service.CassandraDaemon.main(CassandraDaemon.java:732)
+cassandra ERROR [main] 2020-02-21 08:29:44,398 CassandraDaemon.java:749 - Exception encountered during startup
+cassandra java.lang.RuntimeException: A node with address /10.100.150.35 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node.
+cassandra     at org.apache.cassandra.service.StorageService.checkForEndpointCollision(StorageService.java:577) ~[apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.StorageService.prepareToJoin(StorageService.java:823) ~[apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.StorageService.initServer(StorageService.java:683) ~[apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.StorageService.initServer(StorageService.java:632) ~[apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.CassandraDaemon.setup(CassandraDaemon.java:388) [apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.CassandraDaemon.activate(CassandraDaemon.java:620) [apache-cassandra-3.11.4.jar:3.11.4]
+cassandra     at org.apache.cassandra.service.CassandraDaemon.main(CassandraDaemon.java:732) [apache-cassandra-3.11.4.jar:3.11.4]
+```
+
+Following the [issue #170](https://github.com/Orange-OpenSource/casskop/issues/170), at least using Kubernetes and [Project Calico](https://docs.projectcalico.org/v3.9/getting-started/kubernetes/), we may fall into this issue, 
+for example using a fixed [ip pool](https://docs.projectcalico.org/v3.9/reference/resources/ippool) size.
+
+To manage this case we introduced the `restartCountBeforePodDeletion` CassandraCluster spec field which takes an `int32` as value.
+> Note : If you set it with a value lower or equals to 0, or if you omit it, no action will be performed
+
+In setting this field, the cassandra operator will check for each `CassandraCluster` if a pod is in a restart situation (based on restart count of the cassandra container inside the pod).
+In the case where the restartCount of the pod is greater than the value of `restartCountBeforePodDeletion` field and if we are in a Ip cross situation, we will delete the pod, which will be recreated by the Statefulset. 
+In the case of Project Calico usage, this force the pod to get another available IP, which fixes our bug. 
+
+### Ip Cross situation detection
+
+To detect that we are in a Ip cross situation, we add a new status field `CassandraNodeStatus` which will maintain a cache about the map of *Ip node* and his *hostId*, 
+for all ready pods.
+
+> Note: to have more information about this status field, you can check [CassandraCluster Status](#cassandracluster-status)
+
+So when we check pods, we perform a Jolokia call to get a map of the cluster nodes IPs with their corresponding HostId.
+If a pod is failing with the constraints described above, we compare the hostId associated to the Pod's IP, and the hostId
+associated to the Pod name stored into the `CassandraNodeStatus` : 
+
+- if they match, or there are no match for the pod Ip into the map returned by Jolokia, we are not in a Ip cross situation,
+- if they mismatch, we are in a Ip cross situation.
+
 ## Cassandra nodes management
 
 CassKop in duo with the Cassandra docker Image is responsible of the lifecycle of the Cassandra nodes.
@@ -1301,6 +1354,25 @@ it's status :
 $ kubectl describe cassandracluster cassandra
 ...
 status:
+   Cassandra Node Status:
+     cassandra-demo-dc1-rack1-0:
+      Host Id:  ca716bef-dc68-427d-be27-b4eeede1e072
+      Node Ip:  10.100.150.51
+     cassandra-demo-dc1-rack1-1:
+      Host Id:  3528d662-e4a8-4fb6-88f6-3f21056df7ea
+      Node Ip:  10.100.150.39
+     cassandra-demo-dc1-rack1-2:
+      Host Id:  a1d1e7fa-8073-408c-94c1-e3678013f90f
+      Node Ip:  10.100.150.38
+     cassandra-demo-dc1-rack2-0:
+      Host Id:  83ea3410-db00-47fe-9051-e9f877ce5e63
+      Node Ip:  10.100.150.111
+     cassandra-demo-dc1-rack2-1:
+      Host Id:  200bf115-5caf-4218-8e84-e804296c5026
+      Node Ip:  10.100.150.108
+     cassandra-demo-dc1-rack2-2:
+      Host Id:  27ee7414-a695-4744-bf39-41db9d23ddb2
+      Node Ip:  10.100.150.110
   cassandraRackStatus:
     dc1-rack1:
       cassandraLastAction:
@@ -1351,6 +1423,10 @@ The CassandraCluster prints out it's whole status.
     - **Pending**, the number of Nodes requested has changed, waiting for reconciliation
 - **lastClusterAction** Is the Last Action at the Cluster level
 - **lastClusterActionStatus** Is the Last Action Status at the Cluster level
+- **CassandraNodeStatus**: represents a map of (hostId, Ip Node) couple for each Pod in the Cluster
+  - **<Cassandra node pod's name>**
+    - **HostId**: the cassandra node's hostId
+    - **IpNode**: the cassandra node's ip
 - **CassandraRackStatus** represents a map of statuses for each of the Cassandra Racks in the Cluster
   - **<Cassandra DC-Rack Name>**
     - **Cassandra Last Action**: it's an action which is ongoing on the Cassandra cluster :
