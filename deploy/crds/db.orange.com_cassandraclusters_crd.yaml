@@ -207,6 +207,13 @@ spec:
                   - memory
                   type: object
               type: object
+            restartCountBeforePodDeletion:
+              description: RestartCountBeforePodDeletion defines the number of restart
+                allowed for a cassandra container allowed before deleting the pod  to
+                force its restart from scratch. if set to 0 or omit, no action will
+                be performed based on restart count.
+              format: int32
+              type: integer
             runAsUser:
               description: RunAsUser define the id of the user to run in the Cassandra
                 image
@@ -1460,6 +1467,15 @@ spec:
         status:
           description: CassandraClusterStatus defines Global state of CassandraCluster
           properties:
+            cassandraNodeStatus:
+              additionalProperties:
+                properties:
+                  hostId:
+                    type: string
+                  nodeIp:
+                    type: string
+                type: object
+              type: object
             cassandraRackStatus:
               additionalProperties:
                 description: CassandraRackStatus defines states of Cassandra for 1

@@ -8,6 +8,7 @@ metadata:
 spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
+  restartCountBeforePodDeletion: 3
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
   rollingPartition: 0
