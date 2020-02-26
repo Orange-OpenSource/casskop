@@ -199,7 +199,7 @@ func main() {
 
 	// Create Service object to expose the metrics port.
 	servicePorts := []v1.ServicePort{
-		{Name: "metricsPort", TargetPort: intstr.FromInt(int(metricsPort))},
+		{Name: "metrics", Port: metricsPort, TargetPort: intstr.FromInt(int(metricsPort))},
 	}
 	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
