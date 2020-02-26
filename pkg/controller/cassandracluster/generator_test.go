@@ -143,7 +143,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
-	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",

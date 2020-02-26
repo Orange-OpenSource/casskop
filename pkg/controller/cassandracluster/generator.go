@@ -209,10 +209,13 @@ func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMoun
 	return vms
 }
 
-func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
+func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error){
 	var pvcs []v1.PersistentVolumeClaim
 
 	for _, storage := range cc.Spec.StorageConfigs {
+		if storage.PVCSpec == nil {
+			return nil, fmt.Errorf("Can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified.", storage.Name, storage.MountPath)
+		}
 		pvc := v1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   storage.Name,
@@ -223,16 +226,16 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 
 		pvcs = append(pvcs, pvc)
 	}
-	return pvcs
+	return pvcs, nil
 }
 
-func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) []v1.PersistentVolumeClaim {
+func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
 
 	if cc.Spec.DataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
-		return pvc
+		return pvc, nil
 	}
 
 	pvc = []v1.PersistentVolumeClaim{
@@ -259,18 +262,28 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 		pvc[0].Spec.StorageClassName = &cc.Spec.DataStorageClass
 	}
 
-	pvc = append(pvc, generateStorageConfigVolumeClaimTemplates(cc, labels)...)
+	storageConfigPvcs, err := generateStorageConfigVolumeClaimTemplates(cc, labels)
+	if err != nil {
+		logrus.Errorf("Fail to generate PVCs from storage config, %s", err)
+		return nil, err
+	}
+	pvc = append(pvc, storageConfigPvcs...)
 
-	return pvc
+	return pvc, nil
 }
 
 func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcName string, dcRackName string,
-	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) *appsv1.StatefulSet {
+	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) (*appsv1.StatefulSet, error) {
 	name := cc.GetName()
 	namespace := cc.Namespace
 	volumes := generateCassandraVolumes(cc)
-	volumeClaimTemplate := generateVolumeClaimTemplate(cc, labels)
+
+	volumeClaimTemplate, err := generateVolumeClaimTemplate(cc, labels)
+	if err != nil {
+		return nil, err
+	}
+
 	containers := generateContainers(cc, status, dcRackName)
 
 	for _, pvc := range volumeClaimTemplate {
@@ -344,7 +357,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	//Add secrets
-
 	if (cc.Spec.ImagePullSecret != v1.LocalObjectReference{}) {
 		ss.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{cc.Spec.ImagePullSecret}
 	}
@@ -390,7 +402,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	if err := patch.DefaultAnnotator.SetLastAppliedAnnotation(ss); err != nil {
 		logrus.Warnf("[%s]: error while applying LastApplied Annotation on Statefulset", cc.Name)
 	}
-	return ss
+	return ss, nil
 }
 
 func generateResourceQuantity(qs string) resource.Quantity {
