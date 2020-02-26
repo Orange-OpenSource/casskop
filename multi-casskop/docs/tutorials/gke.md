@@ -211,7 +211,7 @@ $ helm init --client-only
 $ helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com
 $ helm repo update
 $ cd ${CASSKOP_WORKSPACE}
-$ helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.0-multi-cluster #--no-hooks if crd already install
+$ helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.local=gke-master-west1-b --set k8s.remote={gke-slave-west1-c} --set image.tag=0.5.1-multi-cluster #--no-hooks if crd already install
 ```
 
 ### Create the MultiCasskop CRD
