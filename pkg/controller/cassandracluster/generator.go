@@ -283,7 +283,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	if err != nil {
 		return nil, err
 	}
-
 	containers := generateContainers(cc, status, dcRackName)
 
 	for _, pvc := range volumeClaimTemplate {
