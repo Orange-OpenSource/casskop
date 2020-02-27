@@ -164,6 +164,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+
+	cc.Spec.StorageConfigs[0].PVCSpec = nil
+	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	assert.NotEqual(t, err, nil)
 }
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
