@@ -51,13 +51,36 @@ const (
 	DefaultUserID int64 = 999
 )
 
+type ClusterStateInfo struct {
+	Id   float64
+	Name string
+}
+
+var (
+	//Cluster phases
+	ClusterPhaseInitial = ClusterStateInfo{1, "Initializing"}
+	ClusterPhaseRunning = ClusterStateInfo{2, "Running"}
+	ClusterPhasePending = ClusterStateInfo{3, "Pending"}
+
+	//Available actions
+	ActionUpdateConfigMap   = ClusterStateInfo{1, "UpdateConfigMap"}
+	ActionUpdateDockerImage = ClusterStateInfo{2, "UpdateDockerImage"}
+	ActionUpdateSeedList    = ClusterStateInfo{3, "UpdateSeedList"}
+	ActionRollingRestart    = ClusterStateInfo{4, "RollingRestart"}
+	ActionUpdateResources   = ClusterStateInfo{5, "UpdateResources"}
+	ActionUpdateStatefulSet = ClusterStateInfo{6, "UpdateStatefulSet"}
+	ActionScaleUp           = ClusterStateInfo{7, "ScaleUp"}
+	ActionScaleDown         = ClusterStateInfo{8, "ScaleDown"}
+
+	ActionDeleteDC   = ClusterStateInfo{9, "ActionDeleteDC"}
+	ActionDeleteRack = ClusterStateInfo{10, "ActionDeleteRack"}
+
+	ActionCorrectCRDConfig = ClusterStateInfo{11, "CorrectCRDConfig"} //The Operator has correct a bad CRD configuration
+
+)
+
 const (
 	AnnotationLastApplied string = "cassandraclusters.db.orange.com/last-applied-configuration"
-
-	//Cluster phases
-	ClusterPhaseInitial string = "Initializing"
-	ClusterPhaseRunning string = "Running"
-	ClusterPhasePending string = "Pending"
 
 	StatusOngoing     string = "Ongoing"    // The Action is Ongoing
 	StatusDone        string = "Done"       // The Action id Done
@@ -67,21 +90,6 @@ const (
 	StatusConfiguring string = "Configuring"
 	StatusManual      string = "Manual"
 	StatusError       string = "Error"
-
-	//Available actions
-	ActionUpdateConfigMap   string = "UpdateConfigMap"
-	ActionUpdateDockerImage string = "UpdateDockerImage"
-	ActionUpdateSeedList    string = "UpdateSeedList"
-	ActionRollingRestart    string = "RollingRestart"
-	ActionUpdateResources   string = "UpdateResources"
-	ActionUpdateStatefulSet string = "UpdateStatefulSet"
-	ActionScaleUp           string = "ScaleUp"
-	ActionScaleDown         string = "ScaleDown"
-
-	ActionDeleteDC   string = "ActionDeleteDC"
-	ActionDeleteRack string = "ActionDeleteRack"
-
-	ActionCorrectCRDConfig string = "CorrectCRDConfig" //The Operator has correct a bad CRD configuration
 
 	//List of Pods Operations
 	OperationUpgradeSSTables string = "upgradesstables"
@@ -93,31 +101,6 @@ const (
 	BreakResyncLoop    = true
 	ContinueResyncLoop = false
 )
-
-func index(slice []string, item string) int {
-	for i := range slice {
-		if slice[i] == item {
-			return i
-		}
-	}
-	return -1
-}
-
-// ClusterPhaseVal returns corresponding float64 value
-func ClusterPhaseVal(clusterPhase string) float64 {
-	return float64(
-		index([]string{ClusterPhaseInitial, ClusterPhaseRunning, ClusterPhasePending}, clusterPhase),
-	)
-}
-
-// ClusterActionVal returns corresponding float64 value
-func ClusterActionVal(clusterAction string) float64 {
-	return float64(
-		index([]string{ActionUpdateConfigMap, ActionUpdateDockerImage, ActionUpdateSeedList, ActionRollingRestart,
-			ActionUpdateResources, ActionUpdateStatefulSet, ActionScaleUp, ActionScaleDown, ActionDeleteDC,
-			ActionDeleteRack, ActionCorrectCRDConfig}, clusterAction),
-	)
-}
 
 // CheckDefaults checks that required fields haven't good values
 func (cc *CassandraCluster) CheckDefaults() {
@@ -160,7 +143,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		changed = true
 	}
 	if len(cc.Status.Phase) == 0 {
-		cc.Status.Phase = string(ClusterPhaseInitial)
+		cc.Status.Phase = ClusterPhaseInitial.Name
 		if cc.InitCassandraRackList() < 1 {
 			logrus.Errorf("[%s]: We should have at list One Rack, Please correct the Error", cc.Name)
 		}
@@ -307,9 +290,9 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	var rackStatus = CassandraRackStatus{
-		Phase: string(ClusterPhaseInitial),
+		Phase: ClusterPhaseInitial.Name,
 		CassandraLastAction: CassandraLastAction{
-			Name:   string(ClusterPhaseInitial),
+			Name:   ClusterPhaseInitial.Name,
 			Status: StatusOngoing,
 		},
 	}
@@ -325,9 +308,9 @@ func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
 func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	var rackStatus CassandraRackStatus = CassandraRackStatus{
-		Phase: string(ClusterPhaseInitial),
+		Phase: ClusterPhaseInitial.Name,
 		CassandraLastAction: CassandraLastAction{
-			Name:   string(ClusterPhaseInitial),
+			Name:   ClusterPhaseInitial.Name,
 			Status: StatusOngoing,
 		},
 	}
