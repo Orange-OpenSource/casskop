@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -47,8 +48,8 @@ import (
 
 // Change below variables to serve metrics on different host or port.
 var (
-	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
+	metricsHost       = "0.0.0.0"
+	metricsPort int32 = 8383
 )
 
 const (
@@ -158,7 +159,7 @@ func main() {
 
 	logrus.Info("Registering Components.")
 
-	prometheusMetrics.Registry.MustRegister(cassandracluster.ClusterPhase, cassandracluster.ClusterAction)
+	prometheusMetrics.Registry.MustRegister(cassandracluster.ClusterActionMetric, cassandracluster.ClusterPhaseMetric)
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -174,7 +175,8 @@ func main() {
 
 	// Create Service object to expose the metrics port.
 	servicePorts := []v1.ServicePort{
-		{Name: "metrics", Port: metricsPort, TargetPort: intstr.FromInt(int(metricsPort))},
+		{Name: metrics.OperatorPortName, Port: metricsPort,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 	}
 
 	if _, err := metrics.CreateMetricsService(ctx, cfg, servicePorts); err != nil {
