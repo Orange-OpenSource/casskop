@@ -98,9 +98,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = true
 
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 	assert.Equal(3, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -132,9 +132,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
 
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
@@ -172,9 +172,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = false
 
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 	assert.Equal(3, len(cc.Status.CassandraRackStatus))
 
 	var firstSeedList = []string{
@@ -204,9 +204,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
 
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
@@ -260,9 +260,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
 
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
@@ -319,9 +319,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
 
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
@@ -357,9 +357,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
 
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ActionUpdateSeedList, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateSeedList.Name, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
@@ -439,13 +439,13 @@ func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) 
 	assert.Equal("2Gi", cc.Spec.Resources.Requests.Memory)
 
 	dcRackName := "dc1-rack1"
-	assert.Equal(api.ActionUpdateResources, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateResources.Name, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus[dcRackName].CassandraLastAction.Status)
 	dcRackName = "dc1-rack2"
-	assert.Equal(api.ActionUpdateResources, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateResources.Name, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus[dcRackName].CassandraLastAction.Status)
 	dcRackName = "dc2-rack1"
-	assert.Equal(api.ActionUpdateResources, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
+	assert.Equal(api.ActionUpdateResources.Name, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus[dcRackName].CassandraLastAction.Status)
 }
 
