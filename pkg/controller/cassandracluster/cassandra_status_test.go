@@ -18,15 +18,14 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/api/core/v1"
-	//"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
+
+	v1 "k8s.io/api/core/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	//"k8s.io/client-go/kubernetes/scheme"
-	//"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"strconv"
 	"testing"
 
@@ -97,9 +96,9 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 	}
 	cc.InitCassandraRackList()
 
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
-	assert.Equal(api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Name)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 	assert.Equal(3, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -223,17 +222,17 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	if err = rcc.client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
-	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning)
+	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning.Name)
 
 	for _, dcRackName := range cc.GetDCRackNames() {
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning,
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning.Name,
 			"dc-rack: %s", dcRackName)
-		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial,
+		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial.Name,
 			"dc-rack: %s", dcRackName)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone,
 			"dc-rack %s", dcRackName)
 	}
-	assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial)
+	assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial.Name)
 	assert.Equal(cc.Status.LastClusterActionStatus, api.StatusDone)
 
 	return rcc, &req
