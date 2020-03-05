@@ -64,8 +64,6 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
-	/*----
-	 */
 	t.Logf(" 2. We Request a ScaleUp (add 1 node in the first dc-rack)")
 	cc.Spec.Topology.DC[0].NodesPerRacks = func(i int32) *int32 { return &i }(2)
 	err = f.Client.Update(goctx.TODO(), cc)

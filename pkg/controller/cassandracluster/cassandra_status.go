@@ -317,6 +317,7 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
 			ClusterActionMetric.set(api.ActionScaleDown, cc.Name)
 			setDecommissionStatus(status, dcRackName)
+			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 		}
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
@@ -401,6 +402,7 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 			}
 
 		case api.ClusterPhaseInitial.Name:
+			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			//nothing particular here
 			return false
 
@@ -429,15 +431,17 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
-
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
 		if nodesPerRacks <= 0 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Warn("Aborting Initializing..., start ScaleDown")
 			setDecommissionStatus(status, dcRackName)
+			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 			return nil
 		}
+
+		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 
 		//Do we have reach requested number of replicas ?
 		if isStatefulSetNotReady(storedStatefulSet) {
@@ -459,6 +463,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			pod := podsList.Items[nodesPerRacks-1]
 			if cassandraPodIsReady(&pod) {
 				status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+				ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 				now := metav1.Now()
 				lastAction.EndTime = &now
 				lastAction.Status = api.StatusDone
@@ -482,6 +487,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName,
 				lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
 			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 		}
 	}
 	return nil
