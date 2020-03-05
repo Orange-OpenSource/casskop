@@ -143,7 +143,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
-	sts := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
@@ -164,6 +164,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+
+	cc.Spec.StorageConfigs[0].PVCSpec = nil
+	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	assert.NotEqual(t, err, nil)
 }
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
