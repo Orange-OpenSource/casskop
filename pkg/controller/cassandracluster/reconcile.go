@@ -509,7 +509,6 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 
 					}
 				}
-				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 
 			}
 			if err = rcc.ensureCassandraService(cc); err != nil {
@@ -538,8 +537,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				return nil
 			}
 
-			//If the Phase is not running Then we won't check on Next Racks so we return
-			//We don't want to make change in 2 racks in a same time
+			//If the Phase is not running then we won't check on Next Racks so we return
+			//We don't want to make any changes in 2 racks at the same time
 			if dcRackStatus.Phase != api.ClusterPhaseRunning.Name ||
 				(dcRackStatus.CassandraLastAction.Status == api.StatusOngoing ||
 					dcRackStatus.CassandraLastAction.Status == api.StatusFinalizing) {
