@@ -145,6 +145,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
+	_, ccDefault := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcName, dcRackName, labelsDefault, nodeSelectorDefault, nil)
+
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
@@ -161,6 +165,11 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		Effect:   v1.TaintEffectNoSchedule}},
 		sts.Spec.Template.Spec.Tolerations)
 
+
+	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
+		1010, 201, 32, 1205, 151, 17)
+	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
+		120, 20, 10, 60, 10, 10)
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
@@ -169,6 +178,30 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 	assert.NotEqual(t, err, nil)
 }
+
+func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
+	readinessInitialDelaySecond,
+	readinessTimeoutSeconds,
+	readinessPeriodSeconds,
+	livenessInitialDelaySecond,
+	livenessTimeoutSeconds,
+	livenessPeriodSeconds int32) {
+	for _, c := range containers {
+		if c.Name == cassandraContainerName {
+			// Readiness Config check
+			assert.Equal(t, c.ReadinessProbe.InitialDelaySeconds, readinessInitialDelaySecond)
+			assert.Equal(t, c.ReadinessProbe.TimeoutSeconds, readinessTimeoutSeconds)
+			assert.Equal(t, c.ReadinessProbe.PeriodSeconds, readinessPeriodSeconds)
+
+			// Liveness Config check
+			assert.Equal(t, c.LivenessProbe.InitialDelaySeconds, livenessInitialDelaySecond)
+			assert.Equal(t, c.LivenessProbe.TimeoutSeconds, livenessTimeoutSeconds)
+			assert.Equal(t, c.LivenessProbe.PeriodSeconds, livenessPeriodSeconds)
+		}
+	}
+}
+
+
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
 	assert.Equal(t, len(pvcs), 3)

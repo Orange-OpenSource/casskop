@@ -6,12 +6,6 @@ metadata:
     cluster: k8s.pic
   namespace: ns
 spec:
-  livenessInitialDelaySeconds: 1205
-  livenessHealthCheckTimeout: 151
-  livenessHealthCheckPeriod: 17
-  readinessInitialDelaySeconds: 1010
-  readinessHealthCheckTimeout: 201
-  readinessHealthCheckPeriod: 32
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
   restartCountBeforePodDeletion: 3
