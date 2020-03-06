@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/stretchr/testify/assert"
 
@@ -66,9 +66,9 @@ func cassandraClusterScaleDownSimpleTest(t *testing.T, f *framework.Framework, c
 		t.Fatal(err)
 	}
 	//locale dc-rack state is OK
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	/*----
@@ -101,10 +101,10 @@ func cassandraClusterScaleDownSimpleTest(t *testing.T, f *framework.Framework, c
 		t.Fatal(err)
 	}
 	//Because AutoUpdateSeedList is false we stay on ScaleUp=Done status
-	assert.Equal(t, api.ActionScaleDown, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ActionScaleDown.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	//Check Global state
-	assert.Equal(t, api.ActionScaleDown, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ActionScaleDown.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 }
 
@@ -163,9 +163,9 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		t.Fatal(err)
 	}
 	//locale dc-rack state is OK
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	//Check that numTokens are 256 (default) for dc1 and 32 (as specified in the crd) for dc2
@@ -217,7 +217,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		t.Fatal(err)
 	}
 	//Operator has restore old CRD
-	assert.Equal(t, api.ActionCorrectCRDConfig, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ActionCorrectCRDConfig.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	/*----
@@ -264,7 +264,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		t.Fatal(err)
 	}
 	//Because AutoUpdateSeedList is false we stay on ScaleUp=Done status
-	assert.Equal(t, api.ActionScaleDown, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ActionScaleDown.Name, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
 	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc2-rack1",
@@ -310,6 +310,6 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	t.Logf("Actual status is %s", cc.Status.LastClusterAction)
 	//We have only 1 dcRack in status
 	assert.Equal(t, 1, len(cc.Status.CassandraRackStatus))
-	assert.Equal(t, api.ActionDeleteDC, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ActionDeleteDC.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 }

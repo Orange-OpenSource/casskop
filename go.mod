@@ -34,6 +34,7 @@ require (
 	github.com/maxbrunsfeld/counterfeiter v0.0.0-20181017030959-1aadac120687 // indirect
 	github.com/operator-framework/operator-sdk v0.15.0
 	github.com/pelletier/go-toml v1.3.0 // indirect
+	github.com/prometheus/client_golang v1.2.1
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2

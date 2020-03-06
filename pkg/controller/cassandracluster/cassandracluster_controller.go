@@ -61,19 +61,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Modify this to be the types you create that are owned by the primary resource
-	/* We currently don't have secondary resource to watch
-	// Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner CassandraCluster
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &dbv1alpha1.CassandraCluster{},
-	})
-	if err != nil {
-		return err
-	}
-	*/
-
 	return nil
 }
 

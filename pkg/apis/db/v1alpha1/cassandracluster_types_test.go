@@ -185,7 +185,7 @@ func TestInitCassandraRackList_NoTopo(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(1, len(cc.Status.CassandraRackStatus))
 
 	assert.Equal(1, cc.GetDCSize())
@@ -200,7 +200,7 @@ func TestInitCassandraRackList_TopoDCNoRack(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
 	assert.Equal(1, len(cc.Status.CassandraRackStatus))
 
 	assert.Equal(1, cc.GetDCSize())
@@ -215,10 +215,10 @@ func TestInitCassandraRackList_2DC(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
 	assert.Equal(4, len(cc.Status.CassandraRackStatus))
 
 }
@@ -230,15 +230,15 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
 	assert.Equal(4, len(cc.Status.CassandraRackStatus))
 	//Add new DC from existing RackStatus
 	cc.InitCassandraRackinStatus(&cc.Status, "foo", "bar")
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["foo-bar"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["foo-bar"].CassandraLastAction.Name)
 	assert.Equal(5, len(cc.Status.CassandraRackStatus))
 }
 
@@ -249,7 +249,7 @@ func TestGetStatusDCRackSize(t *testing.T) {
 
 	cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
 
 	assert.Equal(2, cc.GetDCSize())
 	assert.Equal(2, cc.GetRackSize(0))
@@ -287,8 +287,8 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	assert.Equal(nb, cc.GetDCRackSize())
 
 	//add info in status
-	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = ActionUpdateSeedList
-	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList)
+	cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name = ActionUpdateSeedList.Name
+	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList.Name)
 
 	//Remove 1 dc
 	cc.Spec.Topology.DC.Remove(1)
@@ -302,7 +302,7 @@ func TestGetStatusDCRackSize_KeepChanges(t *testing.T) {
 	nb = len(status.CassandraRackStatus)
 	assert.Equal(2, nb)
 	assert.Equal(nb, cc.GetDCRackSize())
-	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList)
+	assert.Equal(cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name, ActionUpdateSeedList.Name)
 	assert.Equal(2, len(status.CassandraRackStatus))
 }
 
@@ -313,10 +313,10 @@ func TestInitSeedList_2DC(t *testing.T) {
 
 	//cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
 
 	cc.Status.SeedList = cc.InitSeedList()
 
@@ -336,7 +336,7 @@ func TestInitSeedList_NoTopo(t *testing.T) {
 
 	//cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(1, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -355,8 +355,8 @@ func TestInitSeedList_1DC(t *testing.T) {
 
 	//cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
 	assert.Equal(2, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -377,15 +377,15 @@ func TestInitSeedList_2DC5R(t *testing.T) {
 
 	//cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack3"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack4"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack5"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack3"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["stats-rack4"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack3"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack4"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack5"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack3"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack4"].CassandraLastAction.Name)
 	assert.Equal(9, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -408,8 +408,8 @@ func TestInitSeedList_1DC1R1P(t *testing.T) {
 
 	//cc.InitCassandraRackList()
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
 	assert.Equal(2, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -426,8 +426,8 @@ func TestIsPodInSeedList(t *testing.T) {
 
 	cc := helperInitCluster(t, "cassandracluster-1DC1R1P.yaml")
 
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
-	assert.Equal(ClusterPhaseInitial, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack1"].CassandraLastAction.Name)
+	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["online-rack2"].CassandraLastAction.Name)
 	assert.Equal(2, len(cc.Status.CassandraRackStatus))
 
 	cc.Status.SeedList = cc.InitSeedList()
@@ -494,7 +494,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
-	assert.Equal(ClusterPhaseInitial, cluster.Status.Phase)
+	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)
 

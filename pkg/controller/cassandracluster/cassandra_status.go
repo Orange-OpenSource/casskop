@@ -83,11 +83,13 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		needSpecificChange = true
 	}
 	//Do nothing in Initial phase except if we force it
-	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial {
+	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
 		if !needSpecificChange {
+			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			return nil
 		}
-		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
+		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 	}
 
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
@@ -138,7 +140,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 			"dc-rack": dcRackName}).Info("We don't check for new action before the cluster become stable again")
 	}
 
-	if lastAction.Status == api.StatusToDo && lastAction.Name == api.ActionUpdateResources {
+	if lastAction.Status == api.StatusToDo && lastAction.Name == api.ActionUpdateResources.Name {
 		now := metav1.Now()
 		lastAction.StartTime = &now
 		lastAction.Status = api.StatusOngoing
@@ -169,18 +171,6 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 	}
 	return false
 }
-
-/*
-func UpdateStatusIfUpdateResources(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
-	status *api.CassandraClusterStatus) {
-	dcRackStatus := status.CassandraRackStatus[dcRackName]
-	if dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
-		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
-		now := metav1.Now()
-		status.CassandraRackStatus[dcRackName].CassandraLastAction.StartTime = &now
-	}
-}
-*/
 
 //UpdateStatusIfconfigMapHasChanged updates CassandraCluster Action Status if it detect a changes :
 // - a new configmapName in the CRD
@@ -218,7 +208,8 @@ func UpdateStatusIfconfigMapHasChanged(cc *api.CassandraCluster, dcRackName stri
 	if updateConfigMap {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
-		lastAction.Name = api.ActionUpdateConfigMap
+		lastAction.Name = api.ActionUpdateConfigMap.Name
+		ClusterActionMetric.set(api.ActionUpdateConfigMap, cc.Name)
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
 		return true
@@ -239,7 +230,8 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName st
 					logrus.Infof("[%s][%s]: We ask to change DockerImage CRD:%s -> StatefulSet:%s", cc.Name, dcRackName, desiredDockerImage, storedStatefulSet.Spec.Template.Spec.Containers[0].Image)
 					lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 					lastAction.Status = api.StatusToDo
-					lastAction.Name = api.ActionUpdateDockerImage
+					lastAction.Name = api.ActionUpdateDockerImage.Name
+					ClusterActionMetric.set(api.ActionUpdateDockerImage, cc.Name)
 					lastAction.StartTime = nil
 					lastAction.EndTime = nil
 					return true
@@ -258,7 +250,8 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 			"dc-rack": dcRackName}).Info("Scoping RollingRestart of the Rack")
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
-		lastAction.Name = api.ActionRollingRestart
+		lastAction.Name = api.ActionRollingRestart.Name
+		ClusterActionMetric.set(api.ActionRollingRestart, cc.Name)
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
 		cc.Spec.Topology.DC[dc].Rack[rack].RollingRestart = false
@@ -298,7 +291,8 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 		logrus.Infof("[%s][%s]: We ask to Change the Cassandra SeedList", cc.Name, dcRackName)
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusConfiguring
-		lastAction.Name = api.ActionUpdateSeedList
+		lastAction.Name = api.ActionUpdateSeedList.Name
+		ClusterActionMetric.set(api.ActionUpdateSeedList, cc.Name)
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
 		return true
@@ -316,11 +310,14 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
 		if nodesPerRacks > *storedStatefulSet.Spec.Replicas {
-			lastAction.Name = api.ActionScaleUp
+			lastAction.Name = api.ActionScaleUp.Name
+			ClusterActionMetric.set(api.ActionScaleUp, cc.Name)
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleUP", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
 		} else {
 			logrus.Infof("[%s][%s]: Scaling Cluster : Ask %d and have %d --> ScaleDown", cc.Name, dcRackName, nodesPerRacks, *storedStatefulSet.Spec.Replicas)
+			ClusterActionMetric.set(api.ActionScaleDown, cc.Name)
 			setDecommissionStatus(status, dcRackName)
+			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 		}
 		lastAction.StartTime = nil
 		lastAction.EndTime = nil
@@ -338,7 +335,7 @@ func UpdateStatusIfStatefulSetChanged(cc *api.CassandraCluster, dcRackName strin
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	if storedStatefulSet.Status.CurrentRevision != storedStatefulSet.Status.UpdateRevision {
 
-		lastAction.Name = api.ActionUpdateStatefulSet
+		lastAction.Name = api.ActionUpdateStatefulSet.Name
 		lastAction.Status = api.StatusOngoing
 		now := metav1.Now()
 		lastAction.StartTime = &now
@@ -361,7 +358,7 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		switch lastAction.Name {
 
-		case api.ActionScaleUp:
+		case api.ActionScaleUp.Name:
 
 			//Does the Scaling ended ?
 			if nodesPerRacks == storedStatefulSet.Status.Replicas {
@@ -391,7 +388,7 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				return false
 			}
 
-		case api.ActionScaleDown:
+		case api.ActionScaleDown.Name:
 
 			if nodesPerRacks == storedStatefulSet.Status.Replicas {
 				if cc.Status.CassandraRackStatus[dcRackName].PodLastOperation.Name == api.OperationDecommission &&
@@ -404,7 +401,8 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleDown not yet Completed: Waiting for Pod operation to be Done")
 			}
 
-		case api.ClusterPhaseInitial:
+		case api.ClusterPhaseInitial.Name:
+			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			//nothing particular here
 			return false
 
@@ -432,16 +430,18 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
-	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial {
-
+	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
 		if nodesPerRacks <= 0 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 				"rack": dcRackName}).Warn("Aborting Initializing..., start ScaleDown")
 			setDecommissionStatus(status, dcRackName)
+			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 			return nil
 		}
+
+		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 
 		//Do we have reach requested number of replicas ?
 		if isStatefulSetNotReady(storedStatefulSet) {
@@ -462,7 +462,8 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			}
 			pod := podsList.Items[nodesPerRacks-1]
 			if cassandraPodIsReady(&pod) {
-				status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning
+				status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+				ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 				now := metav1.Now()
 				lastAction.EndTime = &now
 				lastAction.Status = api.StatusDone
@@ -480,23 +481,25 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			logrus.Infof("[%s][%s]: StatefulSet(%s) Replicas Number Not OK: %d on %d, ready[%d]", cc.Name,
 				dcRackName, lastAction.Name, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
 				storedStatefulSet.Status.ReadyReplicas)
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
-		} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning {
+			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
+		} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
 			logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName,
 				lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning
+			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 		}
 	}
 	return nil
 }
 
 func setDecommissionStatus(status *api.CassandraClusterStatus, dcRackName string) {
-	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending
+	status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
 	now := metav1.Now()
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	lastAction.StartTime = &now
 	lastAction.Status = api.StatusToDo
-	lastAction.Name = api.ActionScaleDown
+	lastAction.Name = api.ActionScaleDown.Name
 	status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
 	status.CassandraRackStatus[dcRackName].PodLastOperation.Name = api.OperationDecommission
 	status.CassandraRackStatus[dcRackName].PodLastOperation.StartTime = &now

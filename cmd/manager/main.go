@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -29,6 +30,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis"
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/controller"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster"
 	"github.com/Orange-OpenSource/casskop/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -37,6 +39,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	prometheusMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -101,37 +104,12 @@ func getResyncPeriod() int {
 }
 
 func main() {
-	/*
-		// Add the zap logger flag set to the CLI. The flag set must
-		// be added before calling pflag.Parse().
-		pflag.CommandLine.AddFlagSet(zap.FlagSet())
-
-		// avoid glog to write to /tmp
-		flag.Set("logtostderr", "true")
-
-		// Add flags registered by imported packages (e.g. glog and
-		// controller-runtime)
-		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-
-		pflag.Parse()
-	*/
-	// Use a zap logr.Logger implementation. If none of the zap
-	// flags are configured (or if the zap flag set is not being
-	// used), this defaults to a production zap logger.
-	//
-	// The logger instantiated here can be changed to any logger
-	// implementing the logr.Logger interface. This logger will
-	// be propagated through the whole operator, generating
-	// uniform and structured logs.
-	//logf.SetLogger(logf.ZapLogger(false))
-
 	logType, found := os.LookupEnv("LOG_TYPE")
 	if found && logType == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
-	//logrus.SetOutput(os.Stdout)
+
 	logrus.SetLevel(getLogLevel())
-	//	resyncPeriod := getResyncPeriod()
 
 	printVersion()
 
@@ -171,8 +149,8 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace: namespace,
-		//MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -180,6 +158,8 @@ func main() {
 	}
 
 	logrus.Info("Registering Components.")
+
+	prometheusMetrics.Registry.MustRegister(cassandracluster.ClusterActionMetric, cassandracluster.ClusterPhaseMetric)
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -195,10 +175,11 @@ func main() {
 
 	// Create Service object to expose the metrics port.
 	servicePorts := []v1.ServicePort{
-		{Name: "metricsPort", TargetPort: intstr.FromInt(int(metricsPort))},
+		{Name: metrics.OperatorPortName, Port: metricsPort,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 	}
-	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
-	if err != nil {
+
+	if _, err := metrics.CreateMetricsService(ctx, cfg, servicePorts); err != nil {
 		logrus.Info(err.Error())
 	}
 
