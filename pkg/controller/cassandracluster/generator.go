@@ -48,14 +48,6 @@ const (
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
 	cassandraConfigMapName = "cassandra-config"
-
-	livenessInitialDelaySeconds int32 = 120
-	livenessHealthCheckTimeout  int32 = 20
-	livenessHealthCheckPeriod   int32 = 10
-
-	readinessInitialDelaySeconds int32 = 60
-	readinessHealthCheckTimeout  int32 = 10
-	readinessHealthCheckPeriod   int32 = 10
 )
 
 type containerType int
@@ -740,9 +732,9 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		},
 		Env: createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
 		ReadinessProbe: &v1.Probe{
-			InitialDelaySeconds: readinessInitialDelaySeconds,
-			TimeoutSeconds:      readinessHealthCheckTimeout,
-			PeriodSeconds:       readinessHealthCheckPeriod,
+			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
+			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
+			PeriodSeconds:       *cc.Spec.ReadinessHealthCheckPeriod,
 			Handler: v1.Handler{
 				Exec: &v1.ExecAction{
 					Command: []string{
@@ -754,9 +746,9 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			},
 		},
 		LivenessProbe: &v1.Probe{
-			InitialDelaySeconds: livenessInitialDelaySeconds,
-			TimeoutSeconds:      livenessHealthCheckTimeout,
-			PeriodSeconds:       livenessHealthCheckPeriod,
+			InitialDelaySeconds: *cc.Spec.LivenessInitialDelaySeconds,
+			TimeoutSeconds:      *cc.Spec.LivenessHealthCheckTimeout,
+			PeriodSeconds:       *cc.Spec.LivenessHealthCheckPeriod,
 			Handler: v1.Handler{
 				Exec: &v1.ExecAction{
 					Command: []string{
