@@ -167,9 +167,9 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
-		1010, 201, 32, 1205, 151, 17)
+		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
-		120, 20, 10, 60, 10, 10)
+		120, 20, 10, 3, 1,60, 10, 10, 3,1) 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
@@ -183,20 +183,28 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 	readinessInitialDelaySecond,
 	readinessTimeoutSeconds,
 	readinessPeriodSeconds,
+	readinessFailureThreshold,
+	readinessSuccessThreshold,
 	livenessInitialDelaySecond,
 	livenessTimeoutSeconds,
-	livenessPeriodSeconds int32) {
+	livenessPeriodSeconds,
+	livenessFailureThreshold,
+	livenessSuccessThreshold int32) {
 	for _, c := range containers {
 		if c.Name == cassandraContainerName {
 			// Readiness Config check
 			assert.Equal(t, c.ReadinessProbe.InitialDelaySeconds, readinessInitialDelaySecond)
 			assert.Equal(t, c.ReadinessProbe.TimeoutSeconds, readinessTimeoutSeconds)
 			assert.Equal(t, c.ReadinessProbe.PeriodSeconds, readinessPeriodSeconds)
+			assert.Equal(t, c.ReadinessProbe.FailureThreshold, readinessFailureThreshold)
+			assert.Equal(t, c.ReadinessProbe.SuccessThreshold, readinessSuccessThreshold)
 
 			// Liveness Config check
 			assert.Equal(t, c.LivenessProbe.InitialDelaySeconds, livenessInitialDelaySecond)
 			assert.Equal(t, c.LivenessProbe.TimeoutSeconds, livenessTimeoutSeconds)
 			assert.Equal(t, c.LivenessProbe.PeriodSeconds, livenessPeriodSeconds)
+			assert.Equal(t, c.LivenessProbe.FailureThreshold, livenessFailureThreshold)
+			assert.Equal(t, c.LivenessProbe.SuccessThreshold, livenessSuccessThreshold)
 		}
 	}
 }

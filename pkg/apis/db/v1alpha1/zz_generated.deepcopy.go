@@ -127,6 +127,56 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 	out.ImagePullSecret = in.ImagePullSecret
 	out.ImageJolokiaSecret = in.ImageJolokiaSecret
 	in.Topology.DeepCopyInto(&out.Topology)
+	if in.LivenessInitialDelaySeconds != nil {
+		in, out := &in.LivenessInitialDelaySeconds, &out.LivenessInitialDelaySeconds
+		*out = new(int32)
+		**out = **in
+	}
+	if in.LivenessHealthCheckTimeout != nil {
+		in, out := &in.LivenessHealthCheckTimeout, &out.LivenessHealthCheckTimeout
+		*out = new(int32)
+		**out = **in
+	}
+	if in.LivenessHealthCheckPeriod != nil {
+		in, out := &in.LivenessHealthCheckPeriod, &out.LivenessHealthCheckPeriod
+		*out = new(int32)
+		**out = **in
+	}
+	if in.LivenessFailureThreshold != nil {
+		in, out := &in.LivenessFailureThreshold, &out.LivenessFailureThreshold
+		*out = new(int32)
+		**out = **in
+	}
+	if in.LivenessSuccessThreshold != nil {
+		in, out := &in.LivenessSuccessThreshold, &out.LivenessSuccessThreshold
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ReadinessInitialDelaySeconds != nil {
+		in, out := &in.ReadinessInitialDelaySeconds, &out.ReadinessInitialDelaySeconds
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ReadinessHealthCheckTimeout != nil {
+		in, out := &in.ReadinessHealthCheckTimeout, &out.ReadinessHealthCheckTimeout
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ReadinessHealthCheckPeriod != nil {
+		in, out := &in.ReadinessHealthCheckPeriod, &out.ReadinessHealthCheckPeriod
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ReadinessFailureThreshold != nil {
+		in, out := &in.ReadinessFailureThreshold, &out.ReadinessFailureThreshold
+		*out = new(int32)
+		**out = **in
+	}
+	if in.ReadinessSuccessThreshold != nil {
+		in, out := &in.ReadinessSuccessThreshold, &out.ReadinessSuccessThreshold
+		*out = new(int32)
+		**out = **in
+	}
 	return
 }
 

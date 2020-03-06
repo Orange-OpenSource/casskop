@@ -9,9 +9,13 @@ spec:
   livenessInitialDelaySeconds: 1205
   livenessHealthCheckTimeout: 151
   livenessHealthCheckPeriod: 17
+  livenessFailureThreshold: 50
+  livenessSuccessThreshold: 30
   readinessInitialDelaySeconds: 1010
   readinessHealthCheckTimeout: 201
   readinessHealthCheckPeriod: 32
+  readinessFailureThreshold: 7
+  readinessSuccessThreshold: 9
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
   restartCountBeforePodDeletion: 3
