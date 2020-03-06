@@ -20,8 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -29,6 +27,7 @@ import (
 	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -144,10 +143,10 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	containersSpecSts1Len := len(sts1Spec.Containers)
 	containersSpecSts2Len := len(sts2Spec.Containers)
-	if containersSpecSts1Len != containersSpecSts2Len{
+	if containersSpecSts1Len != containersSpecSts2Len {
 		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
 			"namespace": sts1.Namespace}).Info(
-			fmt.Sprintf("Template is different, the number of containers are not the same: len(sts1.Spec.Template.Spec.Containers) = %d, " +
+			fmt.Sprintf("Template is different, the number of containers are not the same: len(sts1.Spec.Template.Spec.Containers) = %d, "+
 				"len(sts2.Spec.Template.Spec.Containers) = %d",
 				containersSpecSts1Len, containersSpecSts2Len))
 		return false
@@ -227,7 +226,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
 	//and change the status to Finalizing (it start a RollingUpdate)
-	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList &&
+	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
@@ -258,7 +257,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
 	}
 
-	if dcRackStatus.CassandraLastAction.Name == api.ActionRollingRestart &&
+	if dcRackStatus.CassandraLastAction.Name == api.ActionRollingRestart.Name &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
 		statefulSet.Spec.Template.SetLabels(k8s.MergeLabels(statefulSet.Spec.Template.GetLabels(), map[string]string{
 			"rolling-restart": k8s.LabelTime()}))
@@ -286,7 +285,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
 			"dc-rack": statefulSet.Labels["dc-rack"]}).Debug("Start Updating Statefulset")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
-		dcRackStatus.CassandraLastAction.Name = api.ActionUpdateStatefulSet
+		dcRackStatus.CassandraLastAction.Name = api.ActionUpdateStatefulSet.Name
 		dcRackStatus.CassandraLastAction.StartTime = &now
 		dcRackStatus.CassandraLastAction.EndTime = nil
 	}

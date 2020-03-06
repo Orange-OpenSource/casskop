@@ -58,14 +58,12 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 		t.Fatal(err)
 	}
 	//locale dc-rack state is OK
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	//global cluster state is OK
-	assert.Equal(t, api.ClusterPhaseInitial, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
-	/*----
-	 */
 	t.Logf(" 2. We Request a ScaleUp (add 1 node in the first dc-rack)")
 	cc.Spec.Topology.DC[0].NodesPerRacks = func(i int32) *int32 { return &i }(2)
 	err = f.Client.Update(goctx.TODO(), cc)
@@ -98,13 +96,13 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 
 	t.Logf("We make some assertions")
 	//locale dc-rack state is OK: Because AutoUpdateSeedList is false we stay on ScaleUp=Done status
-	assert.Equal(t, api.ActionScaleUp, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
+	assert.Equal(t, api.ActionScaleUp.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	// check podLastOperation
 	assert.Equal(t, api.OperationCleanup, cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.Name)
 	assert.Equal(t, []string(nil), cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.Pods)
 	assert.ElementsMatch(t, []string{"cassandra-e2e-dc1-rack1-0", "cassandra-e2e-dc1-rack1-1"}, cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.PodsOK)
 	//global cluster state is OK
-	assert.Equal(t, api.ActionScaleUp, cc.Status.LastClusterAction)
+	assert.Equal(t, api.ActionScaleUp.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 }
