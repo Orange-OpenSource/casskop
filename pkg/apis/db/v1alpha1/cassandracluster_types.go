@@ -27,9 +27,9 @@ import (
 
 const (
 
-	DefaultLivenessInitialDelaySeconds int32 = 120
-	DefaultLivenessHealthCheckTimeout  int32 = 20
-	DefaultLivenessHealthCheckPeriod   int32 = 10
+	DefaultLivenessInitialDelaySeconds 	int32 = 120
+	DefaultLivenessHealthCheckTimeout  	int32 = 20
+	DefaultLivenessHealthCheckPeriod   	int32 = 10
 
 	DefaultReadinessInitialDelaySeconds int32 = 60
 	DefaultReadinessHealthCheckTimeout  int32 = 10
@@ -772,6 +772,12 @@ type CassandraClusterSpec struct {
 	// LivenessHealthCheckPeriod defines health check period for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	LivenessHealthCheckPeriod *int32 `json:"livenessHealthCheckPeriod,omitempty"`
+	// LivenessFailureThreshold defines failure threshold for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessFailureThreshold *int32 `json:"livenessFailureThreshold,omitempty"`
+	// ReadinessSuccessThreshold defines success threshold for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessSuccessThreshold *int32 `json:"livenessSuccessThreshold,omitempty"`
 
 	// ReadinessInitialDelaySeconds defines initial delay for the readiness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
@@ -782,6 +788,12 @@ type CassandraClusterSpec struct {
 	// ReadinessHealthCheckPeriod defines health check period for the readiness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	ReadinessHealthCheckPeriod *int32 `json:"readinessHealthCheckPeriod,omitempty"`
+	// ReadinessFailureThreshold defines failure threshold for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessFailureThreshold *int32 `json:"readinessFailureThreshold,omitempty"`
+	// ReadinessSuccessThreshold defines success threshold for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations

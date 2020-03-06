@@ -763,5 +763,21 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		Resources:    resources,
 	}
 
+	if cc.Spec.LivenessFailureThreshold != nil {
+		cassandraContainer.LivenessProbe.FailureThreshold = *cc.Spec.LivenessFailureThreshold
+	}
+
+	if cc.Spec.LivenessSuccessThreshold != nil {
+		cassandraContainer.LivenessProbe.SuccessThreshold = *cc.Spec.LivenessSuccessThreshold
+	}
+
+	if cc.Spec.ReadinessFailureThreshold != nil {
+		cassandraContainer.ReadinessProbe.FailureThreshold = *cc.Spec.ReadinessFailureThreshold
+	}
+
+	if cc.Spec.ReadinessSuccessThreshold != nil {
+		cassandraContainer.ReadinessProbe.SuccessThreshold = *cc.Spec.ReadinessSuccessThreshold
+	}
+
 	return cassandraContainer
 }
