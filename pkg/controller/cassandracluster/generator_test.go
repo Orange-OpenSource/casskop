@@ -142,8 +142,14 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.CheckDefaults()
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+
+	_, ccDefault := helperInitCluster(t, "cassandracluster-2DC-default.yaml")
+	ccDefault.CheckDefaults()
+	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcName, dcRackName, labelsDefault, nodeSelectorDefault, nil)
 
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
@@ -161,6 +167,11 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		Effect:   v1.TaintEffectNoSchedule}},
 		sts.Spec.Template.Spec.Tolerations)
 
+
+	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
+		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
+	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
+		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
@@ -169,6 +180,38 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 	assert.NotEqual(t, err, nil)
 }
+
+func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
+	readinessInitialDelaySecond,
+	readinessTimeoutSeconds,
+	readinessPeriodSeconds,
+	readinessFailureThreshold,
+	readinessSuccessThreshold,
+	livenessInitialDelaySecond,
+	livenessTimeoutSeconds,
+	livenessPeriodSeconds,
+	livenessFailureThreshold,
+	livenessSuccessThreshold int32) {
+	for _, c := range containers {
+		if c.Name == cassandraContainerName {
+			// Readiness Config check
+			assert.Equal(t, readinessInitialDelaySecond, c.ReadinessProbe.InitialDelaySeconds)
+			assert.Equal(t, readinessTimeoutSeconds, c.ReadinessProbe.TimeoutSeconds)
+			assert.Equal(t, readinessPeriodSeconds, c.ReadinessProbe.PeriodSeconds)
+			assert.Equal(t, readinessFailureThreshold, c.ReadinessProbe.FailureThreshold)
+			assert.Equal(t, readinessSuccessThreshold, c.ReadinessProbe.SuccessThreshold)
+
+			// Liveness Config check
+			assert.Equal(t, livenessInitialDelaySecond, c.LivenessProbe.InitialDelaySeconds)
+			assert.Equal(t, livenessTimeoutSeconds, c.LivenessProbe.TimeoutSeconds)
+			assert.Equal(t, livenessPeriodSeconds, c.LivenessProbe.PeriodSeconds)
+			assert.Equal(t, livenessFailureThreshold, c.LivenessProbe.FailureThreshold)
+			assert.Equal(t, livenessSuccessThreshold, c.LivenessProbe.SuccessThreshold)
+		}
+	}
+}
+
+
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
 	assert.Equal(t, len(pvcs), 3)

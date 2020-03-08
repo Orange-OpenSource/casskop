@@ -27,6 +27,14 @@ import (
 
 const (
 
+	DefaultLivenessInitialDelaySeconds 	int32 = 120
+	DefaultLivenessHealthCheckTimeout  	int32 = 20
+	DefaultLivenessHealthCheckPeriod   	int32 = 10
+
+	DefaultReadinessInitialDelaySeconds int32 = 60
+	DefaultReadinessHealthCheckTimeout  int32 = 10
+	DefaultReadinessHealthCheckPeriod   int32 = 10
+
 	defaultCassandraImage         string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
@@ -131,6 +139,28 @@ func (cc *CassandraCluster) CheckDefaults() {
 	}
 	if ccs.ReadOnlyRootFilesystem == nil {
 		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
+	}
+
+	// LivenessProbe dynamic config
+	if ccs.LivenessInitialDelaySeconds == nil {
+		ccs.LivenessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultLivenessInitialDelaySeconds)
+	}
+	if ccs.LivenessHealthCheckTimeout == nil {
+		ccs.LivenessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckTimeout)
+	}
+	if ccs.LivenessHealthCheckPeriod == nil {
+		ccs.LivenessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultLivenessHealthCheckPeriod)
+	}
+
+	// ReadinessProbe dynamic config
+	if ccs.ReadinessInitialDelaySeconds == nil {
+		ccs.ReadinessInitialDelaySeconds = func(i int32) *int32 { return &i }(DefaultReadinessInitialDelaySeconds)
+	}
+	if ccs.ReadinessHealthCheckTimeout == nil {
+		ccs.ReadinessHealthCheckTimeout = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckTimeout)
+	}
+	if ccs.ReadinessHealthCheckPeriod == nil {
+		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
 	}
 }
 
@@ -732,6 +762,38 @@ type CassandraClusterSpec struct {
 
 	//Topology to create Cassandra DC and Racks and to target appropriate Kubernetes Nodes
 	Topology Topology `json:"topology,omitempty"`
+
+	// LivenessInitialDelaySeconds defines initial delay for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessInitialDelaySeconds	*int32 `json:"livenessInitialDelaySeconds,omitempty"`
+	// LivenessHealthCheckTimeout defines health check timeout for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessHealthCheckTimeout *int32 `json:"livenessHealthCheckTimeout,omitempty"`
+	// LivenessHealthCheckPeriod defines health check period for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessHealthCheckPeriod *int32 `json:"livenessHealthCheckPeriod,omitempty"`
+	// LivenessFailureThreshold defines failure threshold for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessFailureThreshold *int32 `json:"livenessFailureThreshold,omitempty"`
+	// ReadinessSuccessThreshold defines success threshold for the liveness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	LivenessSuccessThreshold *int32 `json:"livenessSuccessThreshold,omitempty"`
+
+	// ReadinessInitialDelaySeconds defines initial delay for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessInitialDelaySeconds *int32 `json:"readinessInitialDelaySeconds,omitempty"`
+	// ReadinessHealthCheckTimeout defines health check timeout for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessHealthCheckTimeout *int32 `json:"readinessHealthCheckTimeout,omitempty"`
+	// ReadinessHealthCheckPeriod defines health check period for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessHealthCheckPeriod *int32 `json:"readinessHealthCheckPeriod,omitempty"`
+	// ReadinessFailureThreshold defines failure threshold for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessFailureThreshold *int32 `json:"readinessFailureThreshold,omitempty"`
+	// ReadinessSuccessThreshold defines success threshold for the readiness probe of the main
+	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
