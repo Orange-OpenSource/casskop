@@ -47,14 +47,23 @@ func (rcc *ReconcileCassandraCluster) weAreScalingDown(dcRackStatus *api.Cassand
 }
 
 func cassandraPodIsReady(pod *v1.Pod) bool {
-	for i := range pod.Status.ContainerStatuses {
-		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName &&
-			pod.Status.Phase == v1.PodRunning &&
-			pod.Status.ContainerStatuses[i].Ready {
-			return true
-		}
+	cassandraContainerStatus := getCassandraContainerStatus(pod)
+
+	if cassandraContainerStatus != nil && cassandraContainerStatus.Name == cassandraContainerName &&
+		pod.Status.Phase == v1.PodRunning && cassandraContainerStatus.Ready {
+		return true
 	}
 	return false
+}
+
+func getCassandraContainerStatus(pod *v1.Pod) *v1.ContainerStatus{
+
+	for i := range pod.Status.ContainerStatuses {
+		if pod.Status.ContainerStatuses[i].Name == cassandraContainerName {
+			return &pod.Status.ContainerStatuses[i]
+		}
+	}
+	return nil
 }
 
 func cassandraPodRestartCount(pod *v1.Pod) int32 {

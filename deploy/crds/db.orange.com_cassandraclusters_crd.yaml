@@ -108,6 +108,31 @@ spec:
               description: Command to execute in the initContainer in the targeted
                 image
               type: string
+            livenessFailureThreshold:
+              description: 'LivenessFailureThreshold defines failure threshold for
+                the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            livenessHealthCheckPeriod:
+              description: 'LivenessHealthCheckPeriod defines health check period
+                for the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            livenessHealthCheckTimeout:
+              description: 'LivenessHealthCheckTimeout defines health check timeout
+                for the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            livenessInitialDelaySeconds:
+              description: 'LivenessInitialDelaySeconds defines initial delay for
+                the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            livenessSuccessThreshold:
+              description: 'ReadinessSuccessThreshold defines success threshold for
+                the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
             maxPodUnavailable:
               format: int32
               type: integer
@@ -174,6 +199,31 @@ spec:
             readOnlyRootFilesystem:
               description: Make the pod as Readonly
               type: boolean
+            readinessFailureThreshold:
+              description: 'ReadinessFailureThreshold defines failure threshold for
+                the readiness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            readinessHealthCheckPeriod:
+              description: 'ReadinessHealthCheckPeriod defines health check period
+                for the readiness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            readinessHealthCheckTimeout:
+              description: 'ReadinessHealthCheckTimeout defines health check timeout
+                for the readiness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            readinessInitialDelaySeconds:
+              description: 'ReadinessInitialDelaySeconds defines initial delay for
+                the readiness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
+            readinessSuccessThreshold:
+              description: 'ReadinessSuccessThreshold defines success threshold for
+                the readiness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
+              format: int32
+              type: integer
             resources:
               description: Pod defines the policy for pods owned by cassandra operator.
                 This field cannot be updated once the CR is created. Pod       *PodPolicy         `json:"pod,omitempty"`
