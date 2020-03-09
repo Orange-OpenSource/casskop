@@ -142,14 +142,11 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	ccDefault := cc.DeepCopy()
 	cc.CheckDefaults()
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
-	_, ccDefault := helperInitCluster(t, "cassandracluster-2DC-default.yaml")
-	ccDefault.CheckDefaults()
-	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
-	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcName, dcRackName, labelsDefault, nodeSelectorDefault, nil)
 
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
@@ -167,18 +164,42 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		Effect:   v1.TaintEffectNoSchedule}},
 		sts.Spec.Template.Spec.Tolerations)
 
-
+	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
 		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
-	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
-		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
-	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 	assert.NotEqual(t, err, nil)
+
+	// Test default setup
+	dcNameDefault := "dc2"
+	rackNameDefault := "rack1"
+	dcRackNameDefault := fmt.Sprintf("%s-%s", dcNameDefault, rackNameDefault)
+	setupForDefaultTest(ccDefault)
+
+	ccDefault.CheckDefaults()
+	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault, labelsDefault, nodeSelectorDefault, nil)
+
+	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
+	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
+		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
+}
+
+func setupForDefaultTest(cc *api.CassandraCluster) {
+	cc.Spec.LivenessFailureThreshold = nil
+	cc.Spec.LivenessSuccessThreshold = nil
+	cc.Spec.LivenessHealthCheckPeriod = nil
+	cc.Spec.LivenessHealthCheckTimeout = nil
+	cc.Spec.LivenessInitialDelaySeconds = nil
+	cc.Spec.ReadinessHealthCheckPeriod = nil
+	cc.Spec.ReadinessHealthCheckTimeout = nil
+	cc.Spec.ReadinessInitialDelaySeconds = nil
+	cc.Spec.ReadinessFailureThreshold = nil
+	cc.Spec.ReadinessSuccessThreshold = nil
 }
 
 func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
@@ -213,12 +234,13 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 
 
 
-func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim) {
+func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
+	dataCapacity, dataClassStorage string) {
 	assert.Equal(t, len(pvcs), 3)
 	for _, pvc := range pvcs {
 		switch pvc.Name {
 		case "data":
-			assert.Equal(t, generateExpectedDataStoragePVC(expectedlabels), pvc)
+			assert.Equal(t, generateExpectedDataStoragePVC(expectedlabels, dataCapacity, dataClassStorage), pvc)
 		case "gc-logs":
 			assert.Equal(t, generateExpectedGcLogsStoragePVC(expectedlabels), pvc)
 		case "cassandra-logs":
@@ -229,10 +251,9 @@ func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, p
 	}
 }
 
-func generateExpectedDataStoragePVC(expectedlabels map[string]string) v1.PersistentVolumeClaim {
+func generateExpectedDataStoragePVC(expectedlabels map[string]string, dataCapacity, dataClassStorage string) v1.PersistentVolumeClaim {
 
-	expectedDataStorageQuantity, _ := resource.ParseQuantity("3Gi")
-	expectedDataStorageClassName := "local-storage"
+	expectedDataStorageQuantity, _ := resource.ParseQuantity(dataCapacity)
 
 	return v1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -249,7 +270,7 @@ func generateExpectedDataStoragePVC(expectedlabels map[string]string) v1.Persist
 					"storage": expectedDataStorageQuantity,
 				},
 			},
-			StorageClassName: &expectedDataStorageClassName,
+			StorageClassName: &dataClassStorage,
 		},
 	}
 }

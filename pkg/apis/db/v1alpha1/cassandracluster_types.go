@@ -502,6 +502,74 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 	return nbRack
 }
 
+// GetDataCapacityForDC sends back the data capacity of cassandra nodes to uses for this dc
+func (cc *CassandraCluster) GetDataCapacityForDC(dcName string) string {
+	dataCapacity := cc.GetDataCapacityFromDCName(dcName)
+	return dataCapacity
+}
+
+// GetDataCapacityFromDCName send DataCapacity used for the given dcName
+func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
+	dcSize := cc.GetDCSize()
+	if dcSize < 1 {
+		return cc.Spec.DataCapacity
+	}
+
+	for dc := 0; dc < dcSize; dc ++ {
+		if dcName == cc.GetDCName(dc) {
+			return cc.getDCDataCapacityFromIndex(dc)
+		}
+	}
+
+	return cc.Spec.DataCapacity
+}
+
+// getDCDataCapacityFromIndex send DataCapacity used for the given index
+func (cc *CassandraCluster) getDCDataCapacityFromIndex(dc int) string {
+	if dc >= cc.GetDCSize() {
+		return cc.Spec.DataCapacity
+	}
+	storeDC := cc.Spec.Topology.DC[dc]
+	if storeDC.DataCapacity == "" {
+		return cc.Spec.DataCapacity
+	}
+	return storeDC.DataCapacity
+}
+
+// GetDataCapacityForDC sends back the data storage class of cassandra nodes to uses for this dc
+func (cc *CassandraCluster) GetDataStorageClassForDC(dcName string) string {
+	dataCapacity := cc.GetDataStorageClassFromDCName(dcName)
+	return dataCapacity
+}
+
+// GetDataCapacityFromDCName send DataStorageClass used for the given dcName
+func (cc *CassandraCluster) GetDataStorageClassFromDCName(dcName string) string {
+	dcSize := cc.GetDCSize()
+	if dcSize < 1 {
+		return cc.Spec.DataStorageClass
+	}
+
+	for dc := 0; dc < dcSize; dc ++ {
+		if dcName == cc.GetDCName(dc) {
+			return cc.getDCDataStorageClassFromIndex(dc)
+		}
+	}
+
+	return cc.Spec.DataCapacity
+}
+
+// getDCDataCapacityFromIndex send DataStorageClass used for the given index
+func (cc *CassandraCluster) getDCDataStorageClassFromIndex(dc int) string {
+	if dc >= cc.GetDCSize() {
+		return cc.Spec.DataStorageClass
+	}
+	storeDC := cc.Spec.Topology.DC[dc]
+	if storeDC.DataStorageClass == "" {
+		return cc.Spec.DataStorageClass
+	}
+	return storeDC.DataStorageClass
+}
+
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
@@ -833,6 +901,13 @@ type DC struct {
 
 	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
 	NumTokens *int32 `json:"numTokens,omitempty"`
+
+	//Define the Capacity for Persistent Volume Claims in the local storage
+	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+	DataCapacity string `json:"dataCapacity,omitempty"`
+
+	//Define StorageClass for Persistent Volume Claims in the local storage.
+	DataStorageClass string `json:"dataStorageClass,omitempty"`
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels

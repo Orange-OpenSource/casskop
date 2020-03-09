@@ -221,11 +221,13 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 	return pvcs, nil
 }
 
-func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error) {
+func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string, dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
+	dataCapacity := cc.GetDataCapacityForDC(dcName)
+	dataStorageClass := cc.GetDataStorageClassForDC(dcName)
 
-	if cc.Spec.DataCapacity == "" {
+	if dataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
 		return pvc, nil
 	}
@@ -243,15 +245,15 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 
 				Resources: v1.ResourceRequirements{
 					Requests: v1.ResourceList{
-						"storage": generateResourceQuantity(cc.Spec.DataCapacity),
+						"storage": generateResourceQuantity(dataCapacity),
 					},
 				},
 			},
 		},
 	}
 
-	if cc.Spec.DataStorageClass != "" {
-		pvc[0].Spec.StorageClassName = &cc.Spec.DataStorageClass
+	if dataStorageClass != "" {
+		pvc[0].Spec.StorageClassName = &dataStorageClass
 	}
 
 	storageConfigPvcs, err := generateStorageConfigVolumeClaimTemplates(cc, labels)
@@ -271,7 +273,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	namespace := cc.Namespace
 	volumes := generateCassandraVolumes(cc)
 
-	volumeClaimTemplate, err := generateVolumeClaimTemplate(cc, labels)
+	volumeClaimTemplate, err := generateVolumeClaimTemplate(cc, labels, dcName)
 	if err != nil {
 		return nil, err
 	}

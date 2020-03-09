@@ -1460,6 +1460,15 @@ spec:
                     description: DC allow to configure Cassandra RC according to kubernetes
                       nodeselector labels
                     properties:
+                      dataCapacity:
+                        description: Define the Capacity for Persistent Volume Claims
+                          in the local storage
+                        pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+                        type: string
+                      dataStorageClass:
+                        description: Define StorageClass for Persistent Volume Claims
+                          in the local storage.
+                        type: string
                       labels:
                         additionalProperties:
                           type: string
