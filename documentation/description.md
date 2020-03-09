@@ -366,7 +366,7 @@ Jolokia, and uses it to connect.
 Cassandra is a stateful application. It needs to store data on disks. CassKop allows you to configure the type of
 storage you want to use.
 
-Storage can be configured using the `storage` property in `CassandraCluster.spec`
+Storage can be configured using the `storage` property in `CassandraCluster.spec` for global Data Centers configuration, or can be overrided at `CassandraCluster.spec.topology.dc` level. 
 
 > **Important:** Once the Cassandra cluster is deployed, the storage cannot be changed.
 
@@ -381,10 +381,23 @@ CassandraCluster fragment of persistent storage definition :
 
 ```
 # ...
+  # Global configuration
   dataCapacity: "300Gi"
   dataStorageClass: "local-storage"
   deletePVC: true
+  # ...
+  topology:
+     dc:
+       - name: dc1
+         # DC level configuration
+         dataCapacity: "10Gi"
+         dataStorageClass: "test-storage"
+         # ...
+        - name: dc2
+         # ...
+  # ...
 # ...
+
 ```
 
 - `dataCapacity` (required): Defines the size of the persistent volume claim, for example, "1000Gi".
@@ -393,6 +406,16 @@ CassandraCluster fragment of persistent storage definition :
   it can be any storage with high ssd througput.
 - `deletePVC`(optional): Boolean value which specifies if the Persistent Volume Claim has to be deleted when the cluster
   is deleted. Default is `false`.
+  
+In this example, all statefulsets related to the `dc2` will have the default configuration for the `data` PV :
+
+- `dataCapacity` : "300Gi"
+- `dataStorageClass`: "local-storage"
+
+All statefulsets related to the `dc1` will have the specific configuration for the `data` PV :
+
+- `dataCapacity` : "10Gi"
+- `dataStorageClass` : "test-storage"
 
 > **WARNING**: Resizing persistent storage for existing CassandraCluster is not currently supported. You must decide the
 > necessary storage size before deploying the cluster.
