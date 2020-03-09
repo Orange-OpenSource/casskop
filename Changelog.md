@@ -2,6 +2,16 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## 0.5.2
+
+- PR [#201](https://github.com/Orange-OpenSource/casskop/pull/201) - Add liveness and readiness probe configurable in CassandraCluster object
+- PR [#200](https://github.com/Orange-OpenSource/casskop/pull/200) - Catch nil pvcSpec error
+- PR [#199](https://github.com/Orange-OpenSource/casskop/pull/199) - Fix [Issue #197](https://github.com/Orange-OpenSource/casskop/issues/197) helm release
+- PR [#198](https://github.com/Orange-OpenSource/casskop/pull/198) - Add custom metrics to operator
+- PR [#196](https://github.com/Orange-OpenSource/casskop/pull/196) - Fix [Issue #170](https://github.com/Orange-OpenSource/casskop/issues/170) cross ip
+- PR [#195](https://github.com/Orange-OpenSource/casskop/pull/195) - Ensure generated deepcopy files are always up to date
+- PR [#193](https://github.com/Orange-OpenSource/casskop/pull/193) - Fix [Issue #192](https://github.com/Orange-OpenSource/casskop/issues/192) Add check on container length for statefulset comparison
+
 ## 0.5.1
 
 **Breaking Change in the bootstrap image**
