@@ -89,6 +89,8 @@ spec:
   topology:
     dc:
       - name: dc1
+        dataCapacity: "10Gi"
+        dataStorageClass: "test-storage"
         labels:
           location.dfy.orange.com/site : mts
         rack:
