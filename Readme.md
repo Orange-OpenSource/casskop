@@ -233,12 +233,22 @@ cassandraclusters.db.orange.com   1h
 ...
 ```
 
-## Deploy a Cassandra cluster
+## Deploy a ConfigMap
 
-### From local yaml spec
+Before we can deploy our cluster, we need to create a configmap.
+This configmap will enable us to customize Cassandra's behaviour.
+More details on this can be found [here](documentation/description.md#configuration-override-using-configmap)
+
+But for our example we will use the simple example: 
+```
+kubectl apply -f samples/cassandra-configmap-v1.yaml
+```
+
+## Deploy a Cassandra cluster
 
 Once the operator is deployed inside a Kubernetes cluster, a new API will be accessible, so 
 you'll be able to create, update and delete cassandraclusters.
+
 
 In order to deploy a new cassandra cluster a [specification](samples/cassandracluster.yaml) has to be created. As an example :
 
