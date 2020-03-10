@@ -32,8 +32,8 @@ spec:
       - key: my_custom_taint
         operator: Exists
         effect: NoSchedule
-  dataCapacity: "3Gi"
-  dataStorageClass: "local-storage"
+  dataCapacity: 3Gi
+  dataStorageClass: local-storage
   hardAntiAffinity: false
   deletePVC: true
   storageConfigs:
@@ -89,8 +89,8 @@ spec:
   topology:
     dc:
       - name: dc1
-        dataCapacity: "10Gi"
-        dataStorageClass: "test-storage"
+        dataCapacity: 10Gi
+        dataStorageClass: test-storage
         labels:
           location.dfy.orange.com/site : mts
         rack:

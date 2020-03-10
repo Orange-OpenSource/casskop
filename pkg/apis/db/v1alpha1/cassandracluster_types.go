@@ -504,70 +504,60 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 
 // GetDataCapacityForDC sends back the data capacity of cassandra nodes to uses for this dc
 func (cc *CassandraCluster) GetDataCapacityForDC(dcName string) string {
-	dataCapacity := cc.GetDataCapacityFromDCName(dcName)
-	return dataCapacity
+	return cc.GetDataCapacityFromDCName(dcName)
 }
 
 // GetDataCapacityFromDCName send DataCapacity used for the given dcName
 func (cc *CassandraCluster) GetDataCapacityFromDCName(dcName string) string {
-	dcSize := cc.GetDCSize()
-	if dcSize < 1 {
-		return cc.Spec.DataCapacity
-	}
-
-	for dc := 0; dc < dcSize; dc ++ {
-		if dcName == cc.GetDCName(dc) {
-			return cc.getDCDataCapacityFromIndex(dc)
+	dcIndex := cc.GetDCIndexFromDCName(dcName)
+	if dcIndex >= 0 {
+		dc := cc.getDCFromIndex(dcIndex)
+		if dc != nil && dc.DataCapacity != "" {
+			return dc.DataCapacity
 		}
+		return cc.Spec.DataCapacity
 	}
-
 	return cc.Spec.DataCapacity
-}
-
-// getDCDataCapacityFromIndex send DataCapacity used for the given index
-func (cc *CassandraCluster) getDCDataCapacityFromIndex(dc int) string {
-	if dc >= cc.GetDCSize() {
-		return cc.Spec.DataCapacity
-	}
-	storeDC := cc.Spec.Topology.DC[dc]
-	if storeDC.DataCapacity == "" {
-		return cc.Spec.DataCapacity
-	}
-	return storeDC.DataCapacity
 }
 
 // GetDataCapacityForDC sends back the data storage class of cassandra nodes to uses for this dc
 func (cc *CassandraCluster) GetDataStorageClassForDC(dcName string) string {
-	dataCapacity := cc.GetDataStorageClassFromDCName(dcName)
-	return dataCapacity
+	return cc.GetDataStorageClassFromDCName(dcName)
 }
 
 // GetDataCapacityFromDCName send DataStorageClass used for the given dcName
 func (cc *CassandraCluster) GetDataStorageClassFromDCName(dcName string) string {
+	dcIndex := cc.GetDCIndexFromDCName(dcName)
+	if dcIndex >= 0 {
+		dc := cc.getDCFromIndex(dcIndex)
+		if dc != nil && dc.DataCapacity != "" {
+			return dc.DataStorageClass
+		}
+		return cc.Spec.DataStorageClass
+	}
+	return cc.Spec.DataStorageClass
+}
+
+func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 	dcSize := cc.GetDCSize()
 	if dcSize < 1 {
-		return cc.Spec.DataStorageClass
+		return -1
 	}
 
 	for dc := 0; dc < dcSize; dc ++ {
 		if dcName == cc.GetDCName(dc) {
-			return cc.getDCDataStorageClassFromIndex(dc)
+			return dc
 		}
 	}
-
-	return cc.Spec.DataCapacity
+	return -1
 }
 
-// getDCDataCapacityFromIndex send DataStorageClass used for the given index
-func (cc *CassandraCluster) getDCDataStorageClassFromIndex(dc int) string {
+// getDCFromIndex send DC for the given index
+func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 	if dc >= cc.GetDCSize() {
-		return cc.Spec.DataStorageClass
+		return nil
 	}
-	storeDC := cc.Spec.Topology.DC[dc]
-	if storeDC.DataStorageClass == "" {
-		return cc.Spec.DataStorageClass
-	}
-	return storeDC.DataStorageClass
+	return  &cc.Spec.Topology.DC[dc]
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack

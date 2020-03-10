@@ -236,7 +236,7 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
 	dataCapacity, dataClassStorage string) {
-	assert.Equal(t, len(pvcs), 3)
+	assert.Equal(t, 3, len(pvcs))
 	for _, pvc := range pvcs {
 		switch pvc.Name {
 		case "data":

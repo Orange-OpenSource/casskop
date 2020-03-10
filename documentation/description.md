@@ -380,23 +380,23 @@ The `PersistentVolumes` are acquired using a `PersistentVolumeClaim` which is ma
 CassandraCluster fragment of persistent storage definition :
 
 ```
-# ...
+...
   # Global configuration
   dataCapacity: "300Gi"
   dataStorageClass: "local-storage"
   deletePVC: true
-  # ...
+  ...
   topology:
      dc:
        - name: dc1
          # DC level configuration
          dataCapacity: "10Gi"
          dataStorageClass: "test-storage"
-         # ...
-        - name: dc2
-         # ...
-  # ...
-# ...
+         ...
+       - name: dc2
+         ...
+  ...
+...
 
 ```
 
@@ -409,13 +409,13 @@ CassandraCluster fragment of persistent storage definition :
   
 In this example, all statefulsets related to the `dc2` will have the default configuration for the `data` PV :
 
-- `dataCapacity` : "300Gi"
-- `dataStorageClass`: "local-storage"
+- `dataCapacity` : 300Gi
+- `dataStorageClass`: local-storage
 
 All statefulsets related to the `dc1` will have the specific configuration for the `data` PV :
 
-- `dataCapacity` : "10Gi"
-- `dataStorageClass` : "test-storage"
+- `dataCapacity` : 10Gi
+- `dataStorageClass` : test-storage
 
 > **WARNING**: Resizing persistent storage for existing CassandraCluster is not currently supported. You must decide the
 > necessary storage size before deploying the cluster.
