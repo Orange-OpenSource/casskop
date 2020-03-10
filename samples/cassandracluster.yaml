@@ -17,7 +17,7 @@ spec:
   gcStdout: true
   autoUpdateSeedList: false
   maxPodUnavailable: 1
-  runAsUser: 1000
+  runAsUser: 999
   resources:         
     requests:
       cpu: '1'
