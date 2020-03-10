@@ -138,22 +138,29 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 		cc.Spec.NodesPerRacks = oldCRD.Spec.NodesPerRacks
 		needUpdate = true
 	}
-	//DataCapacity change is forbidden
-	if cc.Spec.DataCapacity != oldCRD.Spec.DataCapacity {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
-			Warningf("The Operator has refused the change on DataCapacity from [%s] to NewValue[%s]",
-				oldCRD.Spec.DataCapacity, cc.Spec.DataCapacity)
-		cc.Spec.DataCapacity = oldCRD.Spec.DataCapacity
-		needUpdate = true
+
+	for dc := 0; dc < cc.GetDCSize(); dc++ {
+		dcName := cc.GetDCName(dc)
+		//DataCapacity change is forbidden
+		if cc.GetDataCapacityForDC(dcName) != oldCRD.GetDataCapacityForDC(dcName) {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
+				Warningf("The Operator has refused the change on DataCapacity from [%s] to NewValue[%s]",
+					oldCRD.GetDataCapacityForDC(dcName), cc.GetDataCapacityForDC(dcName))
+			cc.Spec.DataCapacity = oldCRD.Spec.DataCapacity
+			cc.Spec.Topology.DC[dc].DataCapacity = oldCRD.Spec.Topology.DC[dc].DataCapacity
+			needUpdate = true
+		}
+		//DataStorage
+		if cc.GetDataStorageClassForDC(dcName) != oldCRD.GetDataStorageClassForDC(dcName) {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dcName": dcName}).
+				Warningf("The Operator has refused the change on DataStorageClass from [%s] to NewValue[%s]",
+					oldCRD.GetDataStorageClassForDC(dcName), cc.GetDataStorageClassForDC(dcName))
+			cc.Spec.DataStorageClass = oldCRD.Spec.DataStorageClass
+			cc.Spec.Topology.DC[dc].DataStorageClass = oldCRD.Spec.Topology.DC[dc].DataStorageClass
+			needUpdate = true
+		}
 	}
-	//DataStorage
-	if cc.Spec.DataStorageClass != oldCRD.Spec.DataStorageClass {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).
-			Warningf("The Operator has refused the change on DataStorageClass from [%s] to NewValue[%s]",
-				oldCRD.Spec.DataStorageClass, cc.Spec.DataStorageClass)
-		cc.Spec.DataStorageClass = oldCRD.Spec.DataStorageClass
-		needUpdate = true
-	}
+
 
 	if needUpdate {
 		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
@@ -208,7 +215,6 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 				status.CassandraRackStatus[dcRackName].CassandraLastAction.EndTime = nil
 			}
 		}
-
 	}
 
 	return false
