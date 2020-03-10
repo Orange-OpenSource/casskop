@@ -113,7 +113,7 @@ The Cassandra operator image is automatically built and stored on [Docker Hub](h
 
 [![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop)
 
-Casskop uses standard Cassandra image.
+Casskop uses standard Cassandra image (tested up to Version 3.11)
 
 
 ## Deploy the Cassandra operator in the cluster
