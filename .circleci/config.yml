@@ -288,7 +288,7 @@ orbs:
         - run: # Run sonar scan
             name: Sonarcloud Scan
             command: |
-              ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner \
+              ./sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner -X \
               -Dsonar.projectName=<< parameters.operatorName >> \
               -Dsonar.projectKey=${SONAR_PROJECT} \
               -Dsonar.login=${SONAR_TOKEN} \

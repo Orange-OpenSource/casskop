@@ -6,6 +6,7 @@ metadata:
     cluster: k8s.kaas
 spec:
   cassandraImage: cassandra:3.11
+  bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.4
   configMapName: cassandra-configmap-v1
   dataCapacity: "200Mi"
   dataStorageClass: "local-storage"
@@ -16,7 +17,7 @@ spec:
   gcStdout: true
   autoUpdateSeedList: false
   maxPodUnavailable: 1
-  runAsUser: 1000
+  runAsUser: 999
   resources:         
     requests:
       cpu: '1'
