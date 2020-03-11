@@ -2,7 +2,7 @@
 
 # CassKop - Cassandra Kubernetes operator
 
-[![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_casskop&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_casskop)
+[![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Orange-OpenSource_cassandra-k8s-operator&metric=alert_status)](https://sonarcloud.io/dashboard?id=Orange-OpenSource_cassandra-k8s-operator)
 
 
 ## Project overview
@@ -113,24 +113,7 @@ The Cassandra operator image is automatically built and stored on [Docker Hub](h
 
 [![CircleCI](https://circleci.com/gh/Orange-OpenSource/casskop.svg?style=svg&circle-token=480ca5c31a9e9ef9b893151dd2d7c15eaf0e94d0)](https://circleci.com/gh/Orange-OpenSource/casskop)
 
-### Associated Cassandra image
-
-The operator works with specific Docker Cassandra image which is build in the repository:
-https://github.com/Orange-OpenSource/cassandra-image
-
-This table shows compatibility between CassKop and associated Cassandra image
-
-
-| Operator      | Cassandra-k8s                 |
-| ---------     | -----------                   |
-| 0.3.1-release | >= 3.11.4-8u212-0.3.1         |
-| 0.3.2-release | >= 3.11.4-8u212-0.3.2-release |
-| 0.3.3-release | >= 3.11.4-8u212-0.3.3-release |
-| 0.4.0-release | >= 3.11.4-8u212-0.4.0-release |
-
-
-> docker image: orangeopensource/cassandra-image:3.11.4-8u212-0.4.0-release
-> or 3.11.4-8u212-0.4.0-release-cqlsh if you need cqlsh
+Casskop uses standard Cassandra image (tested up to Version 3.11)
 
 
 ## Deploy the Cassandra operator in the cluster
@@ -250,12 +233,22 @@ cassandraclusters.db.orange.com   1h
 ...
 ```
 
-## Deploy a Cassandra cluster
+## Deploy a ConfigMap
 
-### From local yaml spec
+Before we can deploy our cluster, we need to create a configmap.
+This configmap will enable us to customize Cassandra's behaviour.
+More details on this can be found [here](documentation/description.md#configuration-override-using-configmap)
+
+But for our example we will use the simple example: 
+```
+kubectl apply -f samples/cassandra-configmap-v1.yaml
+```
+
+## Deploy a Cassandra cluster
 
 Once the operator is deployed inside a Kubernetes cluster, a new API will be accessible, so 
 you'll be able to create, update and delete cassandraclusters.
+
 
 In order to deploy a new cassandra cluster a [specification](samples/cassandracluster.yaml) has to be created. As an example :
 
