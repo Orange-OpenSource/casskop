@@ -125,7 +125,7 @@ resource "kubernetes_deployment" "external-dns" {
             "--txt-owner-id=gke-${google_container_cluster.cassandra-cluster.project}-${google_container_cluster.cassandra-cluster.location}_${google_container_cluster.cassandra-cluster.name}-${kubernetes_namespace.cassandra-demo.metadata[0].name}",
           ]
           command                  = []
-          image                    = "registry.opensource.zalan.do/teapot/external-dns:latest"
+          image                    = "bitnami/external-dns:0.5.14"
           name                     = "external-dns"
         }
       }
