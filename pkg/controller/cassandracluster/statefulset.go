@@ -17,9 +17,11 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -28,7 +30,6 @@ import (
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -119,22 +120,6 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	//updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
-
-	//Things we won't check :
-	//TODO: we should rely on library to ease the comparison between 2 statefulset and to know If we need to apply
-	// change or not cf: https://github.com/banzaicloud/k8s-objectmatcher
-
-	/*
-		patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
-		if err != nil {
-			logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
-			return false
-		}
-		if !patchResult.IsEmpty() {
-			logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
-			return false
-		}
-	*/
 	sts1Spec := &sts1.Spec.Template.Spec
 	sts2Spec := &sts2.Spec.Template.Spec
 
@@ -152,31 +137,47 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 		return false
 	}
 
-	for i := 0; i < len(sts1Spec.Containers); i++ {
-		sts1Spec.Containers[i].LivenessProbe = sts2Spec.Containers[i].LivenessProbe
-		sts1Spec.Containers[i].ReadinessProbe = sts2Spec.Containers[i].ReadinessProbe
-
-		sts1Spec.Containers[i].TerminationMessagePath = sts2Spec.Containers[i].TerminationMessagePath
-		sts1Spec.Containers[i].TerminationMessagePolicy = sts2Spec.Containers[i].TerminationMessagePolicy
-	}
-
-	for i := 0; i < len(sts1.Spec.Template.Spec.InitContainers); i++ {
-		sts1Spec.InitContainers[i].LivenessProbe = sts2Spec.InitContainers[i].LivenessProbe
-		sts1Spec.InitContainers[i].ReadinessProbe = sts2Spec.InitContainers[i].ReadinessProbe
-
-		sts1Spec.InitContainers[i].TerminationMessagePath = sts2Spec.InitContainers[i].TerminationMessagePath
-		sts1Spec.InitContainers[i].TerminationMessagePolicy = sts2Spec.InitContainers[i].TerminationMessagePolicy
-	}
-
-	//some defaultMode changes make falsepositif, so we bypass this, we already have check on configmap changes
-	sts1.Spec.VolumeClaimTemplates = sts2.Spec.VolumeClaimTemplates
-	sts1.Spec.PodManagementPolicy = sts2.Spec.PodManagementPolicy
-	sts1.Spec.RevisionHistoryLimit = sts2.Spec.RevisionHistoryLimit
-
-	if !apiequality.Semantic.DeepEqual(sts1.Spec, sts2.Spec) {
+	pvcsSpecSts1Len := len(sts1.Spec.VolumeClaimTemplates)
+	pvcsSpecSts2Len := len(sts2.Spec.VolumeClaimTemplates)
+	if pvcsSpecSts1Len != pvcsSpecSts2Len {
 		logrus.WithFields(logrus.Fields{"statefulset": sts1.Name,
-			"namespace": sts1.Namespace}).Info("Template is different: " + pretty.CompareAndPrintDiff(sts1.Spec, sts2.Spec))
+			"namespace": sts1.Namespace}).Info(
+			fmt.Sprintf("Template is different, the number of pvcs are not the same: len(sts1.Spec.VolumeClaimTemplates) = %d, "+
+				"len(sts2.Spec.Template.Spec.VolumeClaimTemplates) = %d",
+				pvcsSpecSts1Len, pvcsSpecSts2Len))
+		return false
+	}
 
+	sort.Slice(sts1.Spec.VolumeClaimTemplates, func(i, j int) bool {
+		return sts1.Spec.VolumeClaimTemplates[i].Name < sts1.Spec.VolumeClaimTemplates[j].Name
+	})
+
+	sort.Slice(sts2.Spec.VolumeClaimTemplates, func(i, j int) bool {
+		return sts2.Spec.VolumeClaimTemplates[i].Name < sts2.Spec.VolumeClaimTemplates[j].Name
+	})
+
+	sort.Slice(sts1Spec.Containers, func(i, j int) bool {
+		return sts1Spec.Containers[i].Name < sts1Spec.Containers[j].Name
+	})
+
+	sort.Slice(sts2Spec.Containers, func(i, j int) bool {
+		return sts2Spec.Containers[i].Name < sts2Spec.Containers[j].Name
+	})
+
+	for i := 0; i < len(sts1.Spec.VolumeClaimTemplates); i++ {
+		sts1.Spec.VolumeClaimTemplates[i].Status = sts2.Spec.VolumeClaimTemplates[i].Status
+		if sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode == nil {
+			sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode = sts1.Spec.VolumeClaimTemplates[i].Spec.VolumeMode
+		}
+	}
+
+	patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
+	if err != nil {
+		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+		return false
+	}
+	if !patchResult.IsEmpty() {
+		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 		return false
 	}
 
