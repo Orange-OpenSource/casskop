@@ -833,7 +833,7 @@ type CassandraClusterSpec struct {
 	// LivenessFailureThreshold defines failure threshold for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	LivenessFailureThreshold *int32 `json:"livenessFailureThreshold,omitempty"`
-	// ReadinessSuccessThreshold defines success threshold for the liveness probe of the main
+	//LivenessSuccessThreshold defines success threshold for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	LivenessSuccessThreshold *int32 `json:"livenessSuccessThreshold,omitempty"`
 
