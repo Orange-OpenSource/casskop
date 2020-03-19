@@ -14,48 +14,27 @@ require (
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
-	github.com/chai2010/gettext-go v0.0.0-20170215093142-bf70f2a70fb1 // indirect
-	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect
-	github.com/containerd/ttrpc v0.0.0-20200121165050-0be804eadb15 // indirect
-	github.com/coreos/bbolt v1.3.3 // indirect
-	github.com/docker/cli v0.0.0-20190506213505-d88565df0c2d
-	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
-	github.com/docker/go v1.5.1-1 // indirect
-	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
-	github.com/elazarl/go-bindata-assetfs v1.0.0 // indirect
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.4
-	github.com/gogo/googleapis v1.3.2 // indirect
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/maxbrunsfeld/counterfeiter v0.0.0-20181017030959-1aadac120687 // indirect
 	github.com/operator-framework/operator-sdk v0.15.0
-	github.com/pelletier/go-toml v1.3.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.2.1
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
-	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245 // indirect
-	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/thoas/go-funk v0.4.0
-	github.com/tonistiigi/fsutil v0.0.0-20200128191323-6c909ab392c1 // indirect
-	go.etcd.io/bbolt v1.3.3 // indirect
-	golang.org/x/build v0.0.0-20190314133821-5284462c4bec // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	gopkg.in/square/go-jose.v2 v2.3.0 // indirect
+	golang.org/x/sys v0.0.0-20200120151820-655fe14d7479 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
-	k8s.io/sample-controller v0.0.0-20191121021213-d454fe81777c // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
-	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 //	sigs.k8s.io/controller-runtime v0.1.12
 //	sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde // indirect
 )
