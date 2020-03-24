@@ -26,9 +26,8 @@ func TestStatefulSetsAreEqual(t *testing.T) {
 	cc.CheckDefaults()
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
-
-	var testSetup map[string]liveAndReadinessProbeExpected
-	testSetup = make(map[string]liveAndReadinessProbeExpected)
+	
+	testSetup := make(map[string]liveAndReadinessProbeExpected)
 
 	// Readiness update test
 	testSetup["ReadinessInitialDelaySeconds"]	= liveAndReadinessProbeExpected{areEquals:false, replaceValue: 2000}
