@@ -1313,15 +1313,27 @@ that the application is not healthy and attempt to fix it. Kubernetes supports t
 - Readiness probes.
 
 You can find more details in the [Kubernetes
-documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/).
+documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes).
 
 Both `livenessProbe` and `readinessProbe` support two additional options:
 - `initialDelaySeconds`: defines the initial delay before the probe is tried for the first time. Default is 15 seconds
 - `timeoutSeconds`: defines the timeout of the probe. CassKop uses 20 seconds.
 - `periodSeconds`: the period to wait between each call to a probe: CassKop uses 40 seconds.
 
-> TODO: This is actually not configurable by CassKop: [Issue 183](https://github.com/Orange-OpenSource/casskop/issues/183)
 
+You are now able to override this default values using the following fields in to the `CassandraCluster` definition : 
+
+- `livenessInitialDelaySeconds`: defines initial delay for the liveness probe of the main
+- `livenessHealthCheckTimeout`: defines health check timeout for the liveness probe of the main
+- `livenessHealthCheckPeriod`: defines health check period for the liveness probe of the main
+- `livenessFailureThreshold`: defines failure threshold for the liveness probe of the main
+- `livenessSuccessThreshold`: defines success threshold for the liveness probe of the main
+
+- `readinessInitialDelaySeconds`: defines initial delay for the readiness probe of the main
+- `readinessHealthCheckTimeout`: defines health check timeout for the readiness probe of the main
+- `readinessHealthCheckPeriod`: defines health check period for the readiness probe of the main
+- `readinessFailureThreshold`: defines failure threshold for the readiness probe of the main
+- `readinessSuccessThreshold`: defines success threshold for the readiness probe of the main
 
 ### Pod lifeCycle
 

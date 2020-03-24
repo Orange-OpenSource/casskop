@@ -274,6 +274,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	volumes := generateCassandraVolumes(cc)
 
 	volumeClaimTemplate, err := generateVolumeClaimTemplate(cc, labels, dcName)
+
 	if err != nil {
 		return nil, err
 	}

@@ -129,7 +129,7 @@ spec:
               format: int32
               type: integer
             livenessSuccessThreshold:
-              description: 'ReadinessSuccessThreshold defines success threshold for
+              description: 'LivenessSuccessThreshold defines success threshold for
                 the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
               format: int32
               type: integer
