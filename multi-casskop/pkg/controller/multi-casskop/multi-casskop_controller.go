@@ -135,11 +135,10 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		var cc *ccv1.CassandraCluster
 		var found bool
 		if found, cc = r.computeCassandraClusterForContext(client); !found {
-			logrus.WithFields(logrus.Fields{"kubernetes": client.Name}).Warningf("No Cassandra Cluster defined for context: %v", err)
-			break
+            continue
 		}
 
-		//If deletion is asked
+		// If deletion is asked
 		if r.cmc.DeletionTimestamp != nil {
 			r.deleteCassandraCluster(client, cc)
 			continue
@@ -182,9 +181,9 @@ func (r *reconciler) namespacedName(name, namespace string) types.NamespacedName
 	}
 }
 
-//computeCassandraClusterForContext return the CassandraCluster object to create for the current context
-//It merges the base definition, with the override part for the specified context in the MultiCasskop CRD
-//If client.name don't match a kubernetes context name specified in the override section, it does nothing
+// computeCassandraClusterForContext return the CassandraCluster object to create for the current context
+// It merges the base definition, with the override part for the specified context in the MultiCasskop CRD
+// If client.name don't match a kubernetes context name specified in the override section, it does nothing
 func (r *reconciler) computeCassandraClusterForContext(client *models.Client) (bool, *ccv1.CassandraCluster) {
 	base := r.cmc.Spec.Base.DeepCopy()
 	for cmcclName, override := range r.cmc.Spec.Override {
