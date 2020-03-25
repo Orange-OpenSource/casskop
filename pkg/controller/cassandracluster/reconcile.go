@@ -314,7 +314,6 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 			topologyChangeRefused+"You can only remove 1 DC at a time, "+
 				"not only a Rack: %v restored to %v", cc.Spec.Topology, oldCRD.Spec.Topology)
 		return true, api.ActionCorrectCRDConfig.Name
-
 	}
 
 	if cc.GetDCRackSize() < oldCRD.GetDCRackSize() {
@@ -325,7 +324,6 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 				Warningf(topologyChangeRefused +
 					"You must wait to the end of ScaleDown to 0 before deleting a DC")
 			return true, api.ActionCorrectCRDConfig.Name
-
 		}
 
 		dcName := cc.GetRemovedDCName(oldCRD)
