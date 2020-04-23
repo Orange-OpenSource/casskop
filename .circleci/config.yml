@@ -340,7 +340,7 @@ jobs:
       # Checkout steps
       - checkout:
           path: /home/circleci/casskop
-      - restore-cache:
+      - restore_cache:
           name: Restore yarn Scanner
           keys:
             - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
@@ -350,7 +350,7 @@ jobs:
           name: root-yarn
           command: |
               yarn install --non-interactive --cache-folder ~/.cache/yarn
-      - save-cache:
+      - save_cache:
           name: Save yarn cache
           paths:
             - node_modules
