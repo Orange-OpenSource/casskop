@@ -1,6 +1,8 @@
-
-
-# Instruction for development & contributing on CassKop
+---
+id: 1_developer_guide
+title: Developer guide
+sidebar_label: Developer guide
+---
 
 ## CircleCI build pipeline
 
@@ -21,8 +23,7 @@ The Pipeline uses some envirenment variables that you need to set-up if you want
 
 - DOCKER_REPO_BASE -- name of your docker base reposirory (ex: orangeopensource)
 - DOCKERHUB_PASSWORD
-- DOCKERHUB_USER
-- SONAR_PROJECT
+- DOCKERHUB_USER- SONAR_PROJECT
 - SONAR_TOKEN
 
 If not set in CircleCI environment, according steps will be ignored.
@@ -322,88 +323,17 @@ TELEPRESENCE_REGISTRY=you-private-registry/datawire  make debug-telepresence-wit
 
 Now we just need to configure the IDE :
 
-![](images/ide_debug_configutation.png)
+![](/casskop/img/8_contributing/ide_debug_configutation.png)
 
 and let's the magic happened
 
-![](images/ide_debug_action.png)
+![](/casskop/img/8_contributing/ide_debug_action.png)
 
 
-# Release the Project
 
-There are several things to do when you want to make a release of the project:
-Todo: things should be automatize ;)
+## How this repository was initially build
 
-For ease, we have same version for casskop and multi-casskop
-- [ ] Update Changelog.md with informations for the new release
-- [ ] update version/version.go with the new release version
-- [ ] update multi-casskop/version/version.go with the new release version
-- [ ] update helm/cassandra-operator/Chart.yaml and values.yaml
-- [ ] update multi-casskop/helm/multi-casskop/Chart.yaml and values.yaml
-- [ ] generate casskop helm with `make helm-package`
-- [ ] add to git docs/helm, commit & push
-- [ ] once the PR is merged to master, create the release with content of changelog for this version
-    - https://github.com/Orange-OpenSource/casskop/releases
-
-## With Helm
-
-The CassKop operator is released in the helm/charts/incubator see : https://github.com/helm/charts/pull/14414
-
-We also have a helm repository hosted on GitHub pages.
-
-### Release helm charts on GitHub
-
-In order to release the Helm charts on GitHub, we need to generate the package locally
-```
-make helm-package
-```
-
-then add to git the package and make a PR on the repo.
-
-
-## With OLM (Operator Lifecycle Manager)
-
-OLM is used to manage lifecycle of the Operator, and is also used to puclish on https://operatorhub.io
-
-### Create new OLM release
-
-You can create new version of CassKop OLM bundle using:
-
-Exemple for generating version 0.0.4
-```
-operator-sdk olm-catalog gen-csv --csv-version 0.4.0 --update-crds
-```
-
-> You may need to manually update some fileds (such as description..), you can refere to previous versions for that
-
-### Instruction to tests locally with OLM
-
-Before submitting the operator to operatorhub.io you need to install and test OLM on a local Kubernetes.
-
-These tests and all pre-requisite can also be executed automatically in a single step using a
-[Makefile](https://github.com/operator-framework/community-operators/blob/master/docs/using-scripts.md).
-
-Go to github/operator-framework/community-operators to interract with the OLM makefile
-
-Install OLM
-```
-make operator.olm.install
-```
-
-Launch lint
-```
-make operator.verify OP_PATH=community-operators/casskop VERBOSE=true
-```
-
-Launch tests
-```
-make operator.test OP_PATH=community-operators/casskop VERBOSE=true
-```
-
-
-# How this repository was initially build
-
-## Boilerplate CassKop
+### Boilerplate CassKop
 
 We used the SDK to create the repository layout. This command is for memory ;) (or for applying sdk upgrades)
 
@@ -425,9 +355,9 @@ $ operator-sdk add api --api-version=db.orange.com/v1alpha1 --kind=CassandraClus
 $ operator-sdk add controller --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
 ```
 
-## Useful Infos for developers
+### Useful Infos for developers
 
-### Parsing Yaml from String
+#### Parsing Yaml from String
 
 For parsing Yaml from string to Go Object we uses this library : `github.com/ghodss/yaml` because with the official one
 not all fields of the yaml where correctly populated. I don't know why..

@@ -331,6 +331,37 @@ orbs:
                 else
                   GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/casskop/tools/publish_helm_gcs.sh
                 fi
+jobs:
+  deploy-website:
+    working_directory: /home/circleci/casskop
+    docker: # run the steps with Docker
+      - image: node:13
+    steps:
+      # Checkout steps
+      - checkout:
+          path: /home/circleci/casskop
+      - restore-cache:
+          keys:
+            - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            # Fallback in case checksum fails
+            - root-yarn-{{ .Branch }}-
+      - run:
+          name: root-yarn
+            command: |
+              yarn install --non-interactive --cache-folder ~/.cache/yarn
+        - save-cache:
+            paths:
+              - node_modules
+              - ~/.cache/yarn
+            key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: deploy
+          command: |
+            git config --global user.name "${GH_NAME}"
+            git config --global user.email "${GH_EMAIL}"
+            echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+            yarn && GIT_USER="${GH_NAME}" yarn deploy
+
 # Anchors
 ## Filters anchors
 .everytime_filter : &everytime_filter
@@ -455,6 +486,11 @@ workflows:
           requires:
             - report-casskop
           <<: *only_on_release_tag
+      - deploy-website:
+          name: deploy-website
+          requires:
+            - report-casskop
+          #<<: *only_on_release_tag
 
   ## CassKop operator workflow.
   ci-multicasskop-operator:
