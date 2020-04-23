@@ -1,0 +1,39 @@
+
+@startuml
+
+scale 800 width
+
+:Developpeur:
+[KUBECTL]
+[HELM]
+
+Developpeur --> [KUBECTL]
+Developpeur --> [HELM]
+() HTTPS
+cloud "Kubenetes" {
+  
+  node "master" {
+    HTTPS - [API]
+  }
+
+  node "workers" {
+      
+  }
+[KUBECTL] --> HTTPS
+[HELM] --> HTTPS
+workers - master
+}
+
+
+cloud "Gitlab" {
+
+package "gitlab-ci" {
+
+    node "runner" {
+    [helm] - HTTPS
+    [kubectl] - HTTPS
+  }
+
+}
+
+@enduml
