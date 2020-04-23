@@ -333,13 +333,13 @@ orbs:
                 fi
 jobs:
   deploy-website:
-    working_directory: /home/circleci/casskop
+    working_directory: /home/circleci/casskop/website
     docker: # run the steps with Docker
       - image: node:13
     steps:
       # Checkout steps
       - checkout:
-          path: /home/circleci/casskop
+          path: /home/circleci/casskop/we
       - restore_cache:
           name: Restore yarn Scanner
           keys:
@@ -490,8 +490,8 @@ workflows:
           <<: *only_on_release_tag
       - deploy-website:
           name: deploy-website
-          requires:
-            - report-casskop
+          #requires:
+          #  - report-casskop
           #<<: *only_on_release_tag
 
   ## CassKop operator workflow.
