@@ -349,11 +349,11 @@ jobs:
           name: root-yarn
           command: |
               yarn install --non-interactive --cache-folder ~/.cache/yarn
-        - save-cache:
-            paths:
-              - node_modules
-              - ~/.cache/yarn
-            key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - save-cache:
+          paths:
+            - node_modules
+            - ~/.cache/yarn
+          key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
       - run:
           name: deploy
           command: |
