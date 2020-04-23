@@ -339,7 +339,7 @@ jobs:
     steps:
       # Checkout steps
       - checkout:
-          path: /home/circleci/casskop/we
+          path: /home/circleci/casskop
       - restore_cache:
           name: Restore yarn Scanner
           keys:
@@ -359,6 +359,8 @@ jobs:
       - run:
           name: deploy
           command: |
+            echo $(pwd)
+            ls -la
             git config --global user.name "${GH_NAME}"
             git config --global user.email "${GH_EMAIL}"
             echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
