@@ -494,9 +494,9 @@ workflows:
           <<: *only_on_release_tag
       - deploy-website:
           name: deploy-website
-          #requires:
-          #  - report-casskop
-          #<<: *only_on_release_tag
+          requires:
+            - report-casskop
+          <<: *only_on_release_tag
 
   ## CassKop operator workflow.
   ci-multicasskop-operator:
