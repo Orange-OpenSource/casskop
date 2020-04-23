@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[23],{150:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"casskop","name":"casskop","count":2,"permalink":"/casskop/blog/tags/casskop"}')}}]);
