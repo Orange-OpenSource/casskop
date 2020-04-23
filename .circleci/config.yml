@@ -347,7 +347,7 @@ jobs:
             - root-yarn-{{ .Branch }}-
       - run:
           name: root-yarn
-            command: |
+          command: |
               yarn install --non-interactive --cache-folder ~/.cache/yarn
         - save-cache:
             paths:
