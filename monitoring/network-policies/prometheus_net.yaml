@@ -1,0 +1,320 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-prometheus-to-grafana
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  egress:
+  - ports:
+    - port: 3000
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: grafana
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-grafana-from-prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  ingress:
+  - ports:
+    - port: 3000
+      protocol: TCP
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-grafana-to-prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  egress:
+  - ports:
+    - port: 9090
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-prometheus-from-grafana
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  ingress:
+  - ports:
+    - port: 9090
+      protocol: TCP
+  - from:
+    - podSelector:
+        matchLabels:
+          app: grafana
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-prometheus-to-prom-operator
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 8080
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: prometheus-operator-operator
+---
+# Allow 8080 from prometheus, and 443 from webhook
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-prom-operator
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus-operator-operator
+  policyTypes:
+  - Ingress
+  ingress:
+    - {}
+#  - ports:
+#    - port: 8080
+#      protocol: TCP
+#  - ports:
+#    - port: 443
+#      protocol: TCP
+#  - from: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-prometheus-to-cassandra
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  egress:
+  - ports:
+    - port: 9500
+      protocol: TCP
+    - port: 1234
+      protocol: TCP
+    - port: 1235
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          app: cassandracluster
+    - namespaceSelector:
+        matchLabels:
+          app: cassandra
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-cassandra-from-prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app: cassandracluster
+  ingress:
+  - ports:
+    - port: 9500
+      protocol: TCP
+    - port: 1234
+      protocol: TCP
+    - port: 1235
+      protocol: TCP
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-prometheus-to-alertmanager
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 9093
+    - protocol: TCP
+      port: 6783
+  - to:
+    - podSelector:
+        matchLabels:
+          app: alertmanager
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus        
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-alertmanager-from-prometheus
+spec:
+  podSelector:
+    matchLabels:
+      app: alertmanager
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 9093
+    - protocol: TCP
+      port: 6783
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-kraken-to-prometheus
+  namespace: kraken
+spec:
+  podSelector:
+    matchLabels:
+      app: kraken
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 9090
+  - to:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+          component: cassandra
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-kraken-to-grafana
+  namespace: kraken
+spec:
+  podSelector:
+    matchLabels:
+      app: kraken
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 3000
+  - to:
+    - podSelector:
+        matchLabels:
+          app: grafana
+    - namespaceSelector:
+        matchLabels:
+          app: prometheus
+          component: cassandra
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-grafana-from-kraken
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 3000
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: kraken
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-prometheus-from-kraken
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 9090
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: kraken
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-prometheus-to-metrics-proxy
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 8443
+  - to:
+    - podSelector:
+        matchLabels:
+          app: rickaastley-metrics-collector
+---
+# Open all for cmd-toolbox
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-prom-operator
+spec:
+  podSelector:
+    matchLabels:
+      appz: cmd-toolbox
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+    - {}
+  egress:
+    - {}
