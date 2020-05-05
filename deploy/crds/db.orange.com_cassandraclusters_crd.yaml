@@ -311,6 +311,8 @@ spec:
                     headless service the CassKop operator creates
                   type: object
               type: object
+            serviceAccountName:
+              type: string
             sidecarConfigs:
               description: SidecarsConfig defines additional sidecar configurations
               items:
