@@ -328,7 +328,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{
-						Service
 					Affinity: &v1.Affinity{
 						NodeAffinity:    nodeAffinity,
 						PodAntiAffinity: createPodAntiAffinity(cc.Spec.HardAntiAffinity, k8s.LabelsForCassandra(cc)),
@@ -349,6 +348,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
+					ServiceAccountName: 		   cc.Spec.ServiceAccountName,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,

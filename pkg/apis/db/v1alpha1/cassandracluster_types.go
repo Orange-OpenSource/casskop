@@ -870,6 +870,7 @@ type CassandraClusterSpec struct {
 	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
 
 	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
