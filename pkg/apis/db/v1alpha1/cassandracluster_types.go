@@ -26,6 +26,10 @@ import (
 )
 
 const (
+	// Backup Restore default config
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	DefaultBackRestSidecarContainerPort int32  = 4567
+
 	DefaultLivenessInitialDelaySeconds int32 = 120
 	DefaultLivenessHealthCheckTimeout  int32 = 20
 	DefaultLivenessHealthCheckPeriod   int32 = 10
@@ -161,6 +165,17 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if ccs.ReadinessHealthCheckPeriod == nil {
 		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
 	}
+
+	// BackupRestore default config
+	if ccs.BackRestSidecar == nil {
+		ccs.BackRestSidecar = &BackRestSidecar{}
+	}
+	if len(ccs.BackRestSidecar.Image) == 0 {
+		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
+	}
+	if ccs.BackRestSidecar.ContainerPort == nil {
+		ccs.BackRestSidecar.ContainerPort = func(i int32) *int32 { return &i }(DefaultBackRestSidecarContainerPort)
+	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -184,6 +199,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 	if ccs.MaxPodUnavailable == 0 {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
+		changed = true
 	}
 	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
@@ -858,6 +874,8 @@ type CassandraClusterSpec struct {
 	// +k8s:conversion-gen=false
 	// +optional
 	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
+
+	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
@@ -947,6 +965,14 @@ type CPUAndMem struct {
 	CPU string `json:"cpu"`
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
+}
+
+type BackRestSidecar struct {
+	Image           string        `json:"image,omitempty"`
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	//	SecretVolumeSource	*v1.SecretVolumeSource		`json:"sidecarSecretVolumeSource,omitempty"`
+	Resources     *v1.ResourceRequirements `json:"resources,omitempty"`
+	ContainerPort *int32                   `json:"containerPort,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
