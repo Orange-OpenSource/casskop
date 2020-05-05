@@ -1,55 +1,8 @@
-# FAQ / Troubleshooting
-
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-**Table of Contents**
-
-    - [RBAC on Google Container Engine (GKE)](#rbac-on-google-container-engine-gke)
-    - [Operator can't perform the Action](#operator-cant-perform-the-action)
-        - [Example: can't ScaleUp](#example-cant-scaleup)
-            - [Rollback ScaleUp operation](#rollback-scaleup-operation)
-
-<!-- markdown-toc end -->
-
-## GKE Specifics
-
-### RBAC on Google Container Engine (GKE)
-
-When you try to create `ClusterRole` (`cassandra-operator`, etc.) on GKE Kubernetes cluster, you will probably run into permission errors:
-
-```
-<....>
-failed to initialize cluster resources: roles.rbac.authorization.k8s.io
-"cassandra-operator" is forbidden: attempt to grant extra privileges:
-<....>
-````
-
-This is due to the way Container Engine checks permissions. From [Google Container Engine docs](https://cloud.google.com/container-engine/docs/role-based-access-control):
-
-> Because of the way Container Engine checks permissions when you create a Role or ClusterRole, you must first create a RoleBinding that grants you all of the permissions included in the role you want to create.
-> An example workaround is to create a RoleBinding that gives your Google identity a cluster-admin role before attempting to create additional Role or ClusterRole permissions.
-> This is a known issue in the Beta release of Role-Based Access Control in Kubernetes and Container Engine version 1.6.
-
-To overcome this, you must grant your current Google identity `cluster-admin` Role:
-
-```console
-# get current google identity
-$ gcloud info | grep Account
-Account: [myname@example.org]
-
-# grant cluster-admin to your current identity
-$ kubectl create clusterrolebinding myname-cluster-admin-binding --clusterrole=cluster-admin --user=myname@example.org
-Clusterrolebinding "myname-cluster-admin-binding" created
-```
-
-### Pod and volumes can be scheduled in different zones using default provisioned
-
-The default provisioner in GKE does not have the `volumeBindingMode: "WaitForFirstConsumer"` option that can result in
-a bad
-scheduling behaviour.
-We use one of the following files to create a storage class:
-- samples/gke-storage-standard-wait.yaml
-- samples/gke-storage-ssd-wait.yaml (if you have ssd disks)
-
+---
+id: 1_operations_issues
+title: Operations Issues
+sidebar_label: Operations Issues
+---
 
 ## Operator can't perform the Action
 
@@ -77,7 +30,7 @@ INFO[3037] Cluster has Disruption on Pods, we wait before applying any change to
 ```
 
 
-### Example: can't ScaleUp
+### Can't ScaleUp
 
 In this example I ask a ScaleUp but it can't perform :
 
@@ -145,7 +98,7 @@ INFO[3354] ScaleDown is Done                             cluster=cassandra-demo 
 ```
 
 
-### Example: can't add new rack in new DC
+### Can't add new rack in new DC
 
 In this example, I ask to add dc called dc2
 

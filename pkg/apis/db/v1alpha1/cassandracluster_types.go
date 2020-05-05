@@ -731,16 +731,17 @@ type CassandraClusterSpec struct {
 	// Image used for bootstrapping cluster (use the form : base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
-	// Command to execute in the initContainer in the targeted image
+	// Image used in the initContainer (use the form : base:version)
 	InitContainerImage string `json:"initContainerImage,omitempty"`
+
 	// Command to execute in the initContainer in the targeted image
 	InitContainerCmd string `json:"initContainerCmd,omitempty"`
 
-	//RunAsUser define the id of the user to run in the Cassandra image
+	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1
 	RunAsUser *int64 `json:"runAsUser,omitempty"`
 
-	//Make the pod as Readonly
+	// Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
 
 	// Pod defines the policy for pods owned by cassandra operator.
@@ -786,10 +787,10 @@ type CassandraClusterSpec struct {
 	// no action will be performed based on restart count.
 	RestartCountBeforePodDeletion	int32	`json:"restartCountBeforePodDeletion,omitempty"`
 
-	//Very special Flag to hack CassKop reconcile loop - use with really good Care
+	// Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
-	//Define the Capacity for Persistent Volume Claims in the local storage
+	// Define the Capacity for Persistent Volume Claims in the local storage
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	DataCapacity string `json:"dataCapacity,omitempty"`
 
@@ -892,7 +893,7 @@ type DC struct {
 	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
 	NumTokens *int32 `json:"numTokens,omitempty"`
 
-	//Define the Capacity for Persistent Volume Claims in the local storage
+	// Define the Capacity for Persistent Volume Claims in the local storage
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	DataCapacity string `json:"dataCapacity,omitempty"`
 
