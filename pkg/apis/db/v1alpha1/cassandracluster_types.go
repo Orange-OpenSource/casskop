@@ -876,6 +876,7 @@ type CassandraClusterSpec struct {
 	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
 
 	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations

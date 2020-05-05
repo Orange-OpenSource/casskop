@@ -336,7 +336,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Annotations: annotations,
 				},
 				Spec: v1.PodSpec{
-						Service
 					Affinity: &v1.Affinity{
 						NodeAffinity:    nodeAffinity,
 						PodAntiAffinity: createPodAntiAffinity(cc.Spec.HardAntiAffinity, k8s.LabelsForCassandra(cc)),
@@ -358,6 +357,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
 					ShareProcessNamespace:         cc.Spec.ShareProcessNamespace,
+					ServiceAccountName:            cc.Spec.ServiceAccountName,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,
@@ -822,18 +822,18 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 
-	resources := getCassandraResources(cc.Spec)
+	resources := cassandraResources(cc.Spec)
 
 	container := v1.Container{
 		Name:            "backrest-sidecar",
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
-		Ports:			 []v1.ContainerPort{{Name: "http", ContainerPort: *cc.Spec.BackRestSidecar.ContainerPort}},
-		Env:             createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: *cc.Spec.BackRestSidecar.ContainerPort}},
+		Env:             bootstrapContainerEnvVar(cc, status, resources, dcRackName),
 	}
 
 	if cc.Spec.BackRestSidecar.Resources != nil {
-		container.Resources =  *cc.Spec.BackRestSidecar.Resources
+		container.Resources = *cc.Spec.BackRestSidecar.Resources
 	}
 
 	container.VolumeMounts = generateContainerVolumeMount(cc, backrestContainer)
