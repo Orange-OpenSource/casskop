@@ -41,6 +41,36 @@ spec:
                 update the SeedList according to new cluster CRD topology by default
                 a boolean is false
               type: boolean
+            backRestSidecar:
+              properties:
+                containerPort:
+                  format: int32
+                  type: integer
+                image:
+                  type: string
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+                resources:
+                  description: "\tSecretVolumeSource\t*v1.SecretVolumeSource\t\t`json:\"sidecarSecretVolumeSource,omitempty\"`"
+                  properties:
+                    limits:
+                      additionalProperties:
+                        type: string
+                      description: 'Limits describes the maximum amount of compute
+                        resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                    requests:
+                      additionalProperties:
+                        type: string
+                      description: 'Requests describes the minimum amount of compute
+                        resources required. If Requests is omitted for a container,
+                        it defaults to Limits if that is explicitly specified, otherwise
+                        to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                  type: object
+              type: object
             bootstrapImage:
               description: 'Image used for bootstrapping cluster (use the form : base:version)'
               type: string
