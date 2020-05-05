@@ -315,6 +315,8 @@ spec:
                 a container are visible to all other containers in that pod. https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
                 Optional: Default to false.'
               type: boolean
+            serviceAccountName:
+              type: string
             sidecarConfigs:
               description: SidecarsConfig defines additional sidecar configurations
               items:
