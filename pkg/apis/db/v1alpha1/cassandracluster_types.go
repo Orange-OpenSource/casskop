@@ -173,9 +173,6 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if len(ccs.BackRestSidecar.Image) == 0 {
 		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
 	}
-	if ccs.BackRestSidecar.ContainerPort == nil {
-		ccs.BackRestSidecar.ContainerPort = func(i int32) *int32 { return &i }(DefaultBackRestSidecarContainerPort)
-	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -875,8 +872,8 @@ type CassandraClusterSpec struct {
 	// +optional
 	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
 
-	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
-	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
+	BackRestSidecar    *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string           `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
@@ -969,11 +966,12 @@ type CPUAndMem struct {
 }
 
 type BackRestSidecar struct {
-	Image           string        `json:"image,omitempty"`
+	// Image + version to use for backup restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	Image string `json:"image,omitempty"`
+	//ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
-	//	SecretVolumeSource	*v1.SecretVolumeSource		`json:"sidecarSecretVolumeSource,omitempty"`
-	Resources     *v1.ResourceRequirements `json:"resources,omitempty"`
-	ContainerPort *int32                   `json:"containerPort,omitempty"`
+	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
