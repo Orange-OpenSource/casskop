@@ -43,9 +43,6 @@ spec:
               type: boolean
             backRestSidecar:
               properties:
-                containerPort:
-                  format: int32
-                  type: integer
                 image:
                   type: string
                 imagePullPolicy:
@@ -53,7 +50,8 @@ spec:
                     container image
                   type: string
                 resources:
-                  description: "\tSecretVolumeSource\t*v1.SecretVolumeSource\t\t`json:\"sidecarSecretVolumeSource,omitempty\"`"
+                  description: ResourceRequirements describes the compute resource
+                    requirements.
                   properties:
                     limits:
                       additionalProperties:

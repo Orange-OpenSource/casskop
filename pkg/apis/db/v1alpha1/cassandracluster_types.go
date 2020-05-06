@@ -174,9 +174,6 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if len(ccs.BackRestSidecar.Image) == 0 {
 		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
 	}
-	if ccs.BackRestSidecar.ContainerPort == nil {
-		ccs.BackRestSidecar.ContainerPort = func(i int32) *int32 { return &i }(DefaultBackRestSidecarContainerPort)
-	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -964,11 +961,12 @@ type CPUAndMem struct {
 }
 
 type BackRestSidecar struct {
+	// Image + version to use for backup restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
 	Image 				string						`json:"image,omitempty"`
+	//ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy		v1.PullPolicy 				`json:"imagePullPolicy,omitempty"`
-//	SecretVolumeSource	*v1.SecretVolumeSource		`json:"sidecarSecretVolumeSource,omitempty"`
+	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
 	Resources			*v1.ResourceRequirements	`json:"resources,omitempty"`
-	ContainerPort		*int32						`json:"containerPort,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
