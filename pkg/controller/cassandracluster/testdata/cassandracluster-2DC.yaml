@@ -6,6 +6,16 @@ metadata:
     cluster: k8s.pic
   namespace: ns
 spec:
+  backRestSidecar:
+    image: "eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug"
+    imagePullPolicy: Always
+    resources:
+      limits:
+        cpu: "2"
+        memory: 3Gi
+      requests:
+        cpu: "1"
+        memory: 1Gi
   livenessInitialDelaySeconds: 1205
   livenessHealthCheckTimeout: 151
   livenessHealthCheckPeriod: 17
