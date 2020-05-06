@@ -56,6 +56,7 @@ const (
 	defaultInitContainerRequestsMemory = "0.5Gi"
 
 	cassandraConfigMapName = "cassandra-config"
+	defaultBackRestPort    = 4567
 )
 
 type containerType int
@@ -828,7 +829,7 @@ func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.Cassan
 		Name:            "backrest-sidecar",
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
-		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: *cc.Spec.BackRestSidecar.ContainerPort}},
+		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: api.DefaultBackRestSidecarContainerPort}},
 		Env:             bootstrapContainerEnvVar(cc, status, resources, dcRackName),
 	}
 
