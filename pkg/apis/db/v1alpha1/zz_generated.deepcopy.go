@@ -17,11 +17,6 @@ func (in *BackRestSidecar) DeepCopyInto(out *BackRestSidecar) {
 		*out = new(v1.ResourceRequirements)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.ContainerPort != nil {
-		in, out := &in.ContainerPort, &out.ContainerPort
-		*out = new(int32)
-		**out = **in
-	}
 	return
 }
 
