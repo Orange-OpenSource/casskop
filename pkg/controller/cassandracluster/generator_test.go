@@ -329,7 +329,7 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 }
 
 func checkVolumeMount(t *testing.T, containers []v1.Container) {
-	assert.Equal(t, len(containers), 3)
+	assert.Equal(t, len(containers), 4)
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
@@ -338,6 +338,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
+		case "backrest-sidecar":
+			assert.Equal(t, len(container.VolumeMounts), 4)
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -353,6 +355,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "cassandra-logs":
 				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+			case "backrest-sidecar":
+				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
