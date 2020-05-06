@@ -147,7 +147,6 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
-
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
@@ -166,10 +165,17 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
-		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
+		1010, 201, 32, 7, 9, 1205, 151, 17, 50, 30)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
+	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
+		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
+		v1.PullAlways,
+		v1.ResourceRequirements{
+			Requests: generateResourceList("1", "1Gi"),
+			Limits:   generateResourceList("2", "3Gi"),
+		})
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -187,9 +193,15 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
-		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
+		60, 10, 10, 0, 0, 120, 20, 10, 0, 0)
 	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
-
+	checkBackRestSidecar(t, stsDefault.Spec.Template.Spec.Containers,
+		api.DefaultBackRestSidecarImage,
+		"",
+		v1.ResourceRequirements{
+			Requests: nil,
+			Limits:   nil,
+		})
 }
 
 func setupForDefaultTest(cc *api.CassandraCluster) {
@@ -203,6 +215,21 @@ func setupForDefaultTest(cc *api.CassandraCluster) {
 	cc.Spec.ReadinessInitialDelaySeconds = nil
 	cc.Spec.ReadinessFailureThreshold = nil
 	cc.Spec.ReadinessSuccessThreshold = nil
+	cc.Spec.BackRestSidecar = nil
+}
+
+func checkBackRestSidecar(t *testing.T, containers []v1.Container,
+	image string,
+	imagePullPolicy v1.PullPolicy,
+	resources v1.ResourceRequirements,
+) {
+	for _, c := range containers {
+		if c.Name == "backrest-sidecar" {
+			assert.Equal(t, image, c.Image)
+			assert.Equal(t, imagePullPolicy, c.ImagePullPolicy)
+			assert.Equal(t, resources, c.Resources)
+		}
+	}
 }
 
 func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
@@ -234,8 +261,6 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 		}
 	}
 }
-
-
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
 	dataCapacity, dataClassStorage string) {
@@ -366,7 +391,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 
 func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container) {
 	resources := api.CassandraResources{
-		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	resourcesRequirements := v1.ResourceRequirements{
