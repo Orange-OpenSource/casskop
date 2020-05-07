@@ -6,7 +6,7 @@ sidebar_label: Getting Started
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-The operator uses standard Cassandra image (tested up to Version 3.11), and can run on Kubernetes 1.13.3+.
+The operator uses the standard Cassandra image (tested up to Version 3.11), and can run on Kubernetes 1.13.3+.
 
 :::info
 The operator supports Cassandra 3.11.0+
@@ -17,19 +17,19 @@ As a pre-requisite it needs :
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) version v1.13.3+.
 - [Helm](https://helm.sh/) version v2.12.2+.
 - Access to a Kubernetes v1.13.3+ cluster.
-- Cassandra needs fast local storage (we have tested with local storage provisioner, GKE ssd storage, and Rancher local-path-provisioner)
+- Cassandra needs fast local storage (we have tested with local storage provisioner, GKE ssd storage, and Rancher local-path-provisioner). Fast remote storage should work but is not tested yet.
 
-## Casskop
+## CassKop
 
-### Pre-requisites
+### Kubernetes preparation
 
-First, we need to create a Kubernetes `namespace` in order to host our operator & cluster
+First, we need to create a `namespace` in order to host our operator & cluster (here we call it cassandra)
 
 ```
 kubectl create namespace cassandra
 ```
 
-We recommend to use a **custom StorageClass** to leverage the volume binding mode `WaitForFirstConsumer`
+We recommend using a **custom StorageClass** to leverage the volume binding mode `WaitForFirstConsumer`
 
 ```bash
 apiVersion: storage.k8s.io/v1
@@ -47,17 +47,18 @@ volumeBindingMode: WaitForFirstConsumer
 Remember to set your CassandraCluster CR properly to use the newly created StorageClass.
 :::
 
-### Easy way: installing with Helm
+### Installing CassKop with Helm
 
-Using Helm, you can deploy the operator using a Helm chart [Helm chart](https://github.com/Orange-Opensource/casskop/tree/master/helm):
+You can (should) deploy CassKop using this [Helm chart](https://github.com/Orange-Opensource/casskop/tree/master/helm):
 
-:::note
-To install the an other version of the operator use `helm install --name=casskop --namespace=cassandra --set operator.image.tag=x.y.z orange-incubator/casskop`
-:::
+First we add the repo:
+
 
 ```bash
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
 ```
+
+Then the chart itself depending on your installed version of Helm:
 
 <Tabs
   defaultValue="helm3"
@@ -90,8 +91,13 @@ helm install --name=casskop --namespace=cassandra orange-incubator/casskop
 </TabItem>
 </Tabs>
 
-You can find more information in the [Customizable install with helm](casskop/docs/2_setup/3_install/1_customizable_install_with_helm)
-If you have problem you can see [Troubleshooting](casskop/docs/6_troubleshooting/1_operations_issues) section
+:::note
+To install the an other version of the operator use `helm install --name=casskop --namespace=cassandra --set operator.image.tag=x.y.z orange-incubator/casskop`
+:::
+
+
+You can find more information in the [Customizable install with helm](/casskop/docs/2_setup/3_install/1_customizable_install_with_helm)
+If you have problem you can see [Troubleshooting](/casskop/docs/7_troubleshooting/1_operations_issues) section
 
 
 ### Deploy a Cassandra cluster
@@ -100,7 +106,7 @@ If you have problem you can see [Troubleshooting](casskop/docs/6_troubleshooting
 
 Before we can deploy our cluster, we need to create a configmap.
 This configmap will enable us to customize Cassandra's behaviour.
-More details on this can be found [here](documentation/description.md#configuration-override-using-configmap)
+More details on this can be found [here](https://github.com/Orange-OpenSource/casskop/blob/master/documentation/description.md#configuration-override-using-configmap)
 
 But for our example we will use the simple example: 
 
@@ -184,14 +190,14 @@ In order to have a working Multi-CassKop operator we need to have at least 2 k8s
   - in our on-premise cluster, we leverage [Calico](https://www.projectcalico.org/why-bgp/) routable IP pool in order to make this possible
   - this can also be done using mesh service such as istio
   - there may be other solutions as well
-- having casskop installed (With its ConfigMap) in each namespace see [CassKop installation](#install-casskop)
+- having CassKop installed (with its ConfigMap) in each namespace see [CassKop installation](#casskop)
 - having [External-DNS](https://github.com/kubernetes-sigs/external-dns) with RFC2136 installed in each namespace to
   manage your DNS sub zone. see [Install external dns](#install-external-dns)
-- You need to create secrets from targeted k8s clusters in current see [Bootstrap](#bootstrap-api-access-to-k8s-cluster-2-from-k8s-cluster-1)
+- You need to create secrets from targeted k8s clusters in current k8S cluster (see [Bootstrap](#bootstrap-api-access-to-k8s-cluster-2-from-k8s-cluster-1))
 - You may need to create network policies for Multi-Casskop inter-site communications to k8s apis, if using so.
 
 :::warning
-We have only tested t/.he configuration with Calico routable IP pool & external DNS with RFC2136 configuration.
+We have only tested the configuration with Calico routable IP pool & external DNS with RFC2136 configuration.
 :::
 
 #### Bootstrap API access to k8s-cluster-2 from k8s-cluster-1
@@ -207,10 +213,10 @@ kubemcsa export --context=cluster2 --namespace cassandra-e2e cassandra-operator 
 ```
 
 :::tips
-This will create in current k8s cluster which must be k8s-cluster-1, the k8s secret associated to the
+This will create in current k8s (k8s-cluster-1) the k8s secret associated to the
 **cassandra-operator** service account of namespace **cassandra-e2e** in k8s-cluster2.
 /!\ The Secret will be created with the name **k8s-cluster2** and this name must be used when starting Multi-CassKop and
-in the MultiuCssKop CRD definition see below
+in the MultiCassKop CRD definition see below
 :::
 
 #### Install CassKop

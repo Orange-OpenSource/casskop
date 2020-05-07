@@ -14,7 +14,7 @@ const features = [
         description: (
             <>
                 CassKop will define a new Kubernetes object named CassandraCluster which will be used to describe
-                and instantiate a Cassandra Cluster in Kubernetes
+                and instantiate a Cassandra Cluster in Kubernetes.
             </>
         ),
     },
@@ -32,8 +32,7 @@ const features = [
         imageUrl: 'img/kubernetes.png',
         description: (
             <>
-                CassKop is a Kubernetes custom controller which will loop over events on CassandraCluster objects and
-                reconcile with kubernetes resources needed to create a valid Cassandra Cluster deployment.
+                CassKop is a Kubernetes custom controller which will provide you with the required Kubernetes resources for your deployment.
             </>
         ),
     },
@@ -48,14 +47,13 @@ const features = [
         ),
     },
     {
-        title: <>Operate Cassandra Cluster</>,
+        title: <>Operate Cassandra Node with Kubectl plugin!</>,
         imageUrl: 'img/cassandra.png',
         description: (
             <>
-                Casskop manage a list of operations, with 2 levels :
-                Cluster operations which apply at cluster level and which have a dedicated status in each racks
-                and Pod operations which apply at pod level and can be triggered by specifics pods labels.
-                Status of pod operations are also followed up at rack level.
+                Casskop manage a list of operations at 2 levels :
+                Cluster operations with CRD and pod operations with our kubectl plugin!
+                Pod operation example: cleanup, rebuild...
             </>
         ),
     },
@@ -64,8 +62,7 @@ const features = [
         imageUrl: 'img/dc.png',
         description: (
             <>
-                For having more resilience with our Cassandra cluster, we want to be able to spread it on several regions.
-                For doing this with Kubernetes, we need that our Cassandra to spread on top of different Kubernetes clusters, deployed independently on different regions.
+                Multi-CassKop (included) can deploy one Cassandra cluster on different Kubernetes clusters deployed on different regions for real HA.
             </>
         ),
     }
