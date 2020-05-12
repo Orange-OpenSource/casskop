@@ -66,7 +66,6 @@ func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *
 	//Objects to track in the Fake client
 	objs := []runtime.Object{
 		&cc,
-		//&ccList,
 	}
 	// Register operator types with the runtime scheme.
 	s := scheme.Scheme
@@ -718,17 +717,17 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	mkPod := func(podName string, podIp string, ccReady bool) *v1.Pod {
-		return &v1.Pod {
+		return &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: podName},
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name: cassandraContainerName,
+						Name:  cassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name: cassandraContainerName + "toto",
+						Name:  cassandraContainerName + "toto",
 						Ready: !ccReady,
 					},
 				},
@@ -740,37 +739,36 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 	var podList []*v1.Pod
 
 	// Pod ready and with correspondance into HostIDMap
-	dc1Rack10PodName	:= "dc1-rack1-0"
-	dc1Rack10PodIp 		:= "10.100.150.110"
-	dc1Rack10HostId 	:= "3528d662-e4a8-4fb6-88f6-3f21056df7ea"
+	dc1Rack10PodName := "dc1-rack1-0"
+	dc1Rack10PodIp := "10.100.150.110"
+	dc1Rack10HostId := "3528d662-e4a8-4fb6-88f6-3f21056df7ea"
 	cc.Status.CassandraNodesStatus[dc1Rack10PodName] = api.CassandraNodeStatus{NodeIp: defaultIp, HostId: defaultHostId}
 	hostIDMap[dc1Rack10PodIp] = dc1Rack10HostId
-	podList = append(podList,mkPod(dc1Rack10PodName, dc1Rack10PodIp,true))
+	podList = append(podList, mkPod(dc1Rack10PodName, dc1Rack10PodIp, true))
 
 	// Pod ready and without correspondance into HostIDMap
-	dc1Rack20PodName	:= "dc1-rack2-0"
-	dc1Rack20PodIp 		:= "10.100.150.100"
+	dc1Rack20PodName := "dc1-rack2-0"
+	dc1Rack20PodIp := "10.100.150.100"
 	//dc1Rack20HostId 	:= "ca716bef-dc68-427d-be27-b4eeede1e072"
 	cc.Status.CassandraNodesStatus[dc1Rack20PodName] = api.CassandraNodeStatus{NodeIp: defaultIp, HostId: defaultHostId}
 	//hostIDMap[dc1Rack20PodIp] = dc1Rack20HostId
-	podList = append(podList,mkPod(dc1Rack20PodName, dc1Rack20PodIp,true))
+	podList = append(podList, mkPod(dc1Rack20PodName, dc1Rack20PodIp, true))
 
 	// Pod not ready and with correspondance into HostIDMap
-	dc2Rack10PodName 	:= "dc2-rack1-0"
-	dc2Rack10PodIp 		:= "10.100.150.109"
-	dc2Rack10HostId 	:= "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
+	dc2Rack10PodName := "dc2-rack1-0"
+	dc2Rack10PodIp := "10.100.150.109"
+	dc2Rack10HostId := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: defaultIp, HostId: defaultHostId}
 	hostIDMap[dc2Rack10PodIp] = dc2Rack10HostId
-	podList = append(podList,mkPod(dc2Rack10PodName, dc2Rack10PodIp,false))
+	podList = append(podList, mkPod(dc2Rack10PodName, dc2Rack10PodIp, false))
 
 	// Pod ready and with correspondance into HostIDMap
-	dc2Rack11PodName 	:= "dc2-rack1-1"
-	dc2Rack11PodIp 		:= "10.100.140.111"
-	dc2Rack11HostId 	:= "5228d662-e4a8-4fb6-88f6-3f21056f7ger"
+	dc2Rack11PodName := "dc2-rack1-1"
+	dc2Rack11PodIp := "10.100.140.111"
+	dc2Rack11HostId := "5228d662-e4a8-4fb6-88f6-3f21056f7ger"
 	cc.Status.CassandraNodesStatus[dc2Rack11PodName] = api.CassandraNodeStatus{NodeIp: defaultIp, HostId: defaultHostId}
 	hostIDMap[dc2Rack11PodIp] = dc2Rack11HostId
-	podList = append(podList,mkPod(dc2Rack11PodName, dc2Rack11PodIp, true))
-
+	podList = append(podList, mkPod(dc2Rack11PodName, dc2Rack11PodIp, true))
 
 	for _, pod := range podList {
 		updateCassandraNodesStatusForPod(hostIDMap, pod, &cc.Status)
@@ -786,17 +784,17 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 	hostIDMap := make(map[string]string)
 
 	mkPod := func(podName string, podIp string, ccReady bool) *v1.Pod {
-		return &v1.Pod {
+		return &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: podName},
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name: cassandraContainerName,
+						Name:  cassandraContainerName,
 						Ready: ccReady,
 					},
 					{
-						Name: cassandraContainerName + "toto",
+						Name:  cassandraContainerName + "toto",
 						Ready: !ccReady,
 					},
 				},
@@ -809,37 +807,37 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	// Pod Ip change but the Ip is not in the Jolokia Hostid - Ip map.
-	dc1Rack10PodName	:= "dc1-rack1-0"
-	oldDc1Rack10PodIp 	:= "20.300.150.110"
-	dc1Rack10PodIp 		:= "10.100.150.110"
-	dc1Rack10HostId 	:= "3528d662-e4a8-4fb6-88f6-3f21056df7ea"
+	dc1Rack10PodName := "dc1-rack1-0"
+	oldDc1Rack10PodIp := "20.300.150.110"
+	dc1Rack10PodIp := "10.100.150.110"
+	dc1Rack10HostId := "3528d662-e4a8-4fb6-88f6-3f21056df7ea"
 	cc.Status.CassandraNodesStatus[dc1Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc1Rack10PodIp, HostId: dc1Rack10HostId}
 	hostIDMap[oldDc1Rack10PodIp] = dc1Rack10HostId
-	podNotFound := mkPod(dc1Rack10PodName, dc1Rack10PodIp,true)
+	podNotFound := mkPod(dc1Rack10PodName, dc1Rack10PodIp, true)
 
 	pod, _ := checkPodCrossIpUseCaseForPod(hostIDMap, podNotFound, &cc.Status)
 	assert.True(t, pod == nil)
 
 	// Pod doesn't Ip hostId are the same
-	dc1Rack20PodName	:= "dc1-rack2-0"
-	dc1Rack20PodIp 		:= "10.100.150.100"
-	dc1Rack20HostId 	:= "ca716bef-dc68-427d-be27-b4eeede1e072"
+	dc1Rack20PodName := "dc1-rack2-0"
+	dc1Rack20PodIp := "10.100.150.100"
+	dc1Rack20HostId := "ca716bef-dc68-427d-be27-b4eeede1e072"
 	cc.Status.CassandraNodesStatus[dc1Rack20PodName] = api.CassandraNodeStatus{NodeIp: dc1Rack20PodIp, HostId: dc1Rack20HostId}
 	hostIDMap[dc1Rack20PodIp] = dc1Rack20HostId
-	podNoChange := mkPod(dc1Rack20PodName, dc1Rack20PodIp,true)
+	podNoChange := mkPod(dc1Rack20PodName, dc1Rack20PodIp, true)
 
 	pod, _ = checkPodCrossIpUseCaseForPod(hostIDMap, podNoChange, &cc.Status)
 	assert.True(t, pod == nil)
 
 	// Pod ip change and hostId are not the same in cache.
-	dc2Rack10PodName 	:= "dc2-rack1-0"
-	oldDc2Rack10PodIp 	:= "10.160.150.109"
-	dc2Rack10PodIp 		:= "10.100.150.109"
-	cachedHostId 		:= "ca716bef-dc68-427d-be27-b4eeede1e072"
-	dc2Rack10HostId 	:= "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
+	dc2Rack10PodName := "dc2-rack1-0"
+	oldDc2Rack10PodIp := "10.160.150.109"
+	dc2Rack10PodIp := "10.100.150.109"
+	cachedHostId := "ca716bef-dc68-427d-be27-b4eeede1e072"
+	dc2Rack10HostId := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	hostIDMap[dc2Rack10PodIp] = cachedHostId
-	podCrossIp := mkPod(dc2Rack10PodName, dc2Rack10PodIp,false)
+	podCrossIp := mkPod(dc2Rack10PodName, dc2Rack10PodIp, false)
 
 	pod, _ = checkPodCrossIpUseCaseForPod(hostIDMap, podCrossIp, &cc.Status)
 	assert.Equal(t, pod, podCrossIp)
@@ -848,22 +846,21 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 func TestProcessingPods(t *testing.T) {
 	hostIDMap := make(map[string]string)
 
-	mkPod := func(podName string, podIp string,restartCount int32) *v1.Pod {
-		return &v1.Pod {
+	mkPod := func(podName string, podIp string, restartCount int32) *v1.Pod {
+		return &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: podName},
 			Status: v1.PodStatus{
 				Phase: v1.PodRunning,
 				ContainerStatuses: []v1.ContainerStatus{
 					{
-						Name: cassandraContainerName,
-						Ready: true,
+						Name:         cassandraContainerName,
+						Ready:        true,
 						RestartCount: restartCount,
 					},
 					{
-						Name: cassandraContainerName + "toto",
-						Ready: true,
+						Name:         cassandraContainerName + "toto",
+						Ready:        true,
 						RestartCount: 10000,
-
 					},
 				},
 				PodIP: podIp,
@@ -875,25 +872,25 @@ func TestProcessingPods(t *testing.T) {
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	// Pod ip change and hostId are not the same in cache.
-	dc2Rack10PodName 	:= "dc2-rack1-0"
-	oldDc2Rack10PodIp 	:= "10.180.150.109"
-	dc2Rack10PodIp 		:= "10.100.150.109"
-	cachedHostId 		:= "ca716bef-dc68-427d-be27-b4eeede1e072"
-	dc2Rack10HostId 	:= "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
+	dc2Rack10PodName := "dc2-rack1-0"
+	oldDc2Rack10PodIp := "10.180.150.109"
+	dc2Rack10PodIp := "10.100.150.109"
+	cachedHostId := "ca716bef-dc68-427d-be27-b4eeede1e072"
+	dc2Rack10HostId := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
 	hostIDMap[dc2Rack10PodIp] = cachedHostId
 
 	// No enough restart
 	returnedPod, _ := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp,1)}, &cc.Status)
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
-	assert.True(t,  returnedPod ==nil)
+	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp,cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
-	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIp,100)
+	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
 		[]v1.Pod{*pod}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
@@ -904,17 +901,17 @@ func TestProcessingPods(t *testing.T) {
 
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp,1)}, &cc.Status)
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
-	assert.True(t,  returnedPod ==nil)
+	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp,cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp,100)}, &cc.Status)
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)}, &cc.Status)
 	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
-	assert.True(t, returnedPod == nil )
+	assert.True(t, returnedPod == nil)
 }
