@@ -66,7 +66,6 @@ func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *
 	//Objects to track in the Fake client
 	objs := []runtime.Object{
 		&cc,
-		//&ccList,
 	}
 	// Register operator types with the runtime scheme.
 	s := scheme.Scheme
