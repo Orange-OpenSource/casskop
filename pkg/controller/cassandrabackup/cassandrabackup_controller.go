@@ -232,16 +232,12 @@ func backupOfSameSnapshotExists(c client.Client, instance *api.CassandraBackup) 
 	}
 
 	for _, existingBackup := range backupsList.Items {
-		if existingBackup.Status != nil {
-			if existingBackup.Spec.SnapshotTag == instance.Spec.SnapshotTag {
-				if existingBackup.Spec.StorageLocation == instance.Spec.StorageLocation {
-					if existingBackup.Spec.CassandraCluster == instance.Spec.CassandraCluster {
-						if existingBackup.Spec.Datacenter == instance.Spec.Datacenter {
-							return true, nil
-						}
-					}
-				}
-			}
+		if existingBackup.Status != nil &&
+			existingBackup.Spec.SnapshotTag == instance.Spec.SnapshotTag &&
+			existingBackup.Spec.StorageLocation == instance.Spec.StorageLocation &&
+			existingBackup.Spec.CassandraCluster == instance.Spec.CassandraCluster &&
+			existingBackup.Spec.Datacenter == instance.Spec.Datacenter {
+			return true, nil
 		}
 	}
 
