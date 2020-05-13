@@ -169,6 +169,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -187,6 +188,8 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
 		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
+	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
+
 }
 
 func setupForDefaultTest(cc *api.CassandraCluster) {
@@ -353,6 +356,27 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
+		}
+	}
+}
+
+func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container) {
+	resources := api.CassandraResources{
+		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
+	}
+	resourcesRequirements := v1.ResourceRequirements{
+		Limits:   getRequests(resources),
+		Requests: getLimits(resources),
+	}
+
+	for _, container := range containers {
+		switch container.Name {
+		case "bootstrap":
+			assert.Equal(t, container.Resources, resourcesRequirements)
+		case "init-config":
+			assert.Equal(t, container.Resources, resourcesRequirements)
+		default:
 		}
 	}
 }
