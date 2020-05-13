@@ -40,6 +40,7 @@ const (
 
 	defaultCassandraImage         string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
+	defaultServiceAccountName     string        = "cassandra-cluster-node"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -127,6 +128,10 @@ func (cc *CassandraCluster) CheckDefaults() {
 	}
 	if len(ccs.BootstrapImage) == 0 {
 		ccs.BootstrapImage = defaultBootstrapImage
+	}
+
+	if len(ccs.ServiceAccountName) == 0 {
+		ccs.ServiceAccountName = defaultServiceAccountName
 	}
 
 	//Init-Container 1 : init-config
