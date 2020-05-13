@@ -47,6 +47,12 @@ const (
 	defaultJvmMaxHeap      = "2048M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
+	// InitContainer resources
+	defaultInitContainerLimitsCPU       = "0.5"
+	defaultInitContainerLimitsMemory    = "0.5Gi"
+	defaultInitContainerRequestsCPU     = "0.5"
+	defaultInitContainerRequestsMemory  = "0.5Gi"
+
 	cassandraConfigMapName = "cassandra-config"
 )
 
@@ -450,6 +456,17 @@ func getCassandraResources(spec api.CassandraClusterSpec) v1.ResourceRequirement
 	}
 }
 
+func getInitContainerResources() v1.ResourceRequirements {
+	resources := api.CassandraResources{
+		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
+	}
+	return v1.ResourceRequirements{
+		Limits:   getRequests(resources),
+		Requests: getLimits(resources),
+	}
+}
+
 func getLimits(resources api.CassandraResources) v1.ResourceList {
 	return generateResourceList(resources.Limits.CPU, resources.Limits.Memory)
 }
@@ -610,7 +627,7 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 // createInitConfigContainer allows to copy origin config files from init-config container to /bootstrap directory
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
-	resources := getCassandraResources(cc.Spec)
+	resources := getInitContainerResources()
 	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 
 	return v1.Container{
@@ -627,7 +644,7 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 // configure /etc/cassandra with Env var and with userConfigMap (if enabled) by running the run.sh script
 func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
-	resources := getCassandraResources(cc.Spec)
+	resources := getInitContainerResources()
 	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
 
 	return v1.Container{
