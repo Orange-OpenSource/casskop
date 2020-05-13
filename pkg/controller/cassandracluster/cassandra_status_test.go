@@ -108,7 +108,7 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
 		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
-		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns"
+		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 
 	assert.Equal(len(expectedSeedList), len(cc.Status.SeedList))
