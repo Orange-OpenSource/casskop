@@ -44,14 +44,15 @@ spec:
             backRestSidecar:
               properties:
                 image:
+                  description: 'Image + version to use for backup restore sidecar,
+                    default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"'
                   type: string
                 imagePullPolicy:
-                  description: PullPolicy describes a policy for if/when to pull a
-                    container image
+                  description: ImagePullPolicy define the pull policy for backrest
+                    sidecar docker image
                   type: string
                 resources:
-                  description: ResourceRequirements describes the compute resource
-                    requirements.
+                  description: 'Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements'
                   properties:
                     limits:
                       additionalProperties:
