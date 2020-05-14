@@ -1,5 +1,5 @@
 ---
-id: 3_features
+id: 2_features
 title: Features
 sidebar_label: Features
 ---

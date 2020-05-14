@@ -1,14 +1,14 @@
 ---
-id: 1_customizable_install_with_helm
+id: 0_customizable_install_with_helm
 title: Customizable install with Helm
 sidebar_label: Customizable install with Helm
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This Helm chart installs CassKop to create/configure/manage Cassandra 
+This Helm chart installs CassKop to create/configure/manage Cassandra
 clusters in a Kubernetes Namespace.
-It will use a Custom Ressource Definition(CRD): `cassandraclusters.db.orange.com` 
+It will use a Custom Ressource Definition(CRD): `cassandraclusters.db.orange.com`
 which implements a `CassandraCluster` object in Kubernetes.
 
 ## Introduction
@@ -16,7 +16,6 @@ which implements a `CassandraCluster` object in Kubernetes.
 ### Configuration
 
 The following tables lists the configurable parameters of the Cassandra Operator Helm chart and their default values.
-
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
@@ -30,24 +29,23 @@ The following tables lists the configurable parameters of the Cassandra Operator
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
 | `debug.enabled`                  | activate DEBUG log level                         | `false`                                   |
 
-
-
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install --name casskop incubator/cassandra-operator -f values.yaml
+helm install --name casskop incubator/cassandra-operator -f values.yaml
 ```
 
 ### Installing the Chart
 
 :::important Helm 3 users
 You need to manually install the crds beforehand
+
 ```console
 kubectl apply -f https://github.com/Orange-OpenSource/casskop/blob/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 ```
-::: 
+:::
 
 <Tabs
   defaultValue="dryrun"
@@ -64,45 +62,57 @@ helm install --dry-run \
     --set debug.enabled=true \
     --name casskop
 ```
+
 </TabItem>
 <TabItem value="rn">
 
 ```bash
 helm install --name casskop orange-incubator/casskop
 ```
+
 </TabItem>
 
 </Tabs>
 
 > the `-replace` flag allow you to reuse a charts release name
 
+### Listing deployed charts
 
-### Listing deployed charts:
-
-```
+```bash
 helm list
 ```
 
-### Get Status for the helm deployment:
+### Get status for the helm deployment
 
-```
+```bash
 helm status casskop
-
 ```
+
+## Install another version of the operator
+
+To install another version of the operator use:
+
+```bash
+helm install --name=casskop --namespace=cassandra --set operator.image.tag=x.y.z orange-incubator/casskop`
+```
+
+where x.y.z is the version you want.
 
 ## Uninstaling the Charts
 
 If you want to delete the operator from your Kubernetes cluster, the operator deployment should be deleted.
 
+```bash
+helm delete casskop
 ```
-$ helm delete casskop
-```
+
 The command removes all the Kubernetes components associated with the chart and deletes the helm release.
 
 > The CRD created by the chart are not removed by default and should be manually cleaned up (if required)
 
 Manually delete the CRD:
-```
+
+```bash
 kubectl delete crd cassandraclusters.dfy.orange.com
 ```
 
@@ -111,7 +121,6 @@ If you delete the CRD then :
 It will delete **ALL** Clusters that has been created using this CRD!!!
 Please never delete a CRD without very very good care
 :::
-
 
 Helm always keeps records of what releases were installed. Need to see the deleted releases? `helm list --deleted`
 shows those, and `helm list --all` shows all of the releases (deleted and currently deployed, as well as releases that
@@ -123,11 +132,10 @@ resources.)
 
 Note that because releases are preserved in this way, you can rollback a deleted resource, and have it re-activate.
 
-
 To purge a release
 
 ```console
-$ helm delete --purge casskop
+helm delete --purge casskop
 ```
 
 ## Troubleshooting
@@ -137,13 +145,13 @@ $ helm delete --purge casskop
 By default, the chart will install the Casskop CRD via a helm hook but this installation is global for the whole
 cluster.You may then deploy a chart with an existing CRD already deployed. In that case you can get an error like :
 
-```
+```bash
 $ helm install --name casskop ./helm/cassandra-operator
 Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
 ```
 
 In this case there si a parameter to say not to use the hook to install the CRD :
 
-```
-$ helm install --name casskop ./helm/cassandra-operator --no-hooks
+```bash
+helm install --name casskop ./helm/cassandra-operator --no-hooks
 ```
