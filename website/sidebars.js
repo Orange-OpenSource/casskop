@@ -45,29 +45,10 @@ module.exports = {
             "Operations" : [
                 "5_operations/1_cluster_operations",
                 "5_operations/2_pods_operations",
-                {
-                    "type" : "category",
-                    "label": "Upgrade",
-                    "items"  : [
-                        "5_operations/3_upgrading/1_upgrade_operator",
-                        "5_operations/3_upgrading/2_upgrade_bootstrap_image",
-                    ]
-                },
-                {
-                    "type" : "category",
-                    "label": "Uninstall",
-                    "items"  : [
-                        "5_operations/4_uninstall/1_casskop",
-                    ]
-                },
-                {
-                    "type" : "category",
-                    "label": "MultiCasskop",
-                    "items"  : [
-                        "5_operations/5_multicasskop/1_cassandra_cluster",
-                    ]
-                },
-
+                "5_operations/3_multi_casskop",
+                "5_operations/4_upgrade_operator",
+                "5_operations/5_upgrade_bootstrap_image",
+                "5_operations/6_uninstall_casskop",
             ],
             "Reference": [
                 {
