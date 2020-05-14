@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[38],{165:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"gke","name":"gke","count":1,"permalink":"/casskop/blog/tags/gke"}')}}]);
