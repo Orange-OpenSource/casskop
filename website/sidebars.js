@@ -10,12 +10,14 @@ module.exports = {
         {
             "Concepts": [
                 "1_concepts/1_introduction",
-                "1_concepts/2_design_principes",
-                "1_concepts/3_features",
+                "1_concepts/2_features",
+                "1_concepts/3_design_principes",
                 "1_concepts/4_roadmap",
             ],
             "Setup": [
                 "2_setup/1_getting_started",
+                "2_setup/2_install_plugin",
+                "2_setup/3_multi_casskop",
                 {
                     "type" : "category",
                     "label": "Platform Setup",
@@ -24,34 +26,20 @@ module.exports = {
                         "2_setup/2_platform_setup/2_minikube",
                     ]
                 },
-                {
-                    "type" : "category",
-                    "label": "Install",
-                    "items"  : [
-                        "2_setup/3_install/1_customizable_install_with_helm",
-                        "2_setup/3_install/2_install_plugin",
-                    ]
-                }
             ],
-            "Tasks": [
-                "3_tasks/1_operator_description",
-                {
-                    "type" : "category",
-                    "label": "Configuration Deployment",
-                    "items"  : [
-                        "3_tasks/2_configuration_deployment/1_cassandra_cluster",
-                        "3_tasks/2_configuration_deployment/2_cassandra_configuration",
-                        "3_tasks/2_configuration_deployment/3_storage",
-                        "3_tasks/2_configuration_deployment/4_sidecars",
-                        "3_tasks/2_configuration_deployment/5_kubernets_objects",
-                        "3_tasks/2_configuration_deployment/6_cpu_memory_usage",
-                        "3_tasks/2_configuration_deployment/7_cluster_topology",
-                        "3_tasks/2_configuration_deployment/8_implementation_architecture",
-                        "3_tasks/2_configuration_deployment/9_advanced_configuration",
-                        "3_tasks/2_configuration_deployment/10_nodes_management",
-                        "3_tasks/2_configuration_deployment/11_cassandra_cluster_status",
-                    ]
-                },
+            "Advanced Configuration": [
+                "3_configuration_deployment/0_customizable_install_with_helm",
+                "3_configuration_deployment/1_cassandra_cluster",
+                "3_configuration_deployment/2_cassandra_configuration",
+                "3_configuration_deployment/3_storage",
+                "3_configuration_deployment/4_sidecars",
+                "3_configuration_deployment/5_kubernets_objects",
+                "3_configuration_deployment/6_cpu_memory_usage",
+                "3_configuration_deployment/7_cluster_topology",
+                "3_configuration_deployment/8_implementation_architecture",
+                "3_configuration_deployment/9_advanced_configuration",
+                "3_configuration_deployment/10_nodes_management",
+                "3_configuration_deployment/11_cassandra_cluster_status",
             ],
             "Examples": [],
             "Operations" : [

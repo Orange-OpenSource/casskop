@@ -9,15 +9,37 @@ sidebar_label: Storage
 Cassandra is a stateful application. It needs to store data on disks. CassKop allows you to configure the type of
 storage you want to use.
 
+### Storage class
+
+We recommend using a **custom StorageClass** to leverage the volume binding mode `WaitForFirstConsumer`
+
+```bash
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: exampleStorageclass
+parameters:
+  type: pd-standard
+provisioner: kubernetes.io/gce-pd
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+```
+
+:::tip
+Remember to set your CassandraCluster CRD properly to use the newly created StorageClass.
+:::
+
+### Scope
+
 Storage can be configured using the `storage` property in `CassandraCluster.spec` for global Data Centers configuration, or can be overrided at `CassandraCluster.spec.topology.dc` level. 
+
 
 :::important
 Once the Cassandra cluster is deployed, the storage cannot be changed.
 :::
 
 Persistent storage uses Persistent Volume Claims to provision persistent volumes for storing data.
-The `PersistentVolumes` are acquired using a `PersistentVolumeClaim` which is managed by CassKop. The
-`PersistentVolumeClaim` can use a `StorageClass` to trigger automatic volume provisioning.
+The `PersistentVolumeClaim` can use a `StorageClass` to trigger automatic volume provisioning.
 
 > It is recommended to use local-storage with quick ssd disk access for low latency. We have only tested the
 > `local-storage` storage class within CassKop.
@@ -76,25 +98,25 @@ If we don't specify dataCapacity, then CassKop will use the Docker Container eph
 all data will be lost in case of a cassandra node reboot.
 :::
 
-## Persistent volume claim
+## Persistent volume claim management
 
 When the persistent storage is used, it will create PersistentVolumeClaims with the following names:
 
 `data-<cluster-name>-<dc-name>-<rack-name>-<idx>`
 
-Persistent Volume Claim for the volume used for storing data to the cluster `<cluster-name>` for the Cassandra DC
+Persistent Volume Claim for the volume used for storing data of the cluster `<cluster-name>` for the Cassandra DC
 `<dc-name>` and the rack `<rack-name>` for the Pod with ID `<idx>`.
 
 :::important
-Note that with local-storage the PVC object makes a link between the Pod and the Node. While this
-object is existing the Pod will be sticked to the node chosen by the scheduler. In the case you want to move the
-Cassandra node to a new kubernetes node, you will need at some point to manually delete the associate PVC so that the
-scheduler can choose another Node for scheduling. This is cover in the Operation document.
+Note that with local-storage the PVC object makes a link between the pod and the node. While this
+object exists the pod will be sticked to the node chosen by the scheduler. If you want to move the
+Cassandra node to a new Kubernetes node, you will need to manually delete the associated PVC so that the
+scheduler can choose another node for scheduling. This is covered in the Operation document.
 :::
 
-## Additionnals storages configuration
+## Additional storage configurations
 
-For extra needed not covered by the defaults volumes managed through the CassandraCluster CR, we are allowing you to define your own storage configurations.
+For extra needs not covered by the default volumes managed through the CassandraCluster CRD, we are allowing you to define your own storage configurations.
 To do this, you will configure the `storageConfigs` property in `CassandraCluster.Spec`.
 
 CassandraCluster fragment for dynamic persistent storage definition : 

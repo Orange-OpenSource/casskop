@@ -32,4 +32,3 @@ kubectl-casskop: error: the following arguments are required: command
 ```
 
 Your CassKop plugin is now installed!
-
