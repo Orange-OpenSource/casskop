@@ -1,7 +1,7 @@
 ---
-id: 1_casskop
-title: Casskop
-sidebar_label: Casskop
+id: 6_uninstall_casskop
+title: Uninstall Casskop
+sidebar_label: Uninstall Casskop
 ---
 
 ## Uninstaling the Charts

@@ -1,5 +1,5 @@
 ---
-id: 2_upgrade_bootstrap_image
+id: 5_upgrade_bootstrap_image
 title: Upgrade Bootstrap Image
 sidebar_label: Upgrade Bootstrap Image
 ---

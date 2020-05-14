@@ -1,5 +1,5 @@
 ---
-id: 1_upgrade_operator
+id: 4_upgrade_operator
 title: Upgrade Operator
 sidebar_label: Upgrade Operator
 ---

@@ -1,7 +1,7 @@
 ---
-id: 1_cassandra_cluster
-title: Cassandra Cluster
-sidebar_label: Cassandra Cluster
+id: 3_multi_casskop
+title: Multi-CassKop
+sidebar_label: Multi-CassKop
 ---
 
 Here is describes how perform some operations based on the MultiCasskop Operator.

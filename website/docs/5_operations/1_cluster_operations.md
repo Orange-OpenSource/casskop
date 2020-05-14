@@ -4,7 +4,7 @@ title: Cluster Operations
 sidebar_label: Cluster Operations
 ---
 
-Here is the list of Operations managed by CassKop at the **Cluster operations** level,  which apply at cluster level and which have a dedicated status in each racks
+Here is the list of operations managed by CassKop at the **Cluster** level which have a dedicated status in each racks.
 
 
 Those operations are applied at the Cassandra cluster level, as opposite to Pod operations that are executed at pod
