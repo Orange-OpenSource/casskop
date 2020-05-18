@@ -169,6 +169,13 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
+		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
+		v1.PullAlways,
+		v1.ResourceRequirements{
+			Requests:generateResourceList("1", "1Gi"),
+			Limits:generateResourceList("2", "3Gi"),
+		})
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -187,6 +194,14 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
 		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
+
+	checkBackRestSidecar(t, stsDefault.Spec.Template.Spec.Containers,
+		api.DefaultBackRestSidecarImage,
+		"",
+		v1.ResourceRequirements{
+			Requests: nil,
+			Limits: nil,
+		})
 }
 
 func setupForDefaultTest(cc *api.CassandraCluster) {
@@ -200,6 +215,21 @@ func setupForDefaultTest(cc *api.CassandraCluster) {
 	cc.Spec.ReadinessInitialDelaySeconds = nil
 	cc.Spec.ReadinessFailureThreshold = nil
 	cc.Spec.ReadinessSuccessThreshold = nil
+	cc.Spec.BackRestSidecar = nil
+}
+
+func checkBackRestSidecar(t *testing.T, containers []v1.Container,
+	image string,
+	imagePullPolicy v1.PullPolicy,
+	resources v1.ResourceRequirements,
+	) {
+	for _, c := range containers {
+		if c.Name == "backrest-sidecar" {
+			assert.Equal(t, image, c.Image)
+			assert.Equal(t, imagePullPolicy, c.ImagePullPolicy)
+			assert.Equal(t, resources, c.Resources)
+		}
+	}
 }
 
 func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
@@ -326,7 +356,7 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 }
 
 func checkVolumeMount(t *testing.T, containers []v1.Container) {
-	assert.Equal(t, len(containers), 3)
+	assert.Equal(t, len(containers), 4)
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
@@ -335,6 +365,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
+		case "backrest-sidecar":
+			assert.Equal(t, len(container.VolumeMounts), 4)
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -350,6 +382,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "cassandra-logs":
 				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+			case "backrest-sidecar":
+				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}

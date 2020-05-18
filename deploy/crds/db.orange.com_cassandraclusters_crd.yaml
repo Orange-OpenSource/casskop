@@ -41,6 +41,35 @@ spec:
                 update the SeedList according to new cluster CRD topology by default
                 a boolean is false
               type: boolean
+            backRestSidecar:
+              properties:
+                image:
+                  description: 'Image + version to use for backup restore sidecar,
+                    default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"'
+                  type: string
+                imagePullPolicy:
+                  description: ImagePullPolicy define the pull policy for backrest
+                    sidecar docker image
+                  type: string
+                resources:
+                  description: 'Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements'
+                  properties:
+                    limits:
+                      additionalProperties:
+                        type: string
+                      description: 'Limits describes the maximum amount of compute
+                        resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                    requests:
+                      additionalProperties:
+                        type: string
+                      description: 'Requests describes the minimum amount of compute
+                        resources required. If Requests is omitted for a container,
+                        it defaults to Limits if that is explicitly specified, otherwise
+                        to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                  type: object
+              type: object
             bootstrapImage:
               description: 'Image used for bootstrapping cluster (use the form : base:version)'
               type: string
@@ -281,6 +310,8 @@ spec:
                     headless service the CassKop operator creates
                   type: object
               type: object
+            serviceAccountName:
+              type: string
             sidecarConfigs:
               description: SidecarsConfig defines additional sidecar configurations
               items:
