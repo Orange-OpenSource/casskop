@@ -28,8 +28,8 @@ module.exports = {
                 },
             ],
             "Advanced Configuration": [
-                "3_configuration_deployment/0_customizable_install_with_helm",
-                "3_configuration_deployment/1_cassandra_cluster",
+                "3_configuration_deployment/1_customizable_install_with_helm",
+                "3_configuration_deployment/2_cassandra_cluster",
                 "3_configuration_deployment/2_cassandra_configuration",
                 "3_configuration_deployment/3_storage",
                 "3_configuration_deployment/4_sidecars",
@@ -51,22 +51,10 @@ module.exports = {
                 "5_operations/6_uninstall_casskop",
             ],
             "Reference": [
-                {
-                    "type" : "category",
-                    "label": "Cassandra Cluster",
-                    "items"  : [
-                        "6_references/1_cassandra_cluster/1_cassandra_cluster",
-                        "6_references/1_cassandra_cluster/2_topology",
-                        "6_references/1_cassandra_cluster/3_cassandra_cluster_status",
-                    ]
-                },
-                {
-                    "type" : "category",
-                    "label": "MultiCasskop",
-                    "items"  : [
-                        "6_references/2_multicasskop/1_multicasskop",
-                    ]
-                },
+                "6_references/1_cassandra_cluster",
+                "6_references/2_topology",
+                "6_references/3_cassandra_cluster_status",
+                "6_references/4_multicasskop",
             ],
             "Troubleshooting" : [
                 "7_troubleshooting/1_operations_issues",
