@@ -26,6 +26,10 @@ import (
 )
 
 const (
+	// Backup Restore default config
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	DefaultBackRestSidecarContainerPort int32  = 4567
+
 
 	DefaultLivenessInitialDelaySeconds 	int32 = 120
 	DefaultLivenessHealthCheckTimeout  	int32 = 20
@@ -37,6 +41,7 @@ const (
 
 	defaultCassandraImage         string        = "cassandra:latest"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
+	defaultServiceAccountName     string        = "cassandra-cluster-node"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
@@ -126,6 +131,10 @@ func (cc *CassandraCluster) CheckDefaults() {
 		ccs.BootstrapImage = defaultBootstrapImage
 	}
 
+	if len(ccs.ServiceAccountName) == 0 {
+		ccs.ServiceAccountName = defaultServiceAccountName
+	}
+
 	//Init-Container 1 : init-config
 	if len(ccs.InitContainerImage) == 0 {
 		ccs.InitContainerImage = ccs.CassandraImage
@@ -162,6 +171,14 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if ccs.ReadinessHealthCheckPeriod == nil {
 		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
 	}
+
+	// BackupRestore default config
+	if ccs.BackRestSidecar == nil {
+		ccs.BackRestSidecar = &BackRestSidecar{}
+	}
+	if len(ccs.BackRestSidecar.Image) == 0 {
+		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
+	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -185,6 +202,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 	if ccs.MaxPodUnavailable == 0 {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
+		changed = true
 	}
 	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
@@ -852,6 +870,9 @@ type CassandraClusterSpec struct {
 	// ReadinessSuccessThreshold defines success threshold for the readiness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
+
+	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
@@ -941,6 +962,15 @@ type CPUAndMem struct {
 	CPU string `json:"cpu"`
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
+}
+
+type BackRestSidecar struct {
+	// Image + version to use for backup restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	Image 				string						`json:"image,omitempty"`
+	//ImagePullPolicy define the pull policy for backrest sidecar docker image
+	ImagePullPolicy		v1.PullPolicy 				`json:"imagePullPolicy,omitempty"`
+	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
+	Resources			*v1.ResourceRequirements	`json:"resources,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)

@@ -48,6 +48,7 @@ const (
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
 	cassandraConfigMapName = "cassandra-config"
+	defaultBackRestPort	   = 4567
 )
 
 type containerType int
@@ -56,6 +57,7 @@ const (
 	initContainer containerType = iota
 	bootstrapContainer
 	cassandraContainer
+	backrestContainer
 )
 
 func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
@@ -176,7 +178,10 @@ func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []
 
 	vm = append(vm, v1.VolumeMount{Name: "bootstrap", MountPath: "/etc/cassandra"})
 	vm = append(vm, v1.VolumeMount{Name: "extra-lib", MountPath: "/extra-lib"})
-	vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
+
+	if ct != backrestContainer {
+		vm = append(vm, v1.VolumeMount{Name: "tools", MountPath: "/opt/bin"})
+	}
 
 	if ct == bootstrapContainer {
 		if cc.Spec.ConfigMapName != "" {
@@ -344,6 +349,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
+					ServiceAccountName: 		   cc.Spec.ServiceAccountName,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,
@@ -654,6 +660,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	var containers []v1.Container
 	containers = append(containers, cc.Spec.SidecarConfigs...)
 	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
+	containers = append(containers, createBackRestSidecarContainer(cc, status, dcRackName))
 
 	return containers
 }
@@ -783,4 +790,26 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	}
 
 	return cassandraContainer
+}
+
+func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+	dcRackName string) v1.Container {
+
+	resources := getCassandraResources(cc.Spec)
+
+	container := v1.Container{
+		Name:            "backrest-sidecar",
+		Image:           cc.Spec.BackRestSidecar.Image,
+		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
+		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
+		Env:             createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+	}
+
+	if cc.Spec.BackRestSidecar.Resources != nil {
+		container.Resources =  *cc.Spec.BackRestSidecar.Resources
+	}
+
+	container.VolumeMounts = generateContainerVolumeMount(cc, backrestContainer)
+
+	return container
 }
