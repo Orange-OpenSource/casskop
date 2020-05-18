@@ -27,7 +27,7 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage	        string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
 
