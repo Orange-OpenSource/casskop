@@ -801,7 +801,7 @@ func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.Cassan
 		Name:            "backrest-sidecar",
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
-		Ports:			 []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
+		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
 		Env:             createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
 	}
 
