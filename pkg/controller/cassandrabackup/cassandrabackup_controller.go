@@ -165,10 +165,11 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	secret := &corev1.Secret{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Secret, Namespace: instance.Namespace}, secret); err != nil {
 		if k8sErrors.IsNotFound(err) {
-			// if the resource is not found, that means all of
-			// the finalizers have been removed, and the resource has been deleted,
-			// so there is nothing left to do.
-			reqLogger.Info(fmt.Sprintf("Secret used for backups %s was not found", instance.Spec.Secret))
+			r.recorder.Event(
+				instance,
+				corev1.EventTypeWarning,
+				"FailureEvent",
+				fmt.Sprintf("Secret %s used for backups was not found", instance.Spec.Secret))
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -275,7 +276,7 @@ func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBacku
 
 		if len(secret.Data["awssecretaccesskey"]) != 0 && len(secret.Data["awsaccesskeyid"]) != 0 {
 			if len(secret.Data["awsregion"]) == 0 {
-				return fmt.Errorf("there is not awsregion property "+
+				return fmt.Errorf("there is no awsregion property "+
 					"while you have set both awssecretaccesskey and awsaccesskeyid in %s secret for backups", secret.Name)
 			}
 		}
