@@ -59,7 +59,7 @@ func TestDemarshalling(t *testing.T) {
 						"start": "2019-06-11T03:37:15.593Z",
 						"stop": "2019-06-11T03:38:16.206Z",
 						"state": "FINISHED"
-				},
+					},
 					{
 						"type": "backup",
 						"id": "d3262073-8101-450f-9a11-c851760abd57",
