@@ -2,10 +2,7 @@ package cassandrabackup
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,17 +37,6 @@ spec:
   snapshotTag: SnapshotTag2
   secret: cloud-backup-secrets
 `
-
-func helperLoadBytes(t *testing.T, name string) []byte {
-	path := filepath.Join("../../../testdata", name)
-	fmt.Println(path)
-	fmt.Println("loading input from previous file")
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return bytes
-}
 
 func helperInitCassandraBackup(cassandraBackupYaml string) api.CassandraBackup {
 	var cassandraBackup api.CassandraBackup
