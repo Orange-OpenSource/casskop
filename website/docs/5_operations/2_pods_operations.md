@@ -7,6 +7,7 @@ sidebar_label: Pods Operations
 Here is the list of Operations managed by CassKop at the **Pod operations** level, which apply at pod level and can be triggered by specifics pods labels. Status of pod operations are also followed up at rack level.
 
 Some Pods Operations can be triggered automatically by CassKop if :
+
 - `CassandraCluster.spec.autoPilot` is true, that will trigger `cleanup`, `rebuild` and `upgadesstable` operation in
   response to cluster events automatically.
 - the `decommission operation` is special and will be triggered automatically each time we need to ScaleDown a Pod.
@@ -21,7 +22,7 @@ CassKop will set some specific labels on the targeted pods.
 We can also set these labels manually, or using the privided plugin (`kubectl casskop cleanup start`)
 If we want to see labels for each of the pods of the cluster :
 
-```
+```console
 $ kubectl label pod $(kubectl get pods -l app=cassandracluster -o jsonpath='{range .items[*]}{.metadata.name}{" "}') --list
 Listing labels for Pod./cassandra-demo-dc1-rack1-0:
  cluster=k8s.pic
@@ -37,7 +38,7 @@ Listing labels for Pod./cassandra-demo-dc1-rack1-0:
 
 Now, to trigger a `cleanup` on pod `cassandra-demo-dc1-rack2-0`
 
-```
+```bash
 kubectl label pod cassandra-demo-dc1-rack2-0 operation-name=cleanup --overwrite
 kubectl label pod cassandra-demo-dc1-rack2-0 operation-status=ToDo --overwrite
 ```
@@ -71,12 +72,13 @@ nodes
 This operation operates on multiple nodes in the cluster. Use this operation when CassKop add a new datacenter to an
 existing cluster.
 
-```
-$ kubectl casskop rebuild {--pod <pod_name> | --prefix <prefix_pod_name>} <from-dc_name>           
+```bash
+kubectl casskop rebuild {--pod <pod_name> | --prefix <prefix_pod_name>} <from-dc_name>
 ```
 
 In the background this command is equivalent to set labels on each pods like :
-```
+
+```bash
 kubectl label pod cassandra-demo-dc2-rack1-0 operation-name=rebuild --overwrite
 kubectl label pod cassandra-demo-dc2-rack1-0 operation-status=ToDo --overwrite
 kubectl label pod cassandra-demo-dc2-rack1-0 operation-argument=dc1 --overwrite
@@ -90,20 +92,20 @@ see [UpdateScaleDown](/casskop/docs/5_operations/1_cluster_operations#updatescal
 
 This operation can be triggered with the plugin using simple commands as :
 
-```
-$ k casskop restart --crd cassandra-e2e --rack dc1.rack1 dc2.rack1
+```console
+$ kubectl casskop restart --crd cassandra-e2e --rack dc1.rack1 dc2.rack1
 
 Namespace cassandra-e2e
 Trigger restart of dc1.rack1
 Trigger restart of dc2.rack1
 
-$ k casskop restart --crd cassandra-e2e --dc dc1
+$ kubectl casskop restart --crd cassandra-e2e --dc dc1
 
 Namespace cassandra-e2e
 Trigger restart of dc1.rack1
 Trigger restart of dc1.rack2
 
-$ k casskop restart --crd cassandra-e2e --full
+$ kubectl casskop restart --crd cassandra-e2e --full
 
 Namespace cassandra-e2e
 Trigger restart of dc1.rack1
@@ -112,5 +114,3 @@ Trigger restart of dc2.rack1
 ```
 
 After one of this command, CassKop will do a rolling restart of each rack one at a time avoiding any disruption.
-
-

@@ -29,10 +29,9 @@ volumeBindingMode: WaitForFirstConsumer
 Remember to set your CassandraCluster CRD properly to use the newly created StorageClass.
 :::
 
-### Scope
+### Storage scope
 
-Storage can be configured using the `storage` property in `CassandraCluster.spec` for global Data Centers configuration, or can be overrided at `CassandraCluster.spec.topology.dc` level. 
-
+Storage can be configured using the `storage` property in `CassandraCluster.spec` for global Data Centers configuration, or can be overriden at `CassandraCluster.spec.topology.dc` level.
 
 :::important
 Once the Cassandra cluster is deployed, the storage cannot be changed.
@@ -46,7 +45,7 @@ The `PersistentVolumeClaim` can use a `StorageClass` to trigger automatic volume
 
 CassandraCluster fragment of persistent storage definition :
 
-```
+```yaml
 ...
   # Global configuration
   dataCapacity: "300Gi"
@@ -89,7 +88,7 @@ Resizing persistent storage for existing CassandraCluster is not currently suppo
 necessary storage size before deploying the cluster.
 :::
 
-The above example asks that each node will have 300Gi of data volumes to persist the Cassandra data's using the
+The above example requires that each node has 300Gi of data volumes to persist the Cassandra data's using the
 local-storage storage class provider.
 The parameter deletePVC is used to control if the data storage must persist when the according statefulset is deleted.
 
@@ -117,9 +116,9 @@ scheduler can choose another node for scheduling. This is covered in the Operati
 ## Additional storage configurations
 
 For extra needs not covered by the default volumes managed through the CassandraCluster CRD, we are allowing you to define your own storage configurations.
-To do this, you will configure the `storageConfigs` property in `CassandraCluster.Spec`.
+To do this, you will configure the `storageConfigs` property in `CassandraCluster.Spec`. These volumes can then be used by additional sidecars if needed (see next page on sidecars).
 
-CassandraCluster fragment for dynamic persistent storage definition : 
+CassandraCluster fragment for dynamic persistent storage definition :
 
 ```yaml
 # ...
@@ -146,11 +145,11 @@ CassandraCluster fragment for dynamic persistent storage definition :
 ```
 
 - `storageConfigs` *(required)* : Defines the list of storage config object, which will instantiate `Persitence Volume Claim` and associate volume to pod of cassandra node.
-    - `mountPath` *(required)* : Defines the path into `cassandra container` where the volume will be mounted.
-    - `name` *(required)* : Used to define the `PVC` and `VolumeMount` names.
-    - `pvcSpec` *(required)* : pvcSpec describes the PVC used for the mountPath described above it requires a kubernetes PVC spec.
-    
-With the above configuration, the following configuration will be added to the `rack statefulset` definition : 
+  - `mountPath` *(required)* : Defines the path into `cassandra container` where the volume will be mounted.
+  - `name` *(required)* : Used to define the `PVC` and `VolumeMount` names.
+  - `pvcSpec` *(required)* : pvcSpec describes the PVC used for the mountPath described above it requires a kubernetes PVC spec.
+
+With the above configuration, the following configuration will be added to the `rack statefulset` definition :
 
 ```yaml
 # ...

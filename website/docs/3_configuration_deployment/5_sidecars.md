@@ -1,13 +1,13 @@
 ---
-id: 4_sidecars
+id: 5_sidecars
 title: Sidecars
 sidebar_label: Sidecars
 ---
 
-For extra needed not covered by the defaults container managed through the CassandraCluster CR, we are allowing you to define your own sidecars which will be deployed into the cassandra node pods.
+For extra needs not covered by the defaults container managed through the CassandraCluster CRD, we are allowing you to define your own sidecars which will be deployed into the cassandra node pods.
 To do this, you will configure the `SidecarConfigs` property in `CassandraCluster.Spec`.
 
-CassandraCluster fragment for dynamic sidecars definition : 
+CassandraCluster fragment for dynamic sidecars definition :
 
 ```yaml
 # ...
@@ -45,7 +45,7 @@ CassandraCluster fragment for dynamic sidecars definition :
 
 - `sidecarConfigs` *(required)* : Defines the list of container config object, which will be added into each pod of cassandra node, it requires a list of kubernetes Container spec.
 
-With the above configuration, the following configuration will be added to the `rack statefulset` definition : 
+With the above configuration, the following configuration will be added to the `rack statefulset` definition :
 
 ```yaml
 # ...
@@ -85,12 +85,13 @@ With the above configuration, the following configuration will be added to the `
 
 :::info
 Note that all sidecars added with this configuration will be have, at the container init, some of environment variables from cassandra container merged with those defined into the sidecar container
-for example : 
- - CASSANDRA_MAX_HEAP
- - CASSANDRA_SEEDS
- - CASSANDRA_CLUSTER_NAME
- - CASSANDRA_GC_STDOUT
- - CASSANDRA_NUM_TOKENS
- - CASSANDRA_DC
- - CASSANDRA_RACK
+for example :
+
+- CASSANDRA_MAX_HEAP
+- CASSANDRA_SEEDS
+- CASSANDRA_CLUSTER_NAME
+- CASSANDRA_GC_STDOUT
+- CASSANDRA_NUM_TOKENS
+- CASSANDRA_DC
+- CASSANDRA_RACK
 :::
