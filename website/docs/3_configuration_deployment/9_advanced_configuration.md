@@ -13,7 +13,7 @@ turn propagate it to each created Pod.
 
 Create the secret :
 
-```
+```bash
 kubectl create secret docker-registry yoursecretname \
   --docker-server=yourdockerregistry
   --docker-username=yourlogin \
@@ -21,14 +21,13 @@ kubectl create secret docker-registry yoursecretname \
   --docker-email=yourloginemail
 ```
 
-Then we will add a **imagePullSecrets** parameter in the CRD definition with value the name of the 
+Then we will add a **imagePullSecrets** parameter in the CRD definition with value the name of the
 previously created secret. You can give several secrets :
 
-```
+```yaml
 imagePullSecrets:
   name: yoursecretname
 ```
-
 
 ## Management of allowed Cassandra nodes disruption
 
@@ -70,7 +69,7 @@ cassandra     at org.apache.cassandra.service.CassandraDaemon.activate(Cassandra
 cassandra     at org.apache.cassandra.service.CassandraDaemon.main(CassandraDaemon.java:732) [apache-cassandra-3.11.4.jar:3.11.4]
 ```
 
-Following the [issue #170](https://github.com/Orange-OpenSource/casskop/issues/170), at least using Kubernetes and [Project Calico](https://docs.projectcalico.org/v3.9/getting-started/kubernetes/), we may fall into this issue, 
+Following the [issue #170](https://github.com/Orange-OpenSource/casskop/issues/170), at least using Kubernetes and [Project Calico](https://docs.projectcalico.org/v3.9/getting-started/kubernetes/), we may fall into this issue,
 for example using a fixed [ip pool](https://docs.projectcalico.org/v3.9/reference/resources/ippool) size.
 
 To manage this case we introduced the `restartCountBeforePodDeletion` CassandraCluster spec field which takes an `int32` as value.
@@ -80,12 +79,12 @@ If you set it with a value lower or equals to 0, or if you omit it, no action wi
 :::
 
 In setting this field, the cassandra operator will check for each `CassandraCluster` if a pod is in a restart situation (based on restart count of the cassandra container inside the pod).
-In the case where the restartCount of the pod is greater than the value of `restartCountBeforePodDeletion` field and if we are in a Ip cross situation, we will delete the pod, which will be recreated by the Statefulset. 
-In the case of Project Calico usage, this force the pod to get another available IP, which fixes our bug. 
+In the case where the restartCount of the pod is greater than the value of `restartCountBeforePodDeletion` field and if we are in a Ip cross situation, we will delete the pod, which will be recreated by the Statefulset.
+In the case of Project Calico usage, this force the pod to get another available IP, which fixes our bug.
 
 ## Ip Cross situation detection
 
-To detect that we are in a Ip cross situation, we add a new status field `CassandraNodeStatus` which will maintain a cache about the map of *Ip node* and his *hostId*, 
+To detect that we are in a Ip cross situation, we add a new status field `CassandraNodeStatus` which will maintain a cache about the map of *Ip node* and his *hostId*,
 for all ready pods.
 
 :::note
@@ -94,7 +93,8 @@ to have more information about this status field, you can check [CassandraCluste
 
 So when we check pods, we perform a Jolokia call to get a map of the cluster nodes IPs with their corresponding HostId.
 If a pod is failing with the constraints described above, we compare the hostId associated to the Pod's IP, and the hostId
-associated to the Pod name stored into the `CassandraNodeStatus` : 
+associated to the Pod name stored into the `CassandraNodeStatus` :
 
 - if they match, or there are no match for the pod Ip into the map returned by Jolokia, we are not in a Ip cross situation,
 - if they mismatch, we are in a Ip cross situation.
+  
