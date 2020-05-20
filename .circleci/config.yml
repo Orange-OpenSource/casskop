@@ -331,6 +331,43 @@ orbs:
                 else
                   GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/casskop/tools/publish_helm_gcs.sh
                 fi
+jobs:
+  deploy-website:
+    working_directory: /home/circleci/casskop/website
+    docker: # run the steps with Docker
+      - image: node:13.5.0
+    steps:
+      # Checkout steps
+      - checkout:
+          path: /home/circleci/casskop
+#      - restore_cache:
+#          name: Restore yarn Scanner
+#          keys:
+#            - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+#            # Fallback in case checksum fails
+#            - root-yarn-{{ .Branch }}-
+#      - run:
+#          name: root-yarn
+#          command: |
+#              yarn install --non-interactive --cache-folder ~/.cache/yarn
+#      - save_cache:
+#          name: Save yarn cache
+#          paths:
+#            - node_modules
+#            - ~/.cache/yarn
+#          key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: deploy
+          command: |
+            echo $(pwd)
+            ls -la
+            git config --global user.name "${GH_NAME}"
+            git config --global user.email "${GH_EMAIL}"
+            echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+            yarn install
+            yarn build
+            GIT_USER="${GH_NAME}" yarn deploy
+
 # Anchors
 ## Filters anchors
 .everytime_filter : &everytime_filter
@@ -362,6 +399,12 @@ orbs:
     # only act on version tags
     tags:
       only: /v[0-9]+(\.[0-9]+)*-release/
+
+.website_publish: &website_publish
+  filters:
+    # ignore any commit on any branch by default
+    branches:
+      only: master
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
@@ -455,6 +498,12 @@ workflows:
           requires:
             - report-casskop
           <<: *only_on_release_tag
+      - deploy-website:
+          name: deploy-website
+          requires:
+            - report-casskop
+#          <<: *only_on_release_tag
+          <<: *website_publish
 
   ## CassKop operator workflow.
   ci-multicasskop-operator:
