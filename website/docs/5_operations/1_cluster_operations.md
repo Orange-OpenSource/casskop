@@ -1,53 +1,22 @@
-# Cassandra cluster operations
+---
+id: 1_cluster_operations
+title: Cluster Operations
+sidebar_label: Cluster Operations
+---
 
-Here is the list of Operations managed by CassKop.
-We have defined 2 levels of Operations :
-- **Cluster operations** which apply at cluster level and which have a dedicated status in each racks
-- **Pod operations** which apply at pod level and can be triggered by specifics pods labels. Status of pod operations
-  are also followed up at rack level.
-  
-
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-**Table of Contents**
-
-- [Cassandra cluster operations](#cassandra-cluster-operations)
-    - [Cluster operations](#cluster-operations)
-        - [Initializing](#initializing)
-            - [With no `topology` defined](#with-no-topology-defined)
-            - [With `topology` defined](#with-topology-defined)
-        - [UpdateConfigMap](#updateconfigmap)
-        - [UpdateDockerImage](#updatedockerimage)
-        - [UpdateResources](#updateresources)
-        - [Scaling the cluster](#scaling-the-cluster)
-            - [ScaleUp](#scaleup)
-        - [UpdateScaleDown](#updatescaledown)
-        - [UpdateSeedList](#updateseedlist)
-        - [CorrectCRDConfig](#correctcrdconfig)
-        - [Delete a DC](#delete-a-dc)
-        - [Kubernetes node maintenance operation](#kubernetes-node-maintenance-operation)
-            - [The PodDisruptionBudget (PDB) protection](#the-poddisruptionbudget-pdb-protection)
-        - [K8S host major failure: replacing a cassandra node](#k8s-host-major-failure-replacing-a-cassandra-node)
-            - [Remove old node and create new one](#remove-old-node-and-create-new-one)
-            - [Replace node with a new one](#replace-node-with-a-new-one)
-    - [Cassandra pods operations](#cassandra-pods-operations)
-        - [OperationCleanup](#operationcleanup)
-        - [OperationRebuild](#operationrebuild)
-        - [OperationDecommission](#operationdecommission)
-
-<!-- markdown-toc end -->
-
-
-## Cluster operations
+Here is the list of operations managed by CassKop at the **Cluster** level which have a dedicated status in each racks.
 
 Those operations are applied at the Cassandra cluster level, as opposite to Pod operations that are executed at pod
 level and are discussed in the next section.
 Cluster Operations must only be triggered by a change made on the `CassandraCluster` object.
 
 Some updates in the `CassandraCluster` CRD object are forbidden and will be gently dismissed by CassKop:
+
 - `spec.dataCapacity`
 - `spec.dataStorage`
 
 Some Updates in the `CassandraCluster` CRD object will trigger a rolling update of the whole cluster such as :
+
 - `spec.resources`
 - `spec.baseImage`
 - `spec.version`
@@ -57,6 +26,7 @@ Some Updates in the `CassandraCluster` CRD object will trigger a rolling update 
 
 Some Updates in the `CassandraCluster` CRD object will not trigger change on the cluster but only in future behavior of
 CassKop :
+
 - `spec.autoPilot`
 - `spec.autoUpdateSeedList`
 - `spec.deletePVC`
@@ -68,7 +38,6 @@ CassKop :
 CassKop manages rolling updates for each statefulset in the cluster. Then each statefulset is making the rolling
 updated of it's pod according to the `partition` defined for each statefulset in
 the `spec.topology.dc[].rack[].rollingPartition`.
-
 
 ### Initializing
 
@@ -128,9 +97,11 @@ The number of cassandra nodes `CassandraCluster.spec.nodesPerRacks` defines the 
 must create in each of it's racks. In our example, there is only one default rack, so CassKop will only create 2
 nodes.
 
->**IMPORTANT:** with the default topology there will be no Kubernetes NodesAffinity to spread the Cassandra nodes on the
->cluster. In this case, CassKop will only create one Rack and one DC for Cassandra. It is not recommended as you may
->lose data in case of hardware failure
+:::important
+with the default topology there will be no Kubernetes NodesAffinity to spread the Cassandra nodes on the
+cluster. In this case, CassKop will only create one Rack and one DC for Cassandra. It is not recommended as you may
+lose data in case of hardware failure
+:::
 
 When Initialization has ended you should have a Status similar to :
 
@@ -230,8 +201,10 @@ With this topology section I also references some **Kubernetes nodes labels**
 which will be used to spread the Cassandra
 nodes on each Racks on different groups of Kubernetes servers.
 
-> We can see here that we can give specific configuration for the number of pods in the dc2 (`nodesPerRacks: 3`)
-> We also allow to configure Cassandra pods with different num_tokens confioguration for each dc : `numTokens`.
+:::note
+We can see here that we can give specific configuration for the number of pods in the dc2 (`nodesPerRacks: 3`)
+We also allow to configure Cassandra pods with different num_tokens confioguration for each dc : `numTokens`.
+:::
 
 CassKop will create a statefulset for each Rack, and start creating the
 Cassandra Cluster, starting by nodes from the Rack 1.
@@ -275,14 +248,16 @@ status:
 The creation of the cluster is ongoing.
 We can see that, regarding the Cluster Topology, CassKop has created the SeedList.
 
-> CassKop compute a seedlist with 3 nodes in each datacenter (if possible). The Cassandra seeds are always the
-> first Cassandra nodes of a statefulset (starting with index 0).
+:::tip
+CassKop compute a seedlist with 3 nodes in each datacenter (if possible). The Cassandra seeds are always the
+first Cassandra nodes of a statefulset (starting with index 0).
+:::
 
 When all racks are in status done, then the `CassandraCluster.status.lastClusterActionStatus` is changed to `Done`.
 
 We can see that internally Cassandra also knows the desired topology :
 
-```
+```bash
 k exec -ti cassandra-demo-dc1-rack1-0 nodetool status
 Datacenter: dc1
 ===============
@@ -302,15 +277,16 @@ UN  172.18.72.8    119.65 KiB  32           26.9%             8688abd3-08b6-44e0
 UN  172.18.104.8   153.08 KiB  32           38.8%             62adf02d-8c55-4d95-a459-45b1c9c3aa91  rack1
 ```
 
-
 ### UpdateConfigMap
 
-You can find in the [cassandra-configuration](../documentation/description.md#cassandra-configuration) section how you can use
+You can find in the [cassandra-configuration](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap) section how you can use
 the `spec.configMap` parameter.
 
->**IMPORTANT:** actually CassKop doesn't monitor changes inside the ConfigMap. If you want to change a parameter in a
->file in the current configMap, you must create a new configMap with the updated version, and then ask CassKop to use
->the new configmap name.
+:::important
+Actually CassKop doesn't monitor changes inside the ConfigMap. If you want to change a parameter in a
+file in the current configMap, you must create a new configMap with the updated version, and then ask CassKop to use
+the new configmap name.
+:::
 
 If we add/change/remove the `CassandraCluster.spec.configMapName` then CassKop will start a RollingUpdate of each
 CassandraNodes in each Racks, starting from the first Rack defined in the `topology`.
@@ -337,9 +313,9 @@ spec:
   ...
 ```
 
-First we need to create the configmap exemple: 
+First we need to create the configmap exemple:
 
-```
+```bash
 kubectl apply -f samples/cassandra-configmap-v1.yaml
 ```
 
@@ -375,8 +351,10 @@ status:
   lastClusterActionStatus: Ongoing
 ```
 
->**Note:** CassKop won't make a rolling update on the next rack until the status of the current rack becomes`Done`.
->The Operation is processing "rack per rack".
+:::note
+CassKop won't make a rolling update on the next rack until the status of the current rack becomes`Done`.
+The Operation is processing "rack per rack".
+:::
 
 ```yaml
 status:
@@ -408,22 +386,19 @@ status:
   lastClusterActionStatus: Ongoing
 ```
 
-
 ### UpdateDockerImage
 
-CassKop allows you to change the Cassandra docker image and gracefully redeploy your whole cluster. 
+CassKop allows you to change the Cassandra docker image and gracefully redeploy your whole cluster.
 
 If we change the `CassandraCluster.spec.baseImage` and or `CassandraCluster.spec.version`  CassKop will start to
 perform a RollingUpdate on the whole cluster (for each racks sequentially, in order to change the version of the
 Cassandra Docker Image on all nodes.
 
-> See section [Cassandra docker image](../documentation/description.md#cassandra-docker-image)
-
 You can change the docker image used to :
+
 - change the version of Cassandra
 - change the version of Java
 - Change some configuration parameters for cassandra or jvm if you don't overwrite them with a ConfigMap
-
 
 The status may be similar to:
 
@@ -534,12 +509,14 @@ This provides a Central view to monitor what is happening on the Cassandra Clust
 
 ### UpdateResources
 
-CassKop allows you to configure your Cassandra's pods resources (memory and cpu). 
+CassKop allows you to configure your Cassandra's pods resources (memory and cpu).
 
 If we change the `CassandraCluster.spec.resources`, then CassKop will start to make a RollingUpdate on the whole
 cluster (for each racks sequentially) to change the version of the Cassandra Docker Image on all nodes.
 
-> See section [Resource limits and requets](../documentation/description.md#resource-limits-and-requests)
+:::tip See section
+[Resource limits and requets](/casskop/docs/3_configuration_deployment/2_cassandra_cluster#resource-limits-and-requests)
+:::
 
 For example, to increase Memory/CPU requests and/or limits:
 
@@ -552,7 +529,7 @@ For example, to increase Memory/CPU requests and/or limits:
       memory: 3Gi
 ```
 
-Then CassKop should output the status: 
+Then CassKop should output the status:
 
 ```yaml
 status:
@@ -584,7 +561,6 @@ status:
 
 We can see that it has staged the `UpdateResources` action in all racks (`status=ToDo`) and has started the action in
 the first rack (`status=Ongoing`). Once `Done` it will follow with next rack, and so on.
-
 
 Upon completion, the status may look like :
 
@@ -623,12 +599,13 @@ Upon completion, the status may look like :
 The Scaling of the Cluster is managed through the nodesPerRacks parameters and through the number of Dcs and Racks
 defined in the Topology section.
 
-See section [NodesPerRacks](../documentation/description.md#nodesperracks)
+See section [NodesPerRacks](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#nodes-per-rack)
 
-
-> **NOTE:** if the ScaleUp (or the ScaleDown) may change the SeedList and if `spec.autoUpdateSeedList` is set to `true`
-> then CassKop will program a new operation : `UpdateSeedList` which will trigger a rollingUpdate to apply the new
-> seedlist on all nodes, once the Scaling is done.
+:::note
+if the ScaleUp (or the ScaleDown) may change the SeedList and if `spec.autoUpdateSeedList` is set to `true`
+then CassKop will program a new operation : `UpdateSeedList` which will trigger a rollingUpdate to apply the new
+seedlist on all nodes, once the Scaling is done.
+:::
 
 #### ScaleUp
 
@@ -639,8 +616,8 @@ a rack.
 
 It is possible to surcharge this for a particular DC in the `CassandraCluster.spec.topology.dc[<idx>].nodesPerRacks`
 
-
 Example:
+
 ```yaml
   topology:
     dc:
@@ -684,15 +661,17 @@ CassKop takes into account the new target, and starts applying modifications in 
  ```
 
 We can see that CassKop:
-- Has started the `ScaleUp` action in `dc2-rack1`
-- Has found that the SeedList must be updated, and because the autoUpdateSeedList=true it has staged
+
+- has started the `ScaleUp` action in `dc2-rack1`
+- has found that the SeedList must be updated, and because the autoUpdateSeedList=true it has staged
   (`status=Configuring`) the UpdateSeedList operation for `dc1-rack1` and `dc1-rack2`
 
 When CassKop ends the ScaleUp action in the `dc2-rack1` then it will also stage this rack with `UpdateSeedList=Configuring`.
 Once all racks are in this state, CassKop will turn each Rack in status `UpdateSeedList=ToDo`, meaning that it can
-start the operation. 
+start the operation.
 
 Starting from then, CassKop will iterate on each rack one after the other and get status :
+
 - `UpdateSeedList=Ongoing` meaning that it is currently doing a rolling update on the Rack to update the SeedList seting
   also sets the `startTime`.
 - `UpdateSeedList=Done` meaning that the operation is done. (then, it sets the `endTime`)
@@ -729,7 +708,7 @@ status:
 
 Here is the final topology seen from nodetool :
 
-```
+```bash
 $ k exec -ti cassandra-demo-dc1-rack1-0 nodetool status
 Datacenter: dc1
 ===============
@@ -752,7 +731,7 @@ UN  172.18.88.9    148.34 KiB  32           31.7%             fecdfb5d-3ad4-4204
 
 Note that nodetool prints IP of nodes while kubernetes works with names :
 
-```
+```bash
 $ k get pods -o wide -l app=cassandracluster
 NAME                         READY     STATUS    RESTARTS   AGE       IP              NODE      NOMINATED NODE
 cassandra-demo-dc1-rack1-0   1/1       Running   0          14m       172.18.112.5    node006   <none>
@@ -770,7 +749,7 @@ This can be manually triggered by setting appropriate labels on each Pods.
 CassKop can automate this if `spec.autoPilot` is true by setting the labels on each Pods of the cluster with a ToDo
 state and then find thoses pods to sequentially execute thoses actions.
 
-See podOperation [Cleanup](##operationcleanup)!!
+See podOperation [Cleanup](/casskop/docs/5_operations/2_pods_operations#operationcleanup)!!
 
 ### UpdateScaleDown
 
@@ -780,10 +759,12 @@ Kubernetes level.
 Actually, this is done through CassKop asking the decommission through a jolokia call and waiting for it to be
 performed (cassandra node status = decommissionned) before updating kubernetes statefulset (removing the pod).
 
-> **IMPORTANT**: If we ask to scale down more than 1 node at a time, then CassKop will iterate on a single scale down
-> until it reaches the requested number of nodes.
+:::important
+If we ask to scale down more than 1 node at a time, then CassKop will iterate on a single scale down
+until it reaches the requested number of nodes.
 
-> Also CassKop will refuse a scaledown to 0 for a DC if there still have some data replicated to it.
+Also CassKop will refuse a scaledown to 0 for a DC if there still have some data replicated to it.
+:::
 
 To launch a ScaleDown, we simply need to decrease the value of nodesPerRacks.
 
@@ -800,8 +781,8 @@ To launch a ScaleDown, we simply need to decrease the value of nodesPerRacks.
           - name: rack1
 ```
 
-
 We can see in the below example that:
+
 - It has started the `ScaleDown` action in `dc2-rack1`
 - CassKop has found that the SeedList must be updated, and it has staged (`status=ToDo`) it for `dc1-rack1` and
   `dc1-rack2`
@@ -811,10 +792,9 @@ racks are in this state, CassKop will turn each Rack in status `UpdateSeedList=O
 operation, it also set the `startTime`
 
 Then, CassKop will iterate on each rack one after the other and get status :
+
 - `UpdateSeedList=Finalizing` meaning that it is currently doing a rolling update on the Rack to update the SeedList
 - `UpdateSeedList=Done` meaning that the operation is done. Then, it sets the `endTime`.
-
-
 
 ```yaml
 status:
@@ -887,13 +867,12 @@ status:
 It shows also that `podLastOperation` `decommission` is `Done`. CassKop will then rollingUpdate all racks one by one
 in order to update the Cassandra seedlist.
 
-
 ### UpdateSeedList
 
 The UpdateSeedList is done automatically by CassKop when the parameter
 `CassandraCluster.spec.autoUpdateSeedList` is true (default).
 
-See [ScaleUp](#updatescaleup) and [ScaleDown](#updatescaledown).
+See [ScaleUp](#scaleup) and [ScaleDown](#updatescaledown).
 
 ### CorrectCRDConfig
 
@@ -923,14 +902,13 @@ spec:
 If we try to update the `dataCapacity` or `dataStorageClass` nothing will happen. And we could see thoses messages in
 the logs of CassKop :
 
-```
+```logs
 time="2018-09-27T17:44:13+02:00" level=warning msg="[cassandra-demo]: CassKop has refused the changed on DataCapacity from [3Gi] to NewValue[4Gi]"
 time="2018-09-27T17:44:35+02:00" level=warning msg="[cassandra-demo]: CassKop has refused the changed on DataStorageClass from [local-storage] to NewValue[local-storag]"
 ```
 
 If you performed the modification by updating your local CRD file and apply it with kubectl you must revert to the old
 value.
-
 
 ### Delete a DC
 
@@ -939,11 +917,12 @@ value.
   will refuse and correct the CRD.
 Because CassKop wants that we have the same amounts of pods in all racks, we decided that we would't allow to remove
   only a rack. This will be revert too.
-  
-> You must ScaleDown to 0 priori to Remoove a DC
-> You must change replication factor prior to ScaleDown  to 0 a DC
-  
 
+:::important
+You must ScaleDown to 0 before you remoove a DC
+You must change replication factor before doing a ScaleDown to 0 for a DC
+:::
+  
 ### Kubernetes node maintenance operation
 
 In a normal production environment, CassKop will have spread it's Cassandra pods on differents k8s nodes. If the team
@@ -955,14 +934,15 @@ on another host, because they uses local-storage and are stick to a specific hos
 kubernetes object.
 
 Example: we drain the node008 for a maintenance operation.
-```
-$ kubectl drainnode node008 --ignore-daemonsets --delete-local-data
+
+```bash
+kubectl drainnode node008 --ignore-daemonsets --delete-local-data
 ```
 
 All pods will be evicted, thoses who can will be rescheduled on another hosts.
 Our Cassandra pod won't we able to be schedule elsewhere due to the PVS, and we can see this messages in the k8s events :
 
-```
+```logs
 0s    Warning   FailedScheduling   Pod   0/8 nodes are available: 1 node(s) were unschedulable, 2 node(s) had taints
 that the pod didn't tolerate, 5 node(s) had volume node affinity conflict.
 ```
@@ -973,7 +953,7 @@ because they have volume node affinity conflict ()our pods have an affinity on n
 Once the team have finished their maintenance operation they can bring back the host into the kubernetes cluster. From
 then, k8s will be able to reshedule back the cassandra pod into the cluster so that it can re-join the ring.
 
-```
+```bash
 $ kubectl uncordon node008
 node/node008 uncordoned
 ```
@@ -989,7 +969,8 @@ If a k8s admin ask to drain a node, this may not been allowed by the cassandracl
 the configuration of its PDB (usually only 1 nodes allowed to be in disruption).
 
 Example :
-```
+
+```bash
 $ kubectl drainnode node008 --ignore-daemonsets --delete-local-data
 error when evicting pod "cassandra-demo-dc2-rack1-0" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
 ```
@@ -1042,7 +1023,6 @@ have 13 healthy, that's why the PDB won't allow the eviction of an additional po
 To be able to continue, we need to wait or to make appropriate actions so that the Cassandra cluster won't have any
 unavailable nodes.
 
-
 ### K8S host major failure: replacing a cassandra node
 
 In the case of a major host failure, it may not be possible to bring back the node to life. We can in this case
@@ -1054,32 +1034,32 @@ In this case we may have 2 solutions that will require some manual actions :
 
 1. In this case we will use CassKop client to schedule a cassandra removenode for the failing node.
 
-```
-$ kubectl casskop remove --pod <pod_name> [--previous-ip <previous_ip_pod>] {--from-pod <pod_name> | --crd <crd_name>}
+```bash
+kubectl casskop remove --pod <pod_name> [--previous-ip <previous_ip_pod>] {--from-pod <pod_name> | --crd <crd_name>}
 ```
 
 This will trigger the PodOperation removenode by setting the appropriate labels on a cassandra Pod.
 
 2. Once the node is properly removed, we can free the link between the Pod and the failing host by removing the
    associated PodDisruptionBudget
-   
-```
-$ kubectl delete pvc data-cassandra-test-dc1-rack2-1
+
+```bash
+kubectl delete pvc data-cassandra-test-dc1-rack2-1
 ```
 
 This will allow Kubernetes to reschedule the Pod on another free host.
 
-3. Once the node is back in the cluster we need to apply a cleanup on all nodes 
+3. Once the node is back in the cluster we need to apply a cleanup on all nodes
 
-```
-$ kubectl casskop cleanup start
+```bash
+kubectl casskop cleanup start
 ```
 
-you can pause the cleanup and check status with 
+you can pause the cleanup and check status with
 
-```
-$ kubectl casskop cleanup pause
-$ kubectl casskop cleanup status
+```bash
+kubectl casskop cleanup pause
+kubectl casskop cleanup status
 ```
 
 #### Replace node with a new one
@@ -1089,13 +1069,12 @@ by definition all pods are identical and we couldn't execute specific actions on
 
 For that CassKop provide the ability to execute a `pre_run.sh` script that can be change using the CRD ConfigMap.
 
-To see how to use the configmap see [Overriding Configuration using
-configMap](../documentation/description.md#overriding-configuration-using-configmap)
+To see how to use the configmap see [Overriding Configuration using configMap](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)
 
 for example If we want to replace the node cassandra-test-dc1-rack2-1, we first need to retrieve it's IP address from
 nodetool status for example :
 
-```
+```bash
 $ nodetool status
 Datacenter: dc1
 ===============
@@ -1125,120 +1104,9 @@ data:
 ```
 
 So the Operation will be :
+
 1. Edit the configmap with the appropriate CASSANDRA_REPLACE_NODE IP for the targeted pod name
 2. delete the pvc data-cassandra-test-dc1-rack2-1
 3. the Pod will boot, execute the pre_run.sh script prior to the /run.sh
 4. the new pod replace the dead one by re-syncing the content which could take some times depending on the data size.
 5. Do not forget to edit again the ConfigMap and to remove the specific line with replace_node instructions.
-
-
-## Cassandra pods operations
-
-Some Pods Operations can be triggered automatically by CassKop if :
-- `CassandraCluster.spec.autoPilot` is true, that will trigger `cleanup`, `rebuild` and `upgadesstable` operation in
-  response to cluster events automatically.
-- the `decommission operation` is special and will be triggered automatically each time we need to ScaleDown a Pod.
-- the `removenode operation` is also special and may be set manually when needed.
-
-It is also possible to trigger operations "manually", setting some labels on the Pods.
-
-### OperationCleanup
-
-A Cleanup may be automatically triggered by CassKop when it ends Scaling the cluster.
-CassKop will set some specific labels on the targeted pods.
-We can also set these labels manually, or using the privided plugin (`kubectl casskop cleanup start`)
-If we want to see labels for each of the pods of the cluster :
-
-```
-$ kubectl label pod $(kubectl get pods -l app=cassandracluster -o jsonpath='{range .items[*]}{.metadata.name}{" "}') --list
-Listing labels for Pod./cassandra-demo-dc1-rack1-0:
- cluster=k8s.pic
- controller-revision-hash=cassandra-demo-dc1-rack1-56c9bbb958
- dc-rack=dc1-rack1
- statefulset.kubernetes.io/pod-name=cassandra-demo-dc1-rack1-0
- app=cassandracluster
- cassandracluster=cassandra-demo
- cassandraclusters.db.orange.com.dc=dc1
- cassandraclusters.db.orange.com.rack=rack1
-...
-```
-
-Now, to trigger a `cleanup` on pod `cassandra-demo-dc1-rack2-0`
-
-```
-kubectl label pod cassandra-demo-dc1-rack2-0 operation-name=cleanup --overwrite
-kubectl label pod cassandra-demo-dc1-rack2-0 operation-status=ToDo --overwrite
-```
-
-Automatically, CassKop will detect the change, start the action, and update the status :
-
-```yaml
-    dc1-rack2:
-      cassandraLastAction:
-        Name: UpdateSeedList
-        endTime: 2018-09-27T15:26:51Z
-        startTime: 2018-09-27T15:23:54Z
-        status: Done
-      phase: Running
-      podLastOperation:
-        Name: cleanup
-        endTime: 2018-09-27T16:00:52Z
-        operatorName: operator-cassandr-f6d2968d4504448180ace041d3818d10-799dbb4zqss8
-        podsOK:
-        - cassandra-demo-dc1-rack2-0
-        - cassandra-demo-dc1-rack2-0
-        startTime: 2018-09-27T16:00:32Z
-        status: Done
-```
-
-The section `podLastOperation` appears and we can see that it has correctly executed the cleanup operation on the 2
-nodes
-
-### OperationRebuild
-
-This operation operates on multiple nodes in the cluster. Use this operation when CassKop add a new datacenter to an
-existing cluster.
-
-```
-$ kubectl casskop rebuild {--pod <pod_name> | --prefix <prefix_pod_name>} <from-dc_name>           
-```
-
-In the background this command is equivalent to set labels on each pods like :
-```
-kubectl label pod cassandra-demo-dc2-rack1-0 operation-name=rebuild --overwrite
-kubectl label pod cassandra-demo-dc2-rack1-0 operation-status=ToDo --overwrite
-kubectl label pod cassandra-demo-dc2-rack1-0 operation-argument=dc1 --overwrite
-```
-
-### OperationDecommission
-
-see [UpdateScaleDown](#updatescaledown)
-
-### RollingRestart
-
-This operation can be triggered with the plugin using simple commands as :
-
-```
-$ k casskop restart --crd cassandra-e2e --rack dc1.rack1 dc2.rack1
-
-Namespace cassandra-e2e
-Trigger restart of dc1.rack1
-Trigger restart of dc2.rack1
-
-$ k casskop restart --crd cassandra-e2e --dc dc1
-
-Namespace cassandra-e2e
-Trigger restart of dc1.rack1
-Trigger restart of dc1.rack2
-
-$ k casskop restart --crd cassandra-e2e --full
-
-Namespace cassandra-e2e
-Trigger restart of dc1.rack1
-Trigger restart of dc1.rack2
-Trigger restart of dc2.rack1
-```
-
-After one of this command, CassKop will do a rolling restart of each rack one at a time avoiding any disruption.
-
-

@@ -1,4 +1,8 @@
-# Cassandra cluster operations
+---
+id: 3_multi_casskop
+title: Multi-CassKop
+sidebar_label: Multi-CassKop
+---
 
 Here is describes how perform some operations based on the MultiCasskop Operator.
 
@@ -12,6 +16,7 @@ Performing a scale down at the MultiCasskop operator level, is by designed scale
 To achieve this scaledown the following steps are required :
 
 1.  First of all you need to remove all cassandra DC associated to the Kubernetes Cluster client that you want to remove of the `MultiCasskop` resource : 
+
     i - Ensure that there is no more data replicated on it. For example you can check and perform it in following this instructions : 
     
     ```sh
