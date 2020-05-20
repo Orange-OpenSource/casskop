@@ -404,7 +404,7 @@ jobs:
   filters:
     # ignore any commit on any branch by default
     branches:
-      only: documentation
+      only: master
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
