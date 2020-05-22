@@ -30,12 +30,9 @@ var log = logf.Log.WithName("SidecarClient")
 var DefaultSidecarClientOptions = ClientOptions{Port: 4567, Secure: false}
 
 type Client struct {
-	Host    string
-	Options *ClientOptions
-
-	restyClient  *resty.Client
-	testResponse *resty.Response
-	testMode     bool
+	Host        string
+	Options     *ClientOptions
+	restyClient *resty.Client
 }
 
 type ClientOptions struct {
@@ -122,47 +119,45 @@ func (e *httpResponse) Error() string {
 
 func (client *Client) Status() (*nodestate.Status, error) {
 
-	var r *resty.Response
 	if r, err := client.performRequest(EndpointStatus, http.MethodGet, nil); responseInvalid(r, err) {
 		return nil, err
+	} else {
+		body, err := readBody(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if status, err := unmarshallBody(body, r, &nodestate.Status{}); err == nil {
+			return status.(*nodestate.Status), nil
+		} else {
+			return nil, err
+		}
 	}
-
-	body, err := readBody(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if status, err := unmarshallBody(body, r, &nodestate.Status{}); err == nil {
-		return status.(*nodestate.Status), nil
-	}
-
-	return nil, err
 }
 
-func (client *Client) GetOperation(id uuid.UUID) (*operationResponse, error) {
+func (client *Client) GetOperation(id uuid.UUID) (op *operationResponse, err error) {
 
 	if id == uuid.Nil {
 		return nil, fmt.Errorf("getOperation must get a valid id")
 	}
 	endpoint := EndpointOperations + "/" + id.String()
 
-	var r *resty.Response
 	if r, err := client.performRequest(endpoint, http.MethodGet, nil); responseInvalid(r, err) {
 		return nil, err
+	} else {
+		body, err := readBody(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if status, err := unmarshallBody(body, r, &operationResponse{}); err != nil {
+			return nil, err
+		} else {
+			return status.(*operationResponse), nil
+		}
 	}
-
-	body, err := readBody(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if status, err := unmarshallBody(body, r, &operationResponse{}); err == nil {
-		return status.(*operationResponse), nil
-	}
-
-	return nil, err
 }
 
 func (client *Client) GetOperations() (*Operations, error) {
@@ -193,7 +188,6 @@ func (client *Client) GetFilteredOperations(filter *operationsFilter) (*Operatio
 
 func FilterOperations(ops Operations, kind Kind) (result []interface{}, err error) {
 
-	result = make([]interface{}, 0)
 	var op interface{}
 
 	for _, item := range ops {
@@ -201,7 +195,9 @@ func FilterOperations(ops Operations, kind Kind) (result []interface{}, err erro
 			log.Error(err, "Error parsing operation", &map[string]interface{}{"Operation": op})
 			continue
 		}
-		result = append(result, op)
+		if op != nil {
+			result = append(result, op)
+		}
 	}
 
 	return result, nil
@@ -248,10 +244,6 @@ func responseInvalid(r interface{}, err error) bool {
 }
 
 func (client *Client) performRequest(endpoint string, verb string, requestBody interface{}) (response *resty.Response, err error) {
-
-	if client.testMode {
-		return client.testResponse, nil
-	}
 
 	request := client.restyClient.R().SetHeader(accept, applicationJSON)
 

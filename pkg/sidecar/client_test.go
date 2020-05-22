@@ -1,18 +1,16 @@
 package sidecar
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/Orange-OpenSource/casskop/pkg/common/nodestate"
-	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
-	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 
+	"github.com/jarcoal/httpmock"
 	"gotest.tools/assert"
 )
 
@@ -28,53 +26,41 @@ func getHost() string {
 
 func TestDemarshalling(t *testing.T) {
 
-	// status
-
 	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
 
-	client.testMode = true
+	httpmock.ActivateNonDefault(client.restyClient.GetClient())
 
-	client.testResponse = &resty.Response{
-		RawResponse: &http.Response{
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{ "nodeState": "NORMAL"}`))),
-			Status:     "200 OK",
-			StatusCode: 200,
-		},
-	}
+	defer httpmock.DeactivateAndReset()
+
+	// Check Status()
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointStatus),
+		httpmock.NewStringResponder(200, `{"nodeState": "NORMAL"}`))
 
 	if status, err := client.Status(); err != nil || status == nil || status.NodeState != nodestate.NORMAL {
 		t.Fail()
 	}
 
-	// list operations
-
-	client.testResponse = &resty.Response{
-		RawResponse: &http.Response{
-			Body: ioutil.NopCloser(bytes.NewReader([]byte(
-				`[
-					{
-						"type": "decommission",
-						"id": "d3262073-8101-450f-9a11-c851760abd57",
-						"duration": "PT1M0.613S",
-						"start": "2019-06-11T03:37:15.593Z",
-						"stop": "2019-06-11T03:38:16.206Z",
-						"state": "FINISHED"
-					},
-					{
-						"type": "backup",
-						"id": "d3262073-8101-450f-9a11-c851760abd57",
-						"duration": "PT1M0.613S",
-						"start": "2019-06-11T03:37:15.593Z",
-						"stop": "2019-06-11T03:38:16.206Z",
-						"state": "RUNNING"
+	// Check GetOperations() and FilterOperations()
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+		httpmock.NewStringResponder(200,
+			`[
+				{
+					"type": "decommission",
+					"id": "d3262073-8101-450f-9a11-c851760abd57",
+					"duration": "PT1M0.613S",
+					"start": "2019-06-11T03:37:15.593Z",
+					"stop": "2019-06-11T03:38:16.206Z",
+					"state": "FINISHED"
+				},
+				{
+					"type": "backup",
+					"id": "d3262073-8101-450f-9a11-c851760abd57",
+					"duration": "PT1M0.613S",
+					"start": "2019-06-11T03:37:15.593Z",
+					"stop": "2019-06-11T03:38:16.206Z",
+					"state": "RUNNING"
 				}
-				]`))),
-			Status:     "200 OK",
-			StatusCode: 200,
-		},
-	}
-
-	// get operations
+			]`))
 
 	ops, err := client.GetOperations()
 	if err != nil {
@@ -87,25 +73,23 @@ func TestDemarshalling(t *testing.T) {
 	decommissions, err := FilterOperations(*ops, decommission)
 	assert.Assert(t, len(decommissions) == 1)
 
-	// get operation
+	operationID := "d3262073-8101-450f-9a11-c851760abd57"
 
-	client.testResponse = &resty.Response{
-		RawResponse: &http.Response{
-			Body: ioutil.NopCloser(bytes.NewReader([]byte(
+	httpmock.RegisterResponder(http.MethodGet,
+		fmt.Sprintf("%s/%s/%s", client.restyClient.HostURL, EndpointOperations, operationID),
+		httpmock.NewStringResponder(200,
+			fmt.Sprintf(
 				`{
 					"type": "backup",
-					"id": "d3262073-8101-450f-9a11-c851760abd57",
+					"id": "%s",
 					"duration": "PT1M0.613S",
 					"start": "2019-06-11T03:37:15.593Z",
 					"stop": "2019-06-11T03:38:16.206Z",
 					"state": "RUNNING"
-				}`))),
-			Status:     "200 OK",
-			StatusCode: 200,
-		},
-	}
+				}`, operationID)))
 
-	op, err := client.GetOperation(uuid.MustParse("d3262073-8101-450f-9a11-c851760abd57"))
+	// Check GetOperations(id)
+	op, err := client.GetOperation(uuid.MustParse(operationID))
 
 	if err != nil {
 		t.Error(err)
@@ -116,90 +100,67 @@ func TestDemarshalling(t *testing.T) {
 	}
 }
 
-func TestSidecarClient_GetStatus(t *testing.T) {
+func TestClientBackupNode(t *testing.T) {
 
 	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
 
-	status, e := client.Status()
+	httpmock.ActivateNonDefault(client.restyClient.GetClient())
 
-	if e != nil {
-		t.Errorf(e.Error())
+	defer httpmock.DeactivateAndReset()
+
+	operationID := "d3262073-8101-450f-9a11-c851760abd57"
+	backupResponse := fmt.Sprintf(
+		`
+			{
+				"type": "backup",
+				"id": "%s",
+				"duration": "PT1M0.613S",
+				"start": "2019-06-11T03:37:15.593Z",
+				"stop": "2019-06-11T03:38:16.206Z",
+				"state": "RUNNING"
+			}
+		`, operationID)
+
+	responder := func(req *http.Request) (*http.Response, error) {
+		body := fmt.Sprintf(`[%s]`, backupResponse)
+
+		header := http.Header{}
+		header.Set("Location", fmt.Sprintf("/%s", operationID))
+
+		return &http.Response{
+			Status:        strconv.Itoa(http.StatusOK),
+			StatusCode:    http.StatusOK,
+			Body:          httpmock.NewRespBodyFromString(body),
+			Header:        header,
+			ContentLength: -1,
+		}, nil
 	}
 
-	if status == nil {
-		t.Errorf("Status endpoint has not returned error but its status is not set.")
-	}
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+		responder)
 
-	if status.NodeState != nodestate.NORMAL {
-		t.Fatalf("Expected NORMAL operation mode but received %v", status.NodeState)
-	}
-}
+	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+		responder)
 
-func TestClient_DecommissionNode(t *testing.T) {
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s/%s", client.restyClient.HostURL, EndpointOperations, operationID),
+		httpmock.NewStringResponder(200, backupResponse))
 
-	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
-
-	// first decommissioning
-
-	if operationID, err := client.StartOperation(&decommissionRequest{}); err != nil {
-		t.Errorf(err.Error())
-	} else if operationID == uuid.Nil {
-		t.Errorf("there is not any error from decommission endpoint but operationId is nil")
-	} else if getOpResponse, err := client.GetOperation(operationID); err != nil {
-		t.Errorf(err.Error())
-	} else {
-		assert.Assert(t, (*getOpResponse)["state"] == operations.RUNNING)
-	}
-
-	// second decommissioning on the same node
-
-	operationID, err := client.StartOperation(&decommissionRequest{})
-
-	if err == nil || operationID != uuid.Nil {
-		t.Errorf("Decommissioning of already decomissioned node should fail.")
-	}
-}
-
-func TestClient_BackupNode(t *testing.T) {
-
-	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
-
+	// List backups and ensure we get only one response
 	backups, _ := client.ListBackups()
-	fmt.Println(backups[0])
+	assert.Assert(t, len(backups) == 1)
 
 	request := &BackupRequest{
 		StorageLocation: "s3://my-bucket/cassandra-dc/test-node-0",
 		SnapshotTag:     "mySnapshot",
 	}
 
+	// Trigger a backup and ensure we get an uuid
+	// then use that uuid to check the backup is running
 	if operationID, err := client.StartOperation(request); err != nil {
 		t.Errorf(err.Error())
 	} else if getOpResponse, err := client.GetOperation(operationID); err != nil {
 		t.Errorf(err.Error())
 	} else {
 		assert.Assert(t, (*getOpResponse)["state"] == "RUNNING")
-	}
-}
-
-func TestClient_CleanupNode(t *testing.T) {
-
-	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
-
-	cleanups, _ := client.ListCleanups()
-	fmt.Print(cleanups[0])
-
-	request := &cleanupRequest{
-		Keyspace: "test",
-		Tables:   []string{"mytable", "mytable2"},
-	}
-
-	if operationID, err := client.StartOperation(request); err != nil {
-		t.Errorf(err.Error())
-	} else if operationID == uuid.Nil {
-		t.Errorf("there is not any error from cleanup endpoint but operationID is nil")
-	} else if getOpResponse, err := client.GetOperation(operationID); err != nil {
-		t.Errorf(err.Error())
-	} else {
-		assert.Assert(t, (*getOpResponse)["state"] == "COMPLETED")
 	}
 }
