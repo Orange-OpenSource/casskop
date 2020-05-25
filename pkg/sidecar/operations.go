@@ -172,24 +172,6 @@ func (c *cleanupOperationResponse) String() string {
 	return string(op)
 }
 
-func (client *Client) ListCleanups() ([]*cleanupOperationResponse, error) {
-	var cleanups []*cleanupOperationResponse
-	ops, err := client.GetFilteredOperations(&operationsFilter{Types: []Kind{cleanup}})
-	if ops == nil || err != nil {
-		return cleanups, err
-	}
-
-	for _, op := range *ops {
-		cleanOp, err := ParseOperation(op, cleanup)
-		if err != nil {
-			return []*cleanupOperationResponse{}, err
-		}
-		cleanups = append(cleanups, cleanOp.(*cleanupOperationResponse))
-	}
-
-	return cleanups, nil
-}
-
 func (client *Client) FindBackup(id uuid.UUID) (backupResponse *BackupResponse, err error) {
 	if op, err := client.GetOperation(id); err != nil {
 		return nil, err

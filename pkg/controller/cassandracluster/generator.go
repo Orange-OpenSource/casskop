@@ -212,7 +212,7 @@ func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMoun
 	return vms
 }
 
-func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error){
+func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error) {
 	var pvcs []v1.PersistentVolumeClaim
 
 	for _, storage := range cc.Spec.StorageConfigs {
