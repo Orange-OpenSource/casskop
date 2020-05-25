@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/Orange-OpenSource/casskop/pkg/common/nodestate"
+	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	"github.com/google/uuid"
 
 	"github.com/jarcoal/httpmock"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func getHost() string {
@@ -68,10 +69,11 @@ func TestDemarshalling(t *testing.T) {
 	}
 
 	backups, err := FilterOperations(*ops, backup)
-	assert.Assert(t, len(backups) == 1)
+	assert := assert.New(t)
+	assert.Equal(len(backups), 1)
 
 	decommissions, err := FilterOperations(*ops, decommission)
-	assert.Assert(t, len(decommissions) == 1)
+	assert.Equal(len(decommissions), 1)
 
 	operationID := "d3262073-8101-450f-9a11-c851760abd57"
 
@@ -91,13 +93,8 @@ func TestDemarshalling(t *testing.T) {
 	// Check GetOperations(id)
 	op, err := client.GetOperation(uuid.MustParse(operationID))
 
-	if err != nil {
-		t.Error(err)
-	}
-
-	if (*op)["state"] != "RUNNING" {
-		t.Errorf("testing backing should return RUNNING state")
-	}
+	assert.Nil(err)
+	assert.Equal((*op)["state"], "RUNNING", "testing backing should return RUNNING state")
 }
 
 func TestClientBackupNode(t *testing.T) {
@@ -147,7 +144,9 @@ func TestClientBackupNode(t *testing.T) {
 
 	// List backups and ensure we get only one response
 	backups, _ := client.ListBackups()
-	assert.Assert(t, len(backups) == 1)
+	assert := assert.New(t)
+
+	assert.Equal(len(backups), 1)
 
 	request := &BackupRequest{
 		StorageLocation: "s3://my-bucket/cassandra-dc/test-node-0",
@@ -157,10 +156,15 @@ func TestClientBackupNode(t *testing.T) {
 	// Trigger a backup and ensure we get an uuid
 	// then use that uuid to check the backup is running
 	if operationID, err := client.StartOperation(request); err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	} else if getOpResponse, err := client.GetOperation(operationID); err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	} else {
-		assert.Assert(t, (*getOpResponse)["state"] == "RUNNING")
+		assert.Equal((*getOpResponse)["state"], "RUNNING")
+		opResponse, _ := client.FindBackup(operationID)
+		response := opResponse.basicResponse
+		assert.Equal(response.Id, operationID)
+		assert.Equal(response.State, operations.OperationState("RUNNING"))
 	}
+
 }
