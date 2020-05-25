@@ -219,3 +219,48 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 	msg := <-recorder.Events
 	assert.Contains(msg, "Datacenter dc1 of cluster test-cluster-dc1 to backup not found")
 }
+
+// func TestCassandraBackupSidecarsCalls(t *testing.T) {
+// 	// Check that when a create a CassandraBackup the controller creates a corresponding &sidecar.BackupRequest
+
+// 	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
+
+// 	secret := &corev1.Secret{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      cb.Spec.Secret,
+// 			Namespace: cb.Namespace,
+// 		},
+// 		Data: map[string][]byte{
+// 			"awssecretaccesskey": []byte("a secret"),
+// 			"awsaccesskeyid":     []byte("an access key"),
+// 			"awsregion":          []byte("a region"),
+// 		},
+// 	}
+
+// 	rcb.client.Create(context.TODO(), secret)
+
+// 	req := reconcile.Request{
+// 		NamespacedName: types.NamespacedName{
+// 			Name:      cb.Name,
+// 			Namespace: cb.Namespace,
+// 		},
+// 	}
+
+// 	res, err := rcb.Reconcile(req)
+
+// 	assert := assert.New(t)
+
+// 	// Confirms that Reconcile stops and does not return any error
+// 	assert.Equal(reconcile.Result{}, res)
+// 	assert.Nil(err)
+
+// 	msg := <-recorder.Events
+// 	assert.Contains(msg, "Datacenter dc1 of cluster test-cluster-dc1 to backup not found")
+
+// 	// assert.Contains(resp.Error(), "there is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
+
+// 	// secret.Data["awsregion"] = []byte("a region")
+
+// 	// resp = validateBackupSecret(secret, &cb, reqLogger)
+// 	// assert.Nil(resp)
+// }
