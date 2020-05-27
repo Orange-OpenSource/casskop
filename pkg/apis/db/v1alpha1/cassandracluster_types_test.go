@@ -504,3 +504,19 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)
 
 }
+
+func TestValidateSchedule(t *testing.T) {
+	assert := assert.New(t)
+
+	backupSpec := &CassandraBackupSpec{
+		Schedule: "",
+	}
+
+	for _, schedule := range []string{"@midnight", "1 1 */2 11 *", "@daily"} {
+		backupSpec.Schedule = schedule
+		assert.Nilf(backupSpec.validateSchedule(), "Schedule %s should be parseable", schedule)
+	}
+
+	backupSpec.Schedule = "@noon" // Unknown descriptor
+	assert.NotNil(backupSpec.validateSchedule())
+}

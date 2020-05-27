@@ -19,6 +19,7 @@ require (
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
