@@ -78,31 +78,6 @@ func helperInitCassandraBackupController(t *testing.T, cassandraBackupYaml strin
 	return &reconcileCassandraBackup, &cassandraBackup, fakeRecorder
 }
 
-func TestCassandraBackupJustCreate(t *testing.T) {
-	// When instance.JustCreate Reconcile stops
-	rcb, cb, _ := helperInitCassandraBackupController(t, cbyaml)
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cb.Name,
-			Namespace: cb.Namespace,
-		},
-	}
-
-	cb.JustCreate = true
-
-	rcb.client.Update(context.TODO(), cb)
-
-	res, err := rcb.Reconcile(req)
-
-	assert := assert.New(t)
-
-	// Confirms that Reconcile stops and does not return any error
-	assert.Equal(reconcile.Result{}, res)
-	assert.Nil(err)
-
-}
-
 func TestCassandraBackupAlreadyExists(t *testing.T) {
 	// When same CassandraBackup is recreated Reconcile stops and an event is created
 	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
