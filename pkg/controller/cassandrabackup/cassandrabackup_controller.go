@@ -44,9 +44,10 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileCassandraBackup{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
-		recorder: mgr.GetEventRecorderFor("cassandrabackup-controller"),
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		recorder:  mgr.GetEventRecorderFor("cassandrabackup-controller"),
+		scheduler: api.NewScheduler(),
 	}
 }
 
@@ -95,9 +96,10 @@ var _ reconcile.Reconciler = &ReconcileCassandraBackup{}
 type ReconcileCassandraBackup struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
-	recorder record.EventRecorder
+	client    client.Client
+	scheme    *runtime.Scheme
+	recorder  record.EventRecorder
+	scheduler v1alpha1.Scheduler
 }
 
 func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {
@@ -135,6 +137,18 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	// If deleted and a schedule was configured, we remove the cron task
+	if instance.DeletionTimestamp != nil && instance.Spec.Schedule != "" {
+		r.scheduler.Contains(instance.Name)
+		r.recorder.Event(
+			instance,
+			corev1.EventTypeNormal,
+			"BackupTaskUnscheduled",
+			fmt.Sprintf("Controller unscheduled cron task %s to back up cluster %s under snapshot %s",
+				instance.Name, instance.Spec.CassandraCluster, instance.Spec.SnapshotTag))
+		return reconcile.Result{}, nil
+	}
+
 	if instance.Status != nil && len(instance.Status) != 0 {
 		// when operator is restarted, nothing stops it to react on that CRD and it starts to backup again
 		reqLogger.Info(fmt.Sprintf("Reconcilliation of %s stopped as backup was already run", request.NamespacedName))
@@ -153,10 +167,6 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			"BackupSkipped",
 			fmt.Sprintf("Datacenter %s in cluster %s was not backed up to %s under snapshot %s because such backup already exists",
 				instance.Spec.Datacenter, instance.Spec.CassandraCluster, instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
-		return reconcile.Result{}, nil
-	}
-
-	if instance.JustCreate {
 		return reconcile.Result{}, nil
 	}
 
@@ -196,10 +206,37 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	if instance.Spec.Schedule != "" {
+		// There is a schedule so we need to add a cron task to handle the backup
+		schedule := instance.Spec.Schedule
+		if err := instance.Spec.ValidateSchedule(); err != nil {
+			r.recorder.Event(
+				instance,
+				corev1.EventTypeWarning,
+				"FailureEvent",
+				fmt.Sprintf("Schedule %s is not valid: %s", schedule, err.Error()))
+
+			return reconcile.Result{}, nil
+		}
+
+		// Schedule a cron task in charge of doing that backup
+		if !r.scheduler.Contains(instance.Name) {
+			err := r.scheduler.AddOrUpdate(instance.Name, instance.Spec,
+				func() { r.backupData(instance, cc, reqLogger) })
+			return reconcile.Result{}, err
+		}
+
+	}
+
+	return reconcile.Result{}, r.backupData(instance, cc, reqLogger)
+}
+
+func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
+	reqLogger logr.Logger) error {
 	// Get Pod clients
 	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Unable to list pods")
+		return fmt.Errorf("Unable to list pods")
 	}
 
 	sidecarClients := sidecar.SidecarClients(pods, &sidecar.DefaultSidecarClientOptions)
@@ -219,9 +256,11 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		instance,
 		corev1.EventTypeNormal,
 		"BackupFinished",
-		fmt.Sprintf("Datacenter %s of cluster %s was backed up to %s under snapshot %s", instance.Spec.Datacenter, instance.Spec.CassandraCluster, instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
+		fmt.Sprintf("Datacenter %s of cluster %s was backed up to %s under snapshot %s",
+			instance.Spec.Datacenter, instance.Spec.CassandraCluster,
+			instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
 
-	return reconcile.Result{}, nil
+	return nil
 }
 
 func backupOfSameSnapshotExists(c client.Client, instance *api.CassandraBackup) (bool, error) {
