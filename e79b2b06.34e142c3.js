@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[58],{193:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"external-dns","name":"external-dns","count":1,"permalink":"/casskop/blog/tags/external-dns"}')}}]);

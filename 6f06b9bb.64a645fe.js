@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[31],{167:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"multi-casskop","name":"multi-casskop","count":1,"permalink":"/casskop/blog/tags/multi-casskop"}')}}]);
