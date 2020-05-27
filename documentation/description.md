@@ -74,8 +74,10 @@
 
 ## Overview
 
-The Cassandra Kubernetes Operator (CassKop) makes it easy to run Apache Cassandra on Kubernetes. Apache Cassandra is
-a popular free, open-source distributed wide column store NoSQL database management system.
+The documentation is accessible at https://orange-opensource.github.io/casskop/.
+
+
+The Cassandra Kubernetes Operator, CassKop, makes it easy to run Apache Cassandra on Kubernetes. Apache Cassandra is a popular free, open-source distributed wide column store NoSQL database management system.
 
 
 CassKop will allow to easily create and manage Rack aware Cassandra Clusters.

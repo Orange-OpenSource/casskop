@@ -7,11 +7,10 @@
 
 ## Project overview
 
-The CassKop Cassandra Kubernetes operator makes it easy to run Apache Cassandra on Kubernetes. Apache Cassandra is a popular, 
-free, open-source, distributed wide column store, NoSQL database management system. 
+CassKop, the Cassandra Kubernetes operator makes it easy to run Apache Cassandra on Kubernetes. Apache Cassandra is a popular, free, open-source, distributed wide column store, NoSQL database management system.
 The operator allows to easily create and manage racks and data centers aware Cassandra clusters.
 
-The Cassandra operator is based on the CoreOS
+CassKop is based on CoreOS
 [operator-sdk](https://github.com/operator-framework/operator-sdk) tools and APIs.
 
 > **NOTE**: This is an alpha-status project. We do regular tests on the code and functionality, but we can not assure a
@@ -59,7 +58,7 @@ The following features are supported by CassKop:
 - [x] Manage operations on pods through CassKop plugin (cleanup, rebuild, upgradesstable, removenode..)
 - [x] Monitoring (using Instaclustr Prometheus exporter to Prometheus/Grafana)
 - [x] Use official Cassandra Image (configuration for Casskop is done through a bootstrap init-container)
-- [ ] Performing live backup of Cassandra datas (using Instaclustr sidecar)
+- [X] Performing live backup of Cassandra datas (using Instaclustr sidecar)
 - [ ] Performing live restore of datas (using Instaclustr sidecar)
 - [x] Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
 - [x] Pause/Restart & rolling restart operations through CassKoP plugin.
