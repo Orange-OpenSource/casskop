@@ -139,7 +139,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 
 	// If deleted and a schedule was configured, we remove the cron task
 	if instance.DeletionTimestamp != nil && instance.Spec.Schedule != "" {
-		r.scheduler.Contains(instance.Name)
+		r.scheduler.Remove(instance.Name)
 		r.recorder.Event(
 			instance,
 			corev1.EventTypeNormal,
