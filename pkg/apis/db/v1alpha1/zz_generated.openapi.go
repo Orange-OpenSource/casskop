@@ -78,12 +78,6 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackup(ref common.ReferenceCallback) c
 							Format: "",
 						},
 					},
-					"justCreate": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 				},
 				Required: []string{"spec"},
 			},
@@ -120,11 +114,17 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackupSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"snapshotTag": {
+					"schedule": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The snapshot tag for the backup",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"snapshotTag": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"duration": {

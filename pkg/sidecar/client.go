@@ -213,18 +213,8 @@ func ParseOperation(operation operationResponse, kind Kind) (interface{}, error)
 	if operation["type"].(string) == _KindValueToName[kind] {
 
 		switch kind {
-		case cleanup:
-			op = &cleanupOperationResponse{}
-		case upgradesstables:
-			op = &UpgradeSSTablesResponse{}
-		case decommission:
-			op = &decommissionOperationResponse{}
 		case backup:
 			op = &BackupResponse{}
-		case rebuild:
-			op = &RebuildResponse{}
-		case scrub:
-			op = &ScrubResponse{}
 		case noop:
 			return nil, fmt.Errorf("no op")
 		}
