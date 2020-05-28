@@ -63,7 +63,7 @@ type CassandraBackupSpec struct {
 	// The uri for the backup target location e.g. s3 bucket, filepath
 	StorageLocation string `json:"storageLocation"`
 	// The snapshot tag for the backup
-	Schedule              string `json:"schedule"`
+	Schedule              string `json:"schedule,omitempty"`
 	SnapshotTag           string `json:"snapshotTag"`
 	Duration              string `json:"duration,omitempty"`
 	Bandwidth             string `json:"bandwidth,omitempty"`
