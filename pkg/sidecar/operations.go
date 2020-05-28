@@ -17,12 +17,7 @@ type Kind int
 
 const (
 	noop Kind = iota
-	cleanup
-	upgradesstables
-	decommission
 	backup
-	rebuild
-	scrub
 )
 
 type operationsFilter struct {
@@ -65,25 +60,6 @@ type operation struct {
 	Type Kind `json:"type"`
 }
 
-type decommissionRequest struct {
-	operation
-}
-
-func (d *decommissionRequest) Init() {
-	d.Type = decommission
-}
-
-type cleanupRequest struct {
-	operation
-	Jobs     int32    `json:"jobs,omitempty"`
-	Tables   []string `json:"tables,omitempty"`
-	Keyspace string   `json:"keyspace"`
-}
-
-func (c *cleanupRequest) Init() {
-	c.Type = cleanup
-}
-
 type BackupRequest struct {
 	operation
 	StorageLocation       string   `json:"storageLocation"`
@@ -101,48 +77,9 @@ func (b *BackupRequest) Init() {
 	b.Type = backup
 }
 
-type upgradeSSTablesRequest struct {
-	operation
-	IncludeAllSSTables bool     `json:"includeAllSSTables,omitempty"`
-	Jobs               int32    `json:"jobs,omitempty"`
-	Tables             []string `json:"tables,omitempty"`
-	Keyspace           string   `json:"keyspace"`
-}
-
-func (u *upgradeSSTablesRequest) Init() {
-	u.Type = upgradesstables
-}
-
 type tokenRange struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
-}
-
-type rebuildRequest struct {
-	operation
-	SourceDC        string       `json:"sourceDC,omitempty"`
-	Keyspace        string       `json:"keyspace"`
-	SpecificSources []string     `json:"specificSources,omitempty"`
-	SpecificTokens  []tokenRange `json:"specificTokens,omitempty"`
-}
-
-func (r *rebuildRequest) Init() {
-	r.Type = rebuild
-}
-
-type scrubRequest struct {
-	operation
-	DisableSnapshot       bool     `json:"disableSnapshot,omitempty"`
-	SkipCorrupted         bool     `json:"skipCorrupted,omitempty"`
-	NoValidate            bool     `json:"noValidate,omitempty"`
-	ReinsertOverflowedTTL bool     `json:"reinsertOverflowedTTL,omitempty"`
-	Jobs                  int32    `json:"jobs,omitempty"`
-	Tables                []string `json:"tables,omitempty"`
-	Keyspace              string   `json:"keyspace"`
-}
-
-func (s *scrubRequest) Init() {
-	s.Type = scrub
 }
 
 type operationResponse map[string]interface{}
@@ -155,21 +92,6 @@ type basicResponse struct {
 	Progress       float32                   `json:"progress"`
 	StartTime      time.Time                 `json:"startTime"`
 	CompletionTime time.Time                 `json:"completionTime"`
-}
-
-type decommissionOperationResponse struct {
-	basicResponse
-	decommissionRequest
-}
-
-type cleanupOperationResponse struct {
-	basicResponse
-	cleanupRequest
-}
-
-func (c *cleanupOperationResponse) String() string {
-	op, _ := json.Marshal(c)
-	return string(op)
 }
 
 func (client *Client) FindBackup(id uuid.UUID) (backupResponse *BackupResponse, err error) {
@@ -214,22 +136,4 @@ func (client *Client) ListBackups() ([]*BackupResponse, error) {
 	}
 
 	return backups, nil
-}
-
-// UpgradeSSTables
-type UpgradeSSTablesResponse struct {
-	basicResponse
-	upgradeSSTablesRequest
-}
-
-// rebuild
-type RebuildResponse struct {
-	basicResponse
-	rebuildRequest
-}
-
-// scrub
-type ScrubResponse struct {
-	basicResponse
-	scrubRequest
 }

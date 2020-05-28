@@ -9,21 +9,11 @@ import (
 
 var (
 	_KindNameToValue = map[string]Kind{
-		"cleanup":         cleanup,
-		"upgradesstables": upgradesstables,
-		"decommission":    decommission,
-		"backup":          backup,
-		"rebuild":         rebuild,
-		"scrub":           scrub,
+		"backup": backup,
 	}
 
 	_KindValueToName = map[Kind]string{
-		cleanup:         "cleanup",
-		upgradesstables: "upgradesstables",
-		decommission:    "decommission",
-		backup:          "backup",
-		rebuild:         "rebuild",
-		scrub:           "scrub",
+		backup: "backup",
 	}
 )
 
@@ -31,12 +21,7 @@ func init() {
 	var v Kind
 	if _, ok := interface{}(v).(fmt.Stringer); ok {
 		_KindNameToValue = map[string]Kind{
-			interface{}(cleanup).(fmt.Stringer).String():         cleanup,
-			interface{}(upgradesstables).(fmt.Stringer).String(): upgradesstables,
-			interface{}(decommission).(fmt.Stringer).String():    decommission,
-			interface{}(backup).(fmt.Stringer).String():          backup,
-			interface{}(rebuild).(fmt.Stringer).String():         rebuild,
-			interface{}(scrub).(fmt.Stringer).String():           scrub,
+			interface{}(backup).(fmt.Stringer).String(): backup,
 		}
 	}
 }
