@@ -33,8 +33,6 @@ spec:
           type: string
         globalStatus:
           type: string
-        justCreate:
-          type: boolean
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
@@ -59,10 +57,12 @@ spec:
               type: string
             entities:
               type: string
+            schedule:
+              description: The snapshot tag for the backup
+              type: string
             secret:
               type: string
             snapshotTag:
-              description: The snapshot tag for the backup
               type: string
             storageLocation:
               description: The uri for the backup target location e.g. s3 bucket,
