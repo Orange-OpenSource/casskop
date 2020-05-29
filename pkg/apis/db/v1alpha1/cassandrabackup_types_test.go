@@ -35,3 +35,25 @@ func TestValidateSchedule(t *testing.T) {
 	backupSpec.Schedule = "@noon" // Unknown descriptor
 	assert.NotNilf(backupSpec.ValidateSchedule(), "Schedule %s should not be parseable", backupSpec.Schedule)
 }
+
+func TestCassandraBackupComputeLastAppliedConfiguration(t *testing.T) {
+	assert := assert.New(t)
+
+	backupSpec := &CassandraBackupSpec{
+		CassandraCluster: "cluster1",
+		Datacenter:       "dc1",
+		Schedule:         "@weekly",
+		StorageLocation:  "s3://cassie",
+		SnapshotTag:      "weekly",
+		Entities:         "k1.t1, k3.t3",
+	}
+
+	backup := &CassandraBackup{
+		Spec: *backupSpec,
+	}
+
+	lastAppliedConfiguration, _ := backup.ComputeLastAppliedConfiguration()
+	result := `{"metadata":{"creationTimestamp":null},"spec":{"cassandracluster":"cluster1","datacenter":"dc1","storageLocation":"s3://cassie","schedule":"@weekly","snapshotTag":"weekly","entities":"k1.t1, k3.t3"}}`
+
+	assert.Equal(result, lastAppliedConfiguration)
+}
