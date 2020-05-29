@@ -3,7 +3,7 @@
 ## Install Prometheus operator
 
 ```
-helm install prometheus-monitoring stable/prometheus-operator --set prometheusOperator.createCustomResource=false --set grafana.plugins="{briangann-gauge-panel,grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel,savantly-heatmap-panel,vonage-status-panel}"
+helm install prometheus-monitoring stable/prometheus-operator --set prometheusOperator.createCustomResource=false --set grafana.plugins="{briangann-gauge-panel,grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel,savantly-heatmap-panel,vonage-status-panel}" --set grafana.image.tag=7.0.1
 ```
 
 ## Install our dashboard
