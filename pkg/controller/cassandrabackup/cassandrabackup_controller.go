@@ -47,7 +47,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client:    mgr.GetClient(),
 		scheme:    mgr.GetScheme(),
 		recorder:  mgr.GetEventRecorderFor("cassandrabackup-controller"),
-		scheduler: api.NewScheduler(),
+		scheduler: NewScheduler(),
 	}
 }
 
@@ -99,7 +99,7 @@ type ReconcileCassandraBackup struct {
 	client    client.Client
 	scheme    *runtime.Scheme
 	recorder  record.EventRecorder
-	scheduler v1alpha1.Scheduler
+	scheduler Scheduler
 }
 
 func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {
