@@ -72,23 +72,22 @@ func TestDemarshalling(t *testing.T) {
 	assert := assert.New(t)
 	assert.Equal(len(backups), 1)
 
-	decommissions, err := FilterOperations(*ops, decommission)
-	assert.Equal(len(decommissions), 1)
-
 	operationID := "d3262073-8101-450f-9a11-c851760abd57"
 
 	httpmock.RegisterResponder(http.MethodGet,
 		fmt.Sprintf("%s/%s/%s", client.restyClient.HostURL, EndpointOperations, operationID),
 		httpmock.NewStringResponder(200,
 			fmt.Sprintf(
-				`{
-					"type": "backup",
-					"id": "%s",
-					"duration": "PT1M0.613S",
-					"start": "2019-06-11T03:37:15.593Z",
-					"stop": "2019-06-11T03:38:16.206Z",
-					"state": "RUNNING"
-				}`, operationID)))
+				`
+					{
+						"type": "backup",
+						"id": "%s",
+						"duration": "PT1M0.613S",
+						"start": "2019-06-11T03:37:15.593Z",
+						"stop": "2019-06-11T03:38:16.206Z",
+						"state": "RUNNING"
+					}
+				`, operationID)))
 
 	// Check GetOperations(id)
 	op, err := client.GetOperation(uuid.MustParse(operationID))
