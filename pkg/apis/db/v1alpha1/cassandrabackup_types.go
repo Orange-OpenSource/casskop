@@ -1,10 +1,12 @@
 package v1alpha1
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	cron "github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,6 +63,22 @@ type CassandraBackup struct {
 	Status         []*CassandraBackupStatus  `json:"status,omitempty"`
 	GlobalStatus   operations.OperationState `json:"globalStatus,omitempty"`
 	GlobalProgress string                    `json:"globalProgress,omitempty"`
+}
+
+func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
+	lastcb := cb.DeepCopy()
+	//remove unnecessary fields
+	lastcb.Annotations = nil
+	lastcb.ResourceVersion = ""
+	lastcb.Status = make([]*CassandraBackupStatus, 0)
+	lastcb.GlobalStatus = ""
+	lastcb.GlobalProgress = ""
+
+	lastApplied, err := json.Marshal(lastcb)
+	if err != nil {
+		logrus.Errorf("[%s]: Cannot create last-applied-configuration = %v", cb.Name, err)
+	}
+	return string(lastApplied), err
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
