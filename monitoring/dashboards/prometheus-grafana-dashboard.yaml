@@ -351,7 +351,7 @@ data:
               "thresholds": "",
               "timeFrom": null,
               "timeShift": null,
-              "title": "Compaction tasks",
+              "title": "Compaction Tasks",
               "type": "singlestat",
               "valueFontSize": "80%",
               "valueMaps": [
@@ -637,7 +637,7 @@ data:
               "thresholds": "",
               "timeFrom": null,
               "timeShift": null,
-              "title": "Dropped Msg",
+              "title": "Dropped Messages",
               "type": "singlestat",
               "valueFontSize": "80%",
               "valueMaps": [
@@ -2748,7 +2748,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Total space used",
+                  "title": "Total Space Used",
                   "tooltip": {
                     "shared": true,
                     "sort": 0,
@@ -2944,7 +2944,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Table Read count per second",
+                  "title": "Table Read Count Per Second",
                   "tooltip": {
                     "shared": true,
                     "sort": 2,
@@ -3126,7 +3126,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Table Write count per second",
+                  "title": "Table Write Count Per Second",
                   "tooltip": {
                     "shared": true,
                     "sort": 2,
@@ -3672,7 +3672,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Table disk space",
+                  "title": "Table Disk Space",
                   "tooltip": {
                     "shared": true,
                     "sort": 2,
@@ -4400,7 +4400,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Table Sstables per Read",
+                  "title": "Table Sstables Per Read",
                   "tooltip": {
                     "shared": true,
                     "sort": 2,
@@ -5597,7 +5597,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Young Gen - Number of collections",
+                  "title": "Young Gen - Number Of collections",
                   "tooltip": {
                     "shared": true,
                     "sort": 0,
@@ -5779,7 +5779,7 @@ data:
                   "timeFrom": null,
                   "timeRegions": [],
                   "timeShift": null,
-                  "title": "Old Gen - Number of collections",
+                  "title": "Old Gen - Number Of collections",
                   "tooltip": {
                     "shared": true,
                     "sort": 0,
@@ -5999,7 +5999,7 @@ data:
                   }
                 }
               ],
-              "title": "JVM Metrics by Node",
+              "title": "JVM Metrics By Node",
               "type": "row"
             }
           ],
