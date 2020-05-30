@@ -2006,7 +2006,7 @@ data:
                   "steppedLine": false,
                   "targets": [
                     {
-                      "expr": "irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"read\",instance=~\"$host\"}[5m])\n/\nirate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"read\",instance=~\"$host\"}[5m])",
+                      "expr": "sum by (instance) (irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"read\",instance=~\"$host\"}[5m]))\n/\nsum by (instance) (irate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"read\",instance=~\"$host\"}[5m]))",
                       "format": "time_series",
                       "interval": "",
                       "intervalFactor": 1,
@@ -2099,7 +2099,7 @@ data:
                   "steppedLine": false,
                   "targets": [
                     {
-                      "expr": "irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"write\",instance=~\"$host\"}[5m])\n/\nirate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"write\",instance=~\"$host\"}[5m])",
+                      "expr": "sum by (instance) (irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"write\",instance=~\"$host\"}[5m]))\n/\nsum by (instance) (irate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",operation=\"write\",instance=~\"$host\"}[5m]))",
                       "format": "time_series",
                       "interval": "",
                       "intervalFactor": 1,
@@ -2645,7 +2645,7 @@ data:
                   "steppedLine": false,
                   "targets": [
                     {
-                      "expr": "irate(cassandra_dropped_messages_total{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",instance=~\"$host\"}[5m])",
+                      "expr": "sum by (instance) (irate(cassandra_dropped_messages_total{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",instance=~\"$host\"}[5m]))",
                       "format": "time_series",
                       "interval": "",
                       "intervalFactor": 1,
@@ -2736,7 +2736,7 @@ data:
                   "steppedLine": false,
                   "targets": [
                     {
-                      "expr": "cassandra_table_live_disk_space_bytes{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",instance=~\"$host\"}",
+                      "expr": "sum by (instance) (cassandra_table_live_disk_space_bytes{cassandra_cluster=~\"$cluster\",cassandra_datacenter=~\"$dc\",cassandra_rack=~\"$rack\",instance=~\"$host\"})",
                       "format": "time_series",
                       "interval": "",
                       "intervalFactor": 1,
