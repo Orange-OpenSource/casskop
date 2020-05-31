@@ -53,8 +53,7 @@ orbs:
               name: Setup kubectl
               command: |
                 set -x
-                chmod o+w /usr/local/bin/
-                # sudo chmod o+w /usr/local/bin/
+                sudo chmod o+w /usr/local/bin/
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
                 KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')" kubectl get nodes
@@ -414,52 +413,52 @@ workflows:
             - unit-test-casskop
           <<: *everytime_filter
 
-      - operator/docker-dgoss-test:
-          name: docker-dgoss-test-casskop
-          requires:
-            - build-casskop
-          <<: *everytime_filter
+      # - operator/docker-dgoss-test:
+      #     name: docker-dgoss-test-casskop
+      #     requires:
+      #       - build-casskop
+      #     <<: *everytime_filter
 
-      - operator/report:
-          name: report-casskop
-          requires:
-            - unit-test-casskop
-          <<: *canonical_repo_filter
+      # - operator/report:
+      #     name: report-casskop
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *canonical_repo_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test RollingRestart
-          test_name: RollingRestart
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
+      # - k3d/e2e-orb:
+      #     name: e2e-test RollingRestart
+      #     test_name: RollingRestart
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ScaleUp
-          test_name: ClusterScaleUp
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
+      # - k3d/e2e-orb:
+      #     name: e2e-test ScaleUp
+      #     test_name: ClusterScaleUp
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ScaleDown
-          test_name: ClusterScaleDown
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
+      # - k3d/e2e-orb:
+      #     name: e2e-test ScaleDown
+      #     test_name: ClusterScaleDown
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ScaleDownSimple
-          test_name: ClusterScaleDownSimple
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
+      # - k3d/e2e-orb:
+      #     name: e2e-test ScaleDownSimple
+      #     test_name: ClusterScaleDownSimple
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test CreateOneClusterService
-          test_name: CreateOneClusterService
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
+      # - k3d/e2e-orb:
+      #     name: e2e-test CreateOneClusterService
+      #     test_name: CreateOneClusterService
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
           name: e2e-test UpdateConfigMap
@@ -468,51 +467,45 @@ workflows:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ExecuteCleanup
-          test_name: ExecuteCleanup
-          requires:
-            - unit-test-casskop
-          <<: *ignore_fork_pr_filter
-      - operator/publish-helm:
-          name: publish-helm-orange-incubator-casskop
-          requires:
-            - report-casskop
-          <<: *only_on_release_tag
-      - deploy-website:
-          name: deploy-website
-          requires:
-            - report-casskop
-#          <<: *only_on_release_tag
-          <<: *website_publish
+      # - k3d/e2e-orb:
+      #     name: e2e-test ExecuteCleanup
+      #     test_name: ExecuteCleanup
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *ignore_fork_pr_filter
+      # - operator/publish-helm:
+      #     name: publish-helm-orange-incubator-casskop
+      #     requires:
+      #       - report-casskop
+      #     <<: *only_on_release_tag
 
   ## CassKop operator workflow.
-  ci-multicasskop-operator:
-    jobs:
-      - operator/generate:
-          name: generate-casskop
-          <<: *everytime_filter
-      - operator/generate:
-          name: generate-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - generate-casskop
-          <<: *everytime_filter
-      - operator/build:
-          name: build-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - generate-multicasskop
-          <<: *everytime_filter
-      - operator/report:
-          name: report-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - build-multicasskop
-          <<: *canonical_repo_filter
-      - operator/publish-helm:
-          name: publish-helm-orange-incubator-multicasskop
-          <<: *params_multicasskop
-          requires:
-            - report-multicasskop
-          <<: *only_on_release_tag
+  # ci-multicasskop-operator:
+  #   jobs:
+  #     - operator/generate:
+  #         name: generate-casskop
+  #         <<: *everytime_filter
+  #     - operator/generate:
+  #         name: generate-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - generate-casskop
+  #         <<: *everytime_filter
+  #     - operator/build:
+  #         name: build-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - generate-multicasskop
+  #         <<: *everytime_filter
+  #     - operator/report:
+  #         name: report-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - build-multicasskop
+  #         <<: *canonical_repo_filter
+  #     - operator/publish-helm:
+  #         name: publish-helm-orange-incubator-multicasskop
+  #         <<: *params_multicasskop
+  #         requires:
+  #           - report-multicasskop
+  #         <<: *only_on_release_tag
