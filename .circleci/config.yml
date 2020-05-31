@@ -10,12 +10,11 @@ experimental:
 # elements used into the worflow (= Orbs)
 orbs:
   k3d:
-    # Setting up VM executor for k3d.
+    # Setting up VM executor to run k3d.
     executors:
-      minimum:
+      vm:
         machine:
           image: ubuntu-1604:201903-01
-    # Setting up job list
     jobs:
       e2e-orb:
         # PARAMETERS
@@ -28,9 +27,8 @@ orbs:
             type: string
             description: relative path where the build must be run
             default: casskop
-        executor: minimum
+        executor: vm
         working_directory: /home/circleci/<< parameters.operatorDir >>
-        # ENVIRONMENTS VARIABLES
         environment:
           K3S_IMAGE: rancher/k3s:v1.17.5-k3s1
           K8S_VERSION: v1.17.5
@@ -79,7 +77,6 @@ orbs:
   operator:
     # Parameters anchor
     .params_operator: &params_operator
-      # PARAMETERS
       parameters:
         operatorDir:
           type: string
@@ -106,9 +103,7 @@ orbs:
       generate:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-          # Checkout steps
           - checkout:
               path: /home/circleci/casskop
           - setup_remote_docker # Creates a separate environment for each build for security.
@@ -129,13 +124,11 @@ orbs:
               command: |
                 make generate
                 [ "$(git ls-files -m |grep -c zz_generated)" -eq 0 ]
-          # Create artifacts
-          - persist_to_workspace:
+          - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
                 - << parameters.operatorDir >>/build/_output
                 - << parameters.operatorDir >>/vendor
-          # Cache configuration
           - save_cache:
               name: Save build artifacts in cache
               key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
@@ -148,7 +141,6 @@ orbs:
         <<: *params_operator
         <<: *job_operator
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - setup_remote_docker # Creates a separate environment for each build for security.
@@ -157,17 +149,14 @@ orbs:
               - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         - attach_workspace:  # Attach artifact from workdir
             at: /home/circleci
-        # Build steps
         - run:
             name: Build Operator
             command: make build
-        # Create artifacts
-        - persist_to_workspace:
+        - persist_to_workspace: # Create artifacts
             root: /home/circleci
             paths:
               - << parameters.operatorDir >>/build/_output
               - << parameters.operatorDir >>/vendor
-        # Deploy steps
         - deploy:
             name: Push image to Docker Hub
             command: |
@@ -177,7 +166,6 @@ orbs:
                 docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
                 make push
               fi
-        # Cache configuration
         - save_cache:
             name: Save build artifacts in cache
             key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
@@ -189,9 +177,7 @@ orbs:
       unit-test:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - attach_workspace:  # Attach artifact from workdir
@@ -213,9 +199,7 @@ orbs:
       docker-dgoss-test:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - setup_remote_docker
@@ -237,9 +221,7 @@ orbs:
       report:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - attach_workspace:
@@ -295,7 +277,6 @@ orbs:
         docker:
           - image: google/cloud-sdk
         steps:
-          # Checkout steps
           - checkout:
               path: /home/circleci/casskop
           - run:
@@ -312,7 +293,6 @@ jobs:
     docker: # run the steps with Docker
       - image: node:13.5.0
     steps:
-      # Checkout steps
       - checkout:
           path: /home/circleci/casskop
 #      - restore_cache:
@@ -408,58 +388,57 @@ workflows:
             - unit-test-casskop
           <<: *everytime_filter
 
-      # - operator/docker-dgoss-test:
-      #     name: docker-dgoss-test-casskop
-      #     requires:
-      #       - build-casskop
-      #     <<: *everytime_filter
+      - operator/docker-dgoss-test:
+          name: docker-dgoss-test-casskop
+          requires:
+            - build-casskop
+          <<: *everytime_filter
 
-      # - operator/report:
-      #     name: report-casskop
-      #     requires:
-      #       - unit-test-casskop
-      #     <<: *canonical_repo_filter
+      - operator/report:
+          name: report-casskop
+          requires:
+            - unit-test-casskop
+          <<: *canonical_repo_filter
 
       # - k3d/e2e-orb:
       #     name: e2e-test RollingRestart
       #     test_name: RollingRestart
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
 
       # - k3d/e2e-orb:
       #     name: e2e-test ScaleUp
       #     test_name: ClusterScaleUp
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
 
       # - k3d/e2e-orb:
       #     name: e2e-test ScaleDown
       #     test_name: ClusterScaleDown
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
 
       # - k3d/e2e-orb:
       #     name: e2e-test ScaleDownSimple
       #     test_name: ClusterScaleDownSimple
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
 
       # - k3d/e2e-orb:
       #     name: e2e-test CreateOneClusterService
       #     test_name: CreateOneClusterService
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
-            # - unit-test-casskop
             - build-casskop
           <<: *ignore_fork_pr_filter
 
@@ -467,13 +446,14 @@ workflows:
       #     name: e2e-test ExecuteCleanup
       #     test_name: ExecuteCleanup
       #     requires:
-      #       - unit-test-casskop
+      #       - build-casskop
       #     <<: *ignore_fork_pr_filter
-      # - operator/publish-helm:
-      #     name: publish-helm-orange-incubator-casskop
-      #     requires:
-      #       - report-casskop
-      #     <<: *only_on_release_tag
+
+      - operator/publish-helm:
+          name: publish-helm-orange-incubator-casskop
+          requires:
+            - report-casskop
+          <<: *only_on_release_tag
 
   ## CassKop operator workflow.
   # ci-multicasskop-operator:
