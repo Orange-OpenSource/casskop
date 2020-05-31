@@ -9,80 +9,61 @@ experimental:
 # Define shareable packages of configuration
 # elements used into the worflow (= Orbs)
 orbs:
-  minikube:
-    # Setting up VM executor for minikube.
+  k3d:
+    # Setting up VM executor for k3d.
     executors:
-      vm-classic:
+      minimum:
         machine:
-          image: circleci/classic:201808-01
+          image: ubuntu-1604:201903-01
     # Setting up job list
     jobs:
-      e2e-orb: # Define job which execute 'docker-e2e-test-fix-arg' makefile job
+      e2e-orb:
         # PARAMETERS
         parameters:
           test_name:
             description: name of the test in e2e code
             type: string
-            default: toto
+            default: e2e code name
           operatorDir:
             type: string
             description: relative path where the build must be run
             default: casskop
-        executor: vm-classic
+        executor: minimum
         working_directory: /home/circleci/<< parameters.operatorDir >>
         # ENVIRONMENTS VARIABLES
         environment:
-          K8S_VERSION: v1.14.0
-          KUBECONFIG: /home/circleci/.kube/config
-          MINIKUBE_VERSION: v1.0.0
-          MINIKUBE_WANTUPDATENOTIFICATION: false
-          MINIKUBE_WANTREPORTERRORPROMPT: false
-          MINIKUBE_HOME: /home/circleci
-          MINIKUBE_CONFIG: /home/circleci/.minikube
-          CHANGE_MINIKUBE_NONE_USER: true
+          K3S_IMAGE: rancher/k3s:v1.17.5-k3s1
+          K8S_VERSION: v1.17.5
           GOPATH: /go
           GO111MODULE: on
           DOCKER_LATEST: 1
           GIN_MODE: release
-        # STEPS
         steps:
-          # Pre-checkout steps
-          - run: # Install Minikube components to be able to run it.
-              name: Setup minikube
+          - run:
+              name: Set up K3d
               command: |
-                wget -O minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-          - run: # Run minikube with expected parameters
-              name: Start minikube
-              background: true
-              command: |
-                sudo -E minikube start --vm-driver=none --cpus 4 --memory 4096 --kubernetes-version=${K8S_VERSION}
-          - run: # Install kubectl cli
+                set -x
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/master/install.sh | bash
+                k3d create --image ${K3S_IMAGE} --wait 0
+                # sudo k3d create --image ${K3S_IMAGE} --wait 0
+                mkdir -p ${HOME}/.kube
+                cp $(k3d get-kubeconfig) ${HOME}/.kube/config
+                # sudo cp $(sudo k3d get-kubeconfig) ${HOME}/.kube/config
+          - run:
               name: Setup kubectl
               command: |
-                wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-                mkdir -p ${HOME}/.kube
-                touch ${HOME}/.kube/config
-          # Checkout steps
+                set -x
+                chmod o+w /usr/local/bin/
+                # sudo chmod o+w /usr/local/bin/
+                wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
+                chmod +x /usr/local/bin/kubectl
+                KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')" kubectl get nodes
+                # KUBECONFIG="$(sudo k3d get-kubeconfig --name='k3s-default')" kubectl get nodes
+                # sudo kubectl get nodes
           - checkout:
               path: /home/circleci/casskop
           - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
-          # Check environment set up correctly
-          - run: # Wait until minikube nodes are ready
-              name: Wait for minikube
-              command: |
-                timeout 300s bash \<<EOT
-                  set -o pipefail
-                  function is_ready()
-                  {
-                    kubectl get nodes -o json \
-                      | jq '.items[].status.conditions[] | select(.type=="Ready" and .status=="True")'
-                  }
-                  until is_ready
-                  do
-                    sleep 1
-                  done
-                EOT
           - run: # Check we correctly access to K8s information with kubectl cli
               name: Test k8s
               command: |
@@ -162,7 +143,7 @@ orbs:
                 - << parameters.operatorDir >>/vendor
           # Cache configuration
           - save_cache:
-              name: Save build artefacts in cache
+              name: Save build artifacts in cache
               key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
               paths:
                 - build/_output
@@ -204,7 +185,7 @@ orbs:
               fi
         # Cache configuration
         - save_cache:
-            name: Save build artefacts in cache
+            name: Save build artifacts in cache
             key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
             paths:
               - build/_output
@@ -445,49 +426,49 @@ workflows:
             - unit-test-casskop
           <<: *canonical_repo_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test CreateOneClusterService
           test_name: CreateOneClusterService
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
             - unit-test-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ExecuteCleanup
           test_name: ExecuteCleanup
           requires:
