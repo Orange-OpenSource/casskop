@@ -401,17 +401,17 @@ workflows:
           name: generate-casskop
           <<: *everytime_filter
 
-      - operator/unit-test:
-          name: unit-test-casskop
-          requires:
-            - generate-casskop
-          <<: *everytime_filter
+      # - operator/unit-test:
+      #     name: unit-test-casskop
+      #     requires:
+      #       - generate-casskop
+      #     <<: *everytime_filter
 
-      - operator/build:
-          name: build-casskop
-          requires:
-            - unit-test-casskop
-          <<: *everytime_filter
+      # - operator/build:
+      #     name: build-casskop
+      #     requires:
+      #       - unit-test-casskop
+      #     <<: *everytime_filter
 
       # - operator/docker-dgoss-test:
       #     name: docker-dgoss-test-casskop
@@ -464,7 +464,8 @@ workflows:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
-            - unit-test-casskop
+            # - unit-test-casskop
+            - generate-casskop
           <<: *ignore_fork_pr_filter
 
       # - k3d/e2e-orb:
