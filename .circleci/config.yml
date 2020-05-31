@@ -42,13 +42,10 @@ orbs:
           - run:
               name: Set up K3d
               command: |
-                set -x
                 wget -q -O - https://raw.githubusercontent.com/rancher/k3d/master/install.sh | bash
                 k3d create --image ${K3S_IMAGE} --wait 0
-                # sudo k3d create --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
                 cp $(k3d get-kubeconfig) ${HOME}/.kube/config
-                # sudo cp $(sudo k3d get-kubeconfig) ${HOME}/.kube/config
           - run:
               name: Setup kubectl
               command: |
@@ -56,9 +53,7 @@ orbs:
                 sudo chmod o+w /usr/local/bin/
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
-                KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')" kubectl get nodes
-                # KUBECONFIG="$(sudo k3d get-kubeconfig --name='k3s-default')" kubectl get nodes
-                # sudo kubectl get nodes
+                KUBECONFIG="$(k3d get-kubeconfig)" kubectl get nodes
           - checkout:
               path: /home/circleci/casskop
           - attach_workspace:  # Attach artifact from workdir
