@@ -1526,6 +1526,8 @@ k8s.io/apiserver v0.18.2/go.mod h1:Xbh066NqrZO8cbsoenCwyDJ1OSi8Ag8I2lezeHxzwzw=
 k8s.io/autoscaler v0.0.0-20190607113959-1b4f1855cb8e/go.mod h1:QEXezc9uKPT91dwqhSJq3GNI3B1HxFRQHiku9kmrsSA=
 k8s.io/cli-runtime v0.18.0/go.mod h1:1eXfmBsIJosjn9LjEBUd2WVPoPAY9XGTqTFcPMIBsUQ=
 k8s.io/cli-runtime v0.18.2/go.mod h1:yfFR2sQQzDsV0VEKGZtrJwEy4hLZ2oj4ZIfodgxAHWQ=
+k8s.io/client-go v0.17.4 h1:VVdVbpTY70jiNHS1eiFkUt7ZIJX3txd29nDxxXH4en8=
+k8s.io/client-go v0.17.4/go.mod h1:ouF6o5pz3is8qU0/qYL2RnoxOPqgfuidYLowytyLJmc=
 k8s.io/client-go v0.18.2 h1:aLB0iaD4nmwh7arT2wIn+lMnAq7OswjaejkQ8p9bBYE=
 k8s.io/client-go v0.18.2/go.mod h1:Xcm5wVGXX9HAA2JJ2sSBUn3tCJ+4SVlCbl2MNNv+CIU=
 k8s.io/code-generator v0.0.0-20181206115026-3a2206dd6a78/go.mod h1:MYiN+ZJZ9HkETbgVZdWw2AsuAi9PZ4V80cwfuf2axe8=
@@ -1585,6 +1587,7 @@ rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8
 rsc.io/letsencrypt v0.0.3/go.mod h1:buyQKZ6IXrRnB7TdkHP0RyEybLx18HHyOSoTyoOLqNY=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.7/go.mod h1:PHgbrJT7lCHcxMU+mDHEm+nx46H4zuuHZkDP6icnhu0=
 sigs.k8s.io/controller-runtime v0.1.9/go.mod h1:HFAYoOh6XMV+jKF1UjFwrknPbowfyHEHHRdJMf2jMX8=
+sigs.k8s.io/controller-runtime v0.4.0 h1:wATM6/m+3w8lj8FXNaO6Fs/rq/vqoOjO1Q116Z9NPsg=
 sigs.k8s.io/controller-runtime v0.4.0/go.mod h1:ApC79lpY3PHW9xj/w9pj+lYkLgwAAUZwfXkME1Lajns=
 sigs.k8s.io/controller-runtime v0.6.0 h1:Fzna3DY7c4BIP6KwfSlrfnj20DJ+SeMBK8HSFvOk9NM=
 sigs.k8s.io/controller-runtime v0.6.0/go.mod h1:CpYf5pdNY/B352A1TFLAS2JVSlnGQ5O2cftPHndTroo=

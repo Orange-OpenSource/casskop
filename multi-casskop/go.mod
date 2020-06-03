@@ -22,5 +22,7 @@ replace github.com/Orange-OpenSource/casskop => ../
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
-	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
+	k8s.io/apimachinery => k8s.io/apimachinery v0.17.4 // Required by admiralty
+	k8s.io/client-go => k8s.io/client-go v0.17.4 // Required by admiralty
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.4.0
 )
