@@ -1,0 +1,105 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: cassandrarestores.db.orange.com
+spec:
+  group: db.orange.com
+  names:
+    kind: CassandraRestore
+    listKind: CassandraRestoreList
+    plural: cassandrarestores
+    singular: cassandrarestore
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: CassandraRestore is a Casskop Operator resource that represents
+        the restoration of backup of a Cassandra cluster.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CassandraRestoreSpec defines the specification for a restore
+            of a Cassandra backup.
+          properties:
+            backup:
+              description: Backup is a reference to the Backup object to be restored.
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+            cluster:
+              description: Cluster is a refeference to the Cluster to which the Restore
+                belongs.
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+            scheduledMember:
+              description: ScheduledMember is the Pod name of the Cluster member on
+                which the Restore will be executed.
+              type: string
+          required:
+          - backup
+          - cluster
+          - scheduledMember
+          type: object
+        status:
+          description: CassandraRestoreStatus captures the current status of a Cassandra
+            restore.
+          properties:
+            conditions:
+              items:
+                description: RestoreCondition describes the observed state of a Restore
+                  at a certain point.
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: RestoreConditionType represents a valid condition
+                      of a Restore.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            timeCompleted:
+              description: TimeCompleted is the time at which the restore completed.
+              format: date-time
+              type: string
+            timeStarted:
+              description: TimeStarted is the time at which the restore was started.
+              format: date-time
+              type: string
+          type: object
+      required:
+      - metadata
+      - spec
+      - status
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
