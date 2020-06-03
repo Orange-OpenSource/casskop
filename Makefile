@@ -123,7 +123,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.15.0-pr137
+OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
 # workdir
 WORKDIR := /go/casskop
 
@@ -167,9 +167,8 @@ generate:
 	echo "Generate zzz-deepcopy objects"
 	operator-sdk version
 	operator-sdk generate k8s
-	operator-sdk generate openapi
+	operator-sdk generate crds
 
-#@TODO : `opetator-sdk generate openapî` deprecated
 # Build casskop executable file in local go env
 .PHONY: build
 build: generate
@@ -179,7 +178,6 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
-#@TODO : `opetator-sdk generate openapi` deprecated
 # Run a shell into the development docker image
 docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
@@ -190,7 +188,7 @@ docker-build: ## Build the Operator and it's Docker Image
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod \
 		-v $(shell go env GOCACHE):/root/.cache/go-build --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate openapi'
+		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) \
 	-v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build \

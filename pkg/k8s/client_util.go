@@ -24,6 +24,7 @@ package k8s
 
 import (
 	"bytes"
+	goctx "context"
 	"fmt"
 	"net"
 	"os"
@@ -93,7 +94,7 @@ func outOfClusterConfig() (*rest.Config, error) {
 //https://github.com/kubernetes/kubernetes/blob/master/pkg/kubectl/cmd/exec.go
 //func ExecPodFromName(clientset *kubernetes.Clientset, cfg *rest.Config, namespace string, name string, cmd []string) (string, string, error) {
 func ExecPodFromName(namespace string, name string, cmd []string) (string, string, error) {
-	pod, err := clientset.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods(namespace).Get(goctx.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("could not get pod info: %v", err)
 	}
