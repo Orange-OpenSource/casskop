@@ -116,7 +116,7 @@ func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework)
 func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
 	retryInterval, timeout time.Duration) error {
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(name,
+		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(), name,
 			metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
