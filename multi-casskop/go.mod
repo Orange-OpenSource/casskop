@@ -3,18 +3,13 @@ module github.com/Orange-OpenSource/casskop/multi-casskop
 go 1.13
 
 require (
-	admiralty.io/multicluster-controller v0.2.0
+	admiralty.io/multicluster-controller v0.4.0
 	admiralty.io/multicluster-service-account v0.6.0
 	github.com/Orange-OpenSource/casskop v0.4.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
-	github.com/gobuffalo/packr v1.30.1 // indirect
-	github.com/helm/helm-2to3 v0.5.1 // indirect
 	github.com/imdario/mergo v0.3.8
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/martinlindhe/base36 v1.0.0 // indirect
-	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88 // indirect
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/sirupsen/logrus v1.5.0
 	k8s.io/apimachinery v0.18.2
