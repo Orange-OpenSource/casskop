@@ -85,8 +85,11 @@ else
   endif
 endif
 
+build-image:
+	@echo $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
+
 e2eimage:
-	echo $(E2EIMAGE)
+	@echo $(E2EIMAGE)
 
 params:
 	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"

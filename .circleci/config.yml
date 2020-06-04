@@ -45,6 +45,29 @@ orbs:
                 mkdir -p ${HOME}/.kube
                 cp $(k3d get-kubeconfig) ${HOME}/.kube/config
           - run:
+              name: Create file with build image version
+              command: |
+                make build-image > casskop-build-image
+          - restore_cache:
+              keys:
+                - '{{ checksum "casskop-build-image" }}'
+          - run:
+              name: Load Casskop build image into k3d
+              command: |
+                if [ -f "casskop-build-image.tgz" ]
+                then
+                  docker load < casskop-build-image.tgz
+                else
+                  docker pull $(cat casskop-build-image)
+                  docker save $(cat casskop-build-image)|gzip > casskop-build-image.tgz
+                fi
+                k3d import-images $(cat casskop-build-image)
+          - save_cache:
+              name: Save Casskop build image
+              key: '{{ checksum "casskop-build-image" }}'
+              paths:
+                - casskop-build-image.tgz
+          - run:
               name: Setup kubectl
               command: |
                 set -x
