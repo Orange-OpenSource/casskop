@@ -267,8 +267,8 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	assert.Equal(t, api.ActionScaleDown.Name, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
-	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc2-rack1",
-		metav1.GetOptions{})
+	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
+		"cassandra-e2e-dc2-rack1", metav1.GetOptions{})
 	assert.Equal(t, int32(0), statefulset.Status.CurrentReplicas)
 
 	/*----
@@ -286,8 +286,8 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	time.Sleep(30 * time.Second)
 
 	t.Log("Check Statefulset is deleted")
-	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc2-rack1",
-		metav1.GetOptions{})
+	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
+		"cassandra-e2e-dc2-rack1", metav1.GetOptions{})
 	//assert.Equal(t, true, apierrors.IsNotFound(err))
 
 	t.Log("Check Service is deleted")

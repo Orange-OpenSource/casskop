@@ -103,8 +103,8 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 	}
 
 	t.Log("Download statefulset and store current revision")
-	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc1-rack1",
-		metav1.GetOptions{})
+	statefulset, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
+		"cassandra-e2e-dc1-rack1", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Could not download statefulset: %v", err)
 	}
@@ -136,8 +136,8 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 	}
 
 	t.Log("Download statefulset and check current revision has been updated")
-	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get("cassandra-e2e-dc1-rack1",
-		metav1.GetOptions{})
+	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
+		"cassandra-e2e-dc1-rack1", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Could not download statefulset: %v", err)
 	}
@@ -312,7 +312,7 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 		},
 	}
 
-	pods, err := f.KubeClient.CoreV1().Pods(namespace).List(opts)
+	pods, err := f.KubeClient.CoreV1().Pods(namespace).List(goctx.TODO(), opts)
 	if err != nil {
 		t.Fatalf("Failed to list pods: %s", err)
 	}
@@ -353,7 +353,7 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 				dcRackStatus.PodLastOperation.PodsOK[0])
 		}
 
-		pod, err := f.KubeClient.CoreV1().Pods(namespace).Get(nodeName, metav1.GetOptions{})
+		pod, err := f.KubeClient.CoreV1().Pods(namespace).Get(goctx.TODO(), nodeName, metav1.GetOptions{})
 		if err != nil {
 			t.Logf("Failed to get pod %s: %s", nodeName, err)
 			return false, nil
@@ -439,7 +439,7 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 }
 
 func listServices(namespace string, options metav1.ListOptions, f *framework.Framework) (*v1.ServiceList, error) {
-	return f.KubeClient.CoreV1().Services(namespace).List(options)
+	return f.KubeClient.CoreV1().Services(namespace).List(goctx.TODO(), options)
 }
 
 func assertServiceExposesPort(t *testing.T, svc *v1.Service, portName string, port int32) {
@@ -460,7 +460,7 @@ func findServicePort(name string, ports []v1.ServicePort) (*v1.ServicePort, erro
 }
 
 func getStatefulSet(name string, namespace string, f *framework.Framework, t *testing.T) *appsv1.StatefulSet {
-	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{})
+	statefulSet, err := f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get StatefulSet %s: %v", name, err)
 	}
