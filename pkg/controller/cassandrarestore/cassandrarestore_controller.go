@@ -70,6 +70,36 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 				return false
 			},
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				object, err := meta.Accessor(e.ObjectNew)
+				if err != nil {
+					return false
+				}
+				if _, ok := object.(*api.CassandraRestore); ok {
+					old := e.ObjectOld.(*api.CassandraRestore)
+					new := e.ObjectNew.(*api.CassandraRestore)
+					reqLogger := log.WithValues("Restore.Namespace", new.Namespace, "Restore.Name", new.Name)
+
+					_, cond :=  api.GetRestoreCondition(&new.Status, api.RestoreComplete)
+					if cond != nil && cond.Status == corev1.ConditionTrue {
+						reqLogger.Info("Restore is Complete, skipping.")
+						return false
+					}
+
+					_, cond = api.GetRestoreCondition(&new.Status, api.RestoreRunning)
+					if cond != nil && cond.Status == corev1.ConditionTrue {
+						reqLogger.Info("Restore is Running, skipping.")
+						return false
+					}
+
+					_, cond = api.GetRestoreCondition(&new.Status, api.RestoreScheduled)
+					if cond != nil && cond.Status == corev1.ConditionTrue && new.Spec.ScheduledMember ==  c.podName {
+						return true
+					}
+
+					reqLogger.Info("Restore is not Scheduled on this agent")
+				}
+			},
 		})
 	if err != nil {
 		return err
