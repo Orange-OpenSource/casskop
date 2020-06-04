@@ -44,6 +44,8 @@ orbs:
                 k3d create --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
                 cp $(k3d get-kubeconfig) ${HOME}/.kube/config
+          - checkout:
+              path: /home/circleci/casskop
           - run:
               name: Create file with build image version
               command: |
@@ -75,8 +77,6 @@ orbs:
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
                 KUBECONFIG="$(k3d get-kubeconfig)" kubectl get nodes
-          - checkout:
-              path: /home/circleci/casskop
           - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
           - run: # Check we correctly access to K8s information with kubectl cli
