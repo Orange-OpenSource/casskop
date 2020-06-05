@@ -11,15 +11,19 @@ type RestoreConditionType string
 const (
 	// RestoreScheduled means the Restore has been assigned to a Cluster
 	// member for execution.
-	RestoreScheduled RestoreConditionType = "Scheduled"
+	RestoreScheduled RestoreConditionType = "SCHEDULED"
+	// RestorePending means the Restore operation is pending for being submitted.
+	RestorePending RestoreConditionType = "PENDING"
 	// RestoreRunning means the Restore is currently being executed by a
 	// Cluster member's mysql-agent side-car.
-	RestoreRunning RestoreConditionType = "Running"
+	RestoreRunning RestoreConditionType = "RUNNING"
 	// RestoreComplete means the Restore has successfully executed and the
 	// resulting artifact has been stored in object storage.
-	RestoreComplete RestoreConditionType = "Complete"
+	RestoreCompleted RestoreConditionType = "COMPLETED"
 	// RestoreFailed means the Restore has failed.
-	RestoreFailed RestoreConditionType = "Failed"
+	RestoreFailed RestoreConditionType = "FAILED"
+	// RestoreCanceled means the Restore operation was interrupted while being run.
+	RestoreCanceled RestoreConditionType = "CANCELED"
 )
 
 // RestoreCondition describes the observed state of a Restore at a certain point.
@@ -34,6 +38,32 @@ type RestoreCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
+type RestorationPhaseType string
+
+const (
+	RestorationPhaseDownload RestorationPhaseType = "DOWNLOAD"
+	RestorationPhaseImport RestorationPhaseType = "IMPORT"
+	RestorationPhaseTruncate RestorationPhaseType = "TRUNCATE"
+	RestorationPhaseCleanup RestorationPhaseType = "CLEANUP"
+)
+
+// CassandraRestoreStatus captures the current status of a Cassandra restore.
+type CassandraRestoreStatus struct {
+	TimeCreated metav1.Time `json:"timeCreated"`
+	// TimeStarted is the time at which the restore was started.
+	// +optional
+	TimeStarted metav1.Time `json:"timeStarted"`
+	// TimeCompleted is the time at which the restore completed.
+	// +optional
+	TimeCompleted metav1.Time `json:"timeCompleted"`
+	// +optional
+	Condition RestoreCondition `json:"conditions,omitempty"`
+	// Progress is a float32 from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
+	Progress float32 `json:"conditions,omitempty"`
+	//
+	RestorationPhase RestorationPhaseType `json:"restorationPhase,omitempty"`
+}
+
 // CassandraRestoreSpec defines the specification for a restore of a Cassandra backup.
 type CassandraRestoreSpec struct {
 	// Cluster is a refeference to the Cluster to which the Restore
@@ -44,21 +74,28 @@ type CassandraRestoreSpec struct {
 	// ScheduledMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
 	ScheduledMember string `json:"scheduledMember"`
+	// ConcurrentConnection is the number of threads used for upload, there might be
+	// at most so many uploading threads at any given time, when not set, it defaults to 10
+	ConcurrentConnection *int32 `json:"concurrentConnection,omitempty"`
+	// directory of Cassandra, by default it is /var/lib/cassandra, in this path, one expects there is 'data' directory
+	CassandraDirectory string `json:"cassandraDirectory,omitempty"`
+	// NoDeleteTruncates is flag saying if we should not delete truncated SSTables
+	// after they are imported, as part of CLEANUP phase, defaults to false
+	NoDeleteTruncates bool `json:"noDeleteTruncates,omitempty"`
+	// SchemaVersion is the version of schema we want to restore from, upon backup, a schema version is automatically appended to snapshot name
+	// and its manifest is uploaded under that name. In case we have two snapshots having same name,
+	// we might distinguish between them by this schema version. If schema version is not specified,
+	// we expect that there will be one and only one backup taken with respective snapshot name.
+	// This schema version has to match the version of a Cassandra node we are doing restore for
+	// (hence, by proxy, when global request mode is used, all nodes have to be on exact same schema version).
+	SchemaVersion string `json:"schemaVersion,omitempty"`
+	// ExactSchemaVersion is a flag saying if we indeed want a schema version of a running node match with schema version a snapshot is taken on.
+	// There might be cases when we want to restore a table for which its CQL schema has not changed
+	// but it has changed for other table / keyspace but a schema for that node has changed by doing that.
+	exactSchemaVersion bool `json:"exactSchemaVersion,omitempty""`
 }
 
-// CassandraRestoreStatus captures the current status of a Cassandra restore.
-type CassandraRestoreStatus struct {
-	// TimeStarted is the time at which the restore was started.
-	// +optional
-	TimeStarted metav1.Time `json:"timeStarted"`
-	// TimeCompleted is the time at which the restore completed.
-	// +optional
-	TimeCompleted metav1.Time `json:"timeCompleted"`
-	// +optional
-	Conditions []RestoreCondition `json:"conditions,omitempty"`
-}
-
-// +genclient
+// +genclient0
 // +genclient:noStatus
 // +resourceName=cassandrarestores
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -89,14 +126,9 @@ func init() {
 
 // GetRestoreCondition extracts the provided condition from the given status and returns that.
 // Returns nil and -1 if the condition is not present, and the index of the located condition.
-func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) (int, *RestoreCondition) {
-	if status == nil {
-		return -1, nil
+func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *RestoreCondition {
+	if status.Condition.Type == conditionType {
+		return &status.Condition
 	}
-	for i := range status.Conditions {
-		if status.Conditions[i].Type == conditionType {
-			return i, &status.Conditions[i]
-		}
-	}
-	return -1, nil
+	return nil
 }
