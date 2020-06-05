@@ -76,7 +76,7 @@ func GetLastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 	var readyPods []v1.Pod
 	for _, pod := range podsList {
 		if cassandraPodIsReady(&pod) {
-				readyPods = append(readyPods, pod)
+			readyPods = append(readyPods, pod)
 		}
 	}
 	return GetLastOrFirstPodItem(readyPods, last)
