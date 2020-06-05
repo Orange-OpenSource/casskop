@@ -478,38 +478,44 @@ workflows:
             - report-casskop
           <<: *only_on_release_tag
 
-  # CassKop operator workflow.
+      - deploy-website:
+          name: deploy-website
+          requires:
+             - report-casskop
+          <<: *website_publish
+
+  # MultiCassKop operator workflow.
   ci-multicasskop-operator:
     jobs:
       - operator/generate:
           name: generate-casskop
           <<: *everytime_filter
+
       - operator/generate:
           name: generate-multicasskop
           <<: *params_multicasskop
           requires:
             - generate-casskop
           <<: *everytime_filter
+
       - operator/build:
           name: build-multicasskop
           <<: *params_multicasskop
           requires:
             - generate-multicasskop
           <<: *everytime_filter
+
       - operator/report:
           name: report-multicasskop
           <<: *params_multicasskop
           requires:
             - build-multicasskop
           <<: *canonical_repo_filter
+
       - operator/publish-helm:
           name: publish-helm-orange-incubator-multicasskop
           <<: *params_multicasskop
           requires:
             - report-multicasskop
           <<: *only_on_release_tag
-      - deploy-website:
-          name: deploy-website
-          requires:
-             - report-casskop
-          <<: *website_publish
+
