@@ -60,7 +60,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 				if restore, ok := object.(*api.CassandraRestore); ok {
 					reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-					_, cond := api.GetRestoreCondition(&restore.Status, api.RestoreScheduled)
+					cond := api.GetRestoreCondition(&restore.Status, api.RestoreScheduled)
 					if cond != nil && cond.Status == corev1.ConditionTrue {
 						reqLogger.Info("Restoreis already scheduled on Cluster member %s", restore.Spec.ScheduledMember)
 						return false
@@ -76,23 +76,23 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					return false
 				}
 				if _, ok := object.(*api.CassandraRestore); ok {
-					old := e.ObjectOld.(*api.CassandraRestore)
+					//old := e.ObjectOld.(*api.CassandraRestore)
 					new := e.ObjectNew.(*api.CassandraRestore)
 					reqLogger := log.WithValues("Restore.Namespace", new.Namespace, "Restore.Name", new.Name)
 
-					_, cond :=  api.GetRestoreCondition(&new.Status, api.RestoreComplete)
+					cond :=  api.GetRestoreCondition(&new.Status, api.RestoreCompleted)
 					if cond != nil && cond.Status == corev1.ConditionTrue {
 						reqLogger.Info("Restore is Complete, skipping.")
 						return false
 					}
 
-					_, cond = api.GetRestoreCondition(&new.Status, api.RestoreRunning)
+					cond = api.GetRestoreCondition(&new.Status, api.RestoreRunning)
 					if cond != nil && cond.Status == corev1.ConditionTrue {
 						reqLogger.Info("Restore is Running, skipping.")
 						return false
 					}
 
-					_, cond = api.GetRestoreCondition(&new.Status, api.RestoreScheduled)
+					cond = api.GetRestoreCondition(&new.Status, api.RestoreScheduled)
 					if cond != nil && cond.Status == corev1.ConditionTrue && new.Spec.ScheduledMember ==  c.podName {
 						return true
 					}
