@@ -43,13 +43,13 @@ orbs:
                 wget -q -O - https://raw.githubusercontent.com/rancher/k3d/master/install.sh | TAG=v3.0.0-rc.1 bash
                 k3d create cluster --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
-                cp $(k3d get-kubeconfig) ${HOME}/.kube/config
+                k3d get kubeconfig 0
           - checkout:
               path: /home/circleci/casskop
           - run:
               name: Create file with build image version
               command: |
-                make build-image > casskop-build-image
+                make build-image > casskop-build-image-tar
           - restore_cache:
               keys:
                 - '{{ checksum "casskop-build-image-tar" }}'
@@ -57,8 +57,9 @@ orbs:
               name: Load Casskop build image into k3d
               command: |
                 if [ ! -f "casskop-build-image.tar" ]
-                  docker pull $(cat casskop-build-image)
-                  docker save $(cat casskop-build-image) > casskop-build-image.tar
+                then
+                  docker pull $(cat casskop-build-image-tar)
+                  docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
                 fi
                 k3d load image casskop-build-image.tar
           - save_cache:
