@@ -508,3 +508,8 @@ workflows:
           requires:
             - report-multicasskop
           <<: *only_on_release_tag
+      - deploy-website:
+          name: deploy-website
+          requires:
+             - report-casskop
+          <<: *website_publish
