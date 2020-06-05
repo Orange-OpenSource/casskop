@@ -1,5 +1,5 @@
 #https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/golang/images/1.12.4/Dockerfile
-FROM golang:1.13
+FROM golang:1.14
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90circleci \
