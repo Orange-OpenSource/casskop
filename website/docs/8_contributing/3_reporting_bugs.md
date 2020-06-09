@@ -1,4 +1,8 @@
-# Reporting bugs
+---
+id: 3_reporting_bugs
+title: Reporting bugs
+sidebar_label: Reporting bugs
+---
 
 If any part of the CassKop project has bugs or documentation mistakes, please let us know by 
 [opening an issue](https://github.com/Orange-OpenSource/casskop/issues/new). We treat
@@ -9,6 +13,7 @@ issue reporting the same problem does not already exist.
 To make the bug report accurate and easy to understand, please try to create bug reports that are:
 
 - Specific. Include as much details as possible: which version, what environment, what configuration, etc.
+
 - Reproducible. Include the steps to reproduce the problem. We understand some issues might be hard to reproduce, please
 include the steps that might lead to the problem.
 - Isolated. Please try to isolate and reproduce the bug with minimum dependencies. It would significantly slow down the

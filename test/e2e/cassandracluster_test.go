@@ -426,13 +426,13 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack1\n")
-	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack("rack1"))
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 300*time.Second, checkRack("rack1"))
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}
 
 	logrus.Infof("Wait for cleanup to finish in rack2\n")
-	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 60*time.Second, checkRack("rack2"))
+	err = mye2eutil.WaitForStatusChange(t, f, namespace, clusterName, 1*time.Second, 300*time.Second, checkRack("rack2"))
 	if err != nil {
 		t.Errorf("WaitForStatusChange failed: %s", err)
 	}

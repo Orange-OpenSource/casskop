@@ -1,11 +1,23 @@
 package v1alpha1
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
+	cron "github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// ValidateSchedule valides that schedule uses a correct format
+func (backupSpec CassandraBackupSpec) ValidateSchedule() error {
+	if _, err := cron.ParseStandard(backupSpec.Schedule); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // CassandraBackupSpec defines the desired state of CassandraBackup
 // +k8s:openapi-gen=true
@@ -16,6 +28,7 @@ type CassandraBackupSpec struct {
 	// The uri for the backup target location e.g. s3 bucket, filepath
 	StorageLocation string `json:"storageLocation"`
 	// The snapshot tag for the backup
+	Schedule              string `json:"schedule,omitempty"`
 	SnapshotTag           string `json:"snapshotTag"`
 	Duration              string `json:"duration,omitempty"`
 	Bandwidth             string `json:"bandwidth,omitempty"`
@@ -50,7 +63,22 @@ type CassandraBackup struct {
 	Status         []*CassandraBackupStatus  `json:"status,omitempty"`
 	GlobalStatus   operations.OperationState `json:"globalStatus,omitempty"`
 	GlobalProgress string                    `json:"globalProgress,omitempty"`
-	JustCreate     bool                      `json:"justCreate,omitempty"`
+}
+
+func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
+	lastcb := cb.DeepCopy()
+	//remove unnecessary fields
+	lastcb.Annotations = nil
+	lastcb.ResourceVersion = ""
+	lastcb.Status = make([]*CassandraBackupStatus, 0)
+	lastcb.GlobalStatus = ""
+	lastcb.GlobalProgress = ""
+
+	lastApplied, err := json.Marshal(lastcb)
+	if err != nil {
+		logrus.Errorf("[%s]: Cannot create last-applied-configuration = %v", cb.Name, err)
+	}
+	return string(lastApplied), err
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

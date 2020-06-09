@@ -39,6 +39,10 @@ spec:
                     TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
+            cassandraDirectory:
+              description: directory of Cassandra, by default it is /var/lib/cassandra,
+                in this path, one expects there is 'data' directory
+              type: string
             cluster:
               description: Cluster is a refeference to the Cluster to which the Restore
                 belongs.
@@ -48,9 +52,38 @@ spec:
                     TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
+            concurrentConnection:
+              description: ConcurrentConnection is the number of threads used for
+                upload, there might be at most so many uploading threads at any given
+                time, when not set, it defaults to 10
+              format: int32
+              type: integer
+            exactSchemaVersion:
+              description: ExactSchemaVersion is a flag saying if we indeed want a
+                schema version of a running node match with schema version a snapshot
+                is taken on. There might be cases when we want to restore a table
+                for which its CQL schema has not changed but it has changed for other
+                table / keyspace but a schema for that node has changed by doing that.
+              type: boolean
+            noDeleteTruncates:
+              description: NoDeleteTruncates is flag saying if we should not delete
+                truncated SSTables after they are imported, as part of CLEANUP phase,
+                defaults to false
+              type: boolean
             scheduledMember:
               description: ScheduledMember is the Pod name of the Cluster member on
                 which the Restore will be executed.
+              type: string
+            schemaVersion:
+              description: SchemaVersion is the version of schema we want to restore
+                from, upon backup, a schema version is automatically appended to snapshot
+                name and its manifest is uploaded under that name. In case we have
+                two snapshots having same name, we might distinguish between them
+                by this schema version. If schema version is not specified, we expect
+                that there will be one and only one backup taken with respective snapshot
+                name. This schema version has to match the version of a Cassandra
+                node we are doing restore for (hence, by proxy, when global request
+                mode is used, all nodes have to be on exact same schema version).
               type: string
           required:
           - backup
@@ -62,36 +95,24 @@ spec:
             restore.
           properties:
             conditions:
-              items:
-                description: RestoreCondition describes the observed state of a Restore
-                  at a certain point.
-                properties:
-                  lastTransitionTime:
-                    format: date-time
-                    type: string
-                  message:
-                    type: string
-                  reason:
-                    type: string
-                  status:
-                    type: string
-                  type:
-                    description: RestoreConditionType represents a valid condition
-                      of a Restore.
-                    type: string
-                required:
-                - status
-                - type
-                type: object
-              type: array
+              description: Progress is a float from 0.0 to 1.0, 1.0 telling that operation
+                is completed, either successfully or with errors
+              type: string
+            restorationPhase:
+              type: string
             timeCompleted:
               description: TimeCompleted is the time at which the restore completed.
+              format: date-time
+              type: string
+            timeCreated:
               format: date-time
               type: string
             timeStarted:
               description: TimeStarted is the time at which the restore was started.
               format: date-time
               type: string
+          required:
+          - timeCreated
           type: object
       required:
       - metadata

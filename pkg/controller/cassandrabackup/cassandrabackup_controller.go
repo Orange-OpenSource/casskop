@@ -2,7 +2,9 @@ package cassandrabackup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,6 +13,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/go-logr/logr"
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -33,7 +36,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	AnnotationLastApplied string = "cassandrabackups.db.orange.com/last-applied-configuration"
+)
+
 var log = logf.Log.WithName("controller_cassandrabackup")
+
+// initialize local pseudorandom generator
+var random = rand.New(rand.NewSource(time.Now().Unix()))
 
 // Add creates a new CassandraBackup Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -44,9 +54,10 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileCassandraBackup{
-		client:   mgr.GetClient(),
-		scheme:   mgr.GetScheme(),
-		recorder: mgr.GetEventRecorderFor("cassandrabackup-controller"),
+		client:    mgr.GetClient(),
+		scheme:    mgr.GetScheme(),
+		recorder:  mgr.GetEventRecorderFor("cassandrabackup-controller"),
+		scheduler: NewScheduler(),
 	}
 }
 
@@ -95,9 +106,10 @@ var _ reconcile.Reconciler = &ReconcileCassandraBackup{}
 type ReconcileCassandraBackup struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client   client.Client
-	scheme   *runtime.Scheme
-	recorder record.EventRecorder
+	client    client.Client
+	scheme    *runtime.Scheme
+	recorder  record.EventRecorder
+	scheduler Scheduler
 }
 
 func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {
@@ -122,9 +134,9 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	reqLogger.Info("Reconciling CassandraBackup")
 
 	// Fetch the CassandraBackup backup
-	instance := &api.CassandraBackup{}
+	cb := &api.CassandraBackup{}
 
-	if err := r.client.Get(context.TODO(), request.NamespacedName, instance); err != nil {
+	if err := r.client.Get(context.TODO(), request.NamespacedName, cb); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			// if the resource is not found, that means all of
 			// the finalizers have been removed, and the resource has been deleted,
@@ -135,40 +147,61 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	if instance.Status != nil && len(instance.Status) != 0 {
-		// when operator is restarted, nothing stops it to react on that CRD and it starts to backup again
-		reqLogger.Info(fmt.Sprintf("Reconcilliation of %s stopped as backup was already run", request.NamespacedName))
+	// If deleted and a schedule was configured, we remove the cron task
+	if cb.DeletionTimestamp != nil && cb.Spec.Schedule != "" {
+		r.scheduler.Remove(cb.Name)
+		r.recorder.Event(
+			cb,
+			corev1.EventTypeNormal,
+			"BackupTaskUnscheduled",
+			fmt.Sprintf("Controller unscheduled cron task %s to back up cluster %s under snapshot %s",
+				cb.Name, cb.Spec.CassandraCluster, cb.Spec.SnapshotTag))
 		return reconcile.Result{}, nil
 	}
 
-	instance.Status = []*api.CassandraBackupStatus{}
+	instanceChanged := true
+	scheduled := cb.Spec.Schedule != ""
+	var lastAppliedConfiguration string
 
-	if exists, err := backupOfSameSnapshotExists(r.client, instance); err != nil {
+	if lac, _ := cb.ComputeLastAppliedConfiguration(); lac == cb.Annotations[AnnotationLastApplied] {
+		instanceChanged = false
+	} else {
+		lastAppliedConfiguration = lac
+	}
+
+	if !scheduled && cb.Status != nil && len(cb.Status) != 0 {
+		logrus.WithFields(logrus.Fields{"backup": request.NamespacedName}).Info("Reconcilliation stopped as backup already run")
+		return reconcile.Result{}, nil
+	} else if scheduled && r.scheduler.Contains(cb.Name) && !instanceChanged {
+		logrus.WithFields(logrus.Fields{"backup": cb.Name}).Info("Reconcilliation stopped as backup already scheduled and there are no new changes")
+		return reconcile.Result{}, nil
+	}
+
+	cb.Status = []*api.CassandraBackupStatus{}
+
+	if exists, err := existingNotScheduledSnapshot(r.client, cb); err != nil {
 		return reconcile.Result{}, err
 	} else if exists {
 		// We can not backup with same snapshot, CassandraCluster and storageLocation
 		r.recorder.Event(
-			instance,
+			cb,
 			corev1.EventTypeWarning,
 			"BackupSkipped",
 			fmt.Sprintf("Datacenter %s in cluster %s was not backed up to %s under snapshot %s because such backup already exists",
-				instance.Spec.Datacenter, instance.Spec.CassandraCluster, instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
-		return reconcile.Result{}, nil
-	}
-
-	if instance.JustCreate {
+				cb.Spec.Datacenter, cb.Spec.CassandraCluster, cb.Spec.StorageLocation, cb.Spec.SnapshotTag))
 		return reconcile.Result{}, nil
 	}
 
 	// fetch secret and make sure it exists
 
 	secret := &corev1.Secret{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Secret, Namespace: instance.Namespace}, secret); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cb.Spec.Secret, Namespace: cb.Namespace}, secret); err != nil {
 		if k8sErrors.IsNotFound(err) {
-			// if the resource is not found, that means all of
-			// the finalizers have been removed, and the resource has been deleted,
-			// so there is nothing left to do.
-			reqLogger.Info(fmt.Sprintf("Secret used for backups %s was not found", instance.Spec.Secret))
+			r.recorder.Event(
+				cb,
+				corev1.EventTypeWarning,
+				"FailureEvent",
+				fmt.Sprintf("Secret %s used for backups was not found", cb.Spec.Secret))
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -176,54 +209,112 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// based on storage location, be sure that respective secret entry is there so we error out asap
-	if err := validateBackupSecret(secret, instance, reqLogger); err != nil {
+	if err := validateBackupSecret(secret, cb, reqLogger); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// Get CassandraCluster
 	cc := &api.CassandraCluster{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.CassandraCluster, Namespace: instance.Namespace}, cc); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cb.Spec.CassandraCluster, Namespace: cb.Namespace}, cc); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			r.recorder.Event(
-				instance,
+				cb,
 				corev1.EventTypeWarning,
 				"FailureEvent",
-				fmt.Sprintf("Datacenter %s of cluster %s to backup not found", instance.Spec.Datacenter, instance.Spec.CassandraCluster))
+				fmt.Sprintf("Datacenter %s of cluster %s to backup not found", cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
-	// Get Pod clients
-	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Unable to list pods")
+	if scheduled {
+		// There is a schedule so we need to add or update a cron task to handle the backup
+		schedule := cb.Spec.Schedule
+
+		// Parse the schedule
+		if err := cb.Spec.ValidateSchedule(); err != nil {
+			r.recorder.Event(
+				cb,
+				corev1.EventTypeWarning,
+				"FailureEvent",
+				fmt.Sprintf("Schedule %s is not valid: %s", schedule, err.Error()))
+
+			// If schedule is invalid and the object already existed, we reset it to what it was
+			if instanceChanged {
+				logrus.WithFields(logrus.Fields{"backup": request.NamespacedName,
+					"cluster": cc.Name}).Info("Resetting the schedule to what it was previously. Everything else will be updated")
+				//We retrieved our last-applied-configuration stored in the object
+				var oldCassandraBackup api.CassandraBackup
+				err := json.Unmarshal([]byte(cb.Annotations[AnnotationLastApplied]), &oldCassandraBackup)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{"backup": request.NamespacedName, "cluster": cc.Name,
+						"err": err}).Error("Issue when resetting schedule, we'll give it another try")
+					return reconcile.Result{}, err
+				}
+
+				cb.Spec.Schedule = oldCassandraBackup.Spec.Schedule
+				lastAppliedConfiguration, _ = cb.ComputeLastAppliedConfiguration()
+
+			} else {
+				// The schedule is invalid and the object is new, we stop here
+				return reconcile.Result{}, nil
+			}
+		}
+
+		if err := r.scheduler.AddOrUpdate(cb.Name, cb.Spec,
+			func() { r.backupData(cb, cc, reqLogger) }); err != nil {
+			r.recorder.Event(
+				cb,
+				corev1.EventTypeWarning,
+				"FailureEvent",
+				fmt.Sprintf("Wasn't able to schedule job %s: %s", cb.Name, err.Error()))
+			return reconcile.Result{}, err
+		}
+
+		cb.Annotations[AnnotationLastApplied] = lastAppliedConfiguration
+
+		err := r.client.Update(context.TODO(), cb)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"backup": request.NamespacedName, "cluster": cc.Name,
+				"err": err}).Error("Issue when updating CassandraBackup")
+			return reconcile.Result{}, err
+		}
+
+		return reconcile.Result{}, nil
+
 	}
 
-	sidecarClients := sidecar.SidecarClients(pods, &sidecar.DefaultSidecarClientOptions)
+	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)
+}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(len(sidecarClients))
+func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
+	reqLogger logr.Logger) error {
+
+	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
+	if err != nil {
+		return fmt.Errorf("Unable to list pods")
+	}
+
+	chosenPod := pods.Items[random.Intn(len(pods.Items))]
+	sidecarClient := sidecar.NewSidecarClient(chosenPod.Status.PodIP, &sidecar.DefaultSidecarClientOptions)
 
 	syncedInstance := &syncedInstance{backup: instance, client: r.client}
 
-	for hostname, sc := range sidecarClients {
-		go backup(wg, sc, syncedInstance, hostname, reqLogger, r.recorder)
-	}
-
-	wg.Wait()
+	go backup(sidecarClient, syncedInstance, reqLogger, r.recorder)
 
 	r.recorder.Event(
 		instance,
 		corev1.EventTypeNormal,
 		"BackupFinished",
-		fmt.Sprintf("Datacenter %s of cluster %s was backed up to %s under snapshot %s", instance.Spec.Datacenter, instance.Spec.CassandraCluster, instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
+		fmt.Sprintf("Datacenter %s of cluster %s was backed up to %s under snapshot %s",
+			instance.Spec.Datacenter, instance.Spec.CassandraCluster,
+			instance.Spec.StorageLocation, instance.Spec.SnapshotTag))
 
-	return reconcile.Result{}, nil
+	return nil
 }
 
-func backupOfSameSnapshotExists(c client.Client, instance *api.CassandraBackup) (bool, error) {
+func existingNotScheduledSnapshot(c client.Client, instance *api.CassandraBackup) (bool, error) {
 
 	backupsList := &api.CassandraBackupList{}
 
@@ -232,7 +323,8 @@ func backupOfSameSnapshotExists(c client.Client, instance *api.CassandraBackup) 
 	}
 
 	for _, existingBackup := range backupsList.Items {
-		if existingBackup.Status != nil &&
+		if existingBackup.Spec.Schedule == "" && // Not scheduled
+			existingBackup.Status != nil && // Not started
 			existingBackup.Spec.SnapshotTag == instance.Spec.SnapshotTag &&
 			existingBackup.Spec.StorageLocation == instance.Spec.StorageLocation &&
 			existingBackup.Spec.CassandraCluster == instance.Spec.CassandraCluster &&
@@ -275,7 +367,7 @@ func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBacku
 
 		if len(secret.Data["awssecretaccesskey"]) != 0 && len(secret.Data["awsaccesskeyid"]) != 0 {
 			if len(secret.Data["awsregion"]) == 0 {
-				return fmt.Errorf("there is not awsregion property "+
+				return fmt.Errorf("there is no awsregion property "+
 					"while you have set both awssecretaccesskey and awsaccesskeyid in %s secret for backups", secret.Name)
 			}
 		}
@@ -295,29 +387,28 @@ type syncedInstance struct {
 }
 
 func backup(
-	wg *sync.WaitGroup,
 	sidecarClient *sidecar.Client,
 	instance *syncedInstance,
-	podHostname string,
 	logging logr.Logger,
 	recorder record.EventRecorder) {
 
-	defer wg.Done()
-
 	backupRequest := &sidecar.BackupRequest{
-		StorageLocation:       fmt.Sprintf("%s/%s/%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster, instance.backup.Spec.Datacenter, podHostname),
+		StorageLocation:       fmt.Sprintf("%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
 		Duration:              instance.backup.Spec.Duration,
 		Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,
 		Secret:                instance.backup.Spec.Secret,
+		Datacenter:            instance.backup.Spec.Datacenter,
+		GlobalRequest:         true,
 		KubernetesNamespace:   instance.backup.Namespace,
 	}
 
 	if operationID, err := sidecarClient.StartOperation(backupRequest); err != nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation %v", backupRequest))
 	} else {
+		podHostname := sidecarClient.Host
 		for range time.NewTicker(2 * time.Second).C {
 			if r, err := sidecarClient.FindBackup(operationID); err != nil {
 				logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))

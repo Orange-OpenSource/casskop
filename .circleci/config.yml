@@ -9,80 +9,74 @@ experimental:
 # Define shareable packages of configuration
 # elements used into the worflow (= Orbs)
 orbs:
-  minikube:
-    # Setting up VM executor for minikube.
+  k3d:
+    # Setting up VM executor to run k3d.
     executors:
-      vm-classic:
+      vm:
         machine:
-          image: circleci/classic:201808-01
-    # Setting up job list
+          image: ubuntu-1604:201903-01
     jobs:
-      e2e-orb: # Define job which execute 'docker-e2e-test-fix-arg' makefile job
+      e2e-orb:
         # PARAMETERS
         parameters:
           test_name:
             description: name of the test in e2e code
             type: string
-            default: toto
+            default: e2e code name
           operatorDir:
             type: string
             description: relative path where the build must be run
             default: casskop
-        executor: vm-classic
+        executor: vm
         working_directory: /home/circleci/<< parameters.operatorDir >>
-        # ENVIRONMENTS VARIABLES
         environment:
-          K8S_VERSION: v1.14.0
-          KUBECONFIG: /home/circleci/.kube/config
-          MINIKUBE_VERSION: v1.0.0
-          MINIKUBE_WANTUPDATENOTIFICATION: false
-          MINIKUBE_WANTREPORTERRORPROMPT: false
-          MINIKUBE_HOME: /home/circleci
-          MINIKUBE_CONFIG: /home/circleci/.minikube
-          CHANGE_MINIKUBE_NONE_USER: true
+          K3S_IMAGE: rancher/k3s:v1.16.10-k3s1
+          K8S_VERSION: v1.17.5
           GOPATH: /go
           GO111MODULE: on
           DOCKER_LATEST: 1
           GIN_MODE: release
-        # STEPS
         steps:
-          # Pre-checkout steps
-          - run: # Install Minikube components to be able to run it.
-              name: Setup minikube
+          - run:
+              name: Set up K3d
               command: |
-                wget -O minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-          - run: # Run minikube with expected parameters
-              name: Start minikube
-              background: true
-              command: |
-                sudo -E minikube start --vm-driver=none --cpus 4 --memory 4096 --kubernetes-version=${K8S_VERSION}
-          - run: # Install kubectl cli
-              name: Setup kubectl
-              command: |
-                wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/master/install.sh | TAG=v3.0.0-rc.1 bash
+                k3d create cluster --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
-                touch ${HOME}/.kube/config
-          # Checkout steps
+                k3d get kubeconfig 0
           - checkout:
               path: /home/circleci/casskop
+          - run:
+              name: Create file with build image version
+              command: |
+                make build-image > casskop-build-image-tar
+          - restore_cache:
+              keys:
+                - '{{ checksum "casskop-build-image-tar" }}'
+          - run:
+              name: Load Casskop build image into k3d
+              command: |
+                if [ ! -f "casskop-build-image.tar" ]
+                then
+                  docker pull $(cat casskop-build-image-tar)
+                  docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
+                fi
+                k3d load image casskop-build-image.tar
+          - save_cache:
+              name: Save Casskop build image
+              key: '{{ checksum "casskop-build-image-tar" }}'
+              paths:
+                - casskop-build-image.tar
+          - run:
+              name: Setup kubectl
+              command: |
+                set -x
+                sudo chmod o+w /usr/local/bin/
+                wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
+                chmod +x /usr/local/bin/kubectl
+                KUBECONFIG="$(k3d get-kubeconfig)" kubectl get nodes
           - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
-          # Check environment set up correctly
-          - run: # Wait until minikube nodes are ready
-              name: Wait for minikube
-              command: |
-                timeout 300s bash \<<EOT
-                  set -o pipefail
-                  function is_ready()
-                  {
-                    kubectl get nodes -o json \
-                      | jq '.items[].status.conditions[] | select(.type=="Ready" and .status=="True")'
-                  }
-                  until is_ready
-                  do
-                    sleep 1
-                  done
-                EOT
           - run: # Check we correctly access to K8s information with kubectl cli
               name: Test k8s
               command: |
@@ -104,7 +98,6 @@ orbs:
   operator:
     # Parameters anchor
     .params_operator: &params_operator
-      # PARAMETERS
       parameters:
         operatorDir:
           type: string
@@ -131,9 +124,7 @@ orbs:
       generate:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-          # Checkout steps
           - checkout:
               path: /home/circleci/casskop
           - setup_remote_docker # Creates a separate environment for each build for security.
@@ -154,15 +145,13 @@ orbs:
               command: |
                 make generate
                 [ "$(git ls-files -m |grep -c zz_generated)" -eq 0 ]
-          # Create artifacts
-          - persist_to_workspace:
+          - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
                 - << parameters.operatorDir >>/build/_output
                 - << parameters.operatorDir >>/vendor
-          # Cache configuration
           - save_cache:
-              name: Save build artefacts in cache
+              name: Save build artifacts in cache
               key: << parameters.operatorName >>-generate-{{ .Branch }}-{{ checksum "go.sum" }}
               paths:
                 - build/_output
@@ -173,7 +162,6 @@ orbs:
         <<: *params_operator
         <<: *job_operator
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - setup_remote_docker # Creates a separate environment for each build for security.
@@ -182,17 +170,14 @@ orbs:
               - << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
         - attach_workspace:  # Attach artifact from workdir
             at: /home/circleci
-        # Build steps
         - run:
             name: Build Operator
             command: make build
-        # Create artifacts
-        - persist_to_workspace:
+        - persist_to_workspace: # Create artifacts
             root: /home/circleci
             paths:
               - << parameters.operatorDir >>/build/_output
               - << parameters.operatorDir >>/vendor
-        # Deploy steps
         - deploy:
             name: Push image to Docker Hub
             command: |
@@ -202,9 +187,8 @@ orbs:
                 docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
                 make push
               fi
-        # Cache configuration
         - save_cache:
-            name: Save build artefacts in cache
+            name: Save build artifacts in cache
             key: << parameters.operatorName >>-build-{{ .Branch }}-{{ checksum "go.sum" }}
             paths:
               - build/_output
@@ -214,9 +198,7 @@ orbs:
       unit-test:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - attach_workspace:  # Attach artifact from workdir
@@ -238,9 +220,7 @@ orbs:
       docker-dgoss-test:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - setup_remote_docker
@@ -262,9 +242,7 @@ orbs:
       report:
         <<: *params_operator
         <<: *job_operator
-        # STEPS
         steps:
-        # Checkout steps
         - checkout:
             path: /home/circleci/casskop
         - attach_workspace:
@@ -320,7 +298,6 @@ orbs:
         docker:
           - image: google/cloud-sdk
         steps:
-          # Checkout steps
           - checkout:
               path: /home/circleci/casskop
           - run:
@@ -331,6 +308,42 @@ orbs:
                 else
                   GCP_SA_CREDS=${GCP_POC_RTC_SA_KEY} /home/circleci/casskop/tools/publish_helm_gcs.sh
                 fi
+jobs:
+  deploy-website:
+    working_directory: /home/circleci/casskop/website
+    docker: # run the steps with Docker
+      - image: node:13.5.0
+    steps:
+      - checkout:
+          path: /home/circleci/casskop
+#      - restore_cache:
+#          name: Restore yarn Scanner
+#          keys:
+#            - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+#            # Fallback in case checksum fails
+#            - root-yarn-{{ .Branch }}-
+#      - run:
+#          name: root-yarn
+#          command: |
+#              yarn install --non-interactive --cache-folder ~/.cache/yarn
+#      - save_cache:
+#          name: Save yarn cache
+#          paths:
+#            - node_modules
+#            - ~/.cache/yarn
+#          key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: deploy
+          command: |
+            echo $(pwd)
+            ls -la
+            git config --global user.name "${GH_NAME}"
+            git config --global user.email "${GH_EMAIL}"
+            echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+            yarn install
+            yarn build
+            GIT_USER="${GH_NAME}" yarn deploy
+
 # Anchors
 ## Filters anchors
 .everytime_filter : &everytime_filter
@@ -362,6 +375,12 @@ orbs:
     # only act on version tags
     tags:
       only: /v[0-9]+(\.[0-9]+)*-release/
+
+.website_publish: &website_publish
+  filters:
+    # ignore any commit on any branch by default
+    branches:
+      only: master
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
@@ -402,87 +421,99 @@ workflows:
             - unit-test-casskop
           <<: *canonical_repo_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test RollingRestart
           test_name: RollingRestart
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleUp
           test_name: ClusterScaleUp
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleDown
           test_name: ClusterScaleDown
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ScaleDownSimple
           test_name: ClusterScaleDownSimple
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test CreateOneClusterService
           test_name: CreateOneClusterService
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test UpdateConfigMap
           test_name: UpdateConfigMap
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - minikube/e2e-orb:
+      - k3d/e2e-orb:
           name: e2e-test ExecuteCleanup
           test_name: ExecuteCleanup
           requires:
-            - unit-test-casskop
+            - build-casskop
           <<: *ignore_fork_pr_filter
+
       - operator/publish-helm:
           name: publish-helm-orange-incubator-casskop
           requires:
             - report-casskop
           <<: *only_on_release_tag
 
-  ## CassKop operator workflow.
+      - deploy-website:
+          name: deploy-website
+          requires:
+             - report-casskop
+          <<: *website_publish
+
+  # MultiCassKop operator workflow.
   ci-multicasskop-operator:
     jobs:
       - operator/generate:
           name: generate-casskop
           <<: *everytime_filter
+
       - operator/generate:
           name: generate-multicasskop
           <<: *params_multicasskop
           requires:
             - generate-casskop
           <<: *everytime_filter
+
       - operator/build:
           name: build-multicasskop
           <<: *params_multicasskop
           requires:
             - generate-multicasskop
           <<: *everytime_filter
+
       - operator/report:
           name: report-multicasskop
           <<: *params_multicasskop
           requires:
             - build-multicasskop
           <<: *canonical_repo_filter
+
       - operator/publish-helm:
           name: publish-helm-orange-incubator-multicasskop
           <<: *params_multicasskop
           requires:
             - report-multicasskop
           <<: *only_on_release_tag
+
