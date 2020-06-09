@@ -82,8 +82,8 @@ type CassandraRestoreStatus struct {
 	TimeCompleted metav1.Time `json:"timeCompleted"`
 	// +optional
 	Condition *RestoreCondition `json:"conditions,omitempty"`
-	// Progress is a float32 from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
-	Progress float32 `json:"conditions,omitempty"`
+	// Progress is a float from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
+	Progress string `json:"conditions,omitempty"`
 	//
 	RestorationPhase RestorationPhaseType `json:"restorationPhase,omitempty"`
 }

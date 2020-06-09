@@ -1,4 +1,12 @@
-# Setting up Multi-Casskop on Google Kubernetes Engine
+---
+id: multicasskop_gke
+title: Multi-Casskop on Google Kubernetes Engine
+author: Alexandre Guitton
+author_title: Alexandre Guitton
+author_url: https://github.com/erdrix
+author_image_url: https://avatars0.githubusercontent.com/u/10503351?s=460&u=ea08d802388c79c17655c314296be58814391572&v=4
+tags: [gke, casskop, cassandra, external-dns, multi-casskop]
+---
 
 ## Pre-requisites
 
@@ -46,6 +54,8 @@ $ terraform init
 ```
 
 #### Master provisionning
+
+![MultiCasskop architecture](/casskop/img/blog/2020-01-15-multicasskop_gke/multicasskop_architecture.jpeg)
 
 With the master provisionning, we will deploy firewall and Cloud dns configuration :
 

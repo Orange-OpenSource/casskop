@@ -42,10 +42,11 @@ spec:
                 a boolean is false
               type: boolean
             backRestSidecar:
+              description: BackRestSidecar defines details about cassandra-sidecar
+                to load along with each C* pod
               properties:
                 image:
-                  description: 'Image + version to use for backup restore sidecar,
-                    default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"'
+                  description: 'Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"'
                   type: string
                 imagePullPolicy:
                   description: ImagePullPolicy define the pull policy for backrest
@@ -71,7 +72,7 @@ spec:
                   type: object
               type: object
             bootstrapImage:
-              description: 'Image used for bootstrapping cluster (use the form : base:version)'
+              description: Image used for bootstrapping cluster (use the form base:version)
               type: string
             cassandraImage:
               description: Image + version to use for Cassandra
@@ -134,8 +135,7 @@ spec:
                 image
               type: string
             initContainerImage:
-              description: Command to execute in the initContainer in the targeted
-                image
+              description: Image used in the initContainer (use the form base:version)
               type: string
             livenessFailureThreshold:
               description: 'LivenessFailureThreshold defines failure threshold for
@@ -300,7 +300,7 @@ spec:
               minimum: 1
               type: integer
             service:
-              description: PodPolicy defines the policy for headless service owned
+              description: ServicePolicy defines the policy for headless service owned
                 by CassKop operator.
               properties:
                 annotations:
