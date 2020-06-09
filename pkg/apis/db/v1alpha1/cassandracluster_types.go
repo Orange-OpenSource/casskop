@@ -27,13 +27,12 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
-
-	DefaultLivenessInitialDelaySeconds 	int32 = 120
-	DefaultLivenessHealthCheckTimeout  	int32 = 20
-	DefaultLivenessHealthCheckPeriod   	int32 = 10
+	DefaultLivenessInitialDelaySeconds int32 = 120
+	DefaultLivenessHealthCheckTimeout  int32 = 20
+	DefaultLivenessHealthCheckPeriod   int32 = 10
 
 	DefaultReadinessInitialDelaySeconds int32 = 60
 	DefaultReadinessHealthCheckTimeout  int32 = 10
@@ -562,7 +561,7 @@ func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 		return -1
 	}
 
-	for dc := 0; dc < dcSize; dc ++ {
+	for dc := 0; dc < dcSize; dc++ {
 		if dcName == cc.GetDCName(dc) {
 			return dc
 		}
@@ -575,7 +574,7 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 	if dc >= cc.GetDCSize() {
 		return nil
 	}
-	return  &cc.Spec.Topology.DC[dc]
+	return &cc.Spec.Topology.DC[dc]
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
@@ -746,10 +745,10 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
-	// Image used for bootstrapping cluster (use the form : base:version)
+	// Image used for bootstrapping cluster (use the form base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
-	// Image used in the initContainer (use the form : base:version)
+	// Image used in the initContainer (use the form base:version)
 	InitContainerImage string `json:"initContainerImage,omitempty"`
 
 	// Command to execute in the initContainer in the targeted image
@@ -803,7 +802,7 @@ type CassandraClusterSpec struct {
 	// RestartCountBeforePodDeletion defines the number of restart allowed for a cassandra container allowed before
 	// deleting the pod  to force its restart from scratch. if set to 0 or omit,
 	// no action will be performed based on restart count.
-	RestartCountBeforePodDeletion	int32	`json:"restartCountBeforePodDeletion,omitempty"`
+	RestartCountBeforePodDeletion int32 `json:"restartCountBeforePodDeletion,omitempty"`
 
 	// Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
@@ -842,7 +841,7 @@ type CassandraClusterSpec struct {
 
 	// LivenessInitialDelaySeconds defines initial delay for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-	LivenessInitialDelaySeconds	*int32 `json:"livenessInitialDelaySeconds,omitempty"`
+	LivenessInitialDelaySeconds *int32 `json:"livenessInitialDelaySeconds,omitempty"`
 	// LivenessHealthCheckTimeout defines health check timeout for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	LivenessHealthCheckTimeout *int32 `json:"livenessHealthCheckTimeout,omitempty"`
@@ -872,8 +871,8 @@ type CassandraClusterSpec struct {
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
 
-	BackRestSidecar *BackRestSidecar `json:"backRestSidecar,omitempty"`
-	ServiceAccountName string      `json:"serviceAccountName,omitempty"`
+	BackRestSidecar    *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string           `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
@@ -945,13 +944,13 @@ type PodPolicy struct {
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 }
 
-// PodPolicy defines the policy for headless service owned by CassKop operator.
+// ServicePolicy defines the policy for headless service owned by CassKop operator.
 type ServicePolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-// CassandraClusterResources sets the limits and requests for a container
+// CassandraResources sets the limits and requests for a container
 type CassandraResources struct {
 	Requests CPUAndMem `json:"requests,omitempty"`
 	Limits   CPUAndMem `json:"limits,omitempty"`
@@ -965,13 +964,14 @@ type CPUAndMem struct {
 	Memory string `json:"memory"`
 }
 
+// BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
-	// Image + version to use for backup restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
-	Image 				string						`json:"image,omitempty"`
-	//ImagePullPolicy define the pull policy for backrest sidecar docker image
-	ImagePullPolicy		v1.PullPolicy 				`json:"imagePullPolicy,omitempty"`
+	// Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
+	Image string `json:"image,omitempty"`
+	// ImagePullPolicy define the pull policy for backrest sidecar docker image
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
-	Resources			*v1.ResourceRequirements	`json:"resources,omitempty"`
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
@@ -1007,7 +1007,7 @@ type CassandraClusterStatus struct {
 
 	//
 	CassandraNodesStatus map[string]CassandraNodeStatus `json:"cassandraNodeStatus,omitempty"`
-	
+
 	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
 }
