@@ -27,7 +27,7 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
 	DefaultLivenessInitialDelaySeconds int32 = 120
@@ -745,10 +745,10 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
-	// Image used for bootstrapping cluster (use the form : base:version)
+	// Image used for bootstrapping cluster (use the form base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
-	// Image used in the initContainer (use the form : base:version)
+	// Image used in the initContainer (use the form base:version)
 	InitContainerImage string `json:"initContainerImage,omitempty"`
 
 	// Command to execute in the initContainer in the targeted image
@@ -950,13 +950,13 @@ type PodPolicy struct {
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 }
 
-// PodPolicy defines the policy for headless service owned by CassKop operator.
+// ServicePolicy defines the policy for headless service owned by CassKop operator.
 type ServicePolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-// CassandraClusterResources sets the limits and requests for a container
+// CassandraResources sets the limits and requests for a container
 type CassandraResources struct {
 	Requests CPUAndMem `json:"requests,omitempty"`
 	Limits   CPUAndMem `json:"limits,omitempty"`
@@ -970,10 +970,11 @@ type CPUAndMem struct {
 	Memory string `json:"memory"`
 }
 
+// BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
-	// Image + version to use for backup restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:v6.2.0"
+	// Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
 	Image string `json:"image,omitempty"`
-	//ImagePullPolicy define the pull policy for backrest sidecar docker image
+	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
 	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
