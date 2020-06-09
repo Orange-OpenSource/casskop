@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,6 +41,9 @@ const (
 )
 
 var log = logf.Log.WithName("controller_cassandrabackup")
+
+// initialize local pseudorandom generator
+var random = rand.New(rand.NewSource(time.Now().Unix()))
 
 // Add creates a new CassandraBackup Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -286,24 +290,18 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 
 func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
 	reqLogger logr.Logger) error {
-	// Get Pod clients
+
 	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
 	if err != nil {
 		return fmt.Errorf("Unable to list pods")
 	}
 
-	sidecarClients := sidecar.SidecarClients(pods, &sidecar.DefaultSidecarClientOptions)
-
-	wg := &sync.WaitGroup{}
-	wg.Add(len(sidecarClients))
+	chosenPod := pods.Items[random.Intn(len(pods.Items))]
+	sidecarClient := sidecar.NewSidecarClient(chosenPod.Status.PodIP, &sidecar.DefaultSidecarClientOptions)
 
 	syncedInstance := &syncedInstance{backup: instance, client: r.client}
 
-	for hostname, sc := range sidecarClients {
-		go backup(wg, sc, syncedInstance, hostname, reqLogger, r.recorder)
-	}
-
-	wg.Wait()
+	go backup(sidecarClient, syncedInstance, reqLogger, r.recorder)
 
 	r.recorder.Event(
 		instance,
@@ -326,7 +324,7 @@ func existingNotScheduledSnapshot(c client.Client, instance *api.CassandraBackup
 
 	for _, existingBackup := range backupsList.Items {
 		if existingBackup.Spec.Schedule == "" && // Not scheduled
-			existingBackup.Status != nil &&
+			existingBackup.Status != nil && // Not started
 			existingBackup.Spec.SnapshotTag == instance.Spec.SnapshotTag &&
 			existingBackup.Spec.StorageLocation == instance.Spec.StorageLocation &&
 			existingBackup.Spec.CassandraCluster == instance.Spec.CassandraCluster &&
@@ -389,29 +387,28 @@ type syncedInstance struct {
 }
 
 func backup(
-	wg *sync.WaitGroup,
 	sidecarClient *sidecar.Client,
 	instance *syncedInstance,
-	podHostname string,
 	logging logr.Logger,
 	recorder record.EventRecorder) {
 
-	defer wg.Done()
-
 	backupRequest := &sidecar.BackupRequest{
-		StorageLocation:       fmt.Sprintf("%s/%s/%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster, instance.backup.Spec.Datacenter, podHostname),
+		StorageLocation:       fmt.Sprintf("%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
 		Duration:              instance.backup.Spec.Duration,
 		Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,
 		Secret:                instance.backup.Spec.Secret,
+		Datacenter:            instance.backup.Spec.Datacenter,
+		GlobalRequest:         true,
 		KubernetesNamespace:   instance.backup.Namespace,
 	}
 
 	if operationID, err := sidecarClient.StartOperation(backupRequest); err != nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation %v", backupRequest))
 	} else {
+		podHostname := sidecarClient.Host
 		for range time.NewTicker(2 * time.Second).C {
 			if r, err := sidecarClient.FindBackup(operationID); err != nil {
 				logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))

@@ -71,6 +71,8 @@ type BackupRequest struct {
 	Keyspaces             []string `json:"keyspaces,omitempty"`
 	Secret                string   `json:"k8sSecretName"`
 	KubernetesNamespace   string   `json:"k8sNamespace"`
+	GlobalRequest         bool     `json:"globalRequest,omitempty"`
+	Datacenter            string   `json:"dc"`
 }
 
 func (b *BackupRequest) Init() {
