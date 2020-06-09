@@ -2,20 +2,12 @@ module github.com/Orange-OpenSource/casskop
 
 go 1.13
 
-require github.com/Azure/go-autorest v12.2.0+incompatible // indirect
-
 require (
-	admiralty.io/multicluster-controller v0.2.0 // indirect
-	admiralty.io/multicluster-service-account v0.6.0 // indirect
-	bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c // indirect
-	contrib.go.opencensus.io/exporter/ocagent v0.4.11 // indirect
-	github.com/Masterminds/sprig v0.0.0-20190301161902-9f8fceff796f // indirect
-	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
-	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200608161512-5c5111611004
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
@@ -31,8 +23,9 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200120151820-655fe14d7479 // indirect
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible

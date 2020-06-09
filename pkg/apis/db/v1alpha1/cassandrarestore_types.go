@@ -26,10 +26,34 @@ const (
 	RestoreCanceled RestoreConditionType = "CANCELED"
 )
 
+func (r RestoreConditionType) IsInProgress() bool {
+	return r == RestorePending || r == RestoreRunning
+}
+
+func (r RestoreConditionType) IsInError() bool {
+	return r == RestoreFailed || r == RestoreCanceled
+}
+
+func (r RestoreConditionType) IsScheduled() bool {
+	return r == RestoreScheduled
+}
+
+func (r RestoreConditionType) IsPending() bool {
+	return r == RestorePending
+}
+
+func (r RestoreConditionType) IsRunning() bool {
+	return r == RestoreRunning
+}
+
+func (r RestoreConditionType) IsCompleted() bool {
+	return r == RestoreCompleted
+}
+
+
 // RestoreCondition describes the observed state of a Restore at a certain point.
 type RestoreCondition struct {
 	Type   RestoreConditionType `json:"type"`
-	Status corev1.ConditionStatus `json:"status"`
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// +optional
@@ -57,7 +81,7 @@ type CassandraRestoreStatus struct {
 	// +optional
 	TimeCompleted metav1.Time `json:"timeCompleted"`
 	// +optional
-	Condition RestoreCondition `json:"conditions,omitempty"`
+	Condition *RestoreCondition `json:"conditions,omitempty"`
 	// Progress is a float32 from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
 	Progress float32 `json:"conditions,omitempty"`
 	//
@@ -128,7 +152,30 @@ func init() {
 // Returns nil and -1 if the condition is not present, and the index of the located condition.
 func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *RestoreCondition {
 	if status.Condition.Type == conditionType {
-		return &status.Condition
+		return status.Condition
 	}
 	return nil
+}
+
+// UpdateRestoreCondition updates existing Restore condition or creates a new
+// one. Sets LastTransitionTime to now if the status has changed.
+// Returns true if Restore condition has changed or has been added.
+func UpdateRestoreCondition(status *CassandraRestoreStatus, condition *RestoreCondition) bool {
+	condition.LastTransitionTime = metav1.Now()
+	// Try to find this Restore condition.
+	oldCondition := GetRestoreCondition(status, condition.Type)
+
+	if oldCondition == nil {
+		// We are updating new Restore condition.
+		status.Condition = condition
+		return true
+	}
+
+	isEqual := condition.Reason == oldCondition.Reason &&
+		condition.Message == oldCondition.Message &&
+		condition.LastTransitionTime.Equal(&oldCondition.LastTransitionTime)
+
+	status.Condition = condition
+	// Return true if one of the fields have changed.
+	return !isEqual
 }

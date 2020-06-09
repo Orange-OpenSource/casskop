@@ -15,12 +15,15 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Regex to extract date from label
@@ -181,4 +184,22 @@ func GetDCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc i
 	})
 
 	return labels, nodeSelector
+}
+
+// LookupCassandra Cluster returns the running cluster instance based on its name and namespace
+func LookupCassandraCluster(client runtimeClient.Client, clusterName, clusterNamespace string) (cluster *api.CassandraCluster, err error) {
+	cluster = &api.CassandraCluster{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterNamespace}, cluster)
+	return
+}
+
+func LookupCassandraBackup(client runtimeClient.Client, backupName, backupNamespace string) (backup *api.CassandraBackup, err error) {
+	backup = &api.CassandraBackup{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: backupName, Namespace: backupNamespace}, backup)
+	return
+}
+
+// IsMarkedForDeletion determines if the object is marked for deletion
+func IsMarkedForDeletion(m metav1.ObjectMeta) bool {
+	return m.GetDeletionTimestamp() != nil
 }
