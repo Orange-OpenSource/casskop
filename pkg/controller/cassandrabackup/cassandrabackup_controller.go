@@ -2,7 +2,6 @@ package cassandrabackup
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/go-logr/logr"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -22,10 +20,8 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/sidecar"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -134,7 +130,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	reqLogger.Info("Reconciling CassandraBackup")
 
 	// Fetch the CassandraBackup backup
-	cb := &api.CassandraBackup{}
+/*	cb := &api.CassandraBackup{}
 
 	if err := r.client.Get(context.TODO(), request.NamespacedName, cb); err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -285,7 +281,9 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 
 	}
 
-	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)
+	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)*/
+
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,

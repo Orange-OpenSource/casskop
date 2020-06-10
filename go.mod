@@ -4,10 +4,11 @@ go 1.13
 
 require (
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
+	github.com/antihax/optional v1.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200608161512-5c5111611004
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200609153614-70cb316d1300
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
@@ -26,7 +27,6 @@ require (
 	github.com/thoas/go-funk v0.4.0
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200120151820-655fe14d7479 // indirect
-	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible

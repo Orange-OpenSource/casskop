@@ -7,7 +7,7 @@ import (
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	k8sutil "github.com/Orange-OpenSource/casskop/pkg/k8s"
-	"github.com/Orange-OpenSource/casskop/pkg/util"
+	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,7 +31,7 @@ const (
 
 var log = logf.Log.WithName("controller_cassandracluster")
 
-var restoreFinalizer =  "finalizer.cassandrarestores.db.orange.com"
+//var restoreFinalizer =  "finalizer.cassandrarestores.db.orange.com"
 
 // Add creates a new CassandraRestore Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -82,7 +82,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					reqLogger := log.WithValues("Restore.Namespace", obj.Namespace, "Restore.Name", obj.Name)
 					//old := e.ObjectOld.(*api.CassandraRestore)
 					new := e.ObjectNew.(*api.CassandraRestore)
-
+					if new.Status.Condition == nil {
+						return false
+					}
 					if new.Status.Condition.Type.IsCompleted() {
 						reqLogger.Info("Restore is completed, skipping.")
 						return false
@@ -159,9 +161,9 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		// This shouldn't trigger anymore, but leaving it here as a safetybelt
 		if k8sutil.IsMarkedForDeletion(instance.ObjectMeta) {
 			reqLogger.Info("Cluster is gone already, there is nothing we can do")
-			if err = r.removeFinalizer(ctx, instance); err != nil {
+			/*if err = r.removeFinalizer(ctx, instance); err != nil {
 				return common.RequeueWithError(reqLogger, "failed to remove finalizer from CassandraRestore", err)
-			}
+			}*/
 			return common.Reconciled()
 		}
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced cluster", err)
@@ -176,9 +178,59 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	// Schedule restore on first pod of the cluster.
 	if instance.Status.Condition == nil   {
 		instance, err = r.scheduleRestore(instance, cc, backup, reqLogger)
+		if err != nil {
+			return common.RequeueWithError(reqLogger, err.Error(), err)
+		}
+	}
+
+	if len(instance.Spec.ScheduledMember) == 0 {
+		return common.RequeueWithError(reqLogger, "No scheduled member to perform the restore", err)
 	}
 
 	if instance.Status.Condition.Type.IsScheduled(){
+		pods, err := r.listPods(instance.Namespace, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+		if err != nil {
+			return common.RequeueWithError(reqLogger, err.Error(), err)
+		}
+		csClient, err := common.NewSidecarsConnection(reqLogger, r.client, cc, pods)
+
+		restoreOperationRequest := &csapi.RestoreOperationRequest {
+			Type_: "restore",
+			StorageLocation: backup.Spec.StorageLocation,
+			SnapshotTag: backup.Spec.SnapshotTag,
+			NoDeleteTruncates: instance.Spec.NoDeleteTruncates,
+			ExactSchemaVersion: instance.Spec.ExactSchemaVersion,
+			RestorationPhase: string(api.RestorationPhaseDownload),
+			GlobalRequest: true,
+			Import_: &csapi.AllOfRestoreOperationRequestImport_{
+				Type_: "import",
+				SourceDir: "/var/lib/cassandra/data/downloadedsstables",
+			},
+			RestoreSystemKeyspace: true,
+		}
+
+		if instance.Spec.ConcurrentConnection != nil {
+			restoreOperationRequest.ConcurrentConnections = *instance.Spec.ConcurrentConnection
+		}
+
+		if len(instance.Spec.CassandraDirectory) > 0 {
+			restoreOperationRequest.CassandraDirectory = instance.Spec.CassandraDirectory
+		}
+
+		if len(instance.Spec.SchemaVersion) > 0 {
+			restoreOperationRequest.SchemaVersion = instance.Spec.SchemaVersion
+		}
+
+		if len(instance.Spec.RestorationStrategyType) > 0 {
+			restoreOperationRequest.RestorationStrategyType = instance.Spec.RestorationStrategyType
+		}
+
+		if len(backup.Spec.Entities) > 0  {
+			restoreOperationRequest.Entities = backup.Spec.Entities
+		}
+
+		csClient.PerformRestoreOperation(instance.Spec.ScheduledMember, *restoreOperationRequest)
+
 
 	}
 
@@ -187,12 +239,12 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// ensure a finalizer for cleanup on deletion
-	if !util.StringSliceContains(instance.GetFinalizers(), restoreFinalizer) {
+/*	if !util.StringSliceContains(instance.GetFinalizers(), restoreFinalizer) {
 		r.addFinalizer(reqLogger, instance)
 		if instance, err = r.updateAndFetchLatest(ctx, instance); err != nil {
 			return common.RequeueWithError(reqLogger, "failed to update CassandraRestore with finalizer", err)
 		}
-	}
+	}*/
 
 	return common.Reconciled()
 }
@@ -208,7 +260,9 @@ func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestor
 
 	if len(pods.Items) > 0 {
 		restore.Spec.ScheduledMember = pods.Items[0].Name
-		api.UpdateRestoreCondition(&restore.Status, &api.RestoreCondition{Type: api.RestoreScheduled})
+		if err := UpdateRestoreStatus(r.client, restore, api.CassandraRestoreStatus{ Condition: &api.RestoreCondition{Type: api.RestoreScheduled}}, log); err != nil{
+			return nil, err
+		}
 
 		return restore, nil
 	}
@@ -236,7 +290,7 @@ func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context, re
 	return restore, nil
 }
 
-func (r *ReconcileCassandraRestore) checkFinalizers(ctx context.Context, reqLogger logr.Logger, cluster *api.CassandraCluster, instance *api.CassandraRestore) (reconcile.Result, error) {
+/*func (r *ReconcileCassandraRestore) checkFinalizers(ctx context.Context, reqLogger logr.Logger, cluster *api.CassandraCluster, instance *api.CassandraRestore) (reconcile.Result, error) {
 	// run finalizers
 	var err error
 	if util.StringSliceContains(instance.GetFinalizers(), restoreFinalizer) {
@@ -258,7 +312,7 @@ func (r *ReconcileCassandraRestore) addFinalizer(reqLogger logr.Logger, restore 
 	reqLogger.Info("Adding Finalizer for the NifiUser")
 	restore.SetFinalizers(append(restore.GetFinalizers(), restoreFinalizer))
 	return
-}
+}*/
 
 func (r *ReconcileCassandraRestore) listPods(namespace string, selector map[string]string) (*corev1.PodList, error) {
 
