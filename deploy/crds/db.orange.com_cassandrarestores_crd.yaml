@@ -88,13 +88,29 @@ spec:
           required:
           - backup
           - cluster
-          - scheduledMember
           type: object
         status:
           description: CassandraRestoreStatus captures the current status of a Cassandra
             restore.
           properties:
             conditions:
+              description: RestoreCondition describes the observed state of a Restore
+                at a certain point.
+              properties:
+                lastTransitionTime:
+                  type: string
+                message:
+                  type: string
+                reason:
+                  type: string
+                type:
+                  description: RestoreConditionType represents a valid condition of
+                    a Restore.
+                  type: string
+              required:
+              - type
+              type: object
+            progress:
               description: Progress is a float from 0.0 to 1.0, 1.0 telling that operation
                 is completed, either successfully or with errors
               type: string
@@ -102,22 +118,16 @@ spec:
               type: string
             timeCompleted:
               description: TimeCompleted is the time at which the restore completed.
-              format: date-time
               type: string
             timeCreated:
-              format: date-time
               type: string
             timeStarted:
               description: TimeStarted is the time at which the restore was started.
-              format: date-time
               type: string
-          required:
-          - timeCreated
           type: object
       required:
       - metadata
       - spec
-      - status
       type: object
   version: v1alpha1
   versions:

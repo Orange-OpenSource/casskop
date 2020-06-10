@@ -30,18 +30,9 @@ var log = logf.Log.WithName("SidecarClient")
 var DefaultSidecarClientOptions = ClientOptions{Port: 4567, Secure: false}
 
 type Client struct {
-<<<<<<< HEAD
-	Host    string
-	Options *ClientOptions
-
-	restyClient  *resty.Client
-	testResponse *resty.Response
-	testMode     bool
-=======
 	Host        string
 	Options     *ClientOptions
 	restyClient *resty.Client
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 }
 
 type ClientOptions struct {
@@ -128,27 +119,6 @@ func (e *httpResponse) Error() string {
 
 func (client *Client) Status() (*nodestate.Status, error) {
 
-<<<<<<< HEAD
-	var r *resty.Response
-	if r, err := client.performRequest(EndpointStatus, http.MethodGet, nil); responseInvalid(r, err) {
-		return nil, err
-	}
-
-	body, err := readBody(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if status, err := unmarshallBody(body, r, &nodestate.Status{}); err == nil {
-		return status.(*nodestate.Status), nil
-	}
-
-	return nil, err
-}
-
-func (client *Client) GetOperation(id uuid.UUID) (*operationResponse, error) {
-=======
 	if r, err := client.performRequest(EndpointStatus, http.MethodGet, nil); responseInvalid(r, err) {
 		return nil, err
 	} else {
@@ -167,31 +137,12 @@ func (client *Client) GetOperation(id uuid.UUID) (*operationResponse, error) {
 }
 
 func (client *Client) GetOperation(id uuid.UUID) (op *operationResponse, err error) {
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 
 	if id == uuid.Nil {
 		return nil, fmt.Errorf("getOperation must get a valid id")
 	}
 	endpoint := EndpointOperations + "/" + id.String()
 
-<<<<<<< HEAD
-	var r *resty.Response
-	if r, err := client.performRequest(endpoint, http.MethodGet, nil); responseInvalid(r, err) {
-		return nil, err
-	}
-
-	body, err := readBody(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if status, err := unmarshallBody(body, r, &operationResponse{}); err == nil {
-		return status.(*operationResponse), nil
-	}
-
-	return nil, err
-=======
 	if r, err := client.performRequest(endpoint, http.MethodGet, nil); responseInvalid(r, err) {
 		return nil, err
 	} else {
@@ -207,7 +158,6 @@ func (client *Client) GetOperation(id uuid.UUID) (op *operationResponse, err err
 			return status.(*operationResponse), nil
 		}
 	}
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 }
 
 func (client *Client) GetOperations() (*Operations, error) {
@@ -238,10 +188,6 @@ func (client *Client) GetFilteredOperations(filter *operationsFilter) (*Operatio
 
 func FilterOperations(ops Operations, kind Kind) (result []interface{}, err error) {
 
-<<<<<<< HEAD
-	result = make([]interface{}, 0)
-=======
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 	var op interface{}
 
 	for _, item := range ops {
@@ -249,13 +195,9 @@ func FilterOperations(ops Operations, kind Kind) (result []interface{}, err erro
 			log.Error(err, "Error parsing operation", &map[string]interface{}{"Operation": op})
 			continue
 		}
-<<<<<<< HEAD
-		result = append(result, op)
-=======
 		if op != nil {
 			result = append(result, op)
 		}
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 	}
 
 	return result, nil
@@ -271,23 +213,8 @@ func ParseOperation(operation operationResponse, kind Kind) (interface{}, error)
 	if operation["type"].(string) == _KindValueToName[kind] {
 
 		switch kind {
-<<<<<<< HEAD
-		case cleanup:
-			op = &cleanupOperationResponse{}
-		case upgradesstables:
-			op = &UpgradeSSTablesResponse{}
-		case decommission:
-			op = &decommissionOperationResponse{}
 		case backup:
 			op = &BackupResponse{}
-		case rebuild:
-			op = &RebuildResponse{}
-		case scrub:
-			op = &ScrubResponse{}
-=======
-		case backup:
-			op = &BackupResponse{}
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 		case noop:
 			return nil, fmt.Errorf("no op")
 		}
@@ -308,13 +235,6 @@ func responseInvalid(r interface{}, err error) bool {
 
 func (client *Client) performRequest(endpoint string, verb string, requestBody interface{}) (response *resty.Response, err error) {
 
-<<<<<<< HEAD
-	if client.testMode {
-		return client.testResponse, nil
-	}
-
-=======
->>>>>>> ca75c4c553a8444d3010e61eb47f01684a347719
 	request := client.restyClient.R().SetHeader(accept, applicationJSON)
 
 	if verb == http.MethodPost {

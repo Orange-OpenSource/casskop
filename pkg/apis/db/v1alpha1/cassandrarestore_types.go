@@ -55,7 +55,7 @@ func (r RestoreConditionType) IsCompleted() bool {
 type RestoreCondition struct {
 	Type   RestoreConditionType `json:"type"`
 	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
 	// +optional
 	Reason string `json:"reason,omitempty"`
 	// +optional
@@ -73,17 +73,16 @@ const (
 
 // CassandraRestoreStatus captures the current status of a Cassandra restore.
 type CassandraRestoreStatus struct {
-	TimeCreated metav1.Time `json:"timeCreated"`
+	//
+	TimeCreated string `json:"timeCreated,omitempty"`
 	// TimeStarted is the time at which the restore was started.
-	// +optional
-	TimeStarted metav1.Time `json:"timeStarted"`
+	TimeStarted string `json:"timeStarted,omitempty"`
 	// TimeCompleted is the time at which the restore completed.
-	// +optional
-	TimeCompleted metav1.Time `json:"timeCompleted"`
-	// +optional
+	TimeCompleted string `json:"timeCompleted,omitempty"`
+	//
 	Condition *RestoreCondition `json:"conditions,omitempty"`
 	// Progress is a float from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
-	Progress string `json:"conditions,omitempty"`
+	Progress string `json:"progress,omitempty"`
 	//
 	RestorationPhase RestorationPhaseType `json:"restorationPhase,omitempty"`
 }
@@ -97,7 +96,7 @@ type CassandraRestoreSpec struct {
 	Backup *corev1.LocalObjectReference `json:"backup"`
 	// ScheduledMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
-	ScheduledMember string `json:"scheduledMember"`
+	ScheduledMember string `json:"scheduledMember,omitempty"`
 	// ConcurrentConnection is the number of threads used for upload, there might be
 	// at most so many uploading threads at any given time, when not set, it defaults to 10
 	ConcurrentConnection *int32 `json:"concurrentConnection,omitempty"`
@@ -116,7 +115,10 @@ type CassandraRestoreSpec struct {
 	// ExactSchemaVersion is a flag saying if we indeed want a schema version of a running node match with schema version a snapshot is taken on.
 	// There might be cases when we want to restore a table for which its CQL schema has not changed
 	// but it has changed for other table / keyspace but a schema for that node has changed by doing that.
-	exactSchemaVersion bool `json:"exactSchemaVersion,omitempty""`
+	ExactSchemaVersion bool `json:"exactSchemaVersion,omitempty""`
+	// strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
+	// +kubebuilder:validation:Enum={"HARDLINKS","IMPORT"}
+	RestorationStrategyType string `json:"restorationStrategyType,omitempty"`
 }
 
 // +genclient0
@@ -131,7 +133,7 @@ type CassandraRestore struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   CassandraRestoreSpec   `json:"spec"`
-	Status CassandraRestoreStatus `json:"status"`
+	Status CassandraRestoreStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -151,31 +153,8 @@ func init() {
 // GetRestoreCondition extracts the provided condition from the given status and returns that.
 // Returns nil and -1 if the condition is not present, and the index of the located condition.
 func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *RestoreCondition {
-	if status.Condition.Type == conditionType {
+	if status.Condition != nil && status.Condition.Type == conditionType {
 		return status.Condition
 	}
 	return nil
-}
-
-// UpdateRestoreCondition updates existing Restore condition or creates a new
-// one. Sets LastTransitionTime to now if the status has changed.
-// Returns true if Restore condition has changed or has been added.
-func UpdateRestoreCondition(status *CassandraRestoreStatus, condition *RestoreCondition) bool {
-	condition.LastTransitionTime = metav1.Now()
-	// Try to find this Restore condition.
-	oldCondition := GetRestoreCondition(status, condition.Type)
-
-	if oldCondition == nil {
-		// We are updating new Restore condition.
-		status.Condition = condition
-		return true
-	}
-
-	isEqual := condition.Reason == oldCondition.Reason &&
-		condition.Message == oldCondition.Message &&
-		condition.LastTransitionTime.Equal(&oldCondition.LastTransitionTime)
-
-	status.Condition = condition
-	// Return true if one of the fields have changed.
-	return !isEqual
 }

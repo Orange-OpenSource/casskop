@@ -21,9 +21,11 @@ type CassandraSidecarConfig struct {
 	Pods []corev1.Pod
 }
 
-func ClusterConfig(client client.Client, cluster *api.CassandraCluster, podList *corev1.PodList) (*CassandraSidecarConfig, error) {
+func ClusterConfig(client client.Client, cluster *api.CassandraCluster, podList *corev1.PodList) *CassandraSidecarConfig {
 	conf := &CassandraSidecarConfig{}
 	conf.UseSSL = DefaultCassandraSidecarSecure
 	conf.Port = DefaultCassandraSidecarPort
 	conf.Pods = podList.Items
+
+	return conf
 }
