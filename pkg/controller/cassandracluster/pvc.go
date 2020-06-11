@@ -17,7 +17,7 @@ package cassandracluster
 import (
 	"context"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (rcc *ReconcileCassandraCluster) GetPVC(namespace, name string) (*v1.PersistentVolumeClaim, error) {
+func (rcc *ReconcileCassandraCluster) PVC(namespace, name string) (*v1.PersistentVolumeClaim, error) {
 
 	o := &v1.PersistentVolumeClaim{
 		TypeMeta: metav1.TypeMeta{
