@@ -96,7 +96,7 @@ type basicResponse struct {
 	CompletionTime time.Time                 `json:"completionTime"`
 }
 
-func (client *Client) FindBackup(id uuid.UUID) (backupResponse *BackupResponse, err error) {
+func (client *Client) FindBackup(id string) (backupResponse *BackupResponse, err error) {
 	if op, err := client.GetOperation(id); err != nil {
 		return nil, err
 	} else if b, err := ParseOperation(*op, backup); err != nil {
