@@ -357,7 +357,7 @@ CassKop need specific capabilities in order to work : `IPC_LOCK` and the flag `a
 If yout cluster is using PSP (Pod Security Policies) then you need to allow your
 namespace with the use of thoses capabilities:
 
-The PSP RoleBinding can be retrieved from  the cassandra namespace
+The PSP RoleBinding can be retrieved from the cassandra namespace
 
 ```console
 kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/psp-cassie.yaml

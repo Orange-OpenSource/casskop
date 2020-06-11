@@ -127,6 +127,10 @@ type CassandraRestoreSpec struct {
 	// strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
 	// +kubebuilder:validation:Enum={"HARDLINKS","IMPORT"}
 	RestorationStrategyType string `json:"restorationStrategyType,omitempty"`
+	//
+	SecretName string `json:"secret,omitempty"`
+	//
+	Entities string `json:"entities,omitempty"`
 }
 
 // +genclient0
