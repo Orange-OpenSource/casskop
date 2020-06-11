@@ -12,7 +12,6 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
-	github.com/go-resty/resty/v2 v2.1.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/jarcoal/httpmock v1.0.4

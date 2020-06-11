@@ -29,12 +29,12 @@ func TestDemarshalling(t *testing.T) {
 
 	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
 
-	httpmock.ActivateNonDefault(client.restyClient.GetClient())
+	httpmock.ActivateNonDefault(client.apiClient.GetClient())
 
 	defer httpmock.DeactivateAndReset()
 
 	// Check Status()
-	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointStatus),
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.apiClient.HostURL, EndpointStatus),
 		httpmock.NewStringResponder(200, `{"nodeState": "NORMAL"}`))
 
 	if status, err := client.Status(); err != nil || status == nil || status.NodeState != nodestate.NORMAL {
@@ -42,7 +42,7 @@ func TestDemarshalling(t *testing.T) {
 	}
 
 	// Check GetOperations() and FilterOperations()
-	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.apiClient.HostURL, EndpointOperations),
 		httpmock.NewStringResponder(200,
 			`[
 				{
@@ -75,7 +75,7 @@ func TestDemarshalling(t *testing.T) {
 	operationID := "d3262073-8101-450f-9a11-c851760abd57"
 
 	httpmock.RegisterResponder(http.MethodGet,
-		fmt.Sprintf("%s/%s/%s", client.restyClient.HostURL, EndpointOperations, operationID),
+		fmt.Sprintf("%s/%s/%s", client.apiClient.HostURL, EndpointOperations, operationID),
 		httpmock.NewStringResponder(200,
 			fmt.Sprintf(
 				`
@@ -100,7 +100,7 @@ func TestClientBackupNode(t *testing.T) {
 
 	client := NewSidecarClient(getHost(), &DefaultSidecarClientOptions)
 
-	httpmock.ActivateNonDefault(client.restyClient.GetClient())
+	httpmock.ActivateNonDefault(client.apiClient.GetClient())
 
 	defer httpmock.DeactivateAndReset()
 
@@ -132,13 +132,13 @@ func TestClientBackupNode(t *testing.T) {
 		}, nil
 	}
 
-	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s", client.apiClient.HostURL, EndpointOperations),
 		responder)
 
-	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/%s", client.restyClient.HostURL, EndpointOperations),
+	httpmock.RegisterResponder(http.MethodPost, fmt.Sprintf("%s/%s", client.apiClient.HostURL, EndpointOperations),
 		responder)
 
-	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s/%s", client.restyClient.HostURL, EndpointOperations, operationID),
+	httpmock.RegisterResponder(http.MethodGet, fmt.Sprintf("%s/%s/%s", client.apiClient.HostURL, EndpointOperations, operationID),
 		httpmock.NewStringResponder(200, backupResponse))
 
 	// List backups and ensure we get only one response
