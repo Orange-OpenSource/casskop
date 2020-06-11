@@ -393,7 +393,8 @@ func backup(
 	recorder record.EventRecorder) {
 
 	backupRequest := &sidecar.BackupRequest{
-		StorageLocation:       fmt.Sprintf("%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
+		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
+		StorageLocation:       fmt.Sprintf("%s/%s/dcx/nodex", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
 		Duration:              instance.backup.Spec.Duration,
 		Bandwidth:             instance.backup.Spec.Bandwidth,
