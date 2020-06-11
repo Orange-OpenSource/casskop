@@ -78,7 +78,7 @@ func randomPodOperationKey() string {
 //PodOperations are finishing gracefully.
 func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus) (bool, error) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var breakResyncloop = false
 	var err error
@@ -114,7 +114,7 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 //addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
 func (rcc *ReconcileCassandraCluster) addPodOperationLabels(cc *api.CassandraCluster, dcName string,
 	rackName string, labels map[string]string) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	//Select all Pods in the Rack
 	selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 
@@ -145,7 +145,7 @@ func (rcc *ReconcileCassandraCluster) addPodOperationLabels(cc *api.CassandraClu
 // initOperation finds pods waiting for operation to run
 func (rcc *ReconcileCassandraCluster) initOperation(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcName, rackName, operationName string) []v1.Pod {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	selector := k8s.MergeLabels(k8s.LabelsForCassandraDCRack(cc, dcName, rackName),
 		map[string]string{"operation-name": operationName,
 			"operation-status": api.StatusToDo})
@@ -228,8 +228,8 @@ func (rcc *ReconcileCassandraCluster) startOperation(cc *api.CassandraCluster, s
 //  - operation-name=xxxx and operation-status=To-Do
 func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
-	podsSlice, checkOnly := rcc.getPodsToWorkOn(cc, dcName, rackName, status, operationName)
+	dcRackName := cc.DCRackName(dcName, rackName)
+	podsSlice, checkOnly := rcc.podsToWorkOn(cc, dcName, rackName, status, operationName)
 
 	// For each pod where we need to run the operation on
 	for _, pod := range podsSlice {
@@ -285,7 +285,7 @@ func (rcc *ReconcileCassandraCluster) runOperation(operationName, hostName strin
   it return breakResyncloop=false if we want to call the ensureStatefulset method. */
 func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus) (bool, error) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	if podLastOperation.Name != api.OperationDecommission {
@@ -306,7 +306,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		if podLastOperation.Pods == nil || podLastOperation.Pods[0] == "" {
 			return breakResyncLoop, fmt.Errorf("For Status Ongoing we should have a PodLastOperation Pods item")
 		}
-		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
+		lastPod, err := rcc.Pod(cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
 				return breakResyncLoop, fmt.Errorf("failed to get last cassandra's pods '%s': %v",
@@ -396,12 +396,12 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 // set podLastOperation.Pods and label targeted pod (lastPod)
 func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus) (bool, error) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	var list []string
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	// We Get LastPod From StatefulSet
-	lastPod, err := rcc.GetLastPod(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+	lastPod, err := rcc.LastPod(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 	if err != nil {
 		return breakResyncLoop, fmt.Errorf("Failed to get last cassandra's pods: %v", err)
 	}
@@ -481,13 +481,13 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 // State To-DO -> Ongoing
 func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, lastPod *v1.Pod) (bool, error) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	pvcName := "data-" + podLastOperation.Pods[0]
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pvc": pvcName}).Info("Decommission done -> we delete PVC")
-	pvc, err := rcc.GetPVC(cc.Namespace, pvcName)
+	pvc, err := rcc.PVC(cc.Namespace, pvcName)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pvc": pvcName}).Error("Cannot get PVC")
@@ -526,7 +526,7 @@ func (rcc *ReconcileCassandraCluster) podsSlice(cc *api.CassandraCluster, status
 		podLastOperation.OperatorName = operatorName
 
 		for _, podName := range podLastOperation.Pods {
-			p, err := rcc.GetPod(cc.Namespace, podName)
+			p, err := rcc.Pod(cc.Namespace, podName)
 			if err != nil || p.Status.Phase != v1.PodRunning || p.DeletionTimestamp != nil {
 				continue
 			}
@@ -535,16 +535,16 @@ func (rcc *ReconcileCassandraCluster) podsSlice(cc *api.CassandraCluster, status
 		checkOnly = true
 		return podsSlice, checkOnly
 	}
-	dcName, rackName := cc.GetDCAndRackFromDCRackName(dcRackName)
+	dcName, rackName := cc.DCAndRackFromDCRackName(dcRackName)
 	podsSlice = rcc.initOperation(cc, status, dcName, rackName, operationName)
 	return podsSlice, checkOnly
 }
 
 // Get pods that need an operation to run on
 // Returns if checking is needed (can happen if the operator has been killed during an operation)
-func (rcc *ReconcileCassandraCluster) getPodsToWorkOn(cc *api.CassandraCluster, dcName, rackName string,
+func (rcc *ReconcileCassandraCluster) podsToWorkOn(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, operationName string) ([]v1.Pod, bool) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	var checkOnly bool
 	podsSlice := make([]v1.Pod, 0)
 
@@ -741,7 +741,7 @@ func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.Cassand
 	var err error
 	if podToRemove != "" {
 		// We delete the pod that is no longer part of the cluster
-		lostPod, err = rcc.GetPod(cc.Namespace, podToRemove)
+		lostPod, err = rcc.Pod(cc.Namespace, podToRemove)
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
 				return fmt.Errorf("Failed to get pod '%s': %v", podToRemove, err)
@@ -782,7 +782,7 @@ func (rcc *ReconcileCassandraCluster) runRemove(hostName string, cc *api.Cassand
 
 func (rcc *ReconcileCassandraCluster) waitUntilPvcIsDeleted(namespace, pvcName string) error {
 	err := wait.Poll(retryInterval, deletedPvcTimeout, func() (done bool, err error) {
-		_, err = rcc.GetPVC(namespace, pvcName)
+		_, err = rcc.PVC(namespace, pvcName)
 		if err != nil && apierrors.IsNotFound(err) {
 			logrus.WithFields(logrus.Fields{"namespace": namespace,
 				"pvc": pvcName}).Info("PVC no longer exists")
@@ -818,7 +818,7 @@ func (rcc *ReconcileCassandraCluster) postRunRemove(cc *api.CassandraCluster, dc
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pvc": pvcName}).Info("RemoveNode done. We now delete its PVC")
 
-	pvc, err := rcc.GetPVC(cc.Namespace, pvcName)
+	pvc, err := rcc.PVC(cc.Namespace, pvcName)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pvc": pvcName}).Error("Cannot get PVC")
@@ -835,7 +835,7 @@ func (rcc *ReconcileCassandraCluster) postRunRemove(cc *api.CassandraCluster, dc
 	}
 
 	// We delete the pod that is no longer part of the cluster
-	lostPod, err := rcc.GetPod(cc.Namespace, podToRemove)
+	lostPod, err := rcc.Pod(cc.Namespace, podToRemove)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("Failed to get pod '%s': %v", podToRemove, err)

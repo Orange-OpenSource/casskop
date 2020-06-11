@@ -48,13 +48,13 @@ const (
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
 	// InitContainer resources
-	defaultInitContainerLimitsCPU       = "0.5"
-	defaultInitContainerLimitsMemory    = "0.5Gi"
-	defaultInitContainerRequestsCPU     = "0.5"
-	defaultInitContainerRequestsMemory  = "0.5Gi"
+	defaultInitContainerLimitsCPU      = "0.5"
+	defaultInitContainerLimitsMemory   = "0.5Gi"
+	defaultInitContainerRequestsCPU    = "0.5"
+	defaultInitContainerRequestsMemory = "0.5Gi"
 
 	cassandraConfigMapName = "cassandra-config"
-	defaultBackRestPort	   = 4567
+	defaultBackRestPort    = 4567
 )
 
 type containerType int
@@ -235,8 +235,8 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string, dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
-	dataCapacity := cc.GetDataCapacityForDC(dcName)
-	dataStorageClass := cc.GetDataStorageClassForDC(dcName)
+	dataCapacity := cc.DataCapacityForDC(dcName)
+	dataStorageClass := cc.DataStorageClassForDC(dcName)
 
 	if dataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
@@ -296,8 +296,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	nodeAffinity := createNodeAffinity(nodeSelector)
-	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
+	nodesPerRacks := cc.NodesPerRacks(dcRackName)
+	rollingPartition := cc.RollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 	var annotations = map[string]string{}
 	var tolerations = []v1.Toleration{}
@@ -355,7 +355,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
-					ServiceAccountName: 		   cc.Spec.ServiceAccountName,
+					ServiceAccountName:            cc.Spec.ServiceAccountName,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,
@@ -464,7 +464,7 @@ func getCassandraResources(spec api.CassandraClusterSpec) v1.ResourceRequirement
 
 func getInitContainerResources() v1.ResourceRequirements {
 	resources := api.CassandraResources{
-		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	return v1.ResourceRequirements{
@@ -558,8 +558,8 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	name := cc.GetName()
 	//in statefulset.go we surcharge this value with conditions
-	seedList := cc.GetSeedList(&status.SeedList)
-	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
+	seedList := cc.SeedList(&status.SeedList)
+	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
 
 	return []v1.EnvVar{
 		v1.EnvVar{
@@ -823,7 +823,7 @@ func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.Cassan
 	}
 
 	if cc.Spec.BackRestSidecar.Resources != nil {
-		container.Resources =  *cc.Spec.BackRestSidecar.Resources
+		container.Resources = *cc.Spec.BackRestSidecar.Resources
 	}
 
 	container.VolumeMounts = generateContainerVolumeMount(cc, backrestContainer)
