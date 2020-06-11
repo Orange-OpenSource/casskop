@@ -31,6 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/ghodss/yaml"
 	"github.com/r3labs/diff"
 	"github.com/stretchr/testify/assert"
@@ -591,7 +592,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	pod.Status.Phase = v1.PodRunning
 	pod.Spec.Hostname = "cassandra-demo2-dc2-rack1-0"
 	pod.Spec.Subdomain = "cassandra-demo2-dc2-rack1"
-	hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+	hostName := k8s.PodHostname(*pod)
 	rcc.CreatePod(pod)
 
 	//Mock Jolokia Call to NonLocalKeyspacesInDC
