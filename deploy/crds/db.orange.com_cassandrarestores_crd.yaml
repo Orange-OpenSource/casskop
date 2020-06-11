@@ -70,6 +70,13 @@ spec:
                 truncated SSTables after they are imported, as part of CLEANUP phase,
                 defaults to false
               type: boolean
+            restorationStrategyType:
+              description: strategy telling how we should go about restoration, please
+                refer to details in backup and sidecar documentation
+              enum:
+              - HARDLINKS
+              - IMPORT
+              type: string
             scheduledMember:
               description: ScheduledMember is the Pod name of the Cluster member on
                 which the Restore will be executed.

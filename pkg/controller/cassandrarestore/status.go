@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/casskop/pkg/util"
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -16,7 +14,6 @@ import (
 func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status api.CassandraRestoreStatus, reqLogger logr.Logger) error {
 	typeMeta := restore.TypeMeta
 
-	status.Condition.LastTransitionTime = metav1.Now().Format(util.TimeStampLayout)
 	restore.Status = status
 
 	err := updateRestoreStatus(c, restore)
