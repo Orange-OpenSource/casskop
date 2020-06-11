@@ -151,7 +151,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
 	//Simulate the Update of SeedList (field CASSANDRA_SEEDLIST of init-container bootstrap
-	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.SeedList(&b)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
@@ -340,7 +340,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList), "Status: %v", status.SeedList)
 
 	//3. Simulate the Update of SeedList
-	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.SeedList(&b)
 
 	//4. Ask for ScaleDown on dc1
 	cc.Spec.NodesPerRacks = cc.Spec.NodesPerRacks - 1
@@ -471,7 +471,7 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	//Remove 1 rack/dc at specified index
 	cc.Spec.Topology.DC[0].Rack.Remove(1)
@@ -480,10 +480,10 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	needUpdate = false
 
@@ -495,10 +495,10 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 }
 
 //remove only a rack is not allowed
@@ -509,7 +509,7 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	//Remove DC at specified index
 	cc.Spec.Topology.DC.Remove(1)
@@ -520,10 +520,10 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 }
 
 func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
@@ -538,8 +538,8 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	rcc.updateCassandraStatus(cc, status)
 
 	//Initial Topology
-	assert.Equal(3, cc.GetDCSize())
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(3, cc.DCSize())
+	assert.Equal(4, cc.DCRackSize())
 	assert.Equal(4, len(status.CassandraRackStatus))
 
 	//Remove a dc at specified index
@@ -551,10 +551,10 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been updated
-	assert.Equal(2, cc.GetDCSize())
+	assert.Equal(2, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCRackSize())
+	assert.Equal(3, cc.DCRackSize())
 
 	//Check that status is updated
 	assert.Equal(3, len(status.CassandraRackStatus))

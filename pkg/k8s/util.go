@@ -38,7 +38,7 @@ func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName 
 	m := map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     cc.GetName(),
-		"dc-rack":                              cc.GetDCRackName(dcName, rackName),
+		"dc-rack":                              cc.DCRackName(dcName, rackName),
 		"cassandraclusters.db.orange.com.dc":   dcName,
 		"cassandraclusters.db.orange.com.rack": rackName,
 	}
