@@ -9,7 +9,7 @@ require (
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611115046-09f54690a507
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329
 	// v0.0.0-20200610140227-df43b1138272 > works
 	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610142749-d41f80ea3264 # Object
 	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610133341-a1a47e86a0c1 # interface

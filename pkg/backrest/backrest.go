@@ -43,7 +43,16 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 			Type_: "import",
 			SourceDir: "/var/lib/cassandra/data/downloadedsstables",
 		},
-		Entities: backup.Spec.Entities,
+		Entities: restore.Spec.Entities,
+		K8sSecretName: restore.Spec.SecretName,
+	}
+
+	if len(restore.Spec.Entities) == 0 {
+		restoreOperationRequest.Entities = backup.Spec.Entities
+	}
+
+	if len(restore.Spec.SecretName) == 0 {
+		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
 	}
 
 	if restore.Spec.ConcurrentConnection != nil {
