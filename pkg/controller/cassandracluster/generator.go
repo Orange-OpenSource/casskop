@@ -237,8 +237,8 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string, dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
-	dataCapacity := cc.DataCapacityForDC(dcName)
-	dataStorageClass := cc.DataStorageClassForDC(dcName)
+	dataCapacity := cc.GetDataCapacityForDC(dcName)
+	dataStorageClass := cc.GetDataStorageClassForDC(dcName)
 
 	if dataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
@@ -298,8 +298,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	nodeAffinity := createNodeAffinity(nodeSelector)
-	nodesPerRacks := cc.NodesPerRacks(dcRackName)
-	rollingPartition := cc.RollingPartitionPerRacks(dcRackName)
+	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 	var annotations = map[string]string{}
 	var tolerations = []v1.Toleration{}
@@ -578,8 +578,8 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	name := cc.GetName()
 	//in statefulset.go we surcharge this value with conditions
-	seedList := cc.SeedList(&status.SeedList)
-	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
+	seedList := cc.GetSeedList(&status.SeedList)
+	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
 
 	return []v1.EnvVar{
 		{

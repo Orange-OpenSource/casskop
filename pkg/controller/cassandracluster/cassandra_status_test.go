@@ -157,7 +157,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 
 	for _, dc := range cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
@@ -226,7 +226,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning.Name)
 
-	for _, dcRackName := range cc.DCRackNames() {
+	for _, dcRackName := range cc.GetDCRackNames() {
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning.Name,
 			"dc-rack: %s", dcRackName)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Name, api.ClusterPhaseInitial.Name,
@@ -279,7 +279,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -297,7 +297,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -332,7 +332,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -350,7 +350,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -368,7 +368,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -403,7 +403,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
@@ -421,7 +421,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {
 		for _, rack := range dc.Rack {
-			dcRackName := rcc.cc.DCRackName(dc.Name, rack.Name)
+			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
 			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,

@@ -51,7 +51,7 @@ func PodContainersReady(pod *v1.Pod) bool {
 	return false
 }
 
-func (rcc *ReconcileCassandraCluster) Pod(namespace, name string) (*v1.Pod, error) {
+func (rcc *ReconcileCassandraCluster) GetPod(namespace, name string) (*v1.Pod, error) {
 
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -72,7 +72,7 @@ func GetLastOrFirstPod(podsList *v1.PodList, last bool) (*v1.Pod, error) {
 }
 
 // GetLastOrFirstPodReady returns the las or first pod that is ready
-func LastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
+func GetLastOrFirstPodReady(podsList []v1.Pod, last bool) (*v1.Pod, error) {
 	var readyPods []v1.Pod
 	for _, pod := range podsList {
 		if cassandraPodIsReady(&pod) {
@@ -119,7 +119,7 @@ func (rcc *ReconcileCassandraCluster) GetFirstPod(namespace string, selector map
 }
 
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
-func (rcc *ReconcileCassandraCluster) LastPod(namespace string, selector map[string]string) (*v1.Pod, error) {
+func (rcc *ReconcileCassandraCluster) GetLastPod(namespace string, selector map[string]string) (*v1.Pod, error) {
 	podsList, err := rcc.ListPods(namespace, selector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
@@ -133,7 +133,7 @@ func (rcc *ReconcileCassandraCluster) GetFirstPodReady(namespace string, selecto
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
-	return LastOrFirstPodReady(podsList.Items, first)
+	return GetLastOrFirstPodReady(podsList.Items, first)
 }
 
 // GetLastPod returns the last pod satisfying the selector and being in the namespace
@@ -142,11 +142,11 @@ func (rcc *ReconcileCassandraCluster) GetLastPodReady(namespace string, selector
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cassandra's pods: %v", err)
 	}
-	return LastOrFirstPodReady(podsList.Items, last)
+	return GetLastOrFirstPodReady(podsList.Items, last)
 }
 
 func (rcc *ReconcileCassandraCluster) UpdatePodLabel(pod *v1.Pod, label map[string]string) error {
-	podToUpdate, err := rcc.Pod(pod.Namespace, pod.Name)
+	podToUpdate, err := rcc.GetPod(pod.Namespace, pod.Name)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (rcc *ReconcileCassandraCluster) UpdatePod(pod *v1.Pod) error {
 }
 
 func (rcc *ReconcileCassandraCluster) CreateOrUpdatePod(namespace string, name string, pod *v1.Pod) error {
-	storedPod, err := rcc.Pod(namespace, pod.Name)
+	storedPod, err := rcc.GetPod(namespace, pod.Name)
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
