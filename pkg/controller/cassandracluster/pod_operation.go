@@ -233,7 +233,7 @@ func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, 
 
 	// For each pod where we need to run the operation on
 	for _, pod := range podsSlice {
-		hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+		hostName := k8s.PodHostname(pod)
 		// We check if an operation is running
 		if checkOnly {
 			go rcc.monitorOperation(hostName, cc, dcRackName, pod, operationName)
@@ -327,7 +327,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 
 		}
 
-		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
+		hostName := k8s.PodHostname(*lastPod)
 		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 			cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
@@ -425,7 +425,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 		"pod": lastPod.Name}).Info("ScaleDown detected, we launch decommission")
 
 	//Ensure node is not leaving or absent from the ring
-	hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
+	hostName := k8s.PodHostname(*lastPod)
 	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 		cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
@@ -689,8 +689,9 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 
 	if labelSet != true {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
-	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil  && len(keyspaces) == 0 {
-		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)	}
+	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil && len(keyspaces) == 0 {
+		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)
+	}
 
 	// In case of an error set the status on the pod and skip it
 	if err != nil {
