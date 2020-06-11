@@ -297,7 +297,7 @@ func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc 
 	}
 
 	chosenPod := pods.Items[random.Intn(len(pods.Items))]
-	sidecarClient := sidecar.NewSidecarClient(chosenPod.Status.PodIP, &sidecar.DefaultSidecarClientOptions)
+	sidecarClient := sidecar.NewSidecarClient(k8s.PodHostname(chosenPod), &sidecar.DefaultSidecarClientOptions)
 
 	syncedInstance := &syncedInstance{backup: instance, client: r.client}
 

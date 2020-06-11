@@ -14,7 +14,6 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/common/nodestate"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -77,18 +76,6 @@ func NewSidecarClient(host string, options *ClientOptions) *Client {
 	client.apiClient = cassandrasidecar.NewAPIClient(config)
 
 	return client
-}
-
-func SidecarClients(podsList *v1.PodList, clientOptions *ClientOptions) map[string]*Client {
-
-	podClients := make(map[string]*Client)
-
-	for _, pod := range podsList.Items {
-		NewSidecarClient(pod.Status.PodIP, clientOptions)
-		podClients[pod.Spec.Hostname] = NewSidecarClient(pod.Status.PodIP, clientOptions)
-	}
-
-	return podClients
 }
 
 func ClientFromPods(podsClients map[*corev1.Pod]*Client, pod corev1.Pod) *Client {
