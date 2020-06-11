@@ -15,6 +15,7 @@ var log = logf.Log.WithName("cassandrasidecar-client")
 
 type CassandraSidecarClient interface {
 	PerformRestoreOperation(podName string, restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error)
+	GetRestoreOperation(podName, operationId string) (*csapi.RestoreOperationResponse, error)
 	Build() error
 }
 

@@ -13,7 +13,6 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/operator-framework/operator-sdk v0.15.0
 	github.com/sirupsen/logrus v1.4.2
-	go.uber.org/multierr v1.2.0 // indirect
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/sample-controller v0.0.0-20191121021213-d454fe81777c

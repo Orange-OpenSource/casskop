@@ -3,12 +3,16 @@ module github.com/Orange-OpenSource/casskop
 go 1.13
 
 require (
+	emperror.dev/errors v0.7.0
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/antihax/optional v1.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200609153614-70cb316d1300
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611115046-09f54690a507
+	// v0.0.0-20200610140227-df43b1138272 > works
+	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610142749-d41f80ea3264 # Object
+	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610133341-a1a47e86a0c1 # interface
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
@@ -16,6 +20,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/operator-framework/operator-sdk v0.15.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.2.1

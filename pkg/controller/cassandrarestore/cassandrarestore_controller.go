@@ -3,17 +3,23 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"emperror.dev/errors"
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"github.com/Orange-OpenSource/casskop/pkg/errorfactory"
 	k8sutil "github.com/Orange-OpenSource/casskop/pkg/k8s"
-	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	"github.com/Orange-OpenSource/casskop/pkg/util"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -145,7 +151,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	err := r.client.Get(ctx, request.NamespacedName, instance)
 
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apiErrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -177,9 +183,16 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Schedule restore on first pod of the cluster.
 	if instance.Status.Condition == nil   {
-		instance, err = r.scheduleRestore(instance, cc, backup, reqLogger)
+		err = r.scheduleRestore(instance, cc, backup, reqLogger)
 		if err != nil {
-			return common.RequeueWithError(reqLogger, err.Error(), err)
+			switch errors.Cause(err).(type) {
+			case errorfactory.ResourceNotReady:
+				return ctrl.Result{
+					RequeueAfter: time.Duration(15) * time.Second,
+				}, nil
+			default:
+				return common.RequeueWithError(log, err.Error(), err)
+			}
 		}
 	}
 
@@ -188,54 +201,40 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	if instance.Status.Condition.Type.IsScheduled(){
-		pods, err := r.listPods(instance.Namespace, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+		err = r.handleScheduledRestore(instance, cc, backup, reqLogger)
 		if err != nil {
-			return common.RequeueWithError(reqLogger, err.Error(), err)
+			switch errors.Cause(err).(type) {
+			case errorfactory.SidecarNotReady, errorfactory.ResourceNotReady:
+				return ctrl.Result{
+					RequeueAfter: time.Duration(15) * time.Second,
+				}, nil
+			default:
+				return common.RequeueWithError(log, err.Error(), err)
+			}
 		}
-		csClient, err := common.NewSidecarsConnection(reqLogger, r.client, cc, pods)
-
-		restoreOperationRequest := &csapi.RestoreOperationRequest {
-			Type_: "restore",
-			StorageLocation: backup.Spec.StorageLocation,
-			SnapshotTag: backup.Spec.SnapshotTag,
-			NoDeleteTruncates: instance.Spec.NoDeleteTruncates,
-			ExactSchemaVersion: instance.Spec.ExactSchemaVersion,
-			RestorationPhase: string(api.RestorationPhaseDownload),
-			GlobalRequest: true,
-			Import_: &csapi.AllOfRestoreOperationRequestImport_{
-				Type_: "import",
-				SourceDir: "/var/lib/cassandra/data/downloadedsstables",
-			},
-			RestoreSystemKeyspace: true,
-		}
-
-		if instance.Spec.ConcurrentConnection != nil {
-			restoreOperationRequest.ConcurrentConnections = *instance.Spec.ConcurrentConnection
-		}
-
-		if len(instance.Spec.CassandraDirectory) > 0 {
-			restoreOperationRequest.CassandraDirectory = instance.Spec.CassandraDirectory
-		}
-
-		if len(instance.Spec.SchemaVersion) > 0 {
-			restoreOperationRequest.SchemaVersion = instance.Spec.SchemaVersion
-		}
-
-		if len(instance.Spec.RestorationStrategyType) > 0 {
-			restoreOperationRequest.RestorationStrategyType = instance.Spec.RestorationStrategyType
-		}
-
-		if len(backup.Spec.Entities) > 0  {
-			restoreOperationRequest.Entities = backup.Spec.Entities
-		}
-
-		csClient.PerformRestoreOperation(instance.Spec.ScheduledMember, *restoreOperationRequest)
-
-
 	}
 
 	if instance.Status.Condition.Type.IsInProgress() {
 
+		err = r.checkRestoreOperationState(instance, cc, backup, reqLogger)
+		if err != nil {
+			switch errors.Cause(err).(type) {
+			case errorfactory.SidecarNotReady, errorfactory.ResourceNotReady:
+				return ctrl.Result{
+					RequeueAfter: time.Duration(15) * time.Second,
+				}, nil
+			case errorfactory.SidecarOperationRunning:
+				return ctrl.Result{
+					RequeueAfter: time.Duration(20) * time.Second,
+				}, nil
+			case errorfactory.SidecarOperationFailure:
+				return ctrl.Result{
+					RequeueAfter: time.Duration(20) * time.Second,
+				}, nil
+			default:
+				return common.RequeueWithError(log, err.Error(), err)
+			}
+		}
 	}
 
 	// ensure a finalizer for cleanup on deletion
@@ -250,34 +249,101 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 }
 
 // scheduleRestore schedules a Restore on a specific member of a Cluster
-func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) (*api.CassandraRestore, error) {
+func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
 	ns := restore.Namespace
 
 	pods, err := r.listPods(ns, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to list pods.")
+		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
 
 	if len(pods.Items) > 0 {
 		restore.Spec.ScheduledMember = pods.Items[0].Name
-		if err := UpdateRestoreStatus(r.client, restore, api.CassandraRestoreStatus{ Condition: &api.RestoreCondition{Type: api.RestoreScheduled}}, log); err != nil{
-			return nil, err
+		if err := UpdateRestoreStatus(r.client, restore,
+			api.CassandraRestoreStatus{
+				Condition: &api.RestoreCondition{
+					Type: api.RestoreScheduled,
+					LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
+				},
+			}, log); err != nil{
+			return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 		}
 
-		return restore, nil
+		return nil
 	}
 
-	return nil, fmt.Errorf("No pods found.")
+	return errors.New("No pods found.")
 }
 
 func (r *ReconcileCassandraRestore) handleScheduledRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
+	pods, err := r.listPods(restore.Namespace, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+	if err != nil {
+		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
+	}
+
+	sr, err := backrest.NewSidecarRestore(r.client, cc, restore, pods)
+	if err != nil {
+		reqLogger.Info("Sidecar communication error checking running restore operation")
+		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
+	}
+
+	restoreStatus, err := sr.PerformRestore(restore, backup)
+	if err != nil {
+		reqLogger.Info("Sidecar communication error checking running restore operation")
+		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
+	}
+
+	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, log); err != nil {
+		return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+	}
 
 	return nil
 }
 
-func (r *ReconcileCassandraRestore) checkRestoreTaskState(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
 
-	return nil
+	pods, err := r.listPods(restore.Namespace, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
+	if err != nil {
+		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
+	}
+
+	restoreId := restore.Status.Id
+	if restoreId == "" {
+		return errors.New("no Restore operation id provided to be checked")
+	}
+
+	// Check Restore operation status
+	sr, err := backrest.NewSidecarRestore(r.client, cc, restore, pods)
+	if err != nil {
+		reqLogger.Info("Sidecar communication error checking running Operation", "OperationId", restoreId)
+		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
+	}
+	restoreStatus, err := sr.GetRestorebyId(restoreId)
+	if err != nil {
+		reqLogger.Info("Sidecar communication error checking running Operation", "OperationId", restoreId)
+		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
+	}
+
+	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, log); err != nil {
+		return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+	}
+
+	// Restore operation failed or canceled,
+	// TODO : reschedule it by marking restore Condition.State = RestoreScheduled ?
+	if restore.Status.Condition.Type.IsInError() {
+		return errorfactory.New(errorfactory.SidecarOperationFailure{}, err, "Sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
+	}
+
+	// Restore operation completed successfully
+	if restore.Status.Condition.Type.IsCompleted()  {
+		return nil
+	}
+
+	// TODO : Implement timeout ?
+	
+	// restore operation still in progress
+	log.Info("Sidecar operation is still running", "restoreId", restoreId)
+	return errorfactory.New(errorfactory.SidecarOperationRunning{}, errors.New("sidecar restore operation still running"), fmt.Sprintf("restore operation id : %s", restoreId))
 }
 
 func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context, restore *api.CassandraRestore) (*api.CassandraRestore, error) {
