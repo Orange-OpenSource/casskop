@@ -49,10 +49,10 @@ type op struct {
 }
 
 var podOperationMap = map[string]op{
-	api.OperationCleanup:         op{(*ReconcileCassandraCluster).runCleanup, (*JolokiaClient).hasCleanupCompactions, nil},
-	api.OperationRebuild:         op{(*ReconcileCassandraCluster).runRebuild, (*JolokiaClient).hasStreamingSessions, nil},
-	api.OperationUpgradeSSTables: op{(*ReconcileCassandraCluster).runUpgradeSSTables, (*JolokiaClient).hasUpgradeSSTablesCompactions, nil},
-	api.OperationRemove: op{(*ReconcileCassandraCluster).runRemove, (*JolokiaClient).hasLeavingNodes,
+	api.OperationCleanup:         {(*ReconcileCassandraCluster).runCleanup, (*JolokiaClient).hasCleanupCompactions, nil},
+	api.OperationRebuild:         {(*ReconcileCassandraCluster).runRebuild, (*JolokiaClient).hasStreamingSessions, nil},
+	api.OperationUpgradeSSTables: {(*ReconcileCassandraCluster).runUpgradeSSTables, (*JolokiaClient).hasUpgradeSSTablesCompactions, nil},
+	api.OperationRemove: {(*ReconcileCassandraCluster).runRemove, (*JolokiaClient).hasLeavingNodes,
 		(*ReconcileCassandraCluster).postRunRemove}}
 
 const breakResyncLoop bool = true
