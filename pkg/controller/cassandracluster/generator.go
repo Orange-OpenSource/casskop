@@ -237,8 +237,8 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string, dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
-	dataCapacity := cc.GetDataCapacityForDC(dcName)
-	dataStorageClass := cc.GetDataStorageClassForDC(dcName)
+	dataCapacity := cc.DataCapacityForDC(dcName)
+	dataStorageClass := cc.DataStorageClassForDC(dcName)
 
 	if dataCapacity == "" {
 		logrus.Warnf("[%s]: No Spec.DataCapacity was specified -> You Cluster WILL NOT HAVE PERSISTENT DATA!!!!!", cc.Name)
@@ -298,8 +298,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	nodeAffinity := createNodeAffinity(nodeSelector)
-	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-	rollingPartition := cc.GetRollingPartitionPerRacks(dcRackName)
+	nodesPerRacks := cc.NodesPerRacks(dcRackName)
+	rollingPartition := cc.RollingPartitionPerRacks(dcRackName)
 	terminationPeriod := int64(api.DefaultTerminationGracePeriodSeconds)
 	var annotations = map[string]string{}
 	var tolerations = []v1.Toleration{}

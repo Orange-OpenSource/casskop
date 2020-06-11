@@ -471,7 +471,7 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	//Remove 1 rack/dc at specified index
 	cc.Spec.Topology.DC[0].Rack.Remove(1)
@@ -480,10 +480,10 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	needUpdate = false
 
@@ -495,10 +495,10 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 }
 
 //remove only a rack is not allowed
@@ -509,7 +509,7 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 
 	//Remove DC at specified index
 	cc.Spec.Topology.DC.Remove(1)
@@ -520,10 +520,10 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCSize())
+	assert.Equal(3, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(4, cc.DCRackSize())
 }
 
 func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
@@ -538,8 +538,8 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	rcc.updateCassandraStatus(cc, status)
 
 	//Initial Topology
-	assert.Equal(3, cc.GetDCSize())
-	assert.Equal(4, cc.GetDCRackSize())
+	assert.Equal(3, cc.DCSize())
+	assert.Equal(4, cc.DCRackSize())
 	assert.Equal(4, len(status.CassandraRackStatus))
 
 	//Remove a dc at specified index
@@ -551,10 +551,10 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	assert.Equal(true, res)
 
 	//Topology must have been updated
-	assert.Equal(2, cc.GetDCSize())
+	assert.Equal(2, cc.DCSize())
 
 	//Topology must have been restored
-	assert.Equal(3, cc.GetDCRackSize())
+	assert.Equal(3, cc.DCRackSize())
 
 	//Check that status is updated
 	assert.Equal(3, len(status.CassandraRackStatus))

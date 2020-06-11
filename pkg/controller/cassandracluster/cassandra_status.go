@@ -66,7 +66,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	rack int, dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
 	//UpdateStatusIfUpdateResources(cc, dcRackName, storedStatefulSet, status)
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 
 	if needToWaitDelayBeforeCheck(cc, dcRackName, storedStatefulSet, status) {
 		return nil
@@ -305,7 +305,7 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 //For Scale Down the operator will need to first Decommission the last node from Cassandra before remooving it from kubernetes.
 //For Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
 func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
-	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+	nodesPerRacks := cc.NodesPerRacks(dcRackName)
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusToDo
@@ -348,14 +348,14 @@ func UpdateStatusIfStatefulSetChanged(cc *api.CassandraCluster, dcRackName strin
 //UpdateStatusIfActionEnded Implement Tests to detect End of Ongoing Actions
 func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	now := metav1.Now()
 
 	if lastAction.Status == api.StatusOngoing ||
 		lastAction.Status == api.StatusContinue {
 
-		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+		nodesPerRacks := cc.NodesPerRacks(dcRackName)
 		switch lastAction.Name {
 
 		case api.ActionScaleUp.Name:
@@ -427,11 +427,11 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 // The Phase is a very high level view of the cluster, for a better view we need to see Actions and Pod Operations
 func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
+	dcRackName := cc.DCRackName(dcName, rackName)
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
-		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+		nodesPerRacks := cc.NodesPerRacks(dcRackName)
 		//If we are stuck in initializing state, we can rollback the add of dc which implies decommissioning nodes
 		if nodesPerRacks <= 0 {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
@@ -455,7 +455,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			if err != nil || nb < 1 {
 				return nil
 			}
-			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+			nodesPerRacks := cc.NodesPerRacks(dcRackName)
 			if len(podsList.Items) < int(nodesPerRacks) {
 				logrus.Infof("[%s][%s]: StatefulSet is waiting for scaleUp", cc.Name, dcRackName)
 				return nil

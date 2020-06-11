@@ -42,7 +42,7 @@ var (
 )
 
 //GetStatefulSet return the Statefulset name from the cluster in the namespace
-func (rcc *ReconcileCassandraCluster) GetStatefulSet(namespace, name string) (*appsv1.StatefulSet, error) {
+func (rcc *ReconcileCassandraCluster) StatefulSet(namespace, name string) (*appsv1.StatefulSet, error) {
 
 	ss := &appsv1.StatefulSet{
 		TypeMeta: metav1.TypeMeta{
@@ -96,7 +96,7 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	}
 	//Check that the new revision of statefulset has been taken into account
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
+		newSts, err := rcc.StatefulSet(statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
 		}
@@ -195,7 +195,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	var err error
 	now := metav1.Now()
 
-	rcc.storedStatefulSet, err = rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
+	rcc.storedStatefulSet, err = rcc.StatefulSet(statefulSet.Namespace, statefulSet.Name)
 	if err != nil {
 		// If no resource we need to create.
 		if apierrors.IsNotFound(err) {
