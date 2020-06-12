@@ -310,6 +310,10 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610152005-c9a9492b27d3 h1:MQwq5mmwRD7zBMTNmrOTSVfjuHulFxxZb4YXHroeOFQ=
 github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610152005-c9a9492b27d3/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611115046-09f54690a507 h1:+eKx2j3/PlvBInzFqcehaiQ8aI3Le1YtZuilazdhiqQ=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611115046-09f54690a507/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329 h1:MQu4XU/1z+FdDos4FBxdlIPwpvrTGtN2Xz4KvGhJNRg=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
 github.com/euank/go-kmsg-parser v2.0.0+incompatible/go.mod h1:MhmAMZ8V4CYH4ybgdRwPr2TU5ThnS43puaKEMpja1uw=
 >>>>>>> 8e0004f... backup-operator - Tidy go modules
 github.com/evanphx/json-patch v4.1.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=

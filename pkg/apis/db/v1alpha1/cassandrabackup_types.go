@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +31,7 @@ type CassandraBackupSpec struct {
 	SnapshotTag           string `json:"snapshotTag"`
 	Duration              string `json:"duration,omitempty"`
 	Bandwidth             string `json:"bandwidth,omitempty"`
-	ConcurrentConnections int    `json:"concurrentConnections,omitempty"`
+	ConcurrentConnections int32  `json:"concurrentConnections,omitempty"`
 	Entities              string `json:"entities,omitempty"`
 	Secret                string `json:"secret,omitempty"`
 }
@@ -43,7 +42,7 @@ type CassandraBackupStatus struct {
 	// name of pod / node
 	Node string `json:"node"`
 	// State shows the status of the operation
-	State operations.OperationState `json:"state"`
+	State string `json:"state"`
 	// Progress shows the percentage of the operation done
 	Progress string `json:"progress"`
 }
@@ -60,9 +59,7 @@ type CassandraBackup struct {
 
 	Spec CassandraBackupSpec `json:"spec"`
 	// +listType
-	Status         []*CassandraBackupStatus  `json:"status,omitempty"`
-	GlobalStatus   operations.OperationState `json:"globalStatus,omitempty"`
-	GlobalProgress string                    `json:"globalProgress,omitempty"`
+	Status *CassandraBackupStatus `json:"status,omitempty"`
 }
 
 func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
@@ -70,9 +67,7 @@ func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
 	//remove unnecessary fields
 	lastcb.Annotations = nil
 	lastcb.ResourceVersion = ""
-	lastcb.Status = make([]*CassandraBackupStatus, 0)
-	lastcb.GlobalStatus = ""
-	lastcb.GlobalProgress = ""
+	lastcb.Status = nil
 
 	lastApplied, err := json.Marshal(lastcb)
 	if err != nil {

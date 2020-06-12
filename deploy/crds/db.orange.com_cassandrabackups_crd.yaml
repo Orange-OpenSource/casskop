@@ -29,10 +29,6 @@ spec:
             of an object. Servers should convert recognized schemas to the latest
             internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
-        globalProgress:
-          type: string
-        globalStatus:
-          type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
@@ -48,6 +44,7 @@ spec:
             cassandracluster:
               type: string
             concurrentConnections:
+              format: int32
               type: integer
             datacenter:
               description: Cassandra DC name to back up. Used to find the pods in
@@ -75,24 +72,22 @@ spec:
           - storageLocation
           type: object
         status:
-          items:
-            description: CassandraBackupStatus defines the observed state of CassandraBackup
-            properties:
-              node:
-                description: name of pod / node
-                type: string
-              progress:
-                description: Progress shows the percentage of the operation done
-                type: string
-              state:
-                description: State shows the status of the operation
-                type: string
-            required:
-            - node
-            - progress
-            - state
-            type: object
-          type: array
+          description: CassandraBackupStatus defines the observed state of CassandraBackup
+          properties:
+            node:
+              description: name of pod / node
+              type: string
+            progress:
+              description: Progress shows the percentage of the operation done
+              type: string
+            state:
+              description: State shows the status of the operation
+              type: string
+          required:
+          - node
+          - progress
+          - state
+          type: object
       required:
       - spec
       type: object

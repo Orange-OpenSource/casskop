@@ -56,26 +56,7 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackup(ref common.ReferenceCallback) c
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/db/v1alpha1.CassandraBackupStatus"),
-									},
-								},
-							},
-						},
-					},
-					"globalStatus": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"globalProgress": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref("./pkg/apis/db/v1alpha1.CassandraBackupStatus"),
 						},
 					},
 				},
