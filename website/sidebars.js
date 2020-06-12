@@ -44,6 +44,7 @@ module.exports = {
                 "5_operations/1_cluster_operations",
                 "5_operations/2_pods_operations",
                 "5_operations/3_multi_casskop",
+                "5_operations/3_5_backup_restore",
                 "5_operations/4_upgrade_operator",
                 "5_operations/5_upgrade_bootstrap_image",
                 "5_operations/6_uninstall_casskop",
