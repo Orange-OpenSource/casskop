@@ -8,7 +8,7 @@ require (
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610152005-c9a9492b27d3
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
