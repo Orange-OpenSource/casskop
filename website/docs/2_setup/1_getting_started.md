@@ -50,7 +50,7 @@ Then the chart itself depending on your installed version of Helm:
 ```bash
 # You have to create the namespace before executing following command
 kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-helm install casskop --namespace=cassandra orange-incubator/casskop
+helm install casskop --namespace=cassandra orange-incubator/cassandra-operator
 ```
 
 </TabItem>
@@ -64,7 +64,7 @@ kubectl create -f tiller-clusterrolebinding.yaml
 helm init --service-account tiller --upgrade
 
 # Deploy operator
-helm install --name=casskop --namespace=cassandra orange-incubator/casskop
+helm install --name=casskop --namespace=cassandra orange-incubator/cassandra-operator
 ```
 
 </TabItem>
