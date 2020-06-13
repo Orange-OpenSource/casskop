@@ -207,7 +207,7 @@ func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMoun
 	return vms
 }
 
-func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error){
+func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels map[string]string) ([]v1.PersistentVolumeClaim, error) {
 	var pvcs []v1.PersistentVolumeClaim
 
 	for _, storage := range cc.Spec.StorageConfigs {
@@ -458,7 +458,7 @@ func getCassandraResources(spec api.CassandraClusterSpec) v1.ResourceRequirement
 
 func getInitContainerResources() v1.ResourceRequirements {
 	resources := api.CassandraResources{
-		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	return v1.ResourceRequirements{
@@ -548,7 +548,7 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 	}
 }
 
-func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+func createEnvVarForBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	name := cc.GetName()
 	//in statefulset.go we surcharge this value with conditions
@@ -556,19 +556,19 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
 
 	return []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name:  "CASSANDRA_MAX_HEAP",
 			Value: defineJvmMemory(resources).maxHeapSize,
 		},
-		v1.EnvVar{
+		{
 			Name:  "CASSANDRA_SEEDS",
 			Value: seedList,
 		},
-		v1.EnvVar{
+		{
 			Name:  "CASSANDRA_CLUSTER_NAME",
 			Value: name,
 		},
-		v1.EnvVar{
+		{
 			Name: "POD_IP",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
@@ -577,33 +577,15 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 				},
 			},
 		},
-		v1.EnvVar{
-			Name: "POD_NAME",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "metadata.name",
-				},
-			},
-		},
-		v1.EnvVar{
+		{
 			Name:  "CASSANDRA_GC_STDOUT",
 			Value: strconv.FormatBool(cc.Spec.GCStdout),
 		},
-		v1.EnvVar{
+		{
 			Name:  "CASSANDRA_NUM_TOKENS",
 			Value: strconv.Itoa(int(numTokensPerRacks)),
 		},
-		v1.EnvVar{
-			Name: "NODE_NAME",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "spec.nodeName",
-				},
-			},
-		},
-		v1.EnvVar{
+		{
 			Name: "CASSANDRA_DC",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
@@ -612,7 +594,7 @@ func createEnvVarForCassandraContainer(cc *api.CassandraCluster, status *api.Cas
 				},
 			},
 		},
-		v1.EnvVar{
+		{
 			Name: "CASSANDRA_RACK",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
@@ -644,16 +626,15 @@ func createInitConfigContainer(cc *api.CassandraCluster) v1.Container {
 // configure /etc/cassandra with Env var and with userConfigMap (if enabled) by running the run.sh script
 func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
-	resources := getInitContainerResources()
 	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
 
 	return v1.Container{
 		Name:            "bootstrap",
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Env:             createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		Env:             createEnvVarForBootstrapContainer(cc, status, getCassandraResources(cc.Spec), dcRackName),
 		VolumeMounts:    volumeMounts,
-		Resources:       resources,
+		Resources:       getInitContainerResources(),
 	}
 }
 
@@ -697,32 +678,32 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Command:         command,
 		Ports: []v1.ContainerPort{
-			v1.ContainerPort{
+			{
 				Name:          cassandraIntraNodeName,
 				ContainerPort: cassandraIntraNodePort,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          cassandraIntraNodeTLSName,
 				ContainerPort: cassandraIntraNodeTLSPort,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          cassandraJMXName,
 				ContainerPort: cassandraJMX,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          cassandraPortName,
 				ContainerPort: cassandraPort,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          exporterCassandraJmxPortName,
 				ContainerPort: exporterCassandraJmxPort,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          JolokiaPortName,
 				ContainerPort: JolokiaPort,
 				Protocol:      v1.ProtocolTCP,
@@ -750,7 +731,17 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 				},
 			},
 		},
-		Env: createEnvVarForCassandraContainer(cc, status, resources, dcRackName),
+		Env: []v1.EnvVar{
+			{
+				Name: "POD_IP",
+				ValueFrom: &v1.EnvVarSource{
+					FieldRef: &v1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "status.podIP",
+					},
+				},
+			},
+		},
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
