@@ -147,7 +147,6 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
-
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
@@ -166,7 +165,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
-		1010, 201, 32, 7, 9,1205, 151, 17, 50, 30)
+		1010, 201, 32, 7, 9, 1205, 151, 17, 50, 30)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
@@ -187,7 +186,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
-		60, 10, 10, 0,0, 120, 20, 10, 0, 0)
+		60, 10, 10, 0, 0, 120, 20, 10, 0, 0)
 	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
 
 }
@@ -234,8 +233,6 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 		}
 	}
 }
-
-
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
 	dataCapacity, dataClassStorage string) {
@@ -362,7 +359,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 
 func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container) {
 	resources := api.CassandraResources{
-		Limits: api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
+		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	resourcesRequirements := v1.ResourceRequirements{
@@ -400,7 +397,7 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	resources := getCassandraResources(cc.Spec)
-	envs := createEnvVarForCassandraContainer(cc, &cc.Status, resources, dcRackName)
+	envs := createEnvVarForBootstrapContainer(cc, &cc.Status, resources, dcRackName)
 
 	for _, container := range containers {
 		for _, env := range envs {
