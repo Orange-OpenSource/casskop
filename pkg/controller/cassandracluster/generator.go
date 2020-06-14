@@ -366,6 +366,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	for _, container := range ss.Spec.Template.Spec.InitContainers {
 		if container.Name == bootstrapContainerName {
 			bootstrapContainer = container
+			break
 		}
 	}
 
