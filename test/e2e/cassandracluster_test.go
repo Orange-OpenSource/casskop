@@ -405,8 +405,8 @@ func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *fram
 			return false, nil
 		}
 
-		if !endTime.After(startTime) {
-			t.Logf("Expected endTime (%s) to be after startTime (%s)", endTime, startTime)
+		if endTime.Sub(startTime) < 0 {
+			t.Logf("Expected endTime (%s) to be >= startTime (%s)", endTime, startTime)
 			return false, nil
 		}
 
