@@ -49,10 +49,10 @@ const (
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
 	// InitContainer resources
-	defaultInitContainerLimitsCPU       = "0.5"
-	defaultInitContainerLimitsMemory    = "0.5Gi"
-	defaultInitContainerRequestsCPU     = "0.5"
-	defaultInitContainerRequestsMemory  = "0.5Gi"
+	defaultInitContainerLimitsCPU      = "0.5"
+	defaultInitContainerLimitsMemory   = "0.5Gi"
+	defaultInitContainerRequestsCPU    = "0.5"
+	defaultInitContainerRequestsMemory = "0.5Gi"
 
 	cassandraConfigMapName = "cassandra-config"
 )
@@ -88,7 +88,7 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 			Type:      v1.ServiceTypeClusterIP,
 			ClusterIP: v1.ClusterIPNone,
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Port:     cassandraPort,
 					Protocol: v1.ProtocolTCP,
 					Name:     cassandraPortName,
@@ -121,7 +121,7 @@ func generateCassandraExporterService(cc *api.CassandraCluster, labels map[strin
 			Type:      v1.ServiceTypeClusterIP,
 			ClusterIP: v1.ClusterIPNone,
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Port:     exporterCassandraJmxPort,
 					Protocol: v1.ProtocolTCP,
 					Name:     exporterCassandraJmxPortName,
@@ -213,7 +213,7 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 
 	for _, storage := range cc.Spec.StorageConfigs {
 		if storage.PVCSpec == nil {
-			return nil, fmt.Errorf("Can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified.", storage.Name, storage.MountPath)
+			return nil, fmt.Errorf("Can't create PVC from storageConfig named %s, with mountPath %s, because the PvcSpec is not specified", storage.Name, storage.MountPath)
 		}
 		pvc := v1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
@@ -240,7 +240,7 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 	}
 
 	pvc = []v1.PersistentVolumeClaim{
-		v1.PersistentVolumeClaim{
+		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "data",
 				Labels: labels,
@@ -546,7 +546,7 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 	// Return a SOFT anti-affinity
 	return &v1.PodAntiAffinity{
 		PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
-			v1.WeightedPodAffinityTerm{
+			{
 				Weight:          100,
 				PodAffinityTerm: podAffinityTerm,
 			},
