@@ -84,7 +84,7 @@ With the above configuration, the following configuration will be added to the `
 ```
 
 :::info
-Note that all sidecars added with this configuration will be have, at the container init, some of environment variables from cassandra container merged with those defined into the sidecar container
+Note that all sidecars added with this configuration will have some of the environment variables from cassandra container merged with those defined into the sidecar container
 for example :
 
 - CASSANDRA_MAX_HEAP

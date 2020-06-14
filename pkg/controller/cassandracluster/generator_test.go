@@ -157,11 +157,13 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	}, sts.Labels)
 
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
-	assert.Equal([]v1.Toleration{v1.Toleration{
-		Key:      "my_custom_taint",
-		Operator: v1.TolerationOpExists,
-		Effect:   v1.TaintEffectNoSchedule}},
-		sts.Spec.Template.Spec.Tolerations)
+	assert.Equal([]v1.Toleration{
+		{
+			Key:      "my_custom_taint",
+			Operator: v1.TolerationOpExists,
+			Effect:   v1.TaintEffectNoSchedule,
+		},
+	}, sts.Spec.Template.Spec.Tolerations)
 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
@@ -347,9 +349,9 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 				assert.True(t, volumesContains(append(generateContainerVolumeMount(cc, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
 			case "gc-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "cassandra-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}
@@ -400,8 +402,10 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	envs := createEnvVarForBootstrapContainer(cc, &cc.Status, resources, dcRackName)
 
 	for _, container := range containers {
-		for _, env := range envs {
-			assert.True(t, envsContains(container.Env, env))
+		if container.Name != cassandraContainerName {
+			for _, env := range envs {
+				assert.True(t, envsContains(container.Env, env))
+			}
 		}
 	}
 }
