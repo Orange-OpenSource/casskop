@@ -36,7 +36,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var name string = "cassandra-demo"
+var clusterName string = "cassandra-demo"
 var namespace string = "ns"
 
 var cc2Dcs = `

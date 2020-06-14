@@ -365,8 +365,8 @@ func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container)
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	resourcesRequirements := v1.ResourceRequirements{
-		Limits:   getRequests(resources),
-		Requests: getLimits(resources),
+		Limits:   requests(resources),
+		Requests: limits(resources),
 	}
 
 	for _, container := range containers {
@@ -398,23 +398,29 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 }
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
-	resources := getCassandraResources(cc.Spec)
-	envs := createEnvVarForBootstrapContainer(cc, &cc.Status, resources, dcRackName)
+	cassieResources := cassandraResources(cc.Spec)
+	envVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	cassandraEnvVars := map[string]string{
+		cassandraMaxHeap:         defineJvmMemory(cassieResources).maxHeapSize,
+		"CASSANDRA_SEEDS":        "",
+		"CASSANDRA_CLUSTER_NAME": clusterName,
+		"POD_IP":                 "",
+		"CASSANDRA_GC_STDOUT":    "false",
+		"CASSANDRA_NUM_TOKENS":   "256",
+		"CASSANDRA_DC":           "",
+		"CASSANDRA_RACK":         "",
+	}
+
+	for name, value := range cassandraEnvVars {
+		assert.Equal(t, value, cassandraEnvVars[name])
+	}
 
 	for _, container := range containers {
 		if container.Name != cassandraContainerName {
-			for _, env := range envs {
-				assert.True(t, envsContains(container.Env, env))
+			for _, env := range envVar {
+				assert.Contains(t, envVar, env)
 			}
 		}
 	}
-}
-
-func envsContains(envs []v1.EnvVar, searchedEnv v1.EnvVar) bool {
-	for _, env := range envs {
-		if searchedEnv.Name == env.Name && searchedEnv.Value == env.Value {
-			return true
-		}
-	}
-	return false
 }
