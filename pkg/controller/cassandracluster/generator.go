@@ -44,6 +44,7 @@ type JvmMemory struct {
 /*Bunch of different constants*/
 const (
 	cassandraContainerName = "cassandra"
+	bootstrapContainerName = "bootstrap"
 	defaultJvmMaxHeap      = "2048M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
 
@@ -361,10 +362,15 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		ss.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{cc.Spec.ImagePullSecret}
 	}
 
-	var cassandraContainer v1.Container
+	var bootstrapContainer v1.Container
+	for _, container := range ss.Spec.Template.Spec.InitContainers {
+		if container.Name == bootstrapContainerName {
+			bootstrapContainer = container
+		}
+	}
+
 	for idx, container := range ss.Spec.Template.Spec.Containers {
 		if container.Name == cassandraContainerName {
-			cassandraContainer = container
 			if (cc.Spec.ImageJolokiaSecret != v1.LocalObjectReference{}) {
 				ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env,
 					v1.EnvVar{
@@ -395,7 +401,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	// Merge cassandra main container environment variables into sidecars.
 	for idx, container := range ss.Spec.Template.Spec.Containers {
 		if container.Name != cassandraContainerName {
-			ss.Spec.Template.Spec.Containers[idx].Env = append(ss.Spec.Template.Spec.Containers[idx].Env, cassandraContainer.Env...)
+			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, bootstrapContainer.Env...)
 		}
 	}
 
@@ -629,7 +635,7 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
 
 	return v1.Container{
-		Name:            "bootstrap",
+		Name:            bootstrapContainerName,
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             createEnvVarForBootstrapContainer(cc, status, getCassandraResources(cc.Spec), dcRackName),
