@@ -195,7 +195,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 				Status: v1.PodStatus{
 					Phase: v1.PodRunning,
 					ContainerStatuses: []v1.ContainerStatus{
-						v1.ContainerStatus{
+						{
 							Name: "cassandra",
 							//Image: cc.Spec.BaseImage + ":" + cc.Spec.Version
 							Ready: true,
