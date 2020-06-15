@@ -1,6 +1,7 @@
 package sidecarclient
 
 import (
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
 	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"
@@ -111,7 +112,7 @@ func (m *mockCassandraSidecarClient) PerformRestoreOperation(podName string, res
 
 	var restoreOp csapi.RestoreOperationResponse
 
-	mapstructure.Decode(mockRestoreResponse(
+	mapstructure.Decode(common.MockRestoreResponse(
 		restoreOperation.NoDeleteDownloads,
 		restoreOperation.ConcurrentConnections,
 		state,
@@ -133,7 +134,7 @@ func (m *mockCassandraSidecarClient) GetRestoreOperation(podName, operationId st
 
 	var restoreOperation csapi.RestoreOperationResponse
 
-	mapstructure.Decode(mockRestoreResponse(
+	mapstructure.Decode(common.MockRestoreResponse(
 		noDeleteDownloads,
 		concurrentConnections,
 		stateGetById,
@@ -145,40 +146,4 @@ func (m *mockCassandraSidecarClient) GetRestoreOperation(podName, operationId st
 		"TRUNCATE",
 		schemaVersion), &restoreOperation)
 	return &restoreOperation, nil
-}
-
-func mockRestoreResponse(
-	noDeleteDownloads bool,
-	concurrentConnections int32,
-	state,
-	snapshotTag,
-	operationId,
-	k8sSecretName,
-	storageLocation,
-	restorationStrategyType,
-	restorationPhase,
-	schemaVersion string) map[string]interface{} {
-
-	return map[string]interface{}{
-		"type":                    "restore",
-		"id":                      operationId,
-		"state":                   state,
-		"progress":                0.0,
-		"creationTime":            "2020-06-10T04:53:05.976Z",
-		"startTime":               "2020-06-10T05:53:05.976Z",
-		"completionTime":          "2020-06-10T06:53:05.976Z",
-		//"failureCause":
-		"storageLocation":         storageLocation,
-		"concurrentConnections":   concurrentConnections,
-		"cassandraDirectory":      "/var/lib/cassandra",
-		"snapshotTag":             snapshotTag,
-		"entities":                "",
-		"restorationStrategyType": restorationStrategyType,
-		"restorationPhase":		   restorationPhase,
-		"noDeleteDownloads":       noDeleteDownloads,
-		"schemaVersion":		   schemaVersion,
-		"k8sNamespace":            "default",
-		"k8sSecretName":           k8sSecretName,
-		"globalRequest":           true,
-	}
 }

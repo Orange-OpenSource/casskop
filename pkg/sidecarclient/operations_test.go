@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
 	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -69,7 +70,7 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(
 				codeStatus,
-				mockRestoreResponse(
+				common.MockRestoreResponse(
 					restoreOperationRequest.NoDeleteDownloads,
 					restoreOperationRequest.ConcurrentConnections,
 					state,
@@ -97,7 +98,7 @@ func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(
 				codeStatus,
-				mockRestoreResponse(
+				common.MockRestoreResponse(
 					noDeleteDownloads,
 					concurrentConnections,
 					state,
