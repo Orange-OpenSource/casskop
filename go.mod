@@ -13,7 +13,6 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/google/uuid v1.1.1
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/operator-framework/operator-sdk v0.18.0
