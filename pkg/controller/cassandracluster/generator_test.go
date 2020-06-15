@@ -414,7 +414,9 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	}
 
 	assert.True(cassandraMaxHeapSet)
+	assert.Equal(envVar[cassandraMaxHeap], "512M")
 
+	// The cassandra heap should not be set on other containers
 	delete(envVar, cassandraMaxHeap)
 
 	for name, value := range envVar {
