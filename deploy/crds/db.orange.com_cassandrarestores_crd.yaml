@@ -58,6 +58,8 @@ spec:
                 time, when not set, it defaults to 10
               format: int32
               type: integer
+            entities:
+              type: string
             exactSchemaVersion:
               description: ExactSchemaVersion is a flag saying if we indeed want a
                 schema version of a running node match with schema version a snapshot
@@ -92,6 +94,8 @@ spec:
                 node we are doing restore for (hence, by proxy, when global request
                 mode is used, all nodes have to be on exact same schema version).
               type: string
+            secret:
+              type: string
           required:
           - backup
           - cluster
@@ -106,8 +110,6 @@ spec:
               properties:
                 lastTransitionTime:
                   type: string
-                message:
-                  type: string
                 reason:
                   type: string
                 type:
@@ -117,6 +119,13 @@ spec:
               required:
               - type
               type: object
+            id:
+              description: unique identifier of an operation, a random id is assigned
+                to each operation after a request is submitted, from caller's perspective,
+                an id is sent back as a response to his request so he can further
+                query state of that operation, referencing id, by operations/{id}
+                endpoint
+              type: string
             progress:
               description: Progress is a float from 0.0 to 1.0, 1.0 telling that operation
                 is completed, either successfully or with errors
