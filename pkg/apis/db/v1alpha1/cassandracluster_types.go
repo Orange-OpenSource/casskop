@@ -26,10 +26,9 @@ import (
 )
 
 const (
-
-	DefaultLivenessInitialDelaySeconds 	int32 = 120
-	DefaultLivenessHealthCheckTimeout  	int32 = 20
-	DefaultLivenessHealthCheckPeriod   	int32 = 10
+	DefaultLivenessInitialDelaySeconds int32 = 120
+	DefaultLivenessHealthCheckTimeout  int32 = 20
+	DefaultLivenessHealthCheckPeriod   int32 = 10
 
 	DefaultReadinessInitialDelaySeconds int32 = 60
 	DefaultReadinessHealthCheckTimeout  int32 = 10
@@ -413,7 +412,7 @@ func (cc *CassandraCluster) InitSeedList() []string {
 	return seedList
 }
 
-func (cc *CassandraCluster) GetSeedList(seedListTab *[]string) string {
+func (cc *CassandraCluster) SeedList(seedListTab *[]string) string {
 	seedList := strings.Join(*seedListTab, ",")
 	return seedList
 }
@@ -544,7 +543,7 @@ func (cc *CassandraCluster) GetDCIndexFromDCName(dcName string) int {
 		return -1
 	}
 
-	for dc := 0; dc < dcSize; dc ++ {
+	for dc := 0; dc < dcSize; dc++ {
 		if dcName == cc.GetDCName(dc) {
 			return dc
 		}
@@ -557,7 +556,7 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 	if dc >= cc.GetDCSize() {
 		return nil
 	}
-	return  &cc.Spec.Topology.DC[dc]
+	return &cc.Spec.Topology.DC[dc]
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
@@ -612,7 +611,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) 
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
-func (cc *CassandraCluster) GetNumTokensPerRacks(dcRackName string) int32 {
+func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {
@@ -785,7 +784,7 @@ type CassandraClusterSpec struct {
 	// RestartCountBeforePodDeletion defines the number of restart allowed for a cassandra container allowed before
 	// deleting the pod  to force its restart from scratch. if set to 0 or omit,
 	// no action will be performed based on restart count.
-	RestartCountBeforePodDeletion	int32	`json:"restartCountBeforePodDeletion,omitempty"`
+	RestartCountBeforePodDeletion int32 `json:"restartCountBeforePodDeletion,omitempty"`
 
 	// Very special Flag to hack CassKop reconcile loop - use with really good Care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
@@ -824,7 +823,7 @@ type CassandraClusterSpec struct {
 
 	// LivenessInitialDelaySeconds defines initial delay for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-	LivenessInitialDelaySeconds	*int32 `json:"livenessInitialDelaySeconds,omitempty"`
+	LivenessInitialDelaySeconds *int32 `json:"livenessInitialDelaySeconds,omitempty"`
 	// LivenessHealthCheckTimeout defines health check timeout for the liveness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	LivenessHealthCheckTimeout *int32 `json:"livenessHealthCheckTimeout,omitempty"`
@@ -977,7 +976,7 @@ type CassandraClusterStatus struct {
 
 	//
 	CassandraNodesStatus map[string]CassandraNodeStatus `json:"cassandraNodeStatus,omitempty"`
-	
+
 	//CassandraRackStatusList list status for each Rack
 	CassandraRackStatus map[string]*CassandraRackStatus `json:"cassandraRackStatus,omitempty"`
 }
