@@ -88,7 +88,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraPodDisruptionBudget(cc *api
 func (rcc *ReconcileCassandraCluster) ensureCassandraStatefulSet(cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, dcName string, dcRackName string, dc int, rack int) (bool, error) {
 
-	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
 
 	ss, err := generateCassandraStatefulSet(cc, status, dcName, dcRackName, labels, nodeSelector, nil)
 	if err != nil {

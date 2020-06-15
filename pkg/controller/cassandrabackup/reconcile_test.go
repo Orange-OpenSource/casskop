@@ -83,12 +83,10 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
 
 	oldBackup := cb.DeepCopy()
-	oldBackup.Status = []*api.CassandraBackupStatus{
-		{
-			Node:     "node1",
-			State:    "COMPLETED",
-			Progress: "Done",
-		},
+	oldBackup.Status = &api.CassandraBackupStatus{
+		Node:     "node1",
+		State:    "COMPLETED",
+		Progress: "Done",
 	}
 	oldBackup.Name = "prev-test-cassandra-backup"
 	rcb.client.Create(context.TODO(), oldBackup)

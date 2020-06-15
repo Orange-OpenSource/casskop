@@ -21,6 +21,7 @@ import (
 	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	runtimeClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -155,10 +156,10 @@ func LabelTime2Time(label string) (time.Time, error) {
 	return time.Parse("2006-01-02T15:04:05", reformattedLabel)
 }
 
-// GetDCRackLabelsForStatefulSet function return a map with the labels DC & Rack to deploy
+// DCRackLabelsAndNodeSelectorForStatefulSet function return a map with the labels DC & Rack to deploy
 // on the statefulset.
 // dc and int are the indice of respectively the dc and the rack in the CassandraCluster configuration
-func GetDCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int, rack int) (map[string]string, map[string]string) {
+func DCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int, rack int) (map[string]string, map[string]string) {
 	var dcName, rackName string
 	var nodeSelector = map[string]string{}
 
@@ -202,4 +203,9 @@ func LookupCassandraBackup(client runtimeClient.Client, backupName, backupNamesp
 // IsMarkedForDeletion determines if the object is marked for deletion
 func IsMarkedForDeletion(m metav1.ObjectMeta) bool {
 	return m.GetDeletionTimestamp() != nil
+}
+
+// PodHostname returns hostname of a pod
+func PodHostname(pod v1.Pod) string {
+	return fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 }

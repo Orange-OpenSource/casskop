@@ -2,16 +2,18 @@ package cassandrabackup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
+	csd "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/go-logr/logr"
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -20,8 +22,10 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/sidecar"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -130,7 +134,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	reqLogger.Info("Reconciling CassandraBackup")
 
 	// Fetch the CassandraBackup backup
-/*	cb := &api.CassandraBackup{}
+	cb := &api.CassandraBackup{}
 
 	if err := r.client.Get(context.TODO(), request.NamespacedName, cb); err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -165,7 +169,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		lastAppliedConfiguration = lac
 	}
 
-	if !scheduled && cb.Status != nil && len(cb.Status) != 0 {
+	if !scheduled && cb.Status != nil {
 		logrus.WithFields(logrus.Fields{"backup": request.NamespacedName}).Info("Reconcilliation stopped as backup already run")
 		return reconcile.Result{}, nil
 	} else if scheduled && r.scheduler.Contains(cb.Name) && !instanceChanged {
@@ -173,7 +177,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, nil
 	}
 
-	cb.Status = []*api.CassandraBackupStatus{}
+	cb.Status = &api.CassandraBackupStatus{}
 
 	if exists, err := existingNotScheduledSnapshot(r.client, cb); err != nil {
 		return reconcile.Result{}, err
@@ -281,9 +285,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 
 	}
 
-	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)*/
-
-	return reconcile.Result{}, nil
+	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)
 }
 
 func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
@@ -295,7 +297,7 @@ func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc 
 	}
 
 	chosenPod := pods.Items[random.Intn(len(pods.Items))]
-	sidecarClient := sidecar.NewSidecarClient(chosenPod.Status.PodIP, &sidecar.DefaultSidecarClientOptions)
+	sidecarClient := sidecar.NewSidecarClient(k8s.PodHostname(chosenPod), &sidecar.DefaultSidecarClientOptions)
 
 	syncedInstance := &syncedInstance{backup: instance, client: r.client}
 
@@ -379,7 +381,6 @@ func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBacku
 }
 
 type syncedInstance struct {
-	sync.RWMutex
 	backup *v1alpha1.CassandraBackup
 	client client.Client
 }
@@ -390,17 +391,18 @@ func backup(
 	logging logr.Logger,
 	recorder record.EventRecorder) {
 
-	backupRequest := &sidecar.BackupRequest{
-		StorageLocation:       fmt.Sprintf("%s/%s", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
-		SnapshotTag:           instance.backup.Spec.SnapshotTag,
-		Duration:              instance.backup.Spec.Duration,
-		Bandwidth:             instance.backup.Spec.Bandwidth,
+	backupRequest := csd.BackupOperationRequest{
+		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
+		StorageLocation: fmt.Sprintf("%s/%s/dcx/nodex", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
+		SnapshotTag:     instance.backup.Spec.SnapshotTag,
+		Duration:        instance.backup.Spec.Duration,
+		// Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,
-		Secret:                instance.backup.Spec.Secret,
-		Datacenter:            instance.backup.Spec.Datacenter,
+		K8sSecretName:         instance.backup.Spec.Secret,
+		Dc:                    instance.backup.Spec.Datacenter,
 		GlobalRequest:         true,
-		KubernetesNamespace:   instance.backup.Namespace,
+		K8sNamespace:          instance.backup.Namespace,
 	}
 
 	if operationID, err := sidecarClient.StartOperation(backupRequest); err != nil {
@@ -408,7 +410,7 @@ func backup(
 	} else {
 		podHostname := sidecarClient.Host
 		for range time.NewTicker(2 * time.Second).C {
-			if r, err := sidecarClient.FindBackup(operationID); err != nil {
+			if r, err := sidecarClient.GetOperation(operationID); err != nil {
 				logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
 				break
 			} else {
@@ -438,77 +440,19 @@ func backup(
 	}
 }
 
-func (si *syncedInstance) updateStatus(podHostname string, r *sidecar.BackupResponse) {
-	si.Lock()
-	defer si.Unlock()
-
+func (si *syncedInstance) updateStatus(podHostname string, r *csd.BackupOperationResponse) {
 	status := &api.CassandraBackupStatus{Node: podHostname}
 
-	var existingStatus = false
-
-	for _, v := range si.backup.Status {
-		if v.Node == podHostname {
-			status = v
-			existingStatus = true
-			break
-		}
-	}
+	var existingStatus = si.backup.Status.Node == podHostname
 
 	status.Progress = fmt.Sprintf("%v%%", strconv.Itoa(int(r.Progress*100)))
 	status.State = r.State
 
 	if !existingStatus {
-		si.backup.Status = append(si.backup.Status, status)
+		si.backup.Status = status
 	}
-
-	si.backup.GlobalProgress = func() string {
-		var progresses = 0
-
-		for _, s := range si.backup.Status {
-			var i, _ = strconv.Atoi(strings.TrimSuffix(s.Progress, "%"))
-			progresses = progresses + i
-		}
-
-		return strconv.FormatInt(int64(progresses/len(si.backup.Status)), 10) + "%"
-	}()
-
-	si.backup.GlobalStatus = func() operations.OperationState {
-		var statuses backupStatuses = si.backup.Status
-
-		if statuses.contains(operations.FAILED) {
-			return operations.FAILED
-		} else if statuses.contains(operations.PENDING) {
-			return operations.PENDING
-		} else if statuses.contains(operations.RUNNING) {
-			return operations.RUNNING
-		} else if statuses.allMatch(operations.COMPLETED) {
-			return operations.COMPLETED
-		}
-
-		return operations.UNKNOWN
-	}()
 
 	if err := si.client.Update(context.TODO(), si.backup); err != nil {
 		println("error updating CassandraBackup backup")
 	}
-}
-
-type backupStatuses []*api.CassandraBackupStatus
-
-func (statuses backupStatuses) contains(state operations.OperationState) bool {
-	for _, s := range statuses {
-		if s.State == state {
-			return true
-		}
-	}
-	return false
-}
-
-func (statuses backupStatuses) allMatch(state operations.OperationState) bool {
-	for _, s := range statuses {
-		if s.State != state {
-			return false
-		}
-	}
-	return true
 }
