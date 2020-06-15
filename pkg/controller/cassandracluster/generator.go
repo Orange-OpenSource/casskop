@@ -401,9 +401,20 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 
 	// Merge cassandra main container environment variables into sidecars.
+
+	var sidecarEnv []v1.EnvVar
+
+	// Collect all env vars from bootstrap container except the heap size
+	for _, env := range bootstrapContainer.Env {
+		if env.Name != cassandraMaxHeap {
+			sidecarEnv = append(sidecarEnv, env)
+		}
+	}
+
+	// Add all those env vars to each sidecar
 	for idx, container := range ss.Spec.Template.Spec.Containers {
 		if container.Name != cassandraContainerName {
-			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, bootstrapContainer.Env...)
+			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, sidecarEnv...)
 		}
 	}
 

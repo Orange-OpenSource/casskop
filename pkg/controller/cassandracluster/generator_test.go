@@ -399,27 +399,33 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cassandraResources(cc.Spec)
-	envVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
-	cassandraEnvVars := map[string]string{
-		cassandraMaxHeap:         defineJvmMemory(cassieResources).maxHeapSize,
-		"CASSANDRA_SEEDS":        "",
-		"CASSANDRA_CLUSTER_NAME": clusterName,
-		"POD_IP":                 "",
-		"CASSANDRA_GC_STDOUT":    "false",
-		"CASSANDRA_NUM_TOKENS":   "256",
-		"CASSANDRA_DC":           "",
-		"CASSANDRA_RACK":         "",
+	assert := assert.New(t)
+
+	envVar := map[string]string{}
+	cassandraMaxHeapSet := false
+
+	for _, env := range bootstrapEnvVar {
+		envVar[env.Name] = env.Value
+		if env.Name == cassandraMaxHeap {
+			cassandraMaxHeapSet = true
+		}
 	}
 
-	for name, value := range cassandraEnvVars {
-		assert.Equal(t, value, cassandraEnvVars[name])
+	assert.True(cassandraMaxHeapSet)
+
+	delete(envVar, cassandraMaxHeap)
+
+	for name, value := range envVar {
+		assert.Equal(value, envVar[name])
 	}
 
 	for _, container := range containers {
 		if container.Name != cassandraContainerName {
-			for _, env := range envVar {
-				assert.Contains(t, envVar, env)
+			for _, env := range container.Env {
+				assert.Contains(envVar, env.Name)
+				assert.Equal(envVar[env.Name], env.Value)
 			}
 		}
 	}
