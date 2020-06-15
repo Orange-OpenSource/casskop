@@ -54,14 +54,8 @@ func (in *CassandraBackup) DeepCopyInto(out *CassandraBackup) {
 	out.Spec = in.Spec
 	if in.Status != nil {
 		in, out := &in.Status, &out.Status
-		*out = make([]*CassandraBackupStatus, len(*in))
-		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(CassandraBackupStatus)
-				**out = **in
-			}
-		}
+		*out = new(CassandraBackupStatus)
+		**out = **in
 	}
 	return
 }

@@ -41,7 +41,7 @@ func TestLabelTime2Time(t *testing.T) {
 	}
 }
 
-func TestGetDCRackLabelsAndNodeSelectorForStatefulSet_WithTopology(t *testing.T) {
+func TestDCRackLabelsAndNodeSelectorForStatefulSet_WithTopology(t *testing.T) {
 	assert := assert.New(t)
 
 	var data = `
@@ -98,7 +98,7 @@ spec:
 	var dc int = 0
 	var rack int = 0
 
-	labels, nodeSelector := GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
+	labels, nodeSelector := DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 
 	assert.Equal("cassandra:latest", cc.Spec.CassandraImage)
 	assert.Equal(cc.Spec.Topology.DC[dc].Name, labels["cassandraclusters.db.orange.com.dc"])
@@ -107,13 +107,13 @@ spec:
 	assert.Equal("street1", nodeSelector["location.dfy.orange.com/street"])
 
 	rack = 1
-	labels, nodeSelector = GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
+	labels, nodeSelector = DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 	assert.Equal(cc.Spec.Topology.DC[dc].Name, labels["cassandraclusters.db.orange.com.dc"])
 	assert.Equal(cc.Spec.Topology.DC[dc].Rack[rack].Name, labels["cassandraclusters.db.orange.com.rack"])
 	assert.Equal("street2", nodeSelector["location.dfy.orange.com/street"])
 }
 
-func TestGetDCRackLabelsAndNodeSelectorForStatefulSet_WithoutTopology(t *testing.T) {
+func TestDCRackLabelsAndNodeSelectorForStatefulSet_WithoutTopology(t *testing.T) {
 	assert := assert.New(t)
 
 	var data = `
@@ -148,7 +148,7 @@ spec:
 	var dc int = 0
 	var rack int = 0
 
-	labels, nodeSelector := GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
+	labels, nodeSelector := DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 
 	assert.Equal("cassandra:latest", cc.Spec.CassandraImage)
 	assert.Equal(api.DefaultCassandraDC, labels["cassandraclusters.db.orange.com.dc"])
@@ -156,7 +156,7 @@ spec:
 	assert.Equal(0, len(nodeSelector))
 
 	rack = 1
-	labels, nodeSelector = GetDCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
+	labels, nodeSelector = DCRackLabelsAndNodeSelectorForStatefulSet(&cc, dc, rack)
 	assert.Equal(api.DefaultCassandraDC, labels["cassandraclusters.db.orange.com.dc"])
 	assert.Equal(api.DefaultCassandraRack, labels["cassandraclusters.db.orange.com.rack"])
 	assert.Equal(0, len(nodeSelector))

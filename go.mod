@@ -1,6 +1,6 @@
 module github.com/Orange-OpenSource/casskop
 
-go 1.13
+go 1.14
 
 require (
 	emperror.dev/errors v0.7.0
@@ -10,13 +10,10 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329
-	// v0.0.0-20200610140227-df43b1138272 > works
-	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610142749-d41f80ea3264 # Object
-	// github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200610133341-a1a47e86a0c1 # interface
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
-	github.com/go-resty/resty/v2 v2.1.0
+	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -30,8 +27,10 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
+	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200120151820-655fe14d7479 // indirect
+	google.golang.org/appengine v1.6.6 // indirect
+	google.golang.org/protobuf v1.24.0 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
