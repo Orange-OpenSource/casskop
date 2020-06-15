@@ -8,7 +8,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-
 const (
 	DefaultCassandraSidecarPort = 4567
 	DefaultCassandraSidecarSecure = false
