@@ -13,7 +13,7 @@ func TestPerformRestore(t *testing.T) {
 	assert := assert.New(t)
 
 	sr := SidecarRestore{
-		scheduledMember:  "podA",
+		CoordinatorMember:  "podA",
 		csClient: sidecarclient.NewMockCassandraSidecarClient(),
 	}
 
@@ -58,7 +58,7 @@ func TestPerformRestore(t *testing.T) {
 	}, cs)
 
 	sr = SidecarRestore{
-		scheduledMember:  "podA",
+		CoordinatorMember:  "podA",
 		csClient: sidecarclient.NewMockCassandraSidecarClientFailOps(),
 	}
 
@@ -71,7 +71,7 @@ func TestGetRestorebyId(t *testing.T) {
 	assert := assert.New(t)
 
 	sr := SidecarRestore{
-		scheduledMember:  "podA",
+		CoordinatorMember:  "podA",
 		csClient: sidecarclient.NewMockCassandraSidecarClient(),
 	}
 
@@ -91,7 +91,7 @@ func TestGetRestorebyId(t *testing.T) {
 	}, cs)
 
 	sr = SidecarRestore{
-		scheduledMember:  "podA",
+		CoordinatorMember:  "podA",
 		csClient: sidecarclient.NewMockCassandraSidecarClientFailOps(),
 	}
 

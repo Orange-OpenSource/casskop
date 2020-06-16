@@ -31,6 +31,10 @@ spec:
           description: CassandraRestoreSpec defines the specification for a restore
             of a Cassandra backup.
           properties:
+            CoordinatorMember:
+              description: CoordinatorMember is the Pod name of the Cluster member
+                on which the Restore will be executed.
+              type: string
             backup:
               description: Backup is a reference to the Backup object to be restored.
               properties:
@@ -79,10 +83,6 @@ spec:
               - HARDLINKS
               - IMPORT
               type: string
-            scheduledMember:
-              description: ScheduledMember is the Pod name of the Cluster member on
-                which the Restore will be executed.
-              type: string
             schemaVersion:
               description: SchemaVersion is the version of schema we want to restore
                 from, upon backup, a schema version is automatically appended to snapshot
@@ -108,9 +108,33 @@ spec:
               description: RestoreCondition describes the observed state of a Restore
                 at a certain point.
               properties:
+                failureCause:
+                  properties:
+                    localizedMessage:
+                      type: string
+                    message:
+                      type: string
+                    stackTrace:
+                      items:
+                        properties:
+                          className:
+                            type: string
+                          fileName:
+                            type: string
+                          lineNumber:
+                            type: string
+                          methodName:
+                            type: string
+                          nativeMethod:
+                            type: string
+                        type: object
+                      type: array
+                  required:
+                  - localizedMessage
+                  - message
+                  - stackTrace
+                  type: object
                 lastTransitionTime:
-                  type: string
-                reason:
                   type: string
                 type:
                   description: RestoreConditionType represents a valid condition of
