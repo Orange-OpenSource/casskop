@@ -1,5 +1,7 @@
 admiralty.io/multicluster-controller v0.4.0 h1:kkQfOWarnyHQuuloNu+4gOT/3lBR68i5+Rdb/YMb4LU=
 admiralty.io/multicluster-controller v0.4.0/go.mod h1:0rJqDLJ2DhrGcjnYTV1QIKuNHAd1aNd5ZqDTwijOjYQ=
+admiralty.io/multicluster-controller v0.6.0 h1:xW3vDc7f9kWo0OzD9JVo4pRwjbJVU5zsC8hUpU7BxpE=
+admiralty.io/multicluster-controller v0.6.0/go.mod h1:fgoAMjZadcDOzZ8u/eoHcm3ce+45bahxGaHWoCaVzbM=
 admiralty.io/multicluster-service-account v0.6.0 h1:6K428vEadhWZWacXuGUJXT9mJH2PG2yLbXDmTwPm+Vk=
 admiralty.io/multicluster-service-account v0.6.0/go.mod h1:V6XeGFNGhtgzFVnI+49Ur5pLWzwJQmAKLt+IiK4gvxI=
 bazil.org/fuse v0.0.0-20160811212531-371fbbdaa898/go.mod h1:Xbm+BRKSBEpa4q4hTSxohYNQpsxXPbPry4JJWOB3LB8=
