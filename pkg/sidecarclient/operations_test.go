@@ -41,9 +41,8 @@ func TestGetRestoreOperation(t *testing.T) {
 
 
 func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
-	defer httpmock.DeactivateAndReset()
-
 	client := newBuildedMockClient()
+	defer httpmock.DeactivateAndReset()
 
 	sourceDir         := "/var/lib/cassandra/data/downloadedsstables"
 
@@ -64,7 +63,7 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 		ConcurrentConnections: concurrentConnections,
 	}
 
-	url := fmt.Sprintf("http://%s:%d/operations", ipPodA, DefaultCassandraSidecarPort)
+	url := fmt.Sprintf("http://%s:%d/operations", ipPodB, DefaultCassandraSidecarPort)
 
 	httpmock.RegisterResponder(http.MethodPost, url,
 		func(req *http.Request) (*http.Response, error) {
@@ -88,9 +87,8 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 }
 
 func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
-	defer httpmock.DeactivateAndReset()
-
 	client := newBuildedMockClient()
+	defer httpmock.DeactivateAndReset()
 
 	url := fmt.Sprintf("http://%s:%d/operations/%s", ipPodA, DefaultCassandraSidecarPort, operationID)
 
