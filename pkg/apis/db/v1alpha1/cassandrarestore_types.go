@@ -119,7 +119,7 @@ type CassandraRestoreSpec struct {
 	Backup *corev1.LocalObjectReference `json:"backup"`
 	// CoordinatorMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
-	CoordinatorMember string `json:"CoordinatorMember,omitempty"`
+	CoordinatorMember string `json:"coordinatorMember,omitempty"`
 	// ConcurrentConnection is the number of threads used for upload, there might be
 	// at most so many uploading threads at any given time, when not set, it defaults to 10
 	ConcurrentConnection *int32 `json:"concurrentConnection,omitempty"`
@@ -142,9 +142,13 @@ type CassandraRestoreSpec struct {
 	// strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
 	// +kubebuilder:validation:Enum={"HARDLINKS","IMPORT"}
 	RestorationStrategyType string `json:"restorationStrategyType,omitempty"`
-	//
+	// name of Kubernetes secret from which credentials used for the communication to cloud storage providers are read,
+	// if not specified, secret name to be read will be automatically derived in form 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'.
+	// These secrets are used only in case protocol in storageLocation is gcp, azure or s3.
 	SecretName string `json:"secret,omitempty"`
-	//
+	// database entities to restore, it might be either only keyspaces or only tables (from different keyspaces if needed),
+	// e.g. 'k1,k2' if one wants to backup whole keyspaces and 'ks1.t1,ks2,t2' if one wants to restore tables.
+	// These formats can not be used together so 'k1,k2.t2' is invalid. If this field is empty, all keyspaces are restored.
 	Entities string `json:"entities,omitempty"`
 }
 

@@ -31,10 +31,6 @@ spec:
           description: CassandraRestoreSpec defines the specification for a restore
             of a Cassandra backup.
           properties:
-            CoordinatorMember:
-              description: CoordinatorMember is the Pod name of the Cluster member
-                on which the Restore will be executed.
-              type: string
             backup:
               description: Backup is a reference to the Backup object to be restored.
               properties:
@@ -62,7 +58,16 @@ spec:
                 time, when not set, it defaults to 10
               format: int32
               type: integer
+            coordinatorMember:
+              description: CoordinatorMember is the Pod name of the Cluster member
+                on which the Restore will be executed.
+              type: string
             entities:
+              description: database entities to restore, it might be either only keyspaces
+                or only tables (from different keyspaces if needed), e.g. 'k1,k2'
+                if one wants to backup whole keyspaces and 'ks1.t1,ks2,t2' if one
+                wants to restore tables. These formats can not be used together so
+                'k1,k2.t2' is invalid. If this field is empty, all keyspaces are restored.
               type: string
             exactSchemaVersion:
               description: ExactSchemaVersion is a flag saying if we indeed want a
@@ -95,6 +100,11 @@ spec:
                 mode is used, all nodes have to be on exact same schema version).
               type: string
             secret:
+              description: name of Kubernetes secret from which credentials used for
+                the communication to cloud storage providers are read, if not specified,
+                secret name to be read will be automatically derived in form 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'.
+                These secrets are used only in case protocol in storageLocation is
+                gcp, azure or s3.
               type: string
           required:
           - backup
