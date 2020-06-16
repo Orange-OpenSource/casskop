@@ -14,7 +14,7 @@ var log = logf.Log.WithName("backrest-methods")
 
 type SidecarRestore struct {
 	csClient 		sidecarclient.CassandraSidecarClient
-	scheduledMember string
+	CoordinatorMember string
 }
 
 func NewSidecarRestore(client client.Client, cc *api.CassandraCluster, restore *api.CassandraRestore, pods *corev1.PodList) (*SidecarRestore, error) {
@@ -24,7 +24,7 @@ func NewSidecarRestore(client client.Client, cc *api.CassandraCluster, restore *
 		return nil, err
 	}
 
-	return &SidecarRestore{csClient:csClient, scheduledMember: restore.Spec.ScheduledMember}, nil
+	return &SidecarRestore{csClient:csClient, CoordinatorMember: restore.Spec.CoordinatorMember}, nil
 
 }
 
@@ -72,7 +72,7 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 	}
 
 	// Perform restore operation
-	restoreOperation, err := sr.csClient.PerformRestoreOperation(sr.scheduledMember, *restoreOperationRequest)
+	restoreOperation, err := sr.csClient.PerformRestoreOperation(sr.CoordinatorMember, *restoreOperationRequest)
 	if err != nil && err != sidecarclient.ErrCassandraSidecarNotReturned201 {
 		log.Error(err, "could not communicate with sidecar")
 		return nil, err
@@ -92,7 +92,7 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 func (sr *SidecarRestore) GetRestorebyId(restoreId string) (*api.CassandraRestoreStatus, error) {
 
 	// Perform restore operation
-	restoreOperation, err := sr.csClient.GetRestoreOperation(sr.scheduledMember, restoreId)
+	restoreOperation, err := sr.csClient.GetRestoreOperation(sr.CoordinatorMember, restoreId)
 	if err != nil && err != sidecarclient.ErrCassandraSidecarNotReturned200 {
 		log.Error(err, "could not communicate with sidecar")
 		return nil, err

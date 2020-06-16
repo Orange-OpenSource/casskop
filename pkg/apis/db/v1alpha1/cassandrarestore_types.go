@@ -5,6 +5,7 @@ import (
 
 	"github.com/Orange-OpenSource/casskop/pkg/util"
 	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	"github.com/mitchellh/mapstructure"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,9 +14,9 @@ import (
 type RestoreConditionType string
 
 const (
-	// RestoreScheduled means the Restore has been assigned to a Cluster
+	// RestoreRequired means the Restore has been assigned to a Cluster
 	// member for execution.
-	RestoreScheduled RestoreConditionType = "SCHEDULED"
+	RestoreRequired RestoreConditionType = "REQUIRED"
 	// RestorePending means the Restore operation is pending for being submitted.
 	RestorePending RestoreConditionType = "PENDING"
 	// RestoreRunning means the Restore is currently being executed by a
@@ -38,8 +39,8 @@ func (r RestoreConditionType) IsInError() bool {
 	return r == RestoreFailed || r == RestoreCanceled
 }
 
-func (r RestoreConditionType) IsScheduled() bool {
-	return r == RestoreScheduled
+func (r RestoreConditionType) IsRequired() bool {
+	return r == RestoreRequired
 }
 
 func (r RestoreConditionType) IsPending() bool {
@@ -61,7 +62,21 @@ type RestoreCondition struct {
 	// +optional
 	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
 	// +optional
-	Reason string `json:"reason,omitempty"`
+	FailureCause *FailureCause `json:"failureCause,omitempty"`
+}
+
+type FailureCause struct {
+	StackTrace       []StackTrace  `json:"stackTrace"`
+	Message          string        `json:"message"`
+	LocalizedMessage string        `json:"localizedMessage"`
+}
+
+type StackTrace struct {
+	MethodName   string `json:"methodName,omitempty"`
+	FileName     string `json:"fileName,omitempty"`
+	LineNumber   string `json:"lineNumber,omitempty"`
+	ClassName    string `json:"className,omitempty"`
+	NativeMethod string `json:"nativeMethod,omitempty"`
 }
 
 type RestorationPhaseType string
@@ -102,9 +117,9 @@ type CassandraRestoreSpec struct {
 	Cluster *corev1.LocalObjectReference `json:"cluster"`
 	// Backup is a reference to the Backup object to be restored.
 	Backup *corev1.LocalObjectReference `json:"backup"`
-	// ScheduledMember is the Pod name of the Cluster member on which the
+	// CoordinatorMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
-	ScheduledMember string `json:"scheduledMember,omitempty"`
+	CoordinatorMember string `json:"CoordinatorMember,omitempty"`
 	// ConcurrentConnection is the number of threads used for upload, there might be
 	// at most so many uploading threads at any given time, when not set, it defaults to 10
 	ConcurrentConnection *int32 `json:"concurrentConnection,omitempty"`
@@ -207,14 +222,17 @@ func (status *CassandraRestoreStatus) setRestorationConditionFromRestoreOperatio
 	status.setRestorationStateFromString(restore.State)
 
 	if status.Condition.Type.IsInError() {
+		var failureCause FailureCause
+		mapstructure.Decode(*restore.FailureCause, &failureCause)
 
+		status.Condition.FailureCause = &failureCause
 	}
 }
 
 func (status *CassandraRestoreStatus) setRestorationStateFromString(state string) {
 	switch state {
-	case string(RestoreScheduled):
-		status.Condition.Type = RestoreScheduled
+	case string(RestoreRequired):
+		status.Condition.Type = RestoreRequired
 	case string(RestorePending):
 		status.Condition.Type = RestorePending
 	case string(RestoreRunning):

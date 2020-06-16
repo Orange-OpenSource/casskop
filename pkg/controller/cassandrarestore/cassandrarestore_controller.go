@@ -69,9 +69,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 				if restore, ok := object.(*api.CassandraRestore); ok {
 					reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-					cond := api.GetRestoreCondition(&restore.Status, api.RestoreScheduled)
+					cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
 					if cond != nil {
-						reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.ScheduledMember)
+						reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
 						return false
 					}
 
@@ -183,7 +183,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Schedule restore on first pod of the cluster.
 	if instance.Status.Condition == nil   {
-		err = r.scheduleRestore(instance, cc, backup, reqLogger)
+		err = r.requiredRestore(instance, cc, backup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.ResourceNotReady:
@@ -196,12 +196,12 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		}
 	}
 
-	if len(instance.Spec.ScheduledMember) == 0 {
-		return common.RequeueWithError(reqLogger, "No scheduled member to perform the restore", err)
+	if len(instance.Spec.CoordinatorMember) == 0 {
+		return common.RequeueWithError(reqLogger, "No coordinator member to perform the restore", err)
 	}
 
-	if instance.Status.Condition.Type.IsScheduled(){
-		err = r.handleScheduledRestore(instance, cc, backup, reqLogger)
+	if instance.Status.Condition.Type.IsRequired(){
+		err = r.handleRequiredRestore(instance, cc, backup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.SidecarNotReady, errorfactory.ResourceNotReady:
@@ -249,7 +249,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 }
 
 // scheduleRestore schedules a Restore on a specific member of a Cluster
-func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) requiredRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
 	ns := restore.Namespace
 
 	pods, err := r.listPods(ns, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
@@ -258,11 +258,11 @@ func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestor
 	}
 
 	if len(pods.Items) > 0 {
-		restore.Spec.ScheduledMember = pods.Items[0].Name
+		restore.Spec.CoordinatorMember = pods.Items[0].Name
 		if err := UpdateRestoreStatus(r.client, restore,
 			api.CassandraRestoreStatus{
 				Condition: &api.RestoreCondition{
-					Type: api.RestoreScheduled,
+					Type: api.RestoreRequired,
 					LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
 				},
 			}, log); err != nil{
@@ -275,7 +275,7 @@ func (r *ReconcileCassandraRestore) scheduleRestore(restore *api.CassandraRestor
 	return errors.New("No pods found.")
 }
 
-func (r *ReconcileCassandraRestore) handleScheduledRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
 	pods, err := r.listPods(restore.Namespace, k8sutil.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
@@ -329,7 +329,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *api.Cass
 	}
 
 	// Restore operation failed or canceled,
-	// TODO : reschedule it by marking restore Condition.State = RestoreScheduled ?
+	// TODO : reschedule it by marking restore Condition.State = RestoreRequired ?
 	if restore.Status.Condition.Type.IsInError() {
 		return errorfactory.New(errorfactory.SidecarOperationFailure{}, err, "Sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
 	}
