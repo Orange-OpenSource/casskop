@@ -1,6 +1,45 @@
 
-
 # CassKop Cassandra Kubernetes Operator Changelog
+
+## Unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## 0.5.3
+
+### Added
+
+- PR [#203](https://github.com/Orange-OpenSource/casskop/pull/203) - **[CassandraCluster]** Data configuration at DC level
+- PR [#215](https://github.com/Orange-OpenSource/casskop/pull/215) - **[CassandraCluster]** Default resources requirements for init containers
+
+
+### Changed
+
+- PR [#204](https://github.com/Orange-OpenSource/casskop/pull/204) - Fix sonar project
+- PR [#217](https://github.com/Orange-OpenSource/casskop/pull/217) - **[Documentation]** Website documentation in replacement of MD folder
+- PR [#225](https://github.com/Orange-OpenSource/casskop/pull/217) - **[CI/CD]** Use k3d instead of Minikube
+
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- PR [#205](https://github.com/Orange-OpenSource/casskop/pull/205) - **[MultiCasskop]** Non blocking unused Kubernetes cluster in `MultiCasskop` resources
+- PR [#206](https://github.com/Orange-OpenSource/casskop/pull/206) - **[CassandraCluster]** Fix readiness & liveness probe configuration update detection
+- PR [#220](https://github.com/Orange-OpenSource/casskop/pull/220) - **[Documentation]** Fix yarn.lock
+- PR [#223](https://github.com/Orange-OpenSource/casskop/pull/223) - **[Documentation]** Fix chart name
+- PR [#230](https://github.com/Orange-OpenSource/casskop/pull/230) - **[CassandraCluster]** Set boostratp env vars based on Cassandra resources
+
 
 ## 0.5.2
 

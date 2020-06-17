@@ -105,8 +105,7 @@ spec:
                 image
               type: string
             initContainerImage:
-              description: Command to execute in the initContainer in the targeted
-                image
+              description: 'Image used in the initContainer (use the form : base:version)'
               type: string
             livenessFailureThreshold:
               description: 'LivenessFailureThreshold defines failure threshold for
