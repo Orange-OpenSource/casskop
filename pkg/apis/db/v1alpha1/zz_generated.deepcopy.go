@@ -177,6 +177,11 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.ShareProcessNamespace != nil {
+		in, out := &in.ShareProcessNamespace, &out.ShareProcessNamespace
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
