@@ -123,7 +123,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.15.0-pr137
+OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
 # workdir
 WORKDIR := /go/casskop
 
@@ -167,9 +167,8 @@ generate:
 	echo "Generate zzz-deepcopy objects"
 	operator-sdk version
 	operator-sdk generate k8s
-	operator-sdk generate openapi
+	operator-sdk generate crds
 
-#@TODO : `opetator-sdk generate openapî` deprecated
 # Build casskop executable file in local go env
 .PHONY: build
 build: generate
@@ -179,7 +178,6 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
-#@TODO : `opetator-sdk generate openapi` deprecated
 # Run a shell into the development docker image
 docker-build: ## Build the Operator and it's Docker Image
 	echo "Generate zzz-deepcopy objects"
@@ -190,7 +188,7 @@ docker-build: ## Build the Operator and it's Docker Image
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod \
 		-v $(shell go env GOCACHE):/root/.cache/go-build --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate openapi'
+		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) \
 	-v $(GOPATH)/pkg/mod:/go/pkg/mod -v $(shell go env GOCACHE):/root/.cache/go-build \
@@ -325,6 +323,7 @@ docker-go-lint:
 go-lint:
 	$(GO_LINT_CMD)
 
+
 # Test if the dependencies we need to run this Makefile are installed
 deps-development:
 ifndef DOCKER
@@ -372,7 +371,7 @@ e2e-empty:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$" 
 
 e2e-test-fix:
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 ifeq (e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -383,11 +382,12 @@ e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)	
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 #docker-e2e-test-fix and docker-e2e-test-fix-args need vendor rep to be filled (go mod vendor)
 docker-e2e-test-fix:
 	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --namespace cassandra-e2e'
+
 
 #execute Test filter based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
@@ -402,7 +402,7 @@ endif
 	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 e2e-test-fix-scale-down:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 dgoss-bootstrap:
 	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
