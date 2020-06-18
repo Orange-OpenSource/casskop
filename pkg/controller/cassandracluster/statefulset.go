@@ -165,11 +165,15 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	})
 
 	for i := 0; i < len(sts1.Spec.VolumeClaimTemplates); i++ {
-		sts1.Spec.VolumeClaimTemplates[i].Status = sts2.Spec.VolumeClaimTemplates[i].Status
+		sts2.Spec.VolumeClaimTemplates[i].TypeMeta = sts1.Spec.VolumeClaimTemplates[i].TypeMeta
+
+		sts2.Spec.VolumeClaimTemplates[i].Status = sts1.Spec.VolumeClaimTemplates[i].Status
 		if sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode == nil {
 			sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode = sts1.Spec.VolumeClaimTemplates[i].Spec.VolumeMode
 		}
 	}
+
+	sts2.Status.Replicas = sts1.Status.Replicas
 
 	patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
 	if err != nil {
