@@ -248,7 +248,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	return common.Reconciled()
 }
 
-// scheduleRestore schedules a Restore on a specific member of a Cluster
+// requiredRestore select restore coordinator on a specific member of a Cluster
 func (r *ReconcileCassandraRestore) requiredRestore(restore *api.CassandraRestore, cc *api.CassandraCluster, backup *api.CassandraBackup, reqLogger logr.Logger) error {
 	ns := restore.Namespace
 

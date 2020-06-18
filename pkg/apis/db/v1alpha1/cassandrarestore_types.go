@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/Orange-OpenSource/casskop/pkg/util"
 	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
@@ -192,7 +193,7 @@ func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreCo
 
 func ComputeStatusFromRestoreOperation(restore *csapi.RestoreOperationResponse) CassandraRestoreStatus{
 	status := CassandraRestoreStatus{
-		Progress:      fmt.Sprintf("%f", restore.Progress),
+		Progress:      fmt.Sprintf("%v%%", strconv.Itoa(int(restore.Progress*100))),
 		Id:            restore.Id,
 		TimeCreated:   restore.CreationTime,
 		TimeStarted:   restore.StartTime,

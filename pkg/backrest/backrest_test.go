@@ -37,7 +37,7 @@ func TestPerformRestore(t *testing.T) {
 		Spec:       v1alpha1.CassandraBackupSpec{
 			CassandraCluster: "cassandra-bgl",
 			StorageLocation:  "gcp://backup-casskop-aguitton/cassandra-bgl/dc1/cassandra-bgl-dc1-rack1-0",
-			SnapshotTag:      "toto",
+			SnapshotTag:      "SnapshotTag1",
 			Secret:           "cloud-backup-secrets",
 			Entities:         "ks1,ks2",
 		},
@@ -52,7 +52,7 @@ func TestPerformRestore(t *testing.T) {
 		TimeStarted:      "2020-06-10T05:53:05.976Z",
 		TimeCompleted:    "2020-06-10T06:53:05.976Z",
 		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "0.000000",
+		Progress:         "10",
 		RestorationPhase: v1alpha1.RestorationPhaseDownload,
 		Id:               cs.Id,
 	}, cs)
@@ -85,7 +85,7 @@ func TestGetRestorebyId(t *testing.T) {
 		TimeStarted:      "2020-06-10T05:53:05.976Z",
 		TimeCompleted:    "2020-06-10T06:53:05.976Z",
 		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "0.000000",
+		Progress:         "10",
 		RestorationPhase: v1alpha1.RestorationPhaseTruncate,
 		Id:               operationId,
 	}, cs)

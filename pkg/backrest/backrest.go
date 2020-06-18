@@ -45,6 +45,10 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 		},
 		Entities: restore.Spec.Entities,
 		K8sSecretName: restore.Spec.SecretName,
+		CassandraDirectory: restore.Spec.CassandraDirectory,
+		SchemaVersion: restore.Spec.SchemaVersion,
+		RestorationStrategyType: restore.Spec.RestorationStrategyType,
+		ConcurrentConnections: *restore.Spec.ConcurrentConnection,
 	}
 
 	if len(restore.Spec.Entities) == 0 {
@@ -53,22 +57,6 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 
 	if len(restore.Spec.SecretName) == 0 {
 		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
-	}
-
-	if restore.Spec.ConcurrentConnection != nil {
-		restoreOperationRequest.ConcurrentConnections = *restore.Spec.ConcurrentConnection
-	}
-
-	if len(restore.Spec.CassandraDirectory) > 0 {
-		restoreOperationRequest.CassandraDirectory = restore.Spec.CassandraDirectory
-	}
-
-	if len(restore.Spec.SchemaVersion) > 0 {
-		restoreOperationRequest.SchemaVersion = restore.Spec.SchemaVersion
-	}
-
-	if len(restore.Spec.RestorationStrategyType) > 0 {
-		restoreOperationRequest.RestorationStrategyType = restore.Spec.RestorationStrategyType
 	}
 
 	// Perform restore operation
@@ -88,7 +76,7 @@ func (sr *SidecarRestore) PerformRestore(restore *api.CassandraRestore, backup *
 	return &restoreStatus, nil
 }
 
-// GetRestorebyId, perform a restore
+// GetRestorebyId performs a restore
 func (sr *SidecarRestore) GetRestorebyId(restoreId string) (*api.CassandraRestoreStatus, error) {
 
 	// Perform restore operation
