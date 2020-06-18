@@ -24,7 +24,8 @@ import (
 
 //thereIsNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
 func (rcc *ReconcileCassandraCluster) thereIsPodDisruption() bool {
-	return rcc.storedPdb.Status.PodDisruptionsAllowed == 0
+
+	return rcc.storedPdb.Status.DisruptionsAllowed == 0
 }
 
 func (rcc *ReconcileCassandraCluster) allowMoreThan1PodDisruption() bool {
