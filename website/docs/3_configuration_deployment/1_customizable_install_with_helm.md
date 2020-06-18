@@ -27,7 +27,7 @@ The following tables lists the configurable parameters of the Cassandra Operator
 | `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
 | `resources`                      | Pod resource requests & limits                   | `{}`                                      |
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
-| `debug.enabled`                  | activate DEBUG log level                         | `false`                                   |
+| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)                         | `false`                                   |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 

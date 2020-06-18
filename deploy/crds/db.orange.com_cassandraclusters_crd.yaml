@@ -281,8 +281,9 @@ spec:
                   type: object
               type: object
             shareProcessNamespace:
-              description: When process namespace sharing is enabled, processes in
+              description: 'When process namespace sharing is enabled, processes in
                 a container are visible to all other containers in that pod. https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+                Optional: Default to false.'
               type: boolean
             sidecarConfigs:
               description: SidecarsConfig defines additional sidecar configurations
