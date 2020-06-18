@@ -59,53 +59,54 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	pred := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			object, err := meta.Accessor(e.Object)
+			if err != nil {
+				return false
+			}
+			if restore, ok := object.(*api.CassandraRestore); ok {
+				reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
+				cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
+				if cond != nil {
+					reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
+					return false
+				}
+
+				return true
+			}
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			object, err := meta.Accessor(e.ObjectNew)
+			if err != nil {
+				return false
+			}
+			if obj, ok := object.(*api.CassandraRestore); ok {
+				reqLogger := log.WithValues("Restore.Namespace", obj.Namespace, "Restore.Name", obj.Name)
+				//old := e.ObjectOld.(*api.CassandraRestore)
+				new := e.ObjectNew.(*api.CassandraRestore)
+				if new.Status.Condition == nil {
+					return false
+				}
+				if new.Status.Condition.Type.IsCompleted() {
+					reqLogger.Info("Restore is completed, skipping.")
+					return false
+				}
+
+				if new.Status.Condition.Type.IsInError() {
+					reqLogger.Info("Restore is in error state, skipping.")
+					return false
+				}
+
+				return true
+			}
+			return false
+		},
+	}
+
 	// Watch for changes to primary resource CassandraCluster
-	err = c.Watch(&source.Kind{Type: &api.CassandraRestore{}}, &handler.EnqueueRequestForObject{},
-		predicate.Funcs{
-			CreateFunc: func(e event.CreateEvent) bool {
-				object, err := meta.Accessor(e.Object)
-				if err != nil {
-					return false
-				}
-				if restore, ok := object.(*api.CassandraRestore); ok {
-					reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-					cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
-					if cond != nil {
-						reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
-						return false
-					}
-
-					return true
-				}
-				return false
-			},
-			UpdateFunc: func(e event.UpdateEvent) bool {
-				object, err := meta.Accessor(e.ObjectNew)
-				if err != nil {
-					return false
-				}
-				if obj, ok := object.(*api.CassandraRestore); ok {
-					reqLogger := log.WithValues("Restore.Namespace", obj.Namespace, "Restore.Name", obj.Name)
-					//old := e.ObjectOld.(*api.CassandraRestore)
-					new := e.ObjectNew.(*api.CassandraRestore)
-					if new.Status.Condition == nil {
-						return false
-					}
-					if new.Status.Condition.Type.IsCompleted() {
-						reqLogger.Info("Restore is completed, skipping.")
-						return false
-					}
-
-					if new.Status.Condition.Type.IsInError() {
-						reqLogger.Info("Restore is in error state, skipping.")
-						return false
-					}
-
-					return true
-				}
-				return false
-			},
-		})
+	err = c.Watch(&source.Kind{Type: &api.CassandraRestore{}}, &handler.EnqueueRequestForObject{}, pred)
 	if err != nil {
 		return err
 	}
