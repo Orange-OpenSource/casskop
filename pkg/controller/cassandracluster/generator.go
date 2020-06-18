@@ -352,6 +352,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: &terminationPeriod,
+					ShareProcessNamespace:         &cc.Spec.ShareProcessNamespace,
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplate,
