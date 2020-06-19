@@ -3,7 +3,9 @@ package v1alpha1
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
+	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,14 +29,24 @@ type CassandraBackupSpec struct {
 	// The uri for the backup target location e.g. s3 bucket, filepath
 	StorageLocation string `json:"storageLocation"`
 	// The snapshot tag for the backup
-	Schedule              string `json:"schedule,omitempty"`
-	SnapshotTag           string `json:"snapshotTag"`
-	Duration              string `json:"duration,omitempty"`
-	Bandwidth             string `json:"bandwidth,omitempty"`
-	ConcurrentConnections int32  `json:"concurrentConnections,omitempty"`
-	Entities              string `json:"entities,omitempty"`
-	Secret                string `json:"secret,omitempty"`
+	Schedule              string        `json:"schedule,omitempty"`
+	SnapshotTag           string        `json:"snapshotTag"`
+	Duration              *time.Time    `json:"duration,omitempty"`
+	Bandwidth             *csd.DataRate `json:"bandwidth,omitempty"`
+	ConcurrentConnections int32         `json:"concurrentConnections,omitempty"`
+	Entities              string        `json:"entities,omitempty"`
+	Secret                string        `json:"secret,omitempty"`
 }
+
+type BackupState string
+
+const (
+	BackupPending   BackupState = "PENDING"
+	BackupRunning   BackupState = "RUNNING"
+	BackupCompleted BackupState = "COMPLETED"
+	BackupCanceled  BackupState = "CANCELED"
+	BackupFailed    BackupState = "FAILED"
+)
 
 // CassandraBackupStatus defines the observed state of CassandraBackup
 // +k8s:openapi-gen=true
@@ -42,9 +54,24 @@ type CassandraBackupStatus struct {
 	// name of pod / node
 	Node string `json:"node"`
 	// State shows the status of the operation
-	State string `json:"state"`
+	State BackupState `json:"state"`
 	// Progress shows the percentage of the operation done
 	Progress string `json:"progress"`
+}
+
+func (status *CassandraBackupStatus) SetBackupStatusState(state string) {
+	switch state {
+	case string(BackupPending):
+		status.State = BackupPending
+	case string(BackupRunning):
+		status.State = BackupRunning
+	case string(BackupCompleted):
+		status.State = BackupCompleted
+	case string(BackupCanceled):
+		status.State = BackupCanceled
+	case string(BackupFailed):
+		status.State = BackupFailed
+	}
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -62,12 +89,28 @@ type CassandraBackup struct {
 	Status *CassandraBackupStatus `json:"status,omitempty"`
 }
 
+func (cb *CassandraBackup) PreventBackupDeletion(value bool) {
+	if value {
+		cb.SetFinalizers([]string{"kubernetes.io/unschedule-needed"})
+		return
+	}
+	cb.SetFinalizers([]string{})
+}
+
+func (cb *CassandraBackup) IsScheduled() bool {
+	return cb.Spec.Schedule != ""
+}
+func (cb *CassandraBackup) Ran() bool {
+	return cb.Status != nil
+}
+
 func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
 	lastcb := cb.DeepCopy()
 	//remove unnecessary fields
 	lastcb.Annotations = nil
 	lastcb.ResourceVersion = ""
 	lastcb.Status = nil
+	lastcb.Finalizers = nil
 
 	lastApplied, err := json.Marshal(lastcb)
 	if err != nil {
