@@ -149,6 +149,8 @@ github.com/coreos/prometheus-operator v0.34.0 h1:TF9qaydNeUamLKs0hniaapa4FBz8U8T
 github.com/coreos/prometheus-operator v0.34.0/go.mod h1:Li6rMllG/hYIyXfMuvUwhyC+hqwJVHdsDdP21hypT1M=
 github.com/coreos/rkt v1.30.0/go.mod h1:O634mlH6U7qk87poQifK6M2rsFNt+FyUTWNMnP1hF1U=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
+github.com/cscetbon/cassandrasidecar-go-client v0.0.0-20200618001120-2d61b2aeb9f9 h1:taP8L61R+iD3A+Kv31ZyM7A0jZweV61qHGwriDVdbfo=
+github.com/cscetbon/cassandrasidecar-go-client v0.0.0-20200618001120-2d61b2aeb9f9/go.mod h1:bjNHyR3H/h0Zf9qMhzkTWbkpNvXx1rSyhiiPL5NGK9M=
 github.com/cyphar/filepath-securejoin v0.2.2/go.mod h1:FpkQEhXnPnOthhzymB7CGsFk2G9VLXONKD9G7QGMM+4=
 github.com/cznic/b v0.0.0-20180115125044-35e9bbe41f07/go.mod h1:URriBxXwVq5ijiJ12C7iIZqlA69nTlI+LgI6/pwftG8=
 github.com/cznic/fileutil v0.0.0-20180108211300-6a051e75936f/go.mod h1:8S58EK26zhXSxzv7NQFpnliaOQsmDUxvoQO3rt154Vg=
@@ -214,6 +216,8 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329 h1:MQu4XU/1z+FdDos4FBxdlIPwpvrTGtN2Xz4KvGhJNRg=
 github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200611163207-2d8150cc9329/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200617142142-768b35ecd886 h1:vccgrtFabDMeAaz6V03qYuw/vctBzzt4mAHKN/5iFq0=
+github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200617142142-768b35ecd886/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
 github.com/euank/go-kmsg-parser v2.0.0+incompatible/go.mod h1:MhmAMZ8V4CYH4ybgdRwPr2TU5ThnS43puaKEMpja1uw=
 github.com/evanphx/json-patch v4.1.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
