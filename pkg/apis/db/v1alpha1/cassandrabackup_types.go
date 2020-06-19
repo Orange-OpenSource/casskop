@@ -31,7 +31,7 @@ type CassandraBackupSpec struct {
 	// The snapshot tag for the backup
 	Schedule              string        `json:"schedule,omitempty"`
 	SnapshotTag           string        `json:"snapshotTag"`
-	Duration              *time.Time    `json:"duration,omitempty"`
+	Duration              string        `json:"duration,omitempty"`
 	Bandwidth             *csd.DataRate `json:"bandwidth,omitempty"`
 	ConcurrentConnections int32         `json:"concurrentConnections,omitempty"`
 	Entities              string        `json:"entities,omitempty"`

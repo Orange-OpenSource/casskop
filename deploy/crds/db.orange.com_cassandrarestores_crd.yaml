@@ -161,8 +161,8 @@ spec:
                 endpoint
               type: string
             progress:
-              description: Progress is a float from 0.0 to 1.0, 1.0 telling that operation
-                is completed, either successfully or with errors
+              description: Progress is a percetange from 0% to 100%, 100% telling
+                that operation is completed, either successfully or with errors
               type: string
             restorationPhase:
               type: string
