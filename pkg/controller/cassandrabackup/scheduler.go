@@ -49,7 +49,7 @@ func (schedule Scheduler) AddOrUpdate(cb *api.CassandraBackup,
 		schedule.entries[backupName] = entryType{entryID, cb.Spec.Schedule}
 		(*recorder).Event(
 			cb,
-			corev1.EventTypeWarning,
+			corev1.EventTypeNormal,
 			"BackupTaskscheduled",
 			fmt.Sprintf("Controller scheduled task %s to back up cluster %s under snapshot %s with schedule %s",
 				cb.Name, cb.Spec.CassandraCluster, cb.Spec.SnapshotTag, cb.Spec.Schedule))
