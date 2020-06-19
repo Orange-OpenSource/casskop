@@ -38,7 +38,7 @@ const (
 	DefaultReadinessHealthCheckTimeout  int32 = 10
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
-	defaultCassandraImage         string        = "cassandra:latest"
+	defaultCassandraImage         string        = "cassandra:3.11"
 	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
 	defaultServiceAccountName     string        = "cassandra-cluster-node"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
