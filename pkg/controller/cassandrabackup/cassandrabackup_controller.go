@@ -411,12 +411,15 @@ func backup(
 	logging logr.Logger,
 	recorder record.EventRecorder) {
 
+	duration, _ := time.ParseDuration(instance.backup.Spec.Duration)
+	dateDuration := time.Now().Add(duration)
+
 	backupRequest := csd.BackupOperationRequest{
 		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
 		Type_:                 "backup",
 		StorageLocation:       fmt.Sprintf("%s/%s/dcx/nodex", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
-		Duration:              instance.backup.Spec.Duration,
+		Duration:              &dateDuration,
 		Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,
