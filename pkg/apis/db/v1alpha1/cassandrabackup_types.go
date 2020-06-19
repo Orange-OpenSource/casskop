@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"encoding/json"
 	"strings"
-	"time"
 
 	csd "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	cron "github.com/robfig/cron/v3"
