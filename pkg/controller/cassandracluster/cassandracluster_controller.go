@@ -56,8 +56,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource CassandraCluster
-	err = c.Watch(&source.Kind{Type: &api.CassandraCluster{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
+	if err = c.Watch(&source.Kind{Type: &api.CassandraCluster{}}, &handler.EnqueueRequestForObject{}); err != nil {
 		return err
 	}
 

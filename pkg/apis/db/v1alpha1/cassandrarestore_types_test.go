@@ -44,7 +44,7 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 		TimeStarted:      "2020-06-10T05:53:05.976Z",
 		TimeCompleted:    "2020-06-10T06:53:05.976Z",
 		Condition:        &RestoreCondition{Type: RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "0.000000",
+		Progress:         "10%",
 		RestorationPhase: RestorationPhaseTruncate,
 		Id:               operationID,
 	}, cs)

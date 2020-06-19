@@ -101,7 +101,7 @@ type CassandraRestoreStatus struct {
 	TimeCompleted string `json:"timeCompleted,omitempty"`
 	//
 	Condition *RestoreCondition `json:"conditions,omitempty"`
-	// Progress is a float from 0.0 to 1.0, 1.0 telling that operation is completed, either successfully or with errors
+	// Progress is a percetange from 0% to 100%, 100% telling that operation is completed, either successfully or with errors
 	Progress string `json:"progress,omitempty"`
 	//
 	RestorationPhase RestorationPhaseType `json:"restorationPhase,omitempty"`
