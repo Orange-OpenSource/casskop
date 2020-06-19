@@ -9,7 +9,7 @@ require (
 	github.com/banzaicloud/k8s-objectmatcher v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
-	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200617142142-768b35ecd886
+	github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200619070831-36cddb112acc
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
@@ -35,8 +35,6 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
 	sigs.k8s.io/controller-runtime v0.4.0
-//	sigs.k8s.io/controller-runtime v0.1.12
-//	sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde // indirect
 )
 
 // Pinned to kubernetes-1.16.2

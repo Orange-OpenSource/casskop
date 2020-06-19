@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/antihax/optional"
 	csd "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	"github.com/mitchellh/mapstructure"
@@ -16,7 +17,7 @@ import (
 
 var log = logf.Log.WithName("SidecarClient")
 
-var DefaultSidecarClientOptions = ClientOptions{Port: 4567, Secure: false}
+var DefaultSidecarClientOptions = ClientOptions{Port: api.DefaultBackRestSidecarContainerPort, Secure: false}
 
 type Client struct {
 	Host      string

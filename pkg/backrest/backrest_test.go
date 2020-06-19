@@ -52,7 +52,7 @@ func TestPerformRestore(t *testing.T) {
 		TimeStarted:      "2020-06-10T05:53:05.976Z",
 		TimeCompleted:    "2020-06-10T06:53:05.976Z",
 		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "10",
+		Progress:         "10%",
 		RestorationPhase: v1alpha1.RestorationPhaseDownload,
 		Id:               cs.Id,
 	}, cs)
@@ -85,7 +85,7 @@ func TestGetRestorebyId(t *testing.T) {
 		TimeStarted:      "2020-06-10T05:53:05.976Z",
 		TimeCompleted:    "2020-06-10T06:53:05.976Z",
 		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "10",
+		Progress:         "10%",
 		RestorationPhase: v1alpha1.RestorationPhaseTruncate,
 		Id:               operationId,
 	}, cs)
