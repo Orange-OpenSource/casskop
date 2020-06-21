@@ -223,7 +223,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
-				"FailureEvent",
+				"BackupFailedSecretNotFound",
 				fmt.Sprintf("Secret %s used for backups was not found", cb.Spec.Secret))
 			return reconcile.Result{}, nil
 		}
@@ -243,7 +243,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
-				"FailureEvent",
+				"BackupNotFound",
 				fmt.Sprintf("Datacenter %s of cluster %s to backup not found", cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 
 			return reconcile.Result{}, nil
@@ -257,7 +257,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
-				"FailureEvent",
+				"BackupInvalidSchedule",
 				fmt.Sprintf("Schedule %s is not valid: %s", cb.Spec.Schedule, err.Error()))
 
 			// If schedule is invalid and the object already existed, we reset it to what it was
@@ -292,7 +292,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
-				"FailureEvent",
+				"BackupScheduleError",
 				fmt.Sprintf("Wasn't able to schedule job %s: %s", cb.Name, err.Error()))
 		} else if skip {
 			return reconcile.Result{}, nil
@@ -446,7 +446,7 @@ func backup(
 				if r.State == operations.FAILED {
 					recorder.Event(instance.backup,
 						corev1.EventTypeWarning,
-						"FailureEvent",
+						"BackupFailed",
 						fmt.Sprintf("Backup operation %v on node %s has failed", operationID, podHostname))
 					break
 				}
@@ -454,7 +454,7 @@ func backup(
 				if r.State == operations.COMPLETED {
 					recorder.Event(instance.backup,
 						corev1.EventTypeNormal,
-						"SuccessEvent",
+						"BackupCompleted",
 						fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, podHostname))
 					break
 				}
