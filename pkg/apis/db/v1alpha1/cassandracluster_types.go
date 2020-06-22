@@ -852,6 +852,12 @@ type CassandraClusterSpec struct {
 	// ReadinessSuccessThreshold defines success threshold for the readiness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
+	// When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod.
+	// https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+	// Optional: Default to false.
+	// +k8s:conversion-gen=false
+	// +optional
+	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
 }
 
 // StorageConfig defines additional storage configurations
