@@ -405,14 +405,10 @@ type backupClient struct {
 	client client.Client
 }
 
-func durationFromString(duration string) *time.Time {
-	if duration == "" {
-		return nil
-	}
-	if timeDuration, err := time.ParseDuration(duration); err == nil {
-		x := time.Now().Add(timeDuration)
-		return &x
-
+func backupDuration(duration string) *time.Time {
+	if parsedDuration, err := time.ParseDuration(duration); err == nil {
+		backupDuration := time.Now().Add(parsedDuration)
+		return &backupDuration
 	}
 	return nil
 }
@@ -428,7 +424,7 @@ func backup(
 		Type_:                 "backup",
 		StorageLocation:       fmt.Sprintf("%s/%s/dcx/nodex", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
-		Duration:              durationFromString(instance.backup.Spec.Duration),
+		Duration:              backupDuration(instance.backup.Spec.Duration),
 		Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,

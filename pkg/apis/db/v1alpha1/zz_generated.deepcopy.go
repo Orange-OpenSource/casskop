@@ -305,6 +305,7 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 		in, out := &in.ShareProcessNamespace, &out.ShareProcessNamespace
 		*out = new(bool)
 		**out = **in
+	}
 	if in.BackRestSidecar != nil {
 		in, out := &in.BackRestSidecar, &out.BackRestSidecar
 		*out = new(BackRestSidecar)

@@ -678,7 +678,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	var containers []v1.Container
 	containers = append(containers, cc.Spec.SidecarConfigs...)
 	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
-	containers = append(containers, createBackRestSidecarContainer(cc, status, dcRackName))
+	containers = append(containers, backrestSidecarContainer(cc, status, dcRackName))
 
 	return containers
 }
@@ -820,17 +820,14 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	return cassandraContainer
 }
 
-func createBackRestSidecarContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
+func backrestSidecarContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
-
-	resources := cassandraResources(cc.Spec)
 
 	container := v1.Container{
 		Name:            "backrest-sidecar",
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
-		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: api.DefaultBackRestSidecarContainerPort}},
-		Env:             bootstrapContainerEnvVar(cc, status, resources, dcRackName),
+		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
 	}
 
 	if cc.Spec.BackRestSidecar.Resources != nil {
