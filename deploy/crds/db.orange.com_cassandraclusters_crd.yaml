@@ -324,70 +324,202 @@ spec:
                 type: object
               serviceAccountName:
                 type: string
+              shareProcessNamespace:
+                description: 'When process namespace sharing is enabled, processes
+                  in a container are visible to all other containers in that pod.
+                  https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+                  Optional: Default to false.'
+                type: boolean
               sidecarConfigs:
                 description: SidecarsConfig defines additional sidecar configurations
                 items:
                   description: A single application container that you want to run
                     within a pod.
                   properties:
-                    cpu:
-                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-                      type: string
-                    memory:
-                      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-                      type: string
-                  required:
-                  - cpu
-                  - memory
-                  type: object
-              type: object
-            restartCountBeforePodDeletion:
-              description: RestartCountBeforePodDeletion defines the number of restart
-                allowed for a cassandra container allowed before deleting the pod  to
-                force its restart from scratch. if set to 0 or omit, no action will
-                be performed based on restart count.
-              format: int32
-              type: integer
-            runAsUser:
-              description: RunAsUser define the id of the user to run in the Cassandra
-                image
-              format: int64
-              minimum: 1
-              type: integer
-            service:
-              description: ServicePolicy defines the policy for headless service owned
-                by CassKop operator.
-              properties:
-                annotations:
-                  additionalProperties:
-                    type: string
-                  description: Annotations specifies the annotations to attach to
-                    headless service the CassKop operator creates
-                  type: object
-              type: object
-            shareProcessNamespace:
-              description: 'When process namespace sharing is enabled, processes in
-                a container are visible to all other containers in that pod. https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
-                Optional: Default to false.'
-              type: boolean
-            serviceAccountName:
-              type: string
-            sidecarConfigs:
-              description: SidecarsConfig defines additional sidecar configurations
-              items:
-                description: A single application container that you want to run within
-                  a pod.
-                properties:
-                  args:
-                    description: 'Arguments to the entrypoint. The docker image''s
-                      CMD is used if this is not provided. Variable references $(VAR_NAME)
-                      are expanded using the container''s environment. If a variable
-                      cannot be resolved, the reference in the input string will be
-                      unchanged. The $(VAR_NAME) syntax can be escaped with a double
-                      $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-                      regardless of whether the variable exists or not. Cannot be
-                      updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell'
-                    items:
+                    args:
+                      description: 'Arguments to the entrypoint. The docker image''s
+                        CMD is used if this is not provided. Variable references $(VAR_NAME)
+                        are expanded using the container''s environment. If a variable
+                        cannot be resolved, the reference in the input string will
+                        be unchanged. The $(VAR_NAME) syntax can be escaped with a
+                        double $$, ie: $$(VAR_NAME). Escaped references will never
+                        be expanded, regardless of whether the variable exists or
+                        not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell'
+                      items:
+                        type: string
+                      type: array
+                    command:
+                      description: 'Entrypoint array. Not executed within a shell.
+                        The docker image''s ENTRYPOINT is used if this is not provided.
+                        Variable references $(VAR_NAME) are expanded using the container''s
+                        environment. If a variable cannot be resolved, the reference
+                        in the input string will be unchanged. The $(VAR_NAME) syntax
+                        can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
+                        references will never be expanded, regardless of whether the
+                        variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell'
+                      items:
+                        type: string
+                      type: array
+                    env:
+                      description: List of environment variables to set in the container.
+                        Cannot be updated.
+                      items:
+                        description: EnvVar represents an environment variable present
+                          in a Container.
+                        properties:
+                          name:
+                            description: Name of the environment variable. Must be
+                              a C_IDENTIFIER.
+                            type: string
+                          value:
+                            description: 'Variable references $(VAR_NAME) are expanded
+                              using the previous defined environment variables in
+                              the container and any service environment variables.
+                              If a variable cannot be resolved, the reference in the
+                              input string will be unchanged. The $(VAR_NAME) syntax
+                              can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
+                              references will never be expanded, regardless of whether
+                              the variable exists or not. Defaults to "".'
+                            type: string
+                          valueFrom:
+                            description: Source for the environment variable's value.
+                              Cannot be used if value is not empty.
+                            properties:
+                              configMapKeyRef:
+                                description: Selects a key of a ConfigMap.
+                                properties:
+                                  key:
+                                    description: The key to select.
+                                    type: string
+                                  name:
+                                    description: 'Name of the referent. More info:
+                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                      TODO: Add other useful fields. apiVersion, kind,
+                                      uid?'
+                                    type: string
+                                  optional:
+                                    description: Specify whether the ConfigMap or
+                                      its key must be defined
+                                    type: boolean
+                                required:
+                                - key
+                                type: object
+                              fieldRef:
+                                description: 'Selects a field of the pod: supports
+                                  metadata.name, metadata.namespace, metadata.labels,
+                                  metadata.annotations, spec.nodeName, spec.serviceAccountName,
+                                  status.hostIP, status.podIP, status.podIPs.'
+                                properties:
+                                  apiVersion:
+                                    description: Version of the schema the FieldPath
+                                      is written in terms of, defaults to "v1".
+                                    type: string
+                                  fieldPath:
+                                    description: Path of the field to select in the
+                                      specified API version.
+                                    type: string
+                                required:
+                                - fieldPath
+                                type: object
+                              resourceFieldRef:
+                                description: 'Selects a resource of the container:
+                                  only resources limits and requests (limits.cpu,
+                                  limits.memory, limits.ephemeral-storage, requests.cpu,
+                                  requests.memory and requests.ephemeral-storage)
+                                  are currently supported.'
+                                properties:
+                                  containerName:
+                                    description: 'Container name: required for volumes,
+                                      optional for env vars'
+                                    type: string
+                                  divisor:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Specifies the output format of the
+                                      exposed resources, defaults to "1"
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  resource:
+                                    description: 'Required: resource to select'
+                                    type: string
+                                required:
+                                - resource
+                                type: object
+                              secretKeyRef:
+                                description: Selects a key of a secret in the pod's
+                                  namespace
+                                properties:
+                                  key:
+                                    description: The key of the secret to select from.  Must
+                                      be a valid secret key.
+                                    type: string
+                                  name:
+                                    description: 'Name of the referent. More info:
+                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                      TODO: Add other useful fields. apiVersion, kind,
+                                      uid?'
+                                    type: string
+                                  optional:
+                                    description: Specify whether the Secret or its
+                                      key must be defined
+                                    type: boolean
+                                required:
+                                - key
+                                type: object
+                            type: object
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    envFrom:
+                      description: List of sources to populate environment variables
+                        in the container. The keys defined within a source must be
+                        a C_IDENTIFIER. All invalid keys will be reported as an event
+                        when the container is starting. When a key exists in multiple
+                        sources, the value associated with the last source will take
+                        precedence. Values defined by an Env with a duplicate key
+                        will take precedence. Cannot be updated.
+                      items:
+                        description: EnvFromSource represents the source of a set
+                          of ConfigMaps
+                        properties:
+                          configMapRef:
+                            description: The ConfigMap to select from
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                              optional:
+                                description: Specify whether the ConfigMap must be
+                                  defined
+                                type: boolean
+                            type: object
+                          prefix:
+                            description: An optional identifier to prepend to each
+                              key in the ConfigMap. Must be a C_IDENTIFIER.
+                            type: string
+                          secretRef:
+                            description: The Secret to select from
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                              optional:
+                                description: Specify whether the Secret must be defined
+                                type: boolean
+                            type: object
+                        type: object
+                      type: array
+                    image:
+                      description: 'Docker image name. More info: https://kubernetes.io/docs/concepts/containers/images
+                        This field is optional to allow higher level config management
+                        to default or override container images in workload controllers
+                        like Deployments and StatefulSets.'
                       type: string
                     imagePullPolicy:
                       description: 'Image pull policy. One of Always, Never, IfNotPresent.
