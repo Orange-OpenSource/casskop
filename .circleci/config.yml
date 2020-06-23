@@ -31,7 +31,7 @@ orbs:
         working_directory: /home/circleci/<< parameters.operatorDir >>
         environment:
           K3S_IMAGE: rancher/k3s:v1.18.4-k3s1
-          K8S_VERSION: v1.17.5
+          K8S_VERSION: v1.18.4
           GOPATH: /go
           GO111MODULE: on
           DOCKER_LATEST: 1
