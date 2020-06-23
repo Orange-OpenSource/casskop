@@ -15,22 +15,21 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/prometheus/client_golang v1.5.1
-	github.com/mitchellh/mapstructure v1.1.2
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
-	github.com/robfig/cron/v3 v3.0.1
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
-	k8s.io/api v0.18.2
-	k8s.io/apimachinery v0.18.2
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.24.0 // indirect
+	k8s.io/api v0.18.4
+	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20200316234421-82d701f24f9d
 	sigs.k8s.io/controller-runtime v0.6.0

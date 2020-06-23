@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"encoding/json"
 	"strings"
-	"time"
 
 	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	cron "github.com/robfig/cron/v3"
@@ -31,7 +30,7 @@ type CassandraBackupSpec struct {
 	// The snapshot tag for the backup
 	Schedule              string        `json:"schedule,omitempty"`
 	SnapshotTag           string        `json:"snapshotTag"`
-	Duration              *time.Time    `json:"duration,omitempty"`
+	Duration              string        `json:"duration,omitempty"`
 	Bandwidth             *csd.DataRate `json:"bandwidth,omitempty"`
 	ConcurrentConnections int32         `json:"concurrentConnections,omitempty"`
 	Entities              string        `json:"entities,omitempty"`
@@ -84,8 +83,7 @@ type CassandraBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec CassandraBackupSpec `json:"spec"`
-	// +listType
+	Spec   CassandraBackupSpec    `json:"spec"`
 	Status *CassandraBackupStatus `json:"status,omitempty"`
 }
 
