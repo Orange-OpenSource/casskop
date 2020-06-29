@@ -7,7 +7,6 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/util"
 	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	"github.com/mitchellh/mapstructure"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -117,7 +116,7 @@ type CassandraRestoreSpec struct {
 	// belongs.
 	CassandraClusterRef string `json:"cassandraClusterRef"`
 	// Backup is a reference to the Backup object to be restored.
-	BackupRef *corev1.LocalObjectReference `json:"backupRef"`
+	BackupRef string `json:"backupRef"`
 	// CoordinatorMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
 	CoordinatorMember string `json:"coordinatorMember,omitempty"`

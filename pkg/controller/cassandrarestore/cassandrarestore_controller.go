@@ -82,8 +82,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if err != nil {
 				return false
 			}
-			if obj, ok := object.(*api.CassandraRestore); ok {
-				reqLogger := log.WithValues("Restore.Namespace", obj.Namespace, "Restore.Name", obj.Name)
+			if restore, ok := object.(*api.CassandraRestore); ok {
+				reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
 				//old := e.ObjectOld.(*api.CassandraRestore)
 				new := e.ObjectNew.(*api.CassandraRestore)
 				if new.Status.Condition == nil {
@@ -105,7 +105,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		},
 	}
 
-	// Watch for changes to primary resource CassandraCluster
+	// Watch for changes to primary resource CassandraRestore
 	err = c.Watch(&source.Kind{Type: &api.CassandraRestore{}}, &handler.EnqueueRequestForObject{}, pred)
 	if err != nil {
 		return err
