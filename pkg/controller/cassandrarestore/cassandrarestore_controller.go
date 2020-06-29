@@ -164,7 +164,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Check the referenced Cluster exists.
 	cc := &api.CassandraCluster{}
-	if cc, err = k8sutil.LookupCassandraCluster(r.client, instance.Spec.Cluster.Name, instance.Namespace); err != nil {
+	if cc, err = k8sutil.LookupCassandraCluster(r.client, instance.Spec.CassandraClusterRef, instance.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safetybelt
 		if k8sutil.IsMarkedForDeletion(instance.ObjectMeta) {
 			reqLogger.Info("Cluster is gone already, there is nothing we can do")
@@ -178,7 +178,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Check the referenced Backup exists.
 	backup :=  &api.CassandraBackup{}
-	if backup, err = k8sutil.LookupCassandraBackup(r.client, instance.Spec.Backup.Name, instance.Namespace); err != nil {
+	if backup, err = k8sutil.LookupCassandraBackup(r.client, instance.Spec.BackupRef, instance.Namespace); err != nil {
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced backup", err)
 	}
 

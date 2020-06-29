@@ -29,6 +29,7 @@ const (
 	schemaVersion     = "test"
 	concurrentConnections int32 = 15
 )
+
 type mockCassandraSidecarClient struct {
 	CassandraSidecarClient
 	opts *CassandraSidecarConfig

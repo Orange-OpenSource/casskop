@@ -115,9 +115,9 @@ type CassandraRestoreStatus struct {
 type CassandraRestoreSpec struct {
 	// Cluster is a refeference to the Cluster to which the Restore
 	// belongs.
-	Cluster *corev1.LocalObjectReference `json:"cluster"`
+	CassandraClusterRef string `json:"cassandraClusterRef"`
 	// Backup is a reference to the Backup object to be restored.
-	Backup *corev1.LocalObjectReference `json:"backup"`
+	BackupRef *corev1.LocalObjectReference `json:"backupRef"`
 	// CoordinatorMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
 	CoordinatorMember string `json:"coordinatorMember,omitempty"`
