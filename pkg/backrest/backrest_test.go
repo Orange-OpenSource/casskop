@@ -24,7 +24,7 @@ func TestPerformRestore(t *testing.T) {
 			ConcurrentConnection: &concurrentConnection,
 			NoDeleteTruncates: true,
 			RestorationStrategyType: "HARDLINKS",
-			Cluster: &corev1.LocalObjectReference{
+			CassandraClusterRef: &corev1.LocalObjectReference{
 				Name: "cassandra-bgl",
 			},
 			Backup: &corev1.LocalObjectReference{

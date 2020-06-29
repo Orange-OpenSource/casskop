@@ -31,7 +31,7 @@ spec:
           description: CassandraRestoreSpec defines the specification for a restore
             of a Cassandra backup.
           properties:
-            backup:
+            backupRef:
               description: Backup is a reference to the Backup object to be restored.
               properties:
                 name:
@@ -39,19 +39,14 @@ spec:
                     TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
+            cassandraClusterRef:
+              description: Cluster is a refeference to the Cluster to which the Restore
+                belongs.
+              type: string
             cassandraDirectory:
               description: directory of Cassandra, by default it is /var/lib/cassandra,
                 in this path, one expects there is 'data' directory
               type: string
-            cluster:
-              description: Cluster is a refeference to the Cluster to which the Restore
-                belongs.
-              properties:
-                name:
-                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    TODO: Add other useful fields. apiVersion, kind, uid?'
-                  type: string
-              type: object
             concurrentConnection:
               description: ConcurrentConnection is the number of threads used for
                 upload, there might be at most so many uploading threads at any given
@@ -107,8 +102,8 @@ spec:
                 gcp, azure or s3.
               type: string
           required:
-          - backup
-          - cluster
+          - backupRef
+          - cassandraClusterRef
           type: object
         status:
           description: CassandraRestoreStatus captures the current status of a Cassandra

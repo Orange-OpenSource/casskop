@@ -4,11 +4,9 @@ metadata:
   name: gcp-restore-1
 spec:
   # Cluster is a refeference to the Cluster to which the Restore belongs.
-  cluster:
-    name: cassandra-bgl
+  cassandraClusterRef: cassandra-bgl
   # Backup is a reference to the Backup object to be restored.
-  backup:
-    name: gcp-backup
+  backupRef: gcp-backup
   # ConcurrentConnection is the number of threads used for upload, there might be
   # at most so many uploading threads at any given time, when not set, it defaults to 10
   concurrentConnection: 15
