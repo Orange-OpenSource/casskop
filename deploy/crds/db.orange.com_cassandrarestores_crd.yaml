@@ -33,12 +33,7 @@ spec:
           properties:
             backupRef:
               description: Backup is a reference to the Backup object to be restored.
-              properties:
-                name:
-                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    TODO: Add other useful fields. apiVersion, kind, uid?'
-                  type: string
-              type: object
+              type: string
             cassandraClusterRef:
               description: Cluster is a refeference to the Cluster to which the Restore
                 belongs.
