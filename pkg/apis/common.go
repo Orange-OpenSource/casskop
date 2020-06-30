@@ -1,4 +1,4 @@
-package nodestate
+package apis
 
 /// NodeStates
 
