@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Orange-OpenSource/casskop/pkg/common/operations"
 	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
@@ -451,7 +450,7 @@ func backup(
 			} else {
 				instance.updateStatus(podHostname, r, logging)
 
-				if r.State == operations.FAILED {
+				if r.State == "FAILED" {
 					recorder.Event(instance.backup,
 						corev1.EventTypeWarning,
 						"BackupFailed",
@@ -459,7 +458,7 @@ func backup(
 					break
 				}
 
-				if r.State == operations.COMPLETED {
+				if r.State == "COMPLETED" {
 					recorder.Event(instance.backup,
 						corev1.EventTypeNormal,
 						"BackupCompleted",
