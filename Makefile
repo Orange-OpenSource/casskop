@@ -178,25 +178,32 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
-# Run a shell into the development docker image
-docker-build: ## Build the Operator and it's Docker Image
+
+docker-generate-k8s:
 	echo "Generate zzz-deepcopy objects"
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
 	
-	echo "Generate openapi"
+docker-generate-crds:
+	echo "Generate crds"
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
+	sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+
+docker-build-operator:
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) \
 	-v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated -v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
 	--env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) \
 	--image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
+
+# Build the Operator and its Docker Image
+docker-build: docker-generate-k8s docker-generate-crds docker-build-operator
 
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
