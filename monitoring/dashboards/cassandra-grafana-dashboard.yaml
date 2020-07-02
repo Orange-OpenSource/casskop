@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: prometheus-grafana-dashboard
+    name: cassandra-grafana-dashboard
     labels:
         app: prometheus-operator-grafana
         grafana_dashboard: "1"
@@ -27,11 +27,13 @@ data:
           "editable": true,
           "gnetId": null,
           "graphTooltip": 0,
-          "iteration": 1568974484957,
+          "id": 25,
+          "iteration": 1593704208253,
           "links": [],
           "panels": [
             {
               "collapsed": false,
+              "datasource": null,
               "gridPos": {
                 "h": 1,
                 "w": 24,
@@ -49,6 +51,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 4,
                 "w": 5,
@@ -56,14 +65,26 @@ data:
                 "y": 1
               },
               "id": 85,
-              "options": {},
+              "mappingType": 1,
+              "mappingTypes": [
+                {
+                  "name": "value to text",
+                  "value": 1
+                },
+                {
+                  "name": "range to text",
+                  "value": 2
+                }
+              ],
               "polystat": {
                 "animationSpeed": 2500,
                 "columnAutoSize": true,
                 "columns": "",
                 "defaultClickThrough": "",
+                "defaultClickThroughNewTab": false,
                 "defaultClickThroughSanitize": false,
                 "displayLimit": 100,
+                "fontAutoColor": true,
                 "fontAutoScale": true,
                 "fontSize": 12,
                 "fontType": "Roboto",
@@ -73,7 +94,7 @@ data:
                 "globalOperatorName": "count",
                 "globalUnitFormat": "short",
                 "gradientEnabled": true,
-                "hexagonSortByDirection": "asc",
+                "hexagonSortByDirection": 1,
                 "hexagonSortByField": "name",
                 "maxMetrics": 0,
                 "polygonBorderColor": "black",
@@ -88,12 +109,19 @@ data:
                 "tooltipDisplayTextTriggeredEmpty": "is down",
                 "tooltipFontSize": 12,
                 "tooltipFontType": "Roboto",
-                "tooltipPrimarySortDirection": "desc",
+                "tooltipPrimarySortDirection": 2,
                 "tooltipPrimarySortField": "thresholdLevel",
-                "tooltipSecondarySortDirection": "desc",
+                "tooltipSecondarySortDirection": 2,
                 "tooltipSecondarySortField": "value",
                 "tooltipTimestampEnabled": false
               },
+              "rangeMaps": [
+                {
+                  "from": "null",
+                  "text": "N/A",
+                  "to": "null"
+                }
+              ],
               "savedComposites": [],
               "savedOverrides": [],
               "targets": [
@@ -113,7 +141,14 @@ data:
               "timeFrom": null,
               "timeShift": null,
               "title": "Nodes Down",
-              "type": "grafana-polystat-panel"
+              "type": "grafana-polystat-panel",
+              "valueMaps": [
+                {
+                  "op": "=",
+                  "text": "N/A",
+                  "value": "null"
+                }
+              ]
             },
             {
               "cacheTimeout": null,
@@ -125,6 +160,12 @@ data:
                 "#d44a3a"
               ],
               "datasource": "$datasource",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -156,7 +197,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -174,7 +214,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_table_operation_latency_seconds_count{cassandra_cluster=~\"$cluster\", operation=\"read\"}[5m]))",
@@ -208,6 +248,12 @@ data:
                 "#d44a3a"
               ],
               "datasource": "$datasource",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -239,7 +285,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -257,7 +302,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_table_operation_latency_seconds_count{cassandra_cluster=~\"$cluster\", operation=\"write\"}[5m]))",
@@ -290,6 +335,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -321,7 +373,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -339,7 +390,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_compaction_completed_tasks_total{cassandra_cluster=~\"$cluster\"}[5m]))",
@@ -372,6 +423,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -403,7 +461,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -421,7 +478,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_client_request_timeouts_total{cassandra_cluster=~\"$cluster\"}[5m]))",
@@ -451,6 +508,14 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "description": "Thresholds can be adjusted according to your needs.\nDefault values: 250ms for Warning, 500ms for Critical",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 8,
                 "w": 5,
@@ -459,14 +524,26 @@ data:
               },
               "id": 42,
               "links": [],
-              "options": {},
+              "mappingType": 1,
+              "mappingTypes": [
+                {
+                  "name": "value to text",
+                  "value": 1
+                },
+                {
+                  "name": "range to text",
+                  "value": 2
+                }
+              ],
               "polystat": {
                 "animationSpeed": 2500,
                 "columnAutoSize": true,
                 "columns": "",
                 "defaultClickThrough": "",
+                "defaultClickThroughNewTab": false,
                 "defaultClickThroughSanitize": false,
                 "displayLimit": 50,
+                "fontAutoColor": true,
                 "fontAutoScale": true,
                 "fontSize": 12,
                 "fontType": "Roboto",
@@ -474,9 +551,9 @@ data:
                 "globalDisplayMode": "all",
                 "globalDisplayTextTriggeredEmpty": "OK",
                 "globalOperatorName": "avg",
-                "globalUnitFormat": "s",
+                "globalUnitFormat": "ms",
                 "gradientEnabled": true,
-                "hexagonSortByDirection": "asc",
+                "hexagonSortByDirection": 1,
                 "hexagonSortByField": "name",
                 "maxMetrics": 0,
                 "polygonBorderColor": "black",
@@ -491,12 +568,19 @@ data:
                 "tooltipDisplayTextTriggeredEmpty": "OK",
                 "tooltipFontSize": 12,
                 "tooltipFontType": "Roboto",
-                "tooltipPrimarySortDirection": "desc",
+                "tooltipPrimarySortDirection": 2,
                 "tooltipPrimarySortField": "name",
-                "tooltipSecondarySortDirection": "desc",
+                "tooltipSecondarySortDirection": 2,
                 "tooltipSecondarySortField": "value",
                 "tooltipTimestampEnabled": true
               },
+              "rangeMaps": [
+                {
+                  "from": "null",
+                  "text": "N/A",
+                  "to": "null"
+                }
+              ],
               "savedComposites": [
                 {
                   "animateMode": "all",
@@ -537,26 +621,27 @@ data:
                     {
                       "color": "#299c46",
                       "state": 0,
-                      "value": 0.01
+                      "value": 0
                     },
                     {
                       "color": "#e5ac0e",
                       "state": 1,
-                      "value": 0.1
+                      "value": 250
                     },
                     {
                       "color": "#bf1b00",
                       "state": 2,
-                      "value": 1
+                      "value": 500
                     }
                   ],
-                  "unitFormat": "s"
+                  "unitFormat": "ms"
                 }
               ],
               "targets": [
                 {
                   "expr": "cassandra_jvm_gc_last_collection_duration_seconds{cassandra_cluster=~\"$cluster\",collector=\"G1 Young Generation\"}",
                   "format": "time_series",
+                  "interval": "",
                   "intervalFactor": 1,
                   "legendFormat": "{{instance}} G1 Young",
                   "refId": "A"
@@ -565,7 +650,14 @@ data:
               "timeFrom": null,
               "timeShift": null,
               "title": "GC Last Collection Duration Health",
-              "type": "grafana-polystat-panel"
+              "type": "grafana-polystat-panel",
+              "valueMaps": [
+                {
+                  "op": "=",
+                  "text": "N/A",
+                  "value": "null"
+                }
+              ]
             },
             {
               "cacheTimeout": null,
@@ -576,6 +668,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -607,7 +706,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -625,7 +723,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_dropped_messages_total{cassandra_cluster=~\"$cluster\"}[5m]))",
@@ -658,6 +756,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -689,7 +794,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -740,6 +844,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -771,7 +882,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -822,6 +932,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -853,7 +970,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -871,7 +987,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"cassandra-e2e\"}",
               "targets": [
                 {
                   "expr": "sum by(cassandra_cluster) (irate(cassandra_client_request_failures_total{cassandra_cluster=~\"$cluster\"}[5m]))",
@@ -901,6 +1017,14 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "description": "Thresholds can be adjusted according to your needs:\nDefault values: 60% Warning. 80% Critical",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 8,
                 "w": 5,
@@ -909,14 +1033,26 @@ data:
               },
               "id": 40,
               "links": [],
-              "options": {},
+              "mappingType": 1,
+              "mappingTypes": [
+                {
+                  "name": "value to text",
+                  "value": 1
+                },
+                {
+                  "name": "range to text",
+                  "value": 2
+                }
+              ],
               "polystat": {
                 "animationSpeed": 2500,
                 "columnAutoSize": true,
                 "columns": "",
                 "defaultClickThrough": "",
+                "defaultClickThroughNewTab": false,
                 "defaultClickThroughSanitize": true,
                 "displayLimit": 50,
+                "fontAutoColor": true,
                 "fontAutoScale": true,
                 "fontSize": 12,
                 "fontType": "Roboto",
@@ -926,7 +1062,7 @@ data:
                 "globalOperatorName": "current",
                 "globalUnitFormat": "percent",
                 "gradientEnabled": true,
-                "hexagonSortByDirection": "asc",
+                "hexagonSortByDirection": 1,
                 "hexagonSortByField": "name",
                 "maxMetrics": 0,
                 "polygonBorderColor": "black",
@@ -941,12 +1077,19 @@ data:
                 "tooltipDisplayTextTriggeredEmpty": "OK",
                 "tooltipFontSize": 12,
                 "tooltipFontType": "Roboto",
-                "tooltipPrimarySortDirection": "desc",
+                "tooltipPrimarySortDirection": 2,
                 "tooltipPrimarySortField": "name",
-                "tooltipSecondarySortDirection": "desc",
+                "tooltipSecondarySortDirection": 2,
                 "tooltipSecondarySortField": "value",
                 "tooltipTimestampEnabled": false
               },
+              "rangeMaps": [
+                {
+                  "from": "null",
+                  "text": "N/A",
+                  "to": "null"
+                }
+              ],
               "savedComposites": [],
               "savedOverrides": [
                 {
@@ -999,7 +1142,14 @@ data:
               "timeFrom": null,
               "timeShift": null,
               "title": "Nodes CPU Health (used by cassandra)",
-              "type": "grafana-polystat-panel"
+              "type": "grafana-polystat-panel",
+              "valueMaps": [
+                {
+                  "op": "=",
+                  "text": "N/A",
+                  "value": "null"
+                }
+              ]
             },
             {
               "cacheTimeout": null,
@@ -1010,6 +1160,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "decbytes",
               "gauge": {
                 "maxValue": 100,
@@ -1041,7 +1198,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -1092,6 +1248,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -1123,7 +1286,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -1141,7 +1303,7 @@ data:
                 "lineColor": "rgb(31, 120, 193)",
                 "show": true
               },
-              "tableColumn": "",
+              "tableColumn": "{cassandra_cluster=\"multidc-cluster\"}",
               "targets": [
                 {
                   "expr": "sum by (cassandra_cluster)(irate(cassandra_thread_pool_completed_tasks_total{cassandra_cluster=~\"$cluster\",pool=\"Native-Transport-Requests\"}[5m]))",
@@ -1174,6 +1336,13 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "format": "none",
               "gauge": {
                 "maxValue": 100,
@@ -1205,7 +1374,6 @@ data:
               "maxDataPoints": 100,
               "nullPointMode": "connected",
               "nullText": null,
-              "options": {},
               "postfix": "",
               "postfixFontSize": "50%",
               "prefix": "",
@@ -1253,6 +1421,14 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "description": "Thresholds can be adjusted according to your needs.\nDefault values: 75% for Warning, 90% for Critical",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 8,
                 "w": 5,
@@ -1265,14 +1441,26 @@ data:
                   "url": "/"
                 }
               ],
-              "options": {},
+              "mappingType": 1,
+              "mappingTypes": [
+                {
+                  "name": "value to text",
+                  "value": 1
+                },
+                {
+                  "name": "range to text",
+                  "value": 2
+                }
+              ],
               "polystat": {
                 "animationSpeed": 2500,
                 "columnAutoSize": true,
                 "columns": "",
                 "defaultClickThrough": "",
+                "defaultClickThroughNewTab": false,
                 "defaultClickThroughSanitize": false,
                 "displayLimit": 100,
+                "fontAutoColor": true,
                 "fontAutoScale": true,
                 "fontSize": 12,
                 "fontType": "Roboto",
@@ -1280,14 +1468,14 @@ data:
                 "globalDisplayMode": "all",
                 "globalDisplayTextTriggeredEmpty": "OK",
                 "globalOperatorName": "avg",
-                "globalUnitFormat": "short",
+                "globalUnitFormat": "percent",
                 "gradientEnabled": true,
-                "hexagonSortByDirection": "asc",
+                "hexagonSortByDirection": 1,
                 "hexagonSortByField": "name",
                 "maxMetrics": 0,
                 "polygonBorderColor": "black",
                 "polygonBorderSize": 2,
-                "polygonGlobalFillColor": "#0a50a1",
+                "polygonGlobalFillColor": "#37872D",
                 "radius": "",
                 "radiusAutoSize": true,
                 "rowAutoSize": true,
@@ -1297,12 +1485,19 @@ data:
                 "tooltipDisplayTextTriggeredEmpty": "OK",
                 "tooltipFontSize": 12,
                 "tooltipFontType": "Roboto",
-                "tooltipPrimarySortDirection": "desc",
+                "tooltipPrimarySortDirection": 2,
                 "tooltipPrimarySortField": "thresholdLevel",
-                "tooltipSecondarySortDirection": "desc",
+                "tooltipSecondarySortDirection": 2,
                 "tooltipSecondarySortField": "value",
                 "tooltipTimestampEnabled": true
               },
+              "rangeMaps": [
+                {
+                  "from": "null",
+                  "text": "N/A",
+                  "to": "null"
+                }
+              ],
               "savedComposites": [],
               "savedOverrides": [
                 {
@@ -1326,7 +1521,7 @@ data:
                     {
                       "color": "#299c46",
                       "state": 0,
-                      "value": 50
+                      "value": 0
                     },
                     {
                       "color": "#e5ac0e",
@@ -1336,7 +1531,7 @@ data:
                     {
                       "color": "#bf1b00",
                       "state": 2,
-                      "value": 95
+                      "value": 90
                     }
                   ],
                   "unitFormat": "percent"
@@ -1362,9 +1557,44 @@ data:
               "timeFrom": null,
               "timeShift": null,
               "title": "JVM Memory Pool Used",
-              "type": "grafana-polystat-panel"
+              "type": "grafana-polystat-panel",
+              "valueMaps": [
+                {
+                  "op": "=",
+                  "text": "N/A",
+                  "value": "null"
+                }
+              ]
             },
             {
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {},
+                  "decimals": null,
+                  "mappings": [],
+                  "max": 100,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "s"
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 5,
                 "w": 3,
@@ -1374,35 +1604,17 @@ data:
               "id": 55,
               "links": [],
               "options": {
-                "fieldOptions": {
+                "orientation": "auto",
+                "reduceOptions": {
                   "calcs": [
                     "mean"
                   ],
-                  "defaults": {
-                    "decimals": null,
-                    "mappings": [],
-                    "max": 100,
-                    "min": 0,
-                    "thresholds": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ],
-                    "unit": "s"
-                  },
-                  "override": {},
                   "values": false
                 },
-                "orientation": "auto",
                 "showThresholdLabels": false,
                 "showThresholdMarkers": true
               },
-              "pluginVersion": "6.3.5",
+              "pluginVersion": "7.0.1",
               "targets": [
                 {
                   "expr": "sum (irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",operation=\"read\"}[5m])) by (cassandra_cluster)\n\t/\n\tsum(irate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",operation=\"read\"}[5m])) by (cassandra_cluster)",
@@ -1413,7 +1625,7 @@ data:
               ],
               "timeFrom": null,
               "timeShift": null,
-              "title": "AVG Read Speed",
+              "title": "AVG Read Latency",
               "type": "gauge"
             },
             {
@@ -1422,6 +1634,12 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "fill": 1,
               "fillGradient": 0,
               "gridPos": {
@@ -1430,6 +1648,7 @@ data:
                 "x": 8,
                 "y": 10
               },
+              "hiddenSeries": false,
               "id": 51,
               "legend": {
                 "alignAsTable": true,
@@ -1513,6 +1732,14 @@ data:
                 "rgba(237, 129, 40, 0.89)",
                 "#d44a3a"
               ],
+              "datasource": null,
+              "description": "Thresholds can be adjusted according to your needs.\nDefault values: 40 for Warning, 70 for Critical",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 8,
                 "w": 5,
@@ -1521,14 +1748,26 @@ data:
               },
               "id": 41,
               "links": [],
-              "options": {},
+              "mappingType": 1,
+              "mappingTypes": [
+                {
+                  "name": "value to text",
+                  "value": 1
+                },
+                {
+                  "name": "range to text",
+                  "value": 2
+                }
+              ],
               "polystat": {
                 "animationSpeed": 2500,
                 "columnAutoSize": true,
                 "columns": "",
                 "defaultClickThrough": "",
+                "defaultClickThroughNewTab": false,
                 "defaultClickThroughSanitize": false,
                 "displayLimit": 50,
+                "fontAutoColor": true,
                 "fontAutoScale": true,
                 "fontSize": 12,
                 "fontType": "Roboto",
@@ -1538,7 +1777,7 @@ data:
                 "globalOperatorName": "avg",
                 "globalUnitFormat": "none",
                 "gradientEnabled": true,
-                "hexagonSortByDirection": "asc",
+                "hexagonSortByDirection": 1,
                 "hexagonSortByField": "name",
                 "maxMetrics": 0,
                 "polygonBorderColor": "black",
@@ -1553,12 +1792,19 @@ data:
                 "tooltipDisplayTextTriggeredEmpty": "OK",
                 "tooltipFontSize": 12,
                 "tooltipFontType": "Roboto",
-                "tooltipPrimarySortDirection": "desc",
+                "tooltipPrimarySortDirection": 2,
                 "tooltipPrimarySortField": "name",
-                "tooltipSecondarySortDirection": "desc",
+                "tooltipSecondarySortDirection": 2,
                 "tooltipSecondarySortField": "value",
                 "tooltipTimestampEnabled": true
               },
+              "rangeMaps": [
+                {
+                  "from": "null",
+                  "text": "N/A",
+                  "to": "null"
+                }
+              ],
               "savedComposites": [
                 {
                   "animateMode": "all",
@@ -1599,7 +1845,7 @@ data:
                     {
                       "color": "#299c46",
                       "state": 0,
-                      "value": 1
+                      "value": 0
                     },
                     {
                       "color": "#e5ac0e",
@@ -1619,6 +1865,7 @@ data:
                 {
                   "expr": "irate(cassandra_compaction_completed_total{cassandra_cluster=~\"$cluster\"}[5m])",
                   "format": "time_series",
+                  "interval": "",
                   "intervalFactor": 1,
                   "legendFormat": "{{instance}}",
                   "refId": "A"
@@ -1627,9 +1874,44 @@ data:
               "timeFrom": null,
               "timeShift": null,
               "title": "Nodes Compactions Health",
-              "type": "grafana-polystat-panel"
+              "type": "grafana-polystat-panel",
+              "valueMaps": [
+                {
+                  "op": "=",
+                  "text": "N/A",
+                  "value": "null"
+                }
+              ]
             },
             {
+              "datasource": null,
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {},
+                  "decimals": null,
+                  "mappings": [],
+                  "max": 100,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "s"
+                },
+                "overrides": []
+              },
               "gridPos": {
                 "h": 5,
                 "w": 3,
@@ -1639,35 +1921,17 @@ data:
               "id": 56,
               "links": [],
               "options": {
-                "fieldOptions": {
+                "orientation": "auto",
+                "reduceOptions": {
                   "calcs": [
                     "mean"
                   ],
-                  "defaults": {
-                    "decimals": null,
-                    "mappings": [],
-                    "max": 100,
-                    "min": 0,
-                    "thresholds": [
-                      {
-                        "color": "green",
-                        "value": null
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ],
-                    "unit": "s"
-                  },
-                  "override": {},
                   "values": false
                 },
-                "orientation": "auto",
                 "showThresholdLabels": false,
                 "showThresholdMarkers": true
               },
-              "pluginVersion": "6.3.5",
+              "pluginVersion": "7.0.1",
               "targets": [
                 {
                   "expr": "\tsum (irate(cassandra_client_request_latency_seconds_sum{cassandra_cluster=~\"$cluster\",operation=\"write\"}[5m])) by (cassandra_cluster)/\n\tsum(irate(cassandra_client_request_latency_seconds_count{cassandra_cluster=~\"$cluster\",operation=\"write\"}[5m])) by (cassandra_cluster)",
@@ -1678,7 +1942,7 @@ data:
               ],
               "timeFrom": null,
               "timeShift": null,
-              "title": "AVG Write Speed",
+              "title": "AVG Write Latency",
               "type": "gauge"
             },
             {
@@ -1687,6 +1951,12 @@ data:
               "dashLength": 10,
               "dashes": false,
               "datasource": "$datasource",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
               "fill": 1,
               "fillGradient": 0,
               "gridPos": {
@@ -1695,6 +1965,7 @@ data:
                 "x": 8,
                 "y": 15
               },
+              "hiddenSeries": false,
               "id": 52,
               "legend": {
                 "alignAsTable": true,
@@ -1774,6 +2045,7 @@ data:
             },
             {
               "collapsed": true,
+              "datasource": null,
               "gridPos": {
                 "h": 1,
                 "w": 24,
@@ -1788,6 +2060,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -1796,6 +2074,7 @@ data:
                     "x": 0,
                     "y": 22
                   },
+                  "hiddenSeries": false,
                   "id": 2,
                   "legend": {
                     "alignAsTable": true,
@@ -1879,6 +2158,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -1887,6 +2172,7 @@ data:
                     "x": 12,
                     "y": 22
                   },
+                  "hiddenSeries": false,
                   "id": 28,
                   "legend": {
                     "alignAsTable": true,
@@ -1970,6 +2256,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -1978,6 +2270,7 @@ data:
                     "x": 0,
                     "y": 32
                   },
+                  "hiddenSeries": false,
                   "id": 27,
                   "legend": {
                     "alignAsTable": true,
@@ -2061,6 +2354,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2069,6 +2368,7 @@ data:
                     "x": 12,
                     "y": 32
                   },
+                  "hiddenSeries": false,
                   "id": 3,
                   "legend": {
                     "alignAsTable": true,
@@ -2154,6 +2454,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2162,6 +2468,7 @@ data:
                     "x": 0,
                     "y": 42
                   },
+                  "hiddenSeries": false,
                   "id": 8,
                   "legend": {
                     "alignAsTable": true,
@@ -2245,6 +2552,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2253,6 +2566,7 @@ data:
                     "x": 8,
                     "y": 42
                   },
+                  "hiddenSeries": false,
                   "id": 30,
                   "legend": {
                     "alignAsTable": true,
@@ -2336,6 +2650,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2344,6 +2664,7 @@ data:
                     "x": 16,
                     "y": 42
                   },
+                  "hiddenSeries": false,
                   "id": 31,
                   "legend": {
                     "alignAsTable": true,
@@ -2427,6 +2748,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2435,6 +2762,7 @@ data:
                     "x": 0,
                     "y": 50
                   },
+                  "hiddenSeries": false,
                   "id": 35,
                   "legend": {
                     "alignAsTable": true,
@@ -2518,6 +2846,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2526,6 +2860,7 @@ data:
                     "x": 8,
                     "y": 50
                   },
+                  "hiddenSeries": false,
                   "id": 37,
                   "legend": {
                     "alignAsTable": true,
@@ -2609,6 +2944,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2617,6 +2958,7 @@ data:
                     "x": 16,
                     "y": 50
                   },
+                  "hiddenSeries": false,
                   "id": 36,
                   "legend": {
                     "alignAsTable": true,
@@ -2700,6 +3042,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2708,6 +3056,7 @@ data:
                     "x": 0,
                     "y": 58
                   },
+                  "hiddenSeries": false,
                   "id": 29,
                   "legend": {
                     "alignAsTable": true,
@@ -2791,6 +3140,7 @@ data:
             },
             {
               "collapsed": true,
+              "datasource": null,
               "gridPos": {
                 "h": 1,
                 "w": 24,
@@ -2805,6 +3155,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2813,6 +3169,7 @@ data:
                     "x": 0,
                     "y": 23
                   },
+                  "hiddenSeries": false,
                   "id": 62,
                   "legend": {
                     "alignAsTable": true,
@@ -2880,6 +3237,7 @@ data:
                           "type": "fill"
                         }
                       ],
+                      "interval": "",
                       "intervalFactor": 1,
                       "legendFormat": "{{instance}} {{keyspace}} {{table}}",
                       "measurement": "cassandra_ColumnFamily",
@@ -2987,6 +3345,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -2995,6 +3359,7 @@ data:
                     "x": 12,
                     "y": 23
                   },
+                  "hiddenSeries": false,
                   "id": 63,
                   "legend": {
                     "alignAsTable": true,
@@ -3169,6 +3534,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -3177,6 +3548,7 @@ data:
                     "x": 0,
                     "y": 30
                   },
+                  "hiddenSeries": false,
                   "id": 64,
                   "legend": {
                     "alignAsTable": true,
@@ -3351,6 +3723,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -3359,6 +3737,7 @@ data:
                     "x": 12,
                     "y": 30
                   },
+                  "hiddenSeries": false,
                   "id": 65,
                   "legend": {
                     "alignAsTable": true,
@@ -3533,6 +3912,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -3541,6 +3926,7 @@ data:
                     "x": 0,
                     "y": 37
                   },
+                  "hiddenSeries": false,
                   "id": 66,
                   "legend": {
                     "alignAsTable": true,
@@ -3715,6 +4101,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -3723,6 +4115,7 @@ data:
                     "x": 12,
                     "y": 37
                   },
+                  "hiddenSeries": false,
                   "id": 67,
                   "legend": {
                     "alignAsTable": true,
@@ -3897,6 +4290,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -3905,6 +4304,7 @@ data:
                     "x": 0,
                     "y": 44
                   },
+                  "hiddenSeries": false,
                   "id": 68,
                   "legend": {
                     "alignAsTable": true,
@@ -4079,6 +4479,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4087,6 +4493,7 @@ data:
                     "x": 12,
                     "y": 44
                   },
+                  "hiddenSeries": false,
                   "id": 69,
                   "legend": {
                     "alignAsTable": true,
@@ -4261,6 +4668,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4269,6 +4682,7 @@ data:
                     "x": 0,
                     "y": 51
                   },
+                  "hiddenSeries": false,
                   "id": 70,
                   "legend": {
                     "alignAsTable": true,
@@ -4443,6 +4857,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4451,6 +4871,7 @@ data:
                     "x": 12,
                     "y": 51
                   },
+                  "hiddenSeries": false,
                   "id": 71,
                   "legend": {
                     "alignAsTable": true,
@@ -4625,6 +5046,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4633,6 +5060,7 @@ data:
                     "x": 0,
                     "y": 58
                   },
+                  "hiddenSeries": false,
                   "id": 72,
                   "legend": {
                     "alignAsTable": true,
@@ -4807,6 +5235,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4815,6 +5249,7 @@ data:
                     "x": 12,
                     "y": 58
                   },
+                  "hiddenSeries": false,
                   "id": 73,
                   "legend": {
                     "alignAsTable": true,
@@ -4989,6 +5424,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -4997,6 +5438,7 @@ data:
                     "x": 0,
                     "y": 65
                   },
+                  "hiddenSeries": false,
                   "id": 76,
                   "legend": {
                     "alignAsTable": true,
@@ -5171,6 +5613,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5179,6 +5627,7 @@ data:
                     "x": 12,
                     "y": 65
                   },
+                  "hiddenSeries": false,
                   "id": 75,
                   "legend": {
                     "alignAsTable": true,
@@ -5353,6 +5802,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5361,6 +5816,7 @@ data:
                     "x": 0,
                     "y": 72
                   },
+                  "hiddenSeries": false,
                   "id": 77,
                   "legend": {
                     "alignAsTable": true,
@@ -5535,6 +5991,7 @@ data:
             },
             {
               "collapsed": true,
+              "datasource": null,
               "gridPos": {
                 "h": 1,
                 "w": 24,
@@ -5549,6 +6006,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5557,6 +6020,7 @@ data:
                     "x": 0,
                     "y": 24
                   },
+                  "hiddenSeries": false,
                   "id": 45,
                   "legend": {
                     "alignAsTable": true,
@@ -5640,6 +6104,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5648,6 +6118,7 @@ data:
                     "x": 12,
                     "y": 24
                   },
+                  "hiddenSeries": false,
                   "id": 48,
                   "legend": {
                     "alignAsTable": true,
@@ -5731,6 +6202,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5739,6 +6216,7 @@ data:
                     "x": 0,
                     "y": 32
                   },
+                  "hiddenSeries": false,
                   "id": 49,
                   "legend": {
                     "alignAsTable": true,
@@ -5822,6 +6300,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -5830,6 +6314,7 @@ data:
                     "x": 12,
                     "y": 32
                   },
+                  "hiddenSeries": false,
                   "id": 50,
                   "legend": {
                     "alignAsTable": true,
@@ -5913,6 +6398,12 @@ data:
                   "dashLength": 10,
                   "dashes": false,
                   "datasource": "$datasource",
+                  "fieldConfig": {
+                    "defaults": {
+                      "custom": {}
+                    },
+                    "overrides": []
+                  },
                   "fill": 1,
                   "fillGradient": 0,
                   "gridPos": {
@@ -6003,14 +6494,15 @@ data:
               "type": "row"
             }
           ],
-          "refresh": "10s",
-          "schemaVersion": 19,
+          "refresh": "",
+          "schemaVersion": 25,
           "style": "dark",
           "tags": [],
           "templating": {
             "list": [
               {
                 "current": {
+                  "selected": false,
                   "text": "Prometheus",
                   "value": "Prometheus"
                 },
@@ -6049,9 +6541,10 @@ data:
               {
                 "allValue": null,
                 "current": {
-                  "text": "cassandra",
+                  "selected": true,
+                  "text": "All",
                   "value": [
-                    "cassandra"
+                    "$__all"
                   ]
                 },
                 "datasource": "$datasource",
@@ -6076,8 +6569,11 @@ data:
               {
                 "allValue": null,
                 "current": {
+                  "selected": true,
                   "text": "All",
-                  "value": "$__all"
+                  "value": [
+                    "$__all"
+                  ]
                 },
                 "datasource": "$datasource",
                 "definition": "label_values($filter{cassandra_cluster=~\"$cluster\"}, cassandra_datacenter)",
@@ -6101,8 +6597,11 @@ data:
               {
                 "allValue": null,
                 "current": {
+                  "selected": true,
                   "text": "All",
-                  "value": "$__all"
+                  "value": [
+                    "$__all"
+                  ]
                 },
                 "datasource": "$datasource",
                 "definition": "label_values($filter{cassandra_cluster=~\"$cluster\", cassandra_datacenter=~\"$dc\"}, cassandra_rack)",
@@ -6126,8 +6625,11 @@ data:
               {
                 "allValue": null,
                 "current": {
+                  "selected": true,
                   "text": "All",
-                  "value": "$__all"
+                  "value": [
+                    "$__all"
+                  ]
                 },
                 "datasource": "$datasource",
                 "definition": "label_values($filter{cassandra_cluster=~\"$cluster\", cassandra_datacenter=~\"$dc\", cassandra_rack=~\"$rack\"}, instance)",
@@ -6151,10 +6653,9 @@ data:
               {
                 "allValue": null,
                 "current": {
-                  "text": "pns_bac_integ",
-                  "value": [
-                    "pns_bac_integ"
-                  ]
+                  "selected": false,
+                  "text": "All",
+                  "value": "$__all"
                 },
                 "datasource": "$datasource",
                 "definition": "label_values($filter{cassandra_cluster=~\"$cluster\", cassandra_datacenter=~\"$dc\", cassandra_rack=~\"$rack\", instance=~\"$host\"}, keyspace)",
@@ -6178,8 +6679,11 @@ data:
               {
                 "allValue": null,
                 "current": {
+                  "selected": true,
                   "text": "All",
-                  "value": "$__all"
+                  "value": [
+                    "$__all"
+                  ]
                 },
                 "datasource": "$datasource",
                 "definition": "label_values($filter{cassandra_cluster=~\"$cluster\", cassandra_datacenter=~\"$dc\", cassandra_rack=~\"$rack\", instance=~\"$host\", keyspace=~\"$keyspace\"}, table)",
@@ -6203,12 +6707,11 @@ data:
             ]
           },
           "time": {
-            "from": "now-5m",
+            "from": "now-1h",
             "to": "now"
           },
           "timepicker": {
             "refresh_intervals": [
-              "5s",
               "10s",
               "30s",
               "1m",
@@ -6234,7 +6737,6 @@ data:
           "timezone": "",
           "title": "Cassandra Dashboard",
           "uid": "yyuee_vZkddf",
-          "version": 1
+          "version": 3
         }
-
 
