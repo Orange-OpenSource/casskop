@@ -59,7 +59,7 @@ const topologyChangeRefused = "The Operator has refused the Topology change. "
 func (metric gaugeVec) set(phase api.ClusterStateInfo, clusterName string) {
 	metric.With(
 		prometheus.Labels{"cluster": clusterName},
-	).Set(phase.Id)
+	).Set(phase.ID)
 }
 
 func preventClusterDeletion(cc *api.CassandraCluster, value bool) {

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/go-logr/logr"
@@ -230,9 +230,21 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	// based on storage location, be sure that respective secret entry is there so we error out asap
+	// Based on storage location, be sure that respective secret entry is there so we error out asap
 	if err := validateBackupSecret(secret, cb, reqLogger); err != nil {
 		return reconcile.Result{}, err
+	}
+
+	// Validate the duration if it's set
+	if cb.Spec.Duration != "" {
+		if _, err := time.ParseDuration(cb.Spec.Duration); err != nil {
+			r.recorder.Event(
+				cb,
+				corev1.EventTypeWarning,
+				"BackupFailedDurationParseError",
+				fmt.Sprintf("Duration %s can't be parsed", cb.Spec.Duration))
+			return reconcile.Result{}, nil
+		}
 	}
 
 	// Get CassandraCluster
@@ -404,14 +416,6 @@ type backupClient struct {
 	client client.Client
 }
 
-func backupDuration(duration string) *time.Time {
-	if parsedDuration, err := time.ParseDuration(duration); err == nil {
-		backupDuration := time.Now().Add(parsedDuration)
-		return &backupDuration
-	}
-	return nil
-}
-
 func backup(
 	sidecarClient *sidecar.Client,
 	instance *backupClient,
@@ -423,7 +427,7 @@ func backup(
 		Type_:                 "backup",
 		StorageLocation:       instance.backup.Spec.StorageLocation,
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
-		Duration:              backupDuration(instance.backup.Spec.Duration),
+		Duration:              instance.backup.Spec.Duration,
 		Bandwidth:             instance.backup.Spec.Bandwidth,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,

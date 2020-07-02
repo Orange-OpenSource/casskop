@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )

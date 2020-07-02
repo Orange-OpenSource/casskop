@@ -6,7 +6,7 @@ require (
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/antihax/optional v1.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.3.3
-	github.com/cscetbon/cassandrasidecar-go-client v0.0.0-20200618001120-2d61b2aeb9f9
+	github.com/cscetbon/cassandra-sidecar-go-client v0.0.0-20200702131005-fe88e9ecc252
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
