@@ -421,7 +421,7 @@ func backup(
 	backupRequest := csd.BackupOperationRequest{
 		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
 		Type_:                 "backup",
-		StorageLocation:       fmt.Sprintf("%s/%s/dcx/nodex", instance.backup.Spec.StorageLocation, instance.backup.Spec.CassandraCluster),
+		StorageLocation:       instance.backup.Spec.StorageLocation,
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
 		Duration:              backupDuration(instance.backup.Spec.Duration),
 		Bandwidth:             instance.backup.Spec.Bandwidth,
