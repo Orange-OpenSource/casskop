@@ -27,7 +27,7 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha4"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
 	DefaultLivenessInitialDelaySeconds int32 = 120
@@ -64,6 +64,7 @@ const (
 	DefaultUserID int64 = 999
 )
 
+// ClusterStateInfo describe a cluster state
 type ClusterStateInfo struct {
 	Id   float64
 	Name string
