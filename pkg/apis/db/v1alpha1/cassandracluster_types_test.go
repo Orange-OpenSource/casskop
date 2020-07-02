@@ -93,7 +93,7 @@ func TestGetNumTokensPerRacks_NoTopo(t *testing.T) {
 
 	cc := helperInitCluster(t, "cassandracluster-NoTopo.yaml")
 
-	nodesPerRack := cc.NumTokensPerRacks("dc-rack1")
+	nodesPerRack := cc.GetNumTokensPerRacks("dc-rack1")
 
 	assert.Equal(int32(256), nodesPerRack)
 
@@ -103,16 +103,16 @@ func TestGetNumTokensPerRacks_2DC(t *testing.T) {
 
 	cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
-	numTokens := cc.NumTokensPerRacks("online-rack1")
+	numTokens := cc.GetNumTokensPerRacks("online-rack1")
 	assert.Equal(int32(200), numTokens)
 
-	numTokens = cc.NumTokensPerRacks("online-rack2")
+	numTokens = cc.GetNumTokensPerRacks("online-rack2")
 	assert.Equal(int32(200), numTokens)
 
-	numTokens = cc.NumTokensPerRacks("stats-rack1")
+	numTokens = cc.GetNumTokensPerRacks("stats-rack1")
 	assert.Equal(int32(32), numTokens)
 
-	numTokens = cc.NumTokensPerRacks("toto-toto")
+	numTokens = cc.GetNumTokensPerRacks("toto-toto")
 	assert.Equal(int32(256), numTokens)
 
 }
@@ -366,7 +366,7 @@ func TestInitSeedList_1DC(t *testing.T) {
 		"cassandra-demo-online-rack1-0.cassandra-demo.ns",
 		"cassandra-demo-online-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-online-rack2-0.cassandra-demo.ns",
-	}, ","), cc.SeedList(&cc.Status.SeedList))
+	}, ","), cc.GetSeedList(&cc.Status.SeedList))
 
 }
 
@@ -401,7 +401,7 @@ func TestInitSeedList_2DC5R(t *testing.T) {
 
 	assert.Equal(seeds, cc.Status.SeedList)
 
-	assert.Equal(strings.Join(seeds, ","), cc.SeedList(&cc.Status.SeedList))
+	assert.Equal(strings.Join(seeds, ","), cc.GetSeedList(&cc.Status.SeedList))
 }
 
 func TestInitSeedList_1DC1R1P(t *testing.T) {
@@ -422,7 +422,7 @@ func TestInitSeedList_1DC1R1P(t *testing.T) {
 			"cassandra-demo-online-rack1-0.cassandra-demo.ns",
 			"cassandra-demo-online-rack2-0.cassandra-demo.ns",
 		}, ","),
-		cc.SeedList(&cc.Status.SeedList))
+		cc.GetSeedList(&cc.Status.SeedList))
 }
 
 func TestIsPodInSeedList(t *testing.T) {
@@ -441,7 +441,7 @@ func TestIsPodInSeedList(t *testing.T) {
 			"cassandra-demo-online-rack1-0.cassandra-demo.ns",
 			"cassandra-demo-online-rack2-0.cassandra-demo.ns",
 		}, ","),
-		cc.SeedList(&cc.Status.SeedList))
+		cc.GetSeedList(&cc.Status.SeedList))
 
 	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack1-0.cassandra-demo.ns"))
 	assert.Equal(true, cc.IsPodInSeedList("cassandra-demo-online-rack2-0.cassandra-demo.ns"))

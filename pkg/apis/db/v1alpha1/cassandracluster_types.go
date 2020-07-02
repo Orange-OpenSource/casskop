@@ -52,9 +52,9 @@ const (
 
 	DefaultTerminationGracePeriodSeconds = 1800
 
-	//DefaultDelayWait: wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
 	DefaultResyncPeriod = 10
-	DefaultDelayWait    = 2 * DefaultResyncPeriod
+	//DefaultDelayWait wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
+	DefaultDelayWait = 2 * DefaultResyncPeriod
 
 	//DefaultDelayWaitForDecommission is the time to wait for the decommission to happen on the Pod
 	//The operator will start again if it is not the case
@@ -66,7 +66,7 @@ const (
 
 // ClusterStateInfo describe a cluster state
 type ClusterStateInfo struct {
-	Id   float64
+	ID   float64
 	Name string
 }
 

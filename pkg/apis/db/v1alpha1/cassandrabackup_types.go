@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

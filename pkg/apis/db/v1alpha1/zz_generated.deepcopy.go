@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	cassandrasidecar "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	cassandrasidecar "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )

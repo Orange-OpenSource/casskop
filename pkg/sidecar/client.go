@@ -9,7 +9,8 @@ import (
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/antihax/optional"
-	csd "github.com/cscetbon/cassandrasidecar-go-client/pkg/cassandrasidecar"
+
+	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
