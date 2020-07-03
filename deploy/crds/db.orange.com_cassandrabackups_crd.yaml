@@ -41,18 +41,7 @@ spec:
             description: CassandraBackupSpec defines the desired state of CassandraBackup
             properties:
               bandwidth:
-                description: bandwidth used during uploads
-                properties:
-                  unit:
-                    description: unit of 'data bandwidth'
-                    type: string
-                  value:
-                    description: quantified value of bandwidth, an integer
-                    format: int32
-                    type: integer
-                required:
-                - unit
-                type: object
+                type: string
               cassandracluster:
                 type: string
               concurrentConnections:

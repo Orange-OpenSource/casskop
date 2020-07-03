@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,13 +27,13 @@ type CassandraBackupSpec struct {
 	// The uri for the backup target location e.g. s3 bucket, filepath
 	StorageLocation string `json:"storageLocation"`
 	// The snapshot tag for the backup
-	Schedule              string        `json:"schedule,omitempty"`
-	SnapshotTag           string        `json:"snapshotTag"`
-	Duration              string        `json:"duration,omitempty"`
-	Bandwidth             *csd.DataRate `json:"bandwidth,omitempty"`
-	ConcurrentConnections int32         `json:"concurrentConnections,omitempty"`
-	Entities              string        `json:"entities,omitempty"`
-	Secret                string        `json:"secret,omitempty"`
+	Schedule              string `json:"schedule,omitempty"`
+	SnapshotTag           string `json:"snapshotTag"`
+	Duration              string `json:"duration,omitempty"`
+	Bandwidth             string `json:"bandwidth,omitempty"`
+	ConcurrentConnections int32  `json:"concurrentConnections,omitempty"`
+	Entities              string `json:"entities,omitempty"`
+	Secret                string `json:"secret,omitempty"`
 }
 
 type BackupState string

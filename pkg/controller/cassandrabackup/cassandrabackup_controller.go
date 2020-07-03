@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
-	csd "github.com/cscetbon/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csd "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/go-logr/logr"
@@ -37,6 +39,8 @@ import (
 )
 
 const annotationLastApplied string = "cassandrabackups.db.orange.com/last-applied-configuration"
+
+var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
 var log = logf.Log.WithName("controller_cassandrabackup")
 
@@ -247,7 +251,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		}
 	}
 
-	// Get CassandraCluster
+	// Get CassandraCluster object
 	cc := &api.CassandraCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cb.Spec.CassandraCluster, Namespace: cb.Namespace}, cc); err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -338,9 +342,9 @@ func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc 
 	chosenPod := pods.Items[random.Intn(len(pods.Items))]
 	sidecarClient := sidecar.NewSidecarClient(k8s.PodHostname(chosenPod), &sidecar.DefaultSidecarClientOptions)
 
-	bc := &backupClient{backup: instance, client: r.client}
+	client := &backupClient{backup: instance, client: r.client}
 
-	go backup(sidecarClient, bc, reqLogger, r.recorder)
+	go backup(sidecarClient, client, reqLogger, r.recorder)
 
 	return nil
 }
@@ -416,11 +420,39 @@ type backupClient struct {
 	client client.Client
 }
 
+func parseBandwidth(value string) (*csd.DataRate, error) {
+	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
+
+	if bandwidth == "" {
+		return nil, nil
+	}
+
+	matches := regexBandwidthSupportedFormat.FindStringSubmatch(bandwidth)
+	if matches == nil {
+		return nil, fmt.Errorf("Format of %s not supported", value)
+	}
+	dataValue, _ := strconv.Atoi(matches[1])
+	return &csd.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil
+}
+
 func backup(
 	sidecarClient *sidecar.Client,
 	instance *backupClient,
 	logging logr.Logger,
 	recorder record.EventRecorder) {
+
+	bandwidth := strings.Replace(instance.backup.Spec.Bandwidth, " ", "", -1)
+	bandwidthDataRate, err := parseBandwidth(bandwidth)
+
+	if err != nil {
+		recorder.Event(instance.backup,
+			corev1.EventTypeNormal,
+			"BackupNotInitiated",
+			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s can't be initiated with bandwidth %s",
+				instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
+				instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag, bandwidth))
+		return
+	}
 
 	backupRequest := csd.BackupOperationRequest{
 		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
@@ -428,7 +460,7 @@ func backup(
 		StorageLocation:       instance.backup.Spec.StorageLocation,
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
 		Duration:              instance.backup.Spec.Duration,
-		Bandwidth:             instance.backup.Spec.Bandwidth,
+		Bandwidth:             bandwidthDataRate,
 		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
 		Entities:              instance.backup.Spec.Entities,
 		K8sSecretName:         instance.backup.Spec.Secret,
