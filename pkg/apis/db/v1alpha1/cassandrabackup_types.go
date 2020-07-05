@@ -57,21 +57,6 @@ type CassandraBackupStatus struct {
 	Progress string `json:"progress"`
 }
 
-func (status *CassandraBackupStatus) SetBackupStatusState(state string) {
-	switch state {
-	case string(BackupPending):
-		status.State = BackupPending
-	case string(BackupRunning):
-		status.State = BackupRunning
-	case string(BackupCompleted):
-		status.State = BackupCompleted
-	case string(BackupCanceled):
-		status.State = BackupCanceled
-	case string(BackupFailed):
-		status.State = BackupFailed
-	}
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CassandraBackup is the Schema for the cassandrabackups API
