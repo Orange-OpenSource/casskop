@@ -15,11 +15,9 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/sidecar"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,7 +134,7 @@ func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[strin
 		clientOpt,
 	}
 
-	pl := &v1.PodList{}
+	pl := &corev1.PodList{}
 	return pl, r.client.List(context.TODO(), pl, opt...)
 }
 
@@ -361,7 +359,7 @@ func existingNotScheduledSnapshot(c client.Client, instance *api.CassandraBackup
 	return false, nil
 }
 
-func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBackup, logger *logrus.Entry) error {
+func validateBackupSecret(secret *corev1.Secret, backup *api.CassandraBackup, logger *logrus.Entry) error {
 	if backup.IsGcpBackup() {
 		if len(secret.Data["gcp"]) == 0 {
 			return fmt.Errorf("gcp key for secret %s is not set", secret.Name)
@@ -406,7 +404,7 @@ func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBacku
 }
 
 type backupClient struct {
-	backup *v1alpha1.CassandraBackup
+	backup *api.CassandraBackup
 	client client.Client
 }
 
@@ -475,7 +473,7 @@ func backup(
 			} else {
 				instance.updateStatus(podHostname, r, logging)
 
-				if r.State == "FAILED" {
+				if api.BackupState(r.State) == api.BackupFailed {
 					recorder.Event(instance.backup,
 						corev1.EventTypeWarning,
 						"BackupFailed",
@@ -483,7 +481,7 @@ func backup(
 					break
 				}
 
-				if r.State == "COMPLETED" {
+				if api.BackupState(r.State) == api.BackupCompleted {
 					recorder.Event(instance.backup,
 						corev1.EventTypeNormal,
 						"BackupCompleted",
@@ -498,20 +496,24 @@ func backup(
 func (si *backupClient) updateStatus(podHostname string, r *csd.BackupOperationResponse,
 	logging *logrus.Entry) {
 
-	status := &api.CassandraBackupStatus{Node: podHostname}
-	status.Progress = fmt.Sprintf("%v%%", strconv.Itoa(int(r.Progress*100)))
-	status.SetBackupStatusState(r.State)
+	status := &api.CassandraBackupStatus{
+		Node:     podHostname,
+		Progress: fmt.Sprintf("%v%%", strconv.Itoa(int(r.Progress*100))),
+		State:    api.BackupState(r.State),
+	}
 
 	si.backup.Status = status
 
 	jsonPatch := fmt.Sprintf(`{"status":{"node": "%s", "state": "%s", "progress": "%s"}}`,
 		status.Node, status.State, status.Progress)
-	if err := si.client.Patch(context.Background(),
-		&api.CassandraBackup{ObjectMeta: metav1.ObjectMeta{
+	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
+	objToPatch := &api.CassandraBackup{
+		ObjectMeta: metav1.ObjectMeta{
 			Namespace: si.backup.Namespace,
 			Name:      si.backup.Name,
-		}},
-		client.RawPatch(types.MergePatchType, []byte(jsonPatch))); err != nil {
+		}}
+
+	if err := si.client.Patch(context.Background(), objToPatch, patchToApply); err != nil {
 
 		logging.Error(err, "Error updating CassandraBackup backup")
 	}
