@@ -108,6 +108,8 @@ func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
 	lastcb.ResourceVersion = ""
 	lastcb.Status = nil
 	lastcb.Finalizers = nil
+	lastcb.ObjectMeta = metav1.ObjectMeta{Name: lastcb.Name, Namespace: lastcb.Namespace,
+		CreationTimestamp: lastcb.CreationTimestamp}
 
 	lastApplied, err := json.Marshal(lastcb)
 	if err != nil {
