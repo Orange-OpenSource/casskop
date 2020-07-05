@@ -13,7 +13,6 @@ import (
 	csd "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
-	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -23,6 +22,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -125,7 +125,7 @@ type ReconcileCassandraBackup struct {
 	scheduler Scheduler
 }
 
-func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[string]string) (*v1.PodList, error) {
+func (r *ReconcileCassandraBackup) listPods(namespace string, selector map[string]string) (*corev1.PodList, error) {
 
 	clientOpt := &client.ListOptions{
 		Namespace:     namespace,
@@ -150,7 +150,7 @@ func (r *ReconcileCassandraBackup) setFinalizer(cb *api.CassandraBackup, value b
 // Reconcile reads that state of the cluster for a CassandraBackup object and makes changes based on the state read
 // and what is in the CassandraBackup.Spec
 func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
 	reqLogger.Info("Reconciling CassandraBackup")
 
 	// Fetch the CassandraBackup backup
@@ -188,12 +188,12 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	}
 
 	instanceChanged := true
-	var lastAppliedConfiguration string
 
 	if lac, _ := cb.ComputeLastAppliedConfiguration(); lac == cb.Annotations[annotationLastApplied] {
 		instanceChanged = false
 	} else {
-		lastAppliedConfiguration = lac
+		cb.Annotations[annotationLastApplied] = lac
+		defer r.client.Update(context.TODO(), cb)
 	}
 
 	if !cb.IsScheduled() && cb.Status != nil {
@@ -290,9 +290,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 				}
 
 				cb.Spec.Schedule = oldCassandraBackup.Spec.Schedule
-				lastAppliedConfiguration, _ = cb.ComputeLastAppliedConfiguration()
-				cb.Annotations[annotationLastApplied] = lastAppliedConfiguration
-				r.client.Update(context.TODO(), cb)
+				cb.Annotations[annotationLastApplied], _ = cb.ComputeLastAppliedConfiguration()
 				return reconcile.Result{}, err
 			}
 
@@ -301,9 +299,8 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		}
 
 		if skip, err := r.scheduler.AddOrUpdate(cb,
-			func() {
-				r.backupData(cb, cc, reqLogger)
-			}, &r.recorder); err != nil {
+			func() { r.backupData(cb, cc, reqLogger) },
+			&r.recorder); err != nil {
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
@@ -313,26 +310,18 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			return reconcile.Result{}, nil
 		}
 
-		cb.Annotations[annotationLastApplied] = lastAppliedConfiguration
-
-		// Add Finalizer
 		r.setFinalizer(cb, true)
+	}
 
-		err := r.client.Update(context.TODO(), cb)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{"backup": request.NamespacedName, "cluster": cc.Name,
-				"err": err}).Error("Issue when updating CassandraBackup")
-			return reconcile.Result{}, err
-		}
+	if cb.IsScheduled() {
 		return reconcile.Result{}, nil
-
 	}
 
 	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)
 }
 
 func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
-	reqLogger logr.Logger) error {
+	reqLogger *logrus.Entry) error {
 
 	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
 	if err != nil {
@@ -371,7 +360,7 @@ func existingNotScheduledSnapshot(c client.Client, instance *api.CassandraBackup
 	return false, nil
 }
 
-func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBackup, logger logr.Logger) error {
+func validateBackupSecret(secret *corev1.Secret, backup *v1alpha1.CassandraBackup, logger *logrus.Entry) error {
 	if backup.IsGcpBackup() {
 		if len(secret.Data["gcp"]) == 0 {
 			return fmt.Errorf("gcp key for secret %s is not set", secret.Name)
@@ -438,7 +427,7 @@ func parseBandwidth(value string) (*csd.DataRate, error) {
 func backup(
 	sidecarClient *sidecar.Client,
 	instance *backupClient,
-	logging logr.Logger,
+	logging *logrus.Entry,
 	recorder record.EventRecorder) {
 
 	bandwidth := strings.Replace(instance.backup.Spec.Bandwidth, " ", "", -1)
@@ -455,7 +444,6 @@ func backup(
 	}
 
 	backupRequest := csd.BackupOperationRequest{
-		// TODO Specify only the bucket name when the sidecar has been updated to remove that requirement
 		Type_:                 "backup",
 		StorageLocation:       instance.backup.Spec.StorageLocation,
 		SnapshotTag:           instance.backup.Spec.SnapshotTag,
@@ -507,7 +495,7 @@ func backup(
 }
 
 func (si *backupClient) updateStatus(podHostname string, r *csd.BackupOperationResponse,
-	logging logr.Logger) {
+	logging *logrus.Entry) {
 
 	status := &api.CassandraBackupStatus{Node: podHostname}
 	status.Progress = fmt.Sprintf("%v%%", strconv.Itoa(int(r.Progress*100)))
