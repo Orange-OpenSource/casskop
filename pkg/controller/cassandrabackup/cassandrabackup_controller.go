@@ -310,6 +310,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			return reconcile.Result{}, nil
 		}
 
+		// Add Finalizer
 		r.setFinalizer(cb, true)
 	}
 
