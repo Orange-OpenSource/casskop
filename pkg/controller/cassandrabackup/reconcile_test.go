@@ -29,6 +29,8 @@ metadata:
   namespace: default
   labels:
     app: cassandra
+  annotations:
+    a1: v1
 spec:
   cassandracluster: test-cluster-dc1
   cluster: test-cluster
