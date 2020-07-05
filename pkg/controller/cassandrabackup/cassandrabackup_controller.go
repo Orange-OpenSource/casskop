@@ -503,7 +503,15 @@ func (si *backupClient) updateStatus(podHostname string, r *csd.BackupOperationR
 
 	si.backup.Status = status
 
-	if err := si.client.Update(context.TODO(), si.backup); err != nil {
+	jsonPatch := fmt.Sprintf(`{"status":{"node": "%s", "state": "%s", "progress": "%s"}}`,
+		status.Node, status.State, status.Progress)
+	if err := si.client.Patch(context.Background(),
+		&api.CassandraBackup{ObjectMeta: metav1.ObjectMeta{
+			Namespace: si.backup.Namespace,
+			Name:      si.backup.Name,
+		}},
+		client.RawPatch(types.MergePatchType, []byte(jsonPatch))); err != nil {
+
 		logging.Error(err, "Error updating CassandraBackup backup")
 	}
 }
