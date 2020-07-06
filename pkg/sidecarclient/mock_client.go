@@ -2,7 +2,7 @@ package sidecarclient
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
-	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"
 	corev1 "k8s.io/api/core/v1"

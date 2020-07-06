@@ -4,7 +4,7 @@ import (
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/Orange-OpenSource/casskop/pkg/sidecarclient"
-	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
