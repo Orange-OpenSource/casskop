@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/Orange-OpenSource/casskop/pkg/util"
-	csapi "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

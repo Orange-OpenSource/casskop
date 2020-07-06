@@ -6,7 +6,6 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/sidecarclient"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
 )
 
 func TestPerformRestore(t *testing.T) {
@@ -24,12 +23,8 @@ func TestPerformRestore(t *testing.T) {
 			ConcurrentConnection: &concurrentConnection,
 			NoDeleteTruncates: true,
 			RestorationStrategyType: "HARDLINKS",
-			CassandraClusterRef: &corev1.LocalObjectReference{
-				Name: "cassandra-bgl",
-			},
-			Backup: &corev1.LocalObjectReference{
-				Name: "gcp_backup",
-			},
+			CassandraClusterRef: "cassandra-bgl",
+			BackupRef:  "gcp_backup",
 		},
 	}
 
