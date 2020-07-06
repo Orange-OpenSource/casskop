@@ -65,43 +65,39 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if err != nil {
 				return false
 			}
-			if restore, ok := object.(*api.CassandraRestore); ok {
-				reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-				cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
-				if cond != nil {
-					reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
-					return false
-				}
-
-				return true
+			restore, _ := object.(*api.CassandraRestore)
+			reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
+			cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
+			if cond != nil {
+				reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
+				return false
 			}
-			return false
+
+			return true
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			object, err := meta.Accessor(e.ObjectNew)
 			if err != nil {
 				return false
 			}
-			if restore, ok := object.(*api.CassandraRestore); ok {
-				reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-				//old := e.ObjectOld.(*api.CassandraRestore)
-				new := e.ObjectNew.(*api.CassandraRestore)
-				if new.Status.Condition == nil {
-					return false
-				}
-				if new.Status.Condition.Type.IsCompleted() {
-					reqLogger.Info("Restore is completed, skipping.")
-					return false
-				}
+			restore, _ := object.(*api.CassandraRestore)
 
-				if new.Status.Condition.Type.IsInError() {
-					reqLogger.Info("Restore is in error state, skipping.")
-					return false
-				}
-
-				return true
+			reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
+			//old := e.ObjectOld.(*api.CassandraRestore)
+			new := e.ObjectNew.(*api.CassandraRestore)
+			if new.Status.Condition == nil {
+				return false
 			}
-			return false
+			if new.Status.Condition.Type.IsCompleted() {
+				reqLogger.Info("Restore is completed, skipping.")
+				return false
+			}
+
+			if new.Status.Condition.Type.IsInError() {
+				reqLogger.Info("Restore is in error state, skipping.")
+				return false
+			}
+			return true
 		},
 	}
 
@@ -111,21 +107,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to secondary resource Pods and requeue the owner CassandraRestart
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &api.CassandraRestore{},
-	})
-
-	// Watch for changes to secondary resource CassandraBackup and requeue the owner CassandraRestart
-	err = c.Watch(&source.Kind{Type: &api.CassandraBackup{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &api.CassandraRestore{},
-	})
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
