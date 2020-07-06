@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,6 +29,8 @@ metadata:
   namespace: default
   labels:
     app: cassandra
+  annotations:
+    a1: v1
 spec:
   cassandracluster: test-cluster-dc1
   cluster: test-cluster
@@ -137,7 +139,8 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 	// awsregion must be set when both awssecretaccesskey and awsaccesskeyid are set
 	cb := helperInitCassandraBackup(cbyaml)
 
-	var reqLogger = logf.Log.WithName("controller_cassandrabackup")
+	reqLogger := logrus.WithFields(logrus.Fields{"Name": "controller_cassandrabackup"})
+
 	secret := &corev1.Secret{
 		Data: map[string][]byte{
 			"awssecretaccesskey": []byte("a secret"),

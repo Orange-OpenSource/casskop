@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	csd "github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,13 +27,13 @@ type CassandraBackupSpec struct {
 	// The uri for the backup target location e.g. s3 bucket, filepath
 	StorageLocation string `json:"storageLocation"`
 	// The snapshot tag for the backup
-	Schedule              string        `json:"schedule,omitempty"`
-	SnapshotTag           string        `json:"snapshotTag"`
-	Duration              string        `json:"duration,omitempty"`
-	Bandwidth             *csd.DataRate `json:"bandwidth,omitempty"`
-	ConcurrentConnections int32         `json:"concurrentConnections,omitempty"`
-	Entities              string        `json:"entities,omitempty"`
-	Secret                string        `json:"secret,omitempty"`
+	Schedule              string `json:"schedule,omitempty"`
+	SnapshotTag           string `json:"snapshotTag"`
+	Duration              string `json:"duration,omitempty"`
+	Bandwidth             string `json:"bandwidth,omitempty"`
+	ConcurrentConnections int32  `json:"concurrentConnections,omitempty"`
+	Entities              string `json:"entities,omitempty"`
+	Secret                string `json:"secret,omitempty"`
 }
 
 type BackupState string
@@ -58,21 +57,6 @@ type CassandraBackupStatus struct {
 	Progress string `json:"progress"`
 }
 
-func (status *CassandraBackupStatus) SetBackupStatusState(state string) {
-	switch state {
-	case string(BackupPending):
-		status.State = BackupPending
-	case string(BackupRunning):
-		status.State = BackupRunning
-	case string(BackupCompleted):
-		status.State = BackupCompleted
-	case string(BackupCanceled):
-		status.State = BackupCanceled
-	case string(BackupFailed):
-		status.State = BackupFailed
-	}
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CassandraBackup is the Schema for the cassandrabackups API
@@ -83,8 +67,7 @@ type CassandraBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec CassandraBackupSpec `json:"spec"`
-	// +listType
+	Spec   CassandraBackupSpec    `json:"spec"`
 	Status *CassandraBackupStatus `json:"status,omitempty"`
 }
 
@@ -110,6 +93,8 @@ func (cb *CassandraBackup) ComputeLastAppliedConfiguration() (string, error) {
 	lastcb.ResourceVersion = ""
 	lastcb.Status = nil
 	lastcb.Finalizers = nil
+	lastcb.ObjectMeta = metav1.ObjectMeta{Name: lastcb.Name, Namespace: lastcb.Namespace,
+		CreationTimestamp: lastcb.CreationTimestamp}
 
 	lastApplied, err := json.Marshal(lastcb)
 	if err != nil {

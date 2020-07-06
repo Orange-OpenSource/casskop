@@ -27,7 +27,7 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
+	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha4"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
 	DefaultLivenessInitialDelaySeconds int32 = 120
@@ -52,9 +52,9 @@ const (
 
 	DefaultTerminationGracePeriodSeconds = 1800
 
-	//DefaultDelayWait: wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
 	DefaultResyncPeriod = 10
-	DefaultDelayWait    = 2 * DefaultResyncPeriod
+	//DefaultDelayWait wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
+	DefaultDelayWait = 2 * DefaultResyncPeriod
 
 	//DefaultDelayWaitForDecommission is the time to wait for the decommission to happen on the Pod
 	//The operator will start again if it is not the case
@@ -64,8 +64,9 @@ const (
 	DefaultUserID int64 = 999
 )
 
+// ClusterStateInfo describe a cluster state
 type ClusterStateInfo struct {
-	Id   float64
+	ID   float64
 	Name string
 }
 
@@ -870,6 +871,12 @@ type CassandraClusterSpec struct {
 	// ReadinessSuccessThreshold defines success threshold for the readiness probe of the main
 	// cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 	ReadinessSuccessThreshold *int32 `json:"readinessSuccessThreshold,omitempty"`
+	// When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod.
+	// https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
+	// Optional: Default to false.
+	// +k8s:conversion-gen=false
+	// +optional
+	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
 
 	BackRestSidecar    *BackRestSidecar `json:"backRestSidecar,omitempty"`
 	ServiceAccountName string           `json:"serviceAccountName,omitempty"`

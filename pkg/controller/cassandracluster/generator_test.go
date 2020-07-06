@@ -157,11 +157,13 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	}, sts.Labels)
 
 	assert.Equal("my.custom.annotation", sts.Spec.Template.Annotations["exemple.com/test"])
-	assert.Equal([]v1.Toleration{v1.Toleration{
-		Key:      "my_custom_taint",
-		Operator: v1.TolerationOpExists,
-		Effect:   v1.TaintEffectNoSchedule}},
-		sts.Spec.Template.Spec.Tolerations)
+	assert.Equal([]v1.Toleration{
+		{
+			Key:      "my_custom_taint",
+			Operator: v1.TolerationOpExists,
+			Effect:   v1.TaintEffectNoSchedule,
+		},
+	}, sts.Spec.Template.Spec.Tolerations)
 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
@@ -377,9 +379,9 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 				assert.True(t, volumesContains(append(generateContainerVolumeMount(cc, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
 			case "gc-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "cassandra-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "backrest-sidecar":
 				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
@@ -395,8 +397,8 @@ func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container)
 		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
 	}
 	resourcesRequirements := v1.ResourceRequirements{
-		Limits:   getRequests(resources),
-		Requests: getLimits(resources),
+		Limits:   requests(resources),
+		Requests: limits(resources),
 	}
 
 	for _, container := range containers {
@@ -428,21 +430,37 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 }
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
-	resources := getCassandraResources(cc.Spec)
-	envs := createEnvVarForCassandraContainer(cc, &cc.Status, resources, dcRackName)
+	cassieResources := cassandraResources(cc.Spec)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	assert := assert.New(t)
+
+	envVar := map[string]string{}
+	cassandraMaxHeapSet := false
+
+	for _, env := range bootstrapEnvVar {
+		envVar[env.Name] = env.Value
+		if env.Name == cassandraMaxHeap {
+			cassandraMaxHeapSet = true
+		}
+	}
+
+	assert.True(cassandraMaxHeapSet)
+	assert.Equal(envVar[cassandraMaxHeap], "512M")
+
+	// The cassandra heap should not be set on other containers
+	delete(envVar, cassandraMaxHeap)
+
+	for name, value := range envVar {
+		assert.Equal(value, envVar[name])
+	}
 
 	for _, container := range containers {
-		for _, env := range envs {
-			assert.True(t, envsContains(container.Env, env))
+		if container.Name != cassandraContainerName {
+			for _, env := range container.Env {
+				assert.Contains(envVar, env.Name)
+				assert.Equal(envVar[env.Name], env.Value)
+			}
 		}
 	}
-}
-
-func envsContains(envs []v1.EnvVar, searchedEnv v1.EnvVar) bool {
-	for _, env := range envs {
-		if searchedEnv.Name == env.Name && searchedEnv.Value == env.Value {
-			return true
-		}
-	}
-	return false
 }

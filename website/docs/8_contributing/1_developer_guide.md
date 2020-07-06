@@ -45,7 +45,7 @@ Casskop has been validated with :
 - [docker](docker_tool) version 18.09+.
 - [kubectl](kubectl_tool) version v1.13.3+.
 - [Helm](https://helm.sh/) version v2.12.2.
-- Fork from [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.15.0 : [Operator sdk - forked](https://github.com/erdrix/operator-sdk/tree/v0.15.0-pr137)
+- Fork from [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.18.0 : [Operator sdk - forked](https://github.com/erdrix/operator-sdk/tree/v0.18.0-forked-pr317)
 
 
 ### Install the Operator SDK CLI
@@ -55,7 +55,7 @@ First, checkout and install the operator-sdk CLI:
 ```sh
 $ mkdir -p $GOPATH/src/github.com/operator-framework/
 $ cd $GOPATH/src/github.com/operator-framework/
-git clone -b v0.15.0-pr137 --single-branch git@github.com:erdrix/operator-sdk.git
+git clone -b v0.18.0-forked-pr317 --single-branch git@github.com:erdrix/operator-sdk.git
 $ make tidy
 $ make install
 ```
