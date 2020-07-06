@@ -50,7 +50,7 @@ Then the chart itself depending on your installed version of Helm:
 ```bash
 # You have to create the namespace before executing following command
 kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-helm install casskop --namespace=cassandra orange-incubator/casskop
+helm install casskop --namespace=cassandra orange-incubator/cassandra-operator
 ```
 
 </TabItem>
@@ -64,13 +64,13 @@ kubectl create -f tiller-clusterrolebinding.yaml
 helm init --service-account tiller --upgrade
 
 # Deploy operator
-helm install --name=casskop --namespace=cassandra orange-incubator/casskop
+helm install --name=casskop --namespace=cassandra orange-incubator/cassandra-operator
 ```
 
 </TabItem>
 </Tabs>
 
-You can find more information in the [Customizable install with helm](/casskop/docs/2_setup/3_install/1_customizable_install_with_helm).
+You can find more information in the [Customizable install with helm](/casskop/docs/3_configuration_deployment/1_customizable_install_with_helm).
 
 If you have problem you can see [Troubleshooting](/casskop/docs/7_troubleshooting/1_operations_issues) section
 
@@ -80,7 +80,7 @@ If you have problem you can see [Troubleshooting](/casskop/docs/7_troubleshootin
 
 Before we can deploy our cluster, we need to create a configmap.
 This configmap will enable us to customize Cassandra's behaviour.
-More details on this can be found [here](https://github.com/Orange-OpenSource/casskop/blob/master/documentation/description.md#configuration-override-using-configmap)
+More details on this can be found [here](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)
 
 But for our example we will use the simple example:
 

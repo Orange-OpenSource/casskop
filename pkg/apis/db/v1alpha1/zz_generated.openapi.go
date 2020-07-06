@@ -116,7 +116,12 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackupSpec(ref common.ReferenceCallbac
 					},
 					"bandwidth": {
 						SchemaProps: spec.SchemaProps{
+<<<<<<< HEAD
 							Ref: ref("github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar.DataRate"),
+=======
+							Type:   []string{"string"},
+							Format: "",
+>>>>>>> 845012b76130ee678bf56f69de692e5280d8f223
 						},
 					},
 					"concurrentConnections": {
@@ -141,8 +146,11 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackupSpec(ref common.ReferenceCallbac
 				Required: []string{"cassandracluster", "datacenter", "storageLocation", "snapshotTag"},
 			},
 		},
+<<<<<<< HEAD
 		Dependencies: []string{
 			"github.com/erdrix/cassandrasidecar-go-client/pkg/cassandrasidecar.DataRate"},
+=======
+>>>>>>> 845012b76130ee678bf56f69de692e5280d8f223
 	}
 }
 

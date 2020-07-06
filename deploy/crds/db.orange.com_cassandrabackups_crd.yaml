@@ -1,17 +1,8 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: cassandrabackups.db.orange.com
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .globalStatus
-    description: Restore operation status
-    name: Status
-    type: string
-  - JSONPath: .globalProgress
-    description: Restore operation progress
-    name: Progress
-    type: string
   group: db.orange.com
   names:
     kind: CassandraBackup
@@ -19,91 +10,88 @@ spec:
     plural: cassandrabackups
     singular: cassandrabackup
   scope: Namespaced
-  subresources: {}
-  validation:
-    openAPIV3Schema:
-      description: CassandraBackup is the Schema for the cassandrabackups API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: CassandraBackupSpec defines the desired state of CassandraBackup
-          properties:
-            bandwidth:
-              description: bandwidth used during uploads
-              properties:
-                unit:
-                  description: unit of 'data bandwidth'
-                  type: string
-                value:
-                  description: quantified value of bandwidth, an integer
-                  format: int32
-                  type: integer
-              required:
-              - unit
-              type: object
-            cassandracluster:
-              type: string
-            concurrentConnections:
-              format: int32
-              type: integer
-            datacenter:
-              description: Cassandra DC name to back up. Used to find the pods in
-                the CassandraCluster
-              type: string
-            duration:
-              type: string
-            entities:
-              type: string
-            schedule:
-              description: The snapshot tag for the backup
-              type: string
-            secret:
-              type: string
-            snapshotTag:
-              type: string
-            storageLocation:
-              description: The uri for the backup target location e.g. s3 bucket,
-                filepath
-              type: string
-          required:
-          - cassandracluster
-          - datacenter
-          - snapshotTag
-          - storageLocation
-          type: object
-        status:
-          description: CassandraBackupStatus defines the observed state of CassandraBackup
-          properties:
-            node:
-              description: name of pod / node
-              type: string
-            progress:
-              description: Progress shows the percentage of the operation done
-              type: string
-            state:
-              description: State shows the status of the operation
-              type: string
-          required:
-          - node
-          - progress
-          - state
-          type: object
-      required:
-      - spec
-      type: object
-  version: v1alpha1
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Restore operation status
+      jsonPath: .globalStatus
+      name: Status
+      type: string
+    - description: Restore operation progress
+      jsonPath: .globalProgress
+      name: Progress
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CassandraBackup is the Schema for the cassandrabackups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CassandraBackupSpec defines the desired state of CassandraBackup
+            properties:
+              bandwidth:
+                type: string
+              cassandracluster:
+                type: string
+              concurrentConnections:
+                format: int32
+                type: integer
+              datacenter:
+                description: Cassandra DC name to back up. Used to find the pods in
+                  the CassandraCluster
+                type: string
+              duration:
+                type: string
+              entities:
+                type: string
+              schedule:
+                description: The snapshot tag for the backup
+                type: string
+              secret:
+                type: string
+              snapshotTag:
+                type: string
+              storageLocation:
+                description: The uri for the backup target location e.g. s3 bucket,
+                  filepath
+                type: string
+            required:
+            - cassandracluster
+            - datacenter
+            - snapshotTag
+            - storageLocation
+            type: object
+          status:
+            description: CassandraBackupStatus defines the observed state of CassandraBackup
+            properties:
+              node:
+                description: name of pod / node
+                type: string
+              progress:
+                description: Progress shows the percentage of the operation done
+                type: string
+              state:
+                description: State shows the status of the operation
+                type: string
+            required:
+            - node
+            - progress
+            - state
+            type: object
+        required:
+        - spec
+        type: object
     served: true
     storage: true
+    subresources: {}
