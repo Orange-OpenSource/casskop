@@ -785,7 +785,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					Command: []string{
 						"/bin/bash",
 						"-c",
-						"/etc/cassandra/liveness-probe.sh",
+						"/etc/cassandra/readiness-probe.sh",
 					},
 				},
 			},
