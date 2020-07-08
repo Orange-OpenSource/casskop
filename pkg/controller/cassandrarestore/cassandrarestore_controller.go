@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -37,7 +38,6 @@ const (
 
 var log = logf.Log.WithName("controller_cassandracluster")
 
-//var restoreFinalizer =  "finalizer.cassandrarestores.db.orange.com"
 
 // Add creates a new CassandraRestore Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -116,9 +116,10 @@ var _ reconcile.Reconciler = &ReconcileCassandraRestore{}
 type ReconcileCassandraRestore struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	cc     *api.CassandraCluster
-	client client.Client
-	scheme *runtime.Scheme
+	cc       *api.CassandraCluster
+	recorder record.EventRecorder
+	client   client.Client
+	scheme   *runtime.Scheme
 }
 
 func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -149,21 +150,28 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		// This shouldn't trigger anymore, but leaving it here as a safetybelt
 		if k8sutil.IsMarkedForDeletion(instance.ObjectMeta) {
 			reqLogger.Info("Cluster is gone already, there is nothing we can do")
-			/*if err = r.removeFinalizer(ctx, instance); err != nil {
-				return common.RequeueWithError(reqLogger, "failed to remove finalizer from CassandraRestore", err)
-			}*/
 			return common.Reconciled()
 		}
+		r.recorder.Event(
+			instance,
+			corev1.EventTypeWarning,
+			"CassandraClusterNotFound",
+			fmt.Sprintf("Cassandra Cluster %s to restore not found",instance.Spec.CassandraClusterRef))
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced cluster", err)
 	}
 
 	// Check the referenced Backup exists.
-	backup :=  &api.CassandraBackup{}
+	backup := &api.CassandraBackup{}
 	if backup, err = k8sutil.LookupCassandraBackup(r.client, instance.Spec.BackupRef, instance.Namespace); err != nil {
+		r.recorder.Event(
+			instance,
+			corev1.EventTypeWarning,
+			"BackupNotFound",
+			fmt.Sprintf("Backup %s to restore not found",instance.Spec.BackupRef))
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced backup", err)
 	}
 
-	// Schedule restore on first pod of the cluster.
+	// Require restore on first pod of the cluster.
 	if instance.Status.Condition == nil   {
 		err = r.requiredRestore(instance, cc, backup, reqLogger)
 		if err != nil {
@@ -176,6 +184,13 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(log, err.Error(), err)
 			}
 		}
+		r.recorder.Event(instance,
+			corev1.EventTypeNormal,
+			"RestoreRequired",
+			fmt.Sprintf("Restore task required from backup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation on pod %s",
+				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
+				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
+				instance.Spec.CoordinatorMember))
 	}
 
 	if len(instance.Spec.CoordinatorMember) == 0 {
@@ -187,6 +202,13 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.SidecarNotReady, errorfactory.ResourceNotReady:
+				r.recorder.Event(
+					instance,
+					corev1.EventTypeWarning,
+					"PerformRestoreOperationFailed",
+					fmt.Sprintf("Restore task from backup of datacenter %s of cluster %s to %s under snapshot %s failed to run, will retry. Restore operation on pod %s",backup.Spec.Datacenter, backup.Spec.CassandraCluster,
+						backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
+						instance.Spec.CoordinatorMember))
 				return ctrl.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
@@ -194,6 +216,13 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(log, err.Error(), err)
 			}
 		}
+		r.recorder.Event(instance,
+			corev1.EventTypeNormal,
+			"RestoreInitiated",
+			fmt.Sprintf("Restore task initiated from backup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation %v on pod %s.",
+				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
+				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
+				instance.Status.Id, instance.Spec.CoordinatorMember))
 	}
 
 	if instance.Status.Condition.Type.IsInProgress() {
@@ -217,16 +246,14 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(log, err.Error(), err)
 			}
 		}
+		r.recorder.Event(instance,
+			corev1.EventTypeNormal,
+			"RestoreCompleted",
+			fmt.Sprintf("Restore task from backup of datacenter %s of cluster %s to %s under snapshot %s is completed. Restore operation %v on pod %s.",
+				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
+				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
+				instance.Status.Id, instance.Spec.CoordinatorMember))
 	}
-
-	// ensure a finalizer for cleanup on deletion
-/*	if !util.StringSliceContains(instance.GetFinalizers(), restoreFinalizer) {
-		r.addFinalizer(reqLogger, instance)
-		if instance, err = r.updateAndFetchLatest(ctx, instance); err != nil {
-			return common.RequeueWithError(reqLogger, "failed to update CassandraRestore with finalizer", err)
-		}
-	}*/
-
 	return common.Reconciled()
 }
 
@@ -337,30 +364,6 @@ func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context, re
 	restore.TypeMeta = typeMeta
 	return restore, nil
 }
-
-/*func (r *ReconcileCassandraRestore) checkFinalizers(ctx context.Context, reqLogger logr.Logger, cluster *api.CassandraCluster, instance *api.CassandraRestore) (reconcile.Result, error) {
-	// run finalizers
-	var err error
-	if util.StringSliceContains(instance.GetFinalizers(), restoreFinalizer) {
-		// remove finalizer
-		if err = r.removeFinalizer(ctx, instance); err != nil {
-			return common.RequeueWithError(reqLogger, "failed to remove finalizer from CassandraRestore", err)
-		}
-	}
-	return common.Reconciled()
-}
-
-func (r *ReconcileCassandraRestore) removeFinalizer(ctx context.Context, restore *api.CassandraRestore) error {
-	restore.SetFinalizers(util.StringSliceRemove(restore.GetFinalizers(), restoreFinalizer))
-	_, err := r.updateAndFetchLatest(ctx, restore)
-	return err
-}
-
-func (r *ReconcileCassandraRestore) addFinalizer(reqLogger logr.Logger, restore *api.CassandraRestore) {
-	reqLogger.Info("Adding Finalizer for the NifiUser")
-	restore.SetFinalizers(append(restore.GetFinalizers(), restoreFinalizer))
-	return
-}*/
 
 func (r *ReconcileCassandraRestore) listPods(namespace string, selector map[string]string) (*corev1.PodList, error) {
 
