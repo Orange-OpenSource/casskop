@@ -312,12 +312,12 @@ docker-unit-test-with-vendor:
 
 unit-test:
 	$(UNIT_TEST_CMD) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
+	cat test-report.out
 	$(UNIT_TEST_COVERAGE)
 
 unit-test-with-vendor:
 	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
+	cat test-report.out
 	$(UNIT_TEST_COVERAGE)
 
 define run-operator-cmd
@@ -347,7 +347,7 @@ ifeq ($(UNAME), Darwin)
 	dep status -dot | dot -T png | open -f -a /Applications/Preview.app
 endif
 ifeq ($(UNAME), Linux)
-	dep status -dot | dot -T png | display	
+	dep status -dot | dot -T png | display
 endif
 
 count:
@@ -376,7 +376,7 @@ e2e-scaledown:
 	$(call scale-test,ClusterScaleDown)
 
 e2e-empty:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$" 
+	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$"
 
 e2e-test-fix:
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -387,7 +387,7 @@ ifeq (e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
 endif
 
 e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)	
+ifeq ($(E2E_ARGS),)
 	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
 	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -404,7 +404,7 @@ ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
 endif
 
 docker-e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)	
+ifeq ($(E2E_ARGS),)
 	@echo "args are: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
 	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -469,4 +469,3 @@ endif
 
 	cat /tmp/cassandra-stress-$(STRESS_TYPE).yaml
 	kubectl apply -f /tmp/cassandra-stress-$(STRESS_TYPE).yaml
-
