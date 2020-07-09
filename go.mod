@@ -3,7 +3,7 @@ module github.com/Orange-OpenSource/casskop
 go 1.14
 
 require (
-	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
+	emperror.dev/errors v0.7.0
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/antihax/optional v1.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.3.3

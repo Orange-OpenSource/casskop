@@ -165,7 +165,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(
 				cb,
 				corev1.EventTypeWarning,
-				"BackupNotFound",
+				"CassandraClusterNotFound",
 				fmt.Sprintf("Datacenter %s of cluster %s to backup not found", cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 
 			return reconcile.Result{}, nil
