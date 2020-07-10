@@ -1,21 +1,14 @@
-package sidecarclient
+package cassandrabackup
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
 	hostnamePodA = "podA.ns.cluster.svc.cluster.local"
-	ipPodA       = "10.110.0.2"
-	namePodA     = "podA"
-	hostnamePodB = "podB.ns.cluster.svc.cluster.local"
-	ipPodB       = "10.110.0.3"
-	namePodB     = "podB"
 )
 
 const (
@@ -30,43 +23,20 @@ const (
 	concurrentConnections int32 = 15
 )
 
-type mockCassandraSidecarClient struct {
-	CassandraSidecarClient
-	opts *CassandraSidecarConfig
-	podsClient map[string]*csapi.APIClient
+type mockCassandraBackupClient struct {
+	Client
+	opts *Config
+	podClient *csapi.APIClient
 
 	newClient func(*csapi.Configuration) *csapi.APIClient
 	failOpts bool
 }
 
-func newMockOpts() *CassandraSidecarConfig {
-	return &CassandraSidecarConfig{
+func newMockOpts() *Config {
+	return &Config{
 		UseSSL: DefaultCassandraSidecarSecure,
 		Port: DefaultCassandraSidecarPort,
-		Pods: []corev1.Pod{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: namePodA,
-				},
-				Spec: corev1.PodSpec{
-					Hostname: hostnamePodA,
-				},
-				Status: corev1.PodStatus{
-					PodIP: ipPodA,
-				},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: namePodB,
-				},
-				Spec: corev1.PodSpec{
-					Hostname: hostnamePodB,
-				},
-				Status: corev1.PodStatus{
-					PodIP: ipPodB,
-				},
-			},
-		},
+		Host: hostnamePodA,
 	}
 }
 
@@ -76,37 +46,37 @@ func newMockHttpClient(c *csapi.Configuration) *csapi.APIClient {
 	return client
 }
 
-func newMockClient() *cassandraSidecarClient {
-	return &cassandraSidecarClient{
+func newMockClient() *client {
+	return &client{
 		opts:       newMockOpts(),
 		newClient:  newMockHttpClient,
 	}
 }
 
 
-func newBuildedMockClient() *cassandraSidecarClient {
+func newBuildedMockClient() *client {
 	client := newMockClient()
 	client.Build()
 	return client
 }
 
 
-func NewMockCassandraSidecarClient() *mockCassandraSidecarClient {
-	return &mockCassandraSidecarClient{
+func NewMockCassandraBackupClient() *mockCassandraBackupClient {
+	return &mockCassandraBackupClient{
 		opts:       newMockOpts(),
 		newClient:  newMockHttpClient,
 	}
 }
 
-func NewMockCassandraSidecarClientFailOps() *mockCassandraSidecarClient {
-	return &mockCassandraSidecarClient{
+func NewMockCassandraBackupClientFailOps() *mockCassandraBackupClient {
+	return &mockCassandraBackupClient{
 		opts:      newMockOpts(),
 		newClient: newMockHttpClient,
 		failOpts:  true,
 	}
 }
 
-func (m *mockCassandraSidecarClient) PerformRestoreOperation(podName string, restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned201
 	}
@@ -128,7 +98,7 @@ func (m *mockCassandraSidecarClient) PerformRestoreOperation(podName string, res
 	return &restoreOp, nil
 }
 
-func (m *mockCassandraSidecarClient) GetRestoreOperation(podName, operationId string) (*csapi.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) GetRestoreOperation(operationId string) (*csapi.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned200
 	}
@@ -148,3 +118,4 @@ func (m *mockCassandraSidecarClient) GetRestoreOperation(podName, operationId st
 		schemaVersion), &restoreOperation)
 	return &restoreOperation, nil
 }
+
