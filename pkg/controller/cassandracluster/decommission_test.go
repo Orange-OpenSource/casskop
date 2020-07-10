@@ -43,6 +43,10 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 func TestOneDecommission(t *testing.T) {
 	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
+	assert := assert.New(t)
+
+	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
+
 	cassandraCluster := rcc.cc.DeepCopy()
 	cassandraCluster.Spec.NodesPerRacks = 2
 	rcc.client.Update(context.TODO(), cassandraCluster)
@@ -70,8 +74,6 @@ func TestOneDecommission(t *testing.T) {
 
 	stfsName := cassandraCluster.Name + "-dc1-rack1"
 	stfs, _ := rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-
-	assert := assert.New(t)
 
 	assert.Equal(int32(3), *stfs.Spec.Replicas)
 
@@ -104,18 +106,15 @@ func TestOneDecommission(t *testing.T) {
 	info := httpmock.GetCallCountInfo()
 	assert.Equal(2, info["POST http://cassandra-demo-dc1-rack12.cassandra-demo:8778/jolokia/"])
 
-	// pods, _ := rcc.ListPods(rcc.cc.Namespace, k8s.LabelsForCassandraDCRack(rcc.cc, "dc1", "rack1"))
-	// fmt.Println(len(pods.Items))
-
 	// Need to manually delete pod managed by the fake client
 	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
 		Name:      stfsName + "2",
 		Namespace: rcc.cc.Namespace}})
 
-	decommissionedPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
+	deletedPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
 	lastPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
 
-	httpmock.RegisterResponder("POST", JolokiaURL(decommissionedPod, jolokiaPort),
+	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
 		httpmock.NewNotFoundResponder(t.Fatal))
 	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request":
@@ -197,10 +196,10 @@ func TestMultipleDecommissions(t *testing.T) {
 		Name:      stfsName + "2",
 		Namespace: rcc.cc.Namespace}})
 
-	previousLastPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
+	deletedPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
 	lastPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
 
-	httpmock.RegisterResponder("POST", JolokiaURL(previousLastPod, jolokiaPort),
+	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
 		httpmock.NewNotFoundResponder(t.Fatal))
 	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request":
@@ -246,10 +245,10 @@ func TestMultipleDecommissions(t *testing.T) {
 		Name:      stfsName + "1",
 		Namespace: rcc.cc.Namespace}})
 
-	previousLastPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
+	deletedPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
 	lastPod = "cassandra-demo-dc1-rack10" + "." + rcc.cc.Name
 
-	httpmock.RegisterResponder("POST", JolokiaURL(previousLastPod, jolokiaPort),
+	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
 		httpmock.NewNotFoundResponder(t.Fatal))
 	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request":
