@@ -80,18 +80,18 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 	status *api.CassandraClusterStatus) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
-	var breakResyncloop = false
+	var breakResyncLoopSwitch = false
 	var err error
 
 	// If we ask a ScaleDown, We can't update the Statefulset before the nodetool decommission has finished
 	if rcc.weAreScalingDown(dcRackStatus) {
 		//If a Decommission is Ongoing, we want to break the Resyncloop until the Decommission is succeed
-		breakResyncloop, err = rcc.ensureDecommission(cc, dcName, rackName, status)
+		breakResyncLoopSwitch, err = rcc.ensureDecommission(cc, dcName, rackName, status)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc": dcName, "rack": rackName,
 				"err": err}).Error("Error with decommission")
 		}
-		return breakResyncloop, err
+		return breakResyncLoopSwitch, err
 	}
 
 	// If LastClusterAction was a ScaleUp and It is Done then
@@ -108,7 +108,7 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 		rcc.ensureOperation(cc, dcName, rackName, status, randomPodOperationKey())
 	}
 
-	return breakResyncloop, err
+	return breakResyncLoopSwitch, err
 }
 
 //addPodOperationLabels will add Pod Labels labels on all Pod in the Current dcRackName
@@ -290,33 +290,30 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 
 	if podLastOperation.Name != api.OperationDecommission {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"lastOperation": podLastOperation.Name}).Warnf("We should decommission only if pod.Operation == decommission, not the case here")
+			"lastOperation": podLastOperation.Name}).Warnf("There is another operation than decommission that was asked")
 		return continueResyncLoop, nil
 	}
 
 	switch podLastOperation.Status {
 
-	case api.StatusToDo:
+	case api.StatusToDo, api.StatusContinue:
 
 		return rcc.ensureDecommissionToDo(cc, dcName, rackName, status)
 
-	case api.StatusOngoing,
-		api.StatusFinalizing:
+	case api.StatusOngoing, api.StatusFinalizing:
 
 		if podLastOperation.Pods == nil || podLastOperation.Pods[0] == "" {
 			return breakResyncLoop, fmt.Errorf("For Status Ongoing we should have a PodLastOperation Pods item")
 		}
+
 		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				return breakResyncLoop, fmt.Errorf("failed to get last cassandra's pods '%s': %v",
-					podLastOperation.Pods[0], err)
+			//If Node is already Gone, We Delete PVC
+			if apierrors.IsNotFound(err) {
+				return rcc.ensureDecommissionFinalizing(cc, dcName, rackName, status, lastPod)
 			}
-		}
-
-		//If Node is already Gone, We Delete PVC
-		if apierrors.IsNotFound(err) {
-			return rcc.ensureDecommissionFinalizing(cc, dcName, rackName, status, lastPod)
+			return breakResyncLoop, fmt.Errorf("failed to get last cassandra's pods '%s': %v",
+				podLastOperation.Pods[0], err)
 		}
 
 		//LastPod Still Exists
@@ -447,14 +444,14 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 		return breakResyncLoop, nil
 	}
 
-	err = rcc.UpdatePodLabel(lastPod, map[string]string{
+	if err = rcc.UpdatePodLabel(lastPod, map[string]string{
 		"operation-status": api.StatusOngoing,
 		"operation-start":  k8s.LabelTime(),
-		"operation-name":   api.OperationDecommission})
-	if err != nil {
+		"operation-name":   api.OperationDecommission}); err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name, "err": err}).Debug("Error updating pod")
 	}
+
 	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.Pods = append(list, lastPod.Name)
 	podLastOperation.PodsOK = []string{}
@@ -689,8 +686,9 @@ func (rcc *ReconcileCassandraCluster) runRebuild(hostName string, cc *api.Cassan
 
 	if labelSet != true {
 		err = errors.New("operation-argument is needed to get the datacenter name to rebuild from")
-	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil  && len(keyspaces) == 0 {
-		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)	}
+	} else if keyspaces, err = jolokiaClient.NonLocalKeyspacesInDC(rebuildFrom); err == nil && len(keyspaces) == 0 {
+		err = fmt.Errorf("%s  has no keyspace to replicate data from", rebuildFrom)
+	}
 
 	// In case of an error set the status on the pod and skip it
 	if err != nil {

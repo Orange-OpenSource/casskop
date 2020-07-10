@@ -600,7 +600,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	keyspacesDescribed := []string{}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(hostName, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(hostName, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			var execrequestdata execRequestData
 			if err := json.NewDecoder(req.Body).Decode(&execrequestdata); err != nil {
@@ -872,27 +872,27 @@ func TestProcessingPods(t *testing.T) {
 
 	// Pod ip change and hostId are not the same in cache.
 	dc2Rack10PodName := "dc2-rack1-0"
-	oldDc2Rack10PodIp := "10.180.150.109"
-	dc2Rack10PodIp := "10.100.150.109"
-	cachedHostId := "ca716bef-dc68-427d-be27-b4eeede1e072"
-	dc2Rack10HostId := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
-	hostIDMap[dc2Rack10PodIp] = cachedHostId
+	oldDc2Rack10PodIP := "10.180.150.109"
+	dc2Rack10PodIP := "10.100.150.109"
+	cachedHostID := "ca716bef-dc68-427d-be27-b4eeede1e072"
+	dc2Rack10HostID := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
+	hostIDMap[dc2Rack10PodIP] = cachedHostID
 
 	// No enough restart
 	returnedPod, _ := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 1)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
-	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)
+	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIP, 100)
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
 		[]v1.Pod{*pod}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.Equal(t, returnedPod, pod)
 
 	// Test with option disabled
@@ -900,17 +900,17 @@ func TestProcessingPods(t *testing.T) {
 
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 1)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 100)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
 	assert.True(t, returnedPod == nil)
 }

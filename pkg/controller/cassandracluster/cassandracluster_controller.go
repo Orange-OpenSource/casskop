@@ -120,8 +120,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	}
 	cc.CheckDefaults()
 
-	err = rcc.CheckDeletePVC(cc)
-	if err != nil {
+	if err = rcc.CheckDeletePVC(cc); err != nil {
 		return forget, err
 	}
 

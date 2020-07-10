@@ -61,7 +61,7 @@ func (rcc *ReconcileCassandraCluster) updateCassandraStatus(cc *api.CassandraClu
 }
 
 // getNextCassandraClusterStatus goal is to detect some changes in the status between cassandracluster and its statefulset
-// We follow only one change at a Time : so this function will return on first changed found
+// We follow only one change at a Time : so this function will return on the first change found
 func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc,
 	rack int, dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
@@ -77,14 +77,14 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	}
 
 	//If we set up UnlockNextOperation in CRD we allow to see mode change even last operation didn't ended correctly
-	needSpecificChange := false
+	unlockNextOperation := false
 	if cc.Spec.UnlockNextOperation &&
 		rcc.hasUnschedulablePod(cc.Namespace, dcName, rackName) {
-		needSpecificChange = true
+		unlockNextOperation = true
 	}
 	//Do nothing in Initial phase except if we force it
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
-		if !needSpecificChange {
+		if !unlockNextOperation {
 			ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 			return nil
 		}
@@ -101,7 +101,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// decommission more
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
 	// Meanwhile we allow to check for new changes if unlockNextOperation	 has been set (to recover from problems)
-	if needSpecificChange ||
+	if unlockNextOperation ||
 		(!rcc.thereIsPodDisruption() &&
 			lastAction.Status != api.StatusOngoing &&
 			lastAction.Status != api.StatusToDo &&
@@ -164,8 +164,9 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 
 		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-				"rack": dcRackName}).Info("The Operator Waits " + strconv.Itoa(api.
-				DefaultDelayWait) + " seconds for the action to start correctly")
+				"rack": dcRackName}).Info("The Operator Waits " +
+				strconv.Itoa(api.DefaultDelayWait) +
+				" seconds for the action to start correctly")
 			return true
 		}
 	}
@@ -448,47 +449,42 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			logrus.Infof("[%s][%s]: Initializing StatefulSet: Replicas Number Not OK: %d on %d, ready[%d]",
 				cc.Name, dcRackName, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
 				storedStatefulSet.Status.ReadyReplicas)
-		} else {
-			//If yes, just check that lastPod is running
-			podsList, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
-			nb := len(podsList.Items)
-			if err != nil || nb < 1 {
-				return nil
-			}
-			nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-			if len(podsList.Items) < int(nodesPerRacks) {
-				logrus.Infof("[%s][%s]: StatefulSet is waiting for scaleUp", cc.Name, dcRackName)
-				return nil
-			}
-			pod := podsList.Items[nodesPerRacks-1]
-			if cassandraPodIsReady(&pod) {
-				status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
-				ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
-				now := metav1.Now()
-				lastAction.EndTime = &now
-				lastAction.Status = api.StatusDone
-				logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName, lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
-				return nil
-			}
 			return nil
-
 		}
-
-	} else {
-
-		//We are no more in Initializing state
-		if isStatefulSetNotReady(storedStatefulSet) {
-			logrus.Infof("[%s][%s]: StatefulSet(%s) Replicas Number Not OK: %d on %d, ready[%d]", cc.Name,
-				dcRackName, lastAction.Name, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
-				storedStatefulSet.Status.ReadyReplicas)
-			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
-			ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
-		} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
-			logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName,
-				lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
+		//If yes, just check that lastPod is running
+		podsList, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
+		if err != nil || len(podsList.Items) < 1 {
+			return nil
+		}
+		if len(podsList.Items) < int(nodesPerRacks) {
+			logrus.Infof("[%s][%s]: StatefulSet is waiting for scaleUp", cc.Name, dcRackName)
+			return nil
+		}
+		pod := podsList.Items[nodesPerRacks-1]
+		if cassandraPodIsReady(&pod) {
 			status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
 			ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
+			now := metav1.Now()
+			lastAction.EndTime = &now
+			lastAction.Status = api.StatusDone
+			logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName, lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
+			return nil
 		}
+		return nil
+	}
+
+	//We are no more in Initializing state
+	if isStatefulSetNotReady(storedStatefulSet) {
+		logrus.Infof("[%s][%s]: StatefulSet(%s) Replicas Number Not OK: %d on %d, ready[%d]", cc.Name,
+			dcRackName, lastAction.Name, storedStatefulSet.Status.Replicas, *storedStatefulSet.Spec.Replicas,
+			storedStatefulSet.Status.ReadyReplicas)
+		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
+		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
+	} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
+		logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName,
+			lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
+		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
+		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
 	return nil
 }

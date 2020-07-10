@@ -164,18 +164,14 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			if err != nil {
 				t.Fatalf("get statefulset: (%v)", err)
 			}
-			// Check if the quantity of Replicas for this deployment is equals the specification
-			dsize := *sts.Spec.Replicas
-			if dsize != 1 {
-				t.Errorf("dep size (%d) is not the expected size (%d)", dsize, cc.Spec.NodesPerRacks)
-			}
+
 			//Now simulate sts to be ready for CassKop
 			sts.Status.Replicas = *sts.Spec.Replicas
 			sts.Status.ReadyReplicas = *sts.Spec.Replicas
 			rcc.UpdateStatefulSet(sts)
 
 			//Create Statefulsets associated fake Pods
-			pod := &v1.Pod{
+			podTemplate := v1.Pod{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pod",
 					APIVersion: "v1",
@@ -196,8 +192,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 					Phase: v1.PodRunning,
 					ContainerStatuses: []v1.ContainerStatus{
 						{
-							Name: "cassandra",
-							//Image: cc.Spec.BaseImage + ":" + cc.Spec.Version
+							Name:  "cassandra",
 							Ready: true,
 						},
 					},
@@ -205,9 +200,10 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			}
 
 			for i := 0; i < int(sts.Status.Replicas); i++ {
+				pod := podTemplate.DeepCopy()
 				pod.Name = sts.Name + strconv.Itoa(i)
 				if err = rcc.CreatePod(pod); err != nil {
-					t.Fatalf("can't create pod: (%v)", err)
+					t.Fatalf("can't create pod %s: (%v)", pod.Name, err)
 				}
 			}
 

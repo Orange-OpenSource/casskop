@@ -175,13 +175,8 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	sts2.Status.Replicas = sts1.Status.Replicas
 
-	patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
-	if err != nil {
-		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
-		return false
-	}
-	if !patchResult.IsEmpty() {
-		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+	if patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2); err != nil || !patchResult.IsEmpty() {
+		logrus.Debug("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 		return false
 	}
 
@@ -208,17 +203,19 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	// if there is existing disruptions on Pods
 	// Or if we are not scaling Down the current statefulset
 	if rcc.thereIsPodDisruption() {
-		if rcc.weAreScalingDown(dcRackStatus) && rcc.hasOneDisruptedPod() {
+		// It's not seen as a disruption in that case
+		// if rcc.weAreScalingDown(dcRackStatus) && rcc.hasOneDisruptedPod() {
+		// 	logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+		// 		"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
+		// 		"but that may be normal as we are decommissioning")
+		// } else
+		if rcc.cc.Spec.UnlockNextOperation {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
-				"but that may be normal as we are decommissioning")
-		} else if rcc.cc.Spec.UnlockNextOperation {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Warn("Cluster has 1 Pod Disrupted" +
+				"dc-rack": dcRackName}).Warn("Cluster has 1 disrupted pod" +
 				"but we have unlock the next operation")
 		} else {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Info("Cluster has Disruption on Pods, " +
+				"dc-rack": dcRackName}).Info("Cluster has disruption on Pods, " +
 				"we wait before applying any change to statefulset")
 			return api.ContinueResyncLoop, nil
 		}
@@ -256,7 +253,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	//Hack for ScaleDown:
 	//because before applying a scaledown at Kubernetes (statefulset) level we need to execute a cassandra decommission
 	//we want the statefulset to only perform one scaledown at a time.
-	//we have some call which will block the call of this method until the decommission is not OK, so here
+	//we have some call which will block the call of this method as long as the decommission is running, so here
 	//we just need to change the scaledown value if more than 1 at a time.
 	if *rcc.storedStatefulSet.Spec.Replicas-*statefulSet.Spec.Replicas > 1 {
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
