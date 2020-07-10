@@ -484,23 +484,28 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 	pvcName := "data-" + podLastOperation.Pods[0]
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 		"pvc": pvcName}).Info("Decommission done -> we delete PVC")
-	pvc, err := rcc.GetPVC(cc.Namespace, pvcName)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pvc": pvcName}).Error("Cannot get PVC")
-	}
-	if err == nil {
-		err = rcc.deletePVC(pvc)
-		if err != nil {
+	if pvc, err := rcc.GetPVC(cc.Namespace, pvcName); err == nil {
+		if rcc.deletePVC(pvc) != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 				"pvc": pvcName}).Error("Error deleting PVC, Please make manual Actions..")
 		} else {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 				"pvc": pvcName}).Info("PVC deleted")
 		}
+	} else if !apierrors.IsNotFound(err) {
+		// Error when looking for the PVC let's retry
+		return breakResyncLoop, nil
 	}
 
-	podLastOperation.Status = api.StatusDone
+	dcRackStatus := status.CassandraRackStatus[dcRackName]
+	if rcc.weAreScalingDown(dcRackStatus) {
+		// We have more decommissions to do
+		podLastOperation.Status = api.StatusContinue
+	} else {
+		// We are done with decommissioning
+		podLastOperation.Status = api.StatusDone
+	}
+
 	podLastOperation.PodsOK = []string{lastPod.Name}
 	now := metav1.Now()
 	podLastOperation.EndTime = &now

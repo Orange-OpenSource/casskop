@@ -202,6 +202,8 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			for i := 0; i < int(sts.Status.Replicas); i++ {
 				pod := podTemplate.DeepCopy()
 				pod.Name = sts.Name + strconv.Itoa(i)
+				pod.Spec.Hostname = pod.Name
+				pod.Spec.Subdomain = cc.Name
 				if err = rcc.CreatePod(pod); err != nil {
 					t.Fatalf("can't create pod %s: (%v)", pod.Name, err)
 				}

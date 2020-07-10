@@ -144,14 +144,17 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		now := metav1.Now()
 		lastAction.StartTime = &now
 		lastAction.Status = api.StatusOngoing
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName, "hasDisruption": rcc.thereIsPodDisruption(),
+			"lastAction.Status": lastAction.Status}).Debug("CYRIL 4")
 	}
 
 	return nil
 }
 
 //needToWaitDelayBeforeCheck will return if last action start time is < to api.DefaultDelayWait
-//that mean start operation is too soon to check to an end operation or other available operations
-//this is mostly to let the cassandra cluster and the operator to have the time to correctly stage the action
+//that means the last operation was started only a few seconds ago and checking now would not make any sense
+//this is mostly to give cassandra and the operator enough time to correctly stage the action
 //DefaultDelayWait is of 2 minutes
 func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus) bool {
