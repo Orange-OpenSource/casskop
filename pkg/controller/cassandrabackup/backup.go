@@ -3,13 +3,10 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/casskop/pkg/sidecar"
-	csd "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,82 +21,59 @@ type backupClient struct {
 }
 
 func backup(
-	sidecarClient *sidecar.Client,
+	client *backrest.Client,
 	instance *backupClient,
 	logging *logrus.Entry,
 	recorder record.EventRecorder) {
 
-	bandwidth := strings.Replace(instance.backup.Spec.Bandwidth, " ", "", -1)
-	bandwidthDataRate, err := parseBandwidth(bandwidth)
+	operationID, err := client.PerformBackup(instance.backup)
 
-	if err != nil {
+	if err == nil {
+		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
 		recorder.Event(instance.backup,
 			corev1.EventTypeNormal,
 			"BackupNotInitiated",
-			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s can't be initiated with bandwidth %s",
+			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s failed.",
 				instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
-				instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag, bandwidth))
+				instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag))
 		return
 	}
 
-	backupRequest := csd.BackupOperationRequest{
-		Type_:                 "backup",
-		StorageLocation:       instance.backup.Spec.StorageLocation,
-		SnapshotTag:           instance.backup.Spec.SnapshotTag,
-		Duration:              instance.backup.Spec.Duration,
-		Bandwidth:             bandwidthDataRate,
-		ConcurrentConnections: instance.backup.Spec.ConcurrentConnections,
-		Entities:              instance.backup.Spec.Entities,
-		K8sSecretName:         instance.backup.Spec.Secret,
-		Dc:                    instance.backup.Spec.Datacenter,
-		GlobalRequest:         true,
-		K8sNamespace:          instance.backup.Namespace,
-	}
+	recorder.Event(instance.backup,
+		corev1.EventTypeNormal,
+		"BackupInitiated",
+		fmt.Sprintf("Task initiated to backup datacenter %s of cluster %s to %s under snapshot %s",
+			instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
+			instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag))
 
-	if operationID, err := sidecarClient.StartOperation(backupRequest); err != nil {
-		logging.Error(err, fmt.Sprintf("Error while starting backup operation %v", backupRequest))
-	} else {
-		recorder.Event(instance.backup,
-			corev1.EventTypeNormal,
-			"BackupInitiated",
-			fmt.Sprintf("Task initiated to backup datacenter %s of cluster %s to %s under snapshot %s",
-				instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
-				instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag))
-		podHostname := sidecarClient.Host
-		for range time.NewTicker(2 * time.Second).C {
-			if r, err := sidecarClient.GetOperation(operationID); err != nil {
-				logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
+	for range time.NewTicker(2 * time.Second).C {
+		if status, err := client.GetBackupById(operationID); err != nil {
+			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
+			break
+		} else {
+			instance.updateStatus(status, logging)
+
+			if status.State == api.BackupFailed {
+				recorder.Event(instance.backup,
+					corev1.EventTypeWarning,
+					"BackupFailed",
+					fmt.Sprintf("Backup operation %v on node %s has failed", operationID, status.Node))
 				break
-			} else {
-				instance.updateStatus(podHostname, r, logging)
+			}
 
-				if api.BackupState(r.State) == api.BackupFailed {
-					recorder.Event(instance.backup,
-						corev1.EventTypeWarning,
-						"BackupFailed",
-						fmt.Sprintf("Backup operation %v on node %s has failed", operationID, podHostname))
-					break
-				}
-
-				if api.BackupState(r.State) == api.BackupCompleted {
-					recorder.Event(instance.backup,
-						corev1.EventTypeNormal,
-						"BackupCompleted",
-						fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, podHostname))
-					break
-				}
+			if status.State == api.BackupCompleted {
+				recorder.Event(instance.backup,
+					corev1.EventTypeNormal,
+					"BackupCompleted",
+					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.Node))
+				break
 			}
 		}
 	}
 }
-func (si *backupClient) updateStatus(podHostname string, r *csd.BackupOperationResponse,
-	logging *logrus.Entry) {
 
-	status := &api.CassandraBackupStatus{
-		Node:     podHostname,
-		Progress: fmt.Sprintf("%v%%", strconv.Itoa(int(r.Progress*100))),
-		State:    api.BackupState(r.State),
-	}
+func (si *backupClient) updateStatus(status *api.CassandraBackupStatus,
+	logging *logrus.Entry) {
 
 	si.backup.Status = status
 

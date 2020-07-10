@@ -3,6 +3,7 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"emperror.dev/errors"
@@ -35,6 +36,9 @@ import (
 const (
 	AnnotationLastApplied string = "cassandrarestores.db.orange.com/last-applied-configuration"
 )
+
+// initialize local pseudorandom generator
+var random = rand.New(rand.NewSource(time.Now().Unix()))
 
 var log = logf.Log.WithName("controller_cassandracluster")
 
@@ -290,7 +294,7 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *api.Cassandra
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
 
-	sr, err := backrest.NewSidecarRestore(r.client, cc, restore, pods)
+	sr, err := backrest.NewClientFromRestore(r.client, cc, restore, &pods.Items[random.Intn(len(pods.Items))])
 	if err != nil {
 		reqLogger.Info("Sidecar communication error checking running restore operation")
 		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
@@ -322,12 +326,13 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *api.Cass
 	}
 
 	// Check Restore operation status
-	sr, err := backrest.NewSidecarRestore(r.client, cc, restore, pods)
+	sr, err := backrest.NewClientFromRestore(r.client, cc, restore,
+		k8sutil.PodByName(pods,restore.Spec.CoordinatorMember))
 	if err != nil {
 		reqLogger.Info("Sidecar communication error checking running Operation", "OperationId", restoreId)
 		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")
 	}
-	restoreStatus, err := sr.GetRestorebyId(restoreId)
+	restoreStatus, err := sr.GetRestoreById(restoreId)
 	if err != nil {
 		reqLogger.Info("Sidecar communication error checking running Operation", "OperationId", restoreId)
 		return errorfactory.New(errorfactory.SidecarNotReady{}, err, "sidecar communication error")

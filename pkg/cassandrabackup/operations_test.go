@@ -1,4 +1,4 @@
-package sidecarclient
+package cassandrabackup
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func TestPerformRestoreOperation(t *testing.T) {
 	assert.NotNil(restore)
 
 	restore, err = performRestoreMock(500)
-	assert.Equal(ErrCassandraSidecarNotReturned201, err)
+	assert.NotNil(err)
 	assert.Nil(restore)
 
 }
@@ -35,7 +35,7 @@ func TestGetRestoreOperation(t *testing.T) {
 	assert.NotNil(restore)
 
 	restore, err = getRestoreMock(500)
-	assert.Equal(ErrCassandraSidecarNotReturned200, err)
+	assert.NotNil(err)
 	assert.Nil(restore)
 }
 
@@ -63,7 +63,7 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 		ConcurrentConnections: concurrentConnections,
 	}
 
-	url := fmt.Sprintf("http://%s:%d/operations", ipPodB, DefaultCassandraSidecarPort)
+	url := fmt.Sprintf("http://%s:%d/operations", hostnamePodA, DefaultCassandraSidecarPort)
 
 	httpmock.RegisterResponder(http.MethodPost, url,
 		func(req *http.Request) (*http.Response, error) {
@@ -83,14 +83,14 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 		})
 
 
-	return client.PerformRestoreOperation("podB", restoreOperationRequest)
+	return client.PerformRestoreOperation(restoreOperationRequest)
 }
 
 func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
 	client := newBuildedMockClient()
 	defer httpmock.DeactivateAndReset()
 
-	url := fmt.Sprintf("http://%s:%d/operations/%s", ipPodA, DefaultCassandraSidecarPort, operationID)
+	url := fmt.Sprintf("http://%s:%d/operations/%s", hostnamePodA, DefaultCassandraSidecarPort, operationID)
 
 	httpmock.RegisterResponder(http.MethodGet, url,
 		func(req *http.Request) (*http.Response, error) {
@@ -109,6 +109,6 @@ func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
 					schemaVersion))
 		})
 
-	return client.GetRestoreOperation("podA", operationID)
+	return client.GetRestoreOperation(operationID)
 }
 
