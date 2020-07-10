@@ -34,9 +34,9 @@ type mockCassandraBackupClient struct {
 
 func newMockOpts() *Config {
 	return &Config{
-		UseSSL: DefaultCassandraSidecarSecure,
-		Port: DefaultCassandraSidecarPort,
-		Host: hostnamePodA,
+		UseSSL: DefaultCassandraBackupSecure,
+		Port:   DefaultCassandraSidecarPort,
+		Host:   hostnamePodA,
 	}
 }
 

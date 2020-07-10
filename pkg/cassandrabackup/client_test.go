@@ -29,7 +29,7 @@ func TestGetCassandraPodSidecarConfig(t *testing.T) {
 	client.opts.UseSSL = true
 	client.opts.TLSConfig = &tls.Config{}
 
-	conf := client.getCassandraPodSidecarConfig()
+	conf := client.getCassandraBackupPodSidecarConfig()
 
 	assert.Equal("HTTPS", conf.Scheme)
 	assert.Equal(fmt.Sprintf("https://%s:4567", hostnamePodA), conf.BasePath)
