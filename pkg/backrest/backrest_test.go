@@ -4,16 +4,18 @@ import (
 	"testing"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/Orange-OpenSource/casskop/pkg/sidecarclient"
+	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPerformRestore(t *testing.T) {
 	assert := assert.New(t)
 
-	sr := SidecarRestore{
-		CoordinatorMember:  "podA",
-		csClient: sidecarclient.NewMockCassandraSidecarClient(),
+	test := cassandrabackup.NewMockCassandraBackupClient()
+	sr := Client{
+		CoordinatorMember: "podA",
+		client:            test,
 	}
 
 	var concurrentConnection int32 = 15
@@ -52,26 +54,26 @@ func TestPerformRestore(t *testing.T) {
 		Id:               cs.Id,
 	}, cs)
 
-	sr = SidecarRestore{
-		CoordinatorMember:  "podA",
-		csClient: sidecarclient.NewMockCassandraSidecarClientFailOps(),
+	sr = Client{
+		CoordinatorMember: "podA",
+		client:            cassandrabackup.NewMockCassandraBackupClientFailOps(),
 	}
 
 	cs, err = sr.PerformRestore(cr, cb)
-	assert.Equal(sidecarclient.ErrCassandraSidecarNotReturned201, err)
+	assert.Equal(cassandrabackup.ErrCassandraSidecarNotReturned201, err)
 	assert.Nil(cs)
 }
 
 func TestGetRestorebyId(t *testing.T) {
 	assert := assert.New(t)
 
-	sr := SidecarRestore{
-		CoordinatorMember:  "podA",
-		csClient: sidecarclient.NewMockCassandraSidecarClient(),
+	c := Client{
+		CoordinatorMember: "podA",
+		client:            cassandrabackup.NewMockCassandraBackupClient(),
 	}
 
 	operationId := "d3262073-8101-450f-9a11-c851760abd57"
-	cs, err := sr.GetRestorebyId(operationId)
+	cs, err := c.GetRestoreById(operationId)
 
 	assert.Nil(err)
 	assert.NotNil(cs)
@@ -85,12 +87,41 @@ func TestGetRestorebyId(t *testing.T) {
 		Id:               operationId,
 	}, cs)
 
-	sr = SidecarRestore{
-		CoordinatorMember:  "podA",
-		csClient: sidecarclient.NewMockCassandraSidecarClientFailOps(),
+	c = Client{
+		CoordinatorMember: "podA",
+		client:            cassandrabackup.NewMockCassandraBackupClientFailOps(),
 	}
 
-	cs, err = sr.GetRestorebyId(operationId)
-	assert.Equal(sidecarclient.ErrCassandraSidecarNotReturned200, err)
+	cs, err = c.GetRestoreById(operationId)
+	assert.Equal(cassandrabackup.ErrCassandraSidecarNotReturned200, err)
 	assert.Nil(cs)
+}
+
+
+func TestParseBandwidth(t *testing.T) {
+	assert := assert.New(t)
+
+	value, err := parseBandwidth("250")
+	assert.Nil(err)
+	assert.Equal(value, &csapi.DataRate{Value: 250, Unit: "BPS"})
+
+	value, err = parseBandwidth("10k")
+	assert.Nil(err)
+	assert.Equal(value, &csapi.DataRate{Value: 10, Unit: "KBPS"})
+
+	value, err = parseBandwidth("1024M")
+	assert.Nil(err)
+	assert.Equal(value, &csapi.DataRate{Value: 1024, Unit: "MBPS"})
+
+	value, err = parseBandwidth("10G")
+	assert.Nil(err)
+	assert.Equal(value, &csapi.DataRate{Value: 10, Unit: "GBPS"})
+
+	value, err = parseBandwidth("250T")
+	assert.NotNil(err)
+	assert.Nil(value)
+
+	value, err = parseBandwidth("0.25M")
+	assert.NotNil(err)
+	assert.Nil(value)
 }

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
-	"github.com/Orange-OpenSource/casskop/pkg/sidecar"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -233,15 +233,20 @@ func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc 
 
 	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
 	if err != nil {
-		return fmt.Errorf("Unable to list pods")
+		return fmt.Errorf("unable to list pods")
 	}
 
-	chosenPod := pods.Items[random.Intn(len(pods.Items))]
-	sidecarClient := sidecar.NewSidecarClient(k8s.PodHostname(chosenPod), &sidecar.DefaultSidecarClientOptions)
-
+	pod := pods.Items[random.Intn(len(pods.Items))]
+	instance.Status = &api.CassandraBackupStatus{
+		Node: pod.Name,
+	}
 	client := &backupClient{backup: instance, client: r.client}
+	client.updateStatus(&api.CassandraBackupStatus{},reqLogger )
 
-	go backup(sidecarClient, client, reqLogger, r.recorder)
+	//sidecarClient, _ := common.NewCassandraBackupConnection(log, r.client, cc, &pod)
+	backupClient, _ := backrest.NewClientFromBackup(r.client, cc, instance, &pod)
+
+	go backup(backupClient, client, reqLogger, r.recorder)
 
 	return nil
 }
