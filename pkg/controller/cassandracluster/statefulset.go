@@ -255,6 +255,16 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	//we want the statefulset to only perform one scaledown at a time.
 	//we have some call which will block the call of this method as long as the decommission is running, so here
 	//we just need to change the scaledown value if more than 1 at a time.
+
+	// If we're scaling down and Ready Replica is not yet the value we expect we break the loop
+	if rcc.weAreScalingDown(dcRackStatus) &&
+		rcc.storedStatefulSet.Status.ReadyReplicas != rcc.storedStatefulSet.Status.Replicas {
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+			"dc-rack": dcRackName}).Infof("CYRIL 500 - STFS not ready %d ready replicas for %d replicas asked",
+			rcc.storedStatefulSet.Status.ReadyReplicas, rcc.storedStatefulSet.Status.Replicas)
+		return api.BreakResyncLoop, nil
+	}
+
 	if *rcc.storedStatefulSet.Spec.Replicas-*statefulSet.Spec.Replicas > 1 {
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
 	}
