@@ -116,7 +116,18 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	return nil
 }
 
-// sts1 = stored statefulset and sts2 = new generated statefulset
+func sortPVCs(pvcs *[]v1.PersistentVolumeClaim) {
+	sort.Slice(*pvcs, func(i, j int) bool {
+		return (*pvcs)[i].Name < (*pvcs)[j].Name
+	})
+}
+
+func sortContainers(containers *[]v1.Container) {
+	sort.Slice(*containers, func(i, j int) bool {
+		return (*containers)[i].Name < (*containers)[j].Name
+	})
+}
+
 func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	//updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
@@ -148,25 +159,14 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 		return false
 	}
 
-	sort.Slice(sts1.Spec.VolumeClaimTemplates, func(i, j int) bool {
-		return sts1.Spec.VolumeClaimTemplates[i].Name < sts1.Spec.VolumeClaimTemplates[j].Name
-	})
+	sortPVCs(&sts1.Spec.VolumeClaimTemplates)
+	sortPVCs(&sts2.Spec.VolumeClaimTemplates)
 
-	sort.Slice(sts2.Spec.VolumeClaimTemplates, func(i, j int) bool {
-		return sts2.Spec.VolumeClaimTemplates[i].Name < sts2.Spec.VolumeClaimTemplates[j].Name
-	})
-
-	sort.Slice(sts1Spec.Containers, func(i, j int) bool {
-		return sts1Spec.Containers[i].Name < sts1Spec.Containers[j].Name
-	})
-
-	sort.Slice(sts2Spec.Containers, func(i, j int) bool {
-		return sts2Spec.Containers[i].Name < sts2Spec.Containers[j].Name
-	})
+	sortContainers(&sts1Spec.Containers)
+	sortContainers(&sts2Spec.Containers)
 
 	for i := 0; i < len(sts1.Spec.VolumeClaimTemplates); i++ {
 		sts2.Spec.VolumeClaimTemplates[i].TypeMeta = sts1.Spec.VolumeClaimTemplates[i].TypeMeta
-
 		sts2.Spec.VolumeClaimTemplates[i].Status = sts1.Spec.VolumeClaimTemplates[i].Status
 		if sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode == nil {
 			sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode = sts1.Spec.VolumeClaimTemplates[i].Spec.VolumeMode
