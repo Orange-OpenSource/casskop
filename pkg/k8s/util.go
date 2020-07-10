@@ -209,3 +209,12 @@ func IsMarkedForDeletion(m metav1.ObjectMeta) bool {
 func PodHostname(pod v1.Pod) string {
 	return fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
 }
+
+func PodByName(podList *v1.PodList, podName string) *v1.Pod {
+	for _, pod := range podList.Items {
+		if pod.Name == podName {
+			return &pod
+		}
+	}
+	return nil
+}

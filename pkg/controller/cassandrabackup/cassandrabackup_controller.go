@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	csd "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,8 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
-
-var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
 var log = logf.Log.WithName("controller_cassandrabackup")
 
@@ -167,17 +161,3 @@ func validateBackupSecret(secret *corev1.Secret, backup *api.CassandraBackup, lo
 	return nil
 }
 
-func parseBandwidth(value string) (*csd.DataRate, error) {
-	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
-
-	if bandwidth == "" {
-		return nil, nil
-	}
-
-	matches := regexBandwidthSupportedFormat.FindStringSubmatch(bandwidth)
-	if matches == nil {
-		return nil, fmt.Errorf("Format of %s not supported", value)
-	}
-	dataValue, _ := strconv.Atoi(matches[1])
-	return &csd.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil
-}
