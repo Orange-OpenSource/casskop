@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	DefaultCassandraSidecarPort = 4567
-	DefaultCassandraSidecarSecure = false
+	DefaultCassandraSidecarPort  = 4567
+	DefaultCassandraBackupSecure = false
 )
 
 type Config struct {
@@ -25,7 +25,7 @@ type Config struct {
 
 func ClusterConfig(client controllerclient.Client, cluster *api.CassandraCluster, pod *corev1.Pod) *Config {
 	conf        := &Config{}
-	conf.UseSSL = DefaultCassandraSidecarSecure
+	conf.UseSSL = DefaultCassandraBackupSecure
 	conf.Port   = DefaultCassandraSidecarPort
 	conf.Host   = k8s.PodHostname(*pod)
 

@@ -39,7 +39,7 @@ func New(opts *Config) Client {
 }
 
 func (cs *client) Build() error {
-	cs.podClient = cs.newClient( cs.getCassandraPodSidecarConfig())
+	cs.podClient = cs.newClient( cs.getCassandraBackupPodSidecarConfig())
 	return nil
 }
 
@@ -58,7 +58,7 @@ func NewFromCluster(k8sclient controllerclient.Client, cluster *api.CassandraClu
 	return client, nil
 }
 
-func (cs *client) getCassandraPodSidecarConfig() (config *csapi.Configuration) {
+func (cs *client) getCassandraBackupPodSidecarConfig() (config *csapi.Configuration) {
 	config = csapi.NewConfiguration()
 
 	protocol := "http"
