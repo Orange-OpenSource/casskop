@@ -266,6 +266,10 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	if *rcc.storedStatefulSet.Spec.Replicas-*statefulSet.Spec.Replicas > 1 {
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+			"dc-rack": dcRackName}).Debugf("Must scale down one node at a time. Update stfs " +
+				"replicas to %d instead of %d for now",
+			*rcc.storedStatefulSet.Spec.Replicas-1, *statefulSet.Spec.Replicas)
 		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
 	}
 

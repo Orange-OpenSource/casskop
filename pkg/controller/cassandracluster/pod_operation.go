@@ -48,6 +48,15 @@ type op struct {
 	PostAction func(*ReconcileCassandraCluster, *api.CassandraCluster, string, v1.Pod) error
 }
 
+type operationMode string
+
+const (
+	NORMAL operationMode = "NORMAL"
+	LEAVING = "LEAVING"
+	DECOMMISSIONED = "DECOMMISSIONED"
+	UNKNOWN = "UNKNOWN"
+)
+
 var podOperationMap = map[string]op{
 	api.OperationCleanup:         op{(*ReconcileCassandraCluster).runCleanup, (*JolokiaClient).hasCleanupCompactions, nil},
 	api.OperationRebuild:         op{(*ReconcileCassandraCluster).runRebuild, (*JolokiaClient).hasStreamingSessions, nil},
@@ -319,7 +328,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		//LastPod Still Exists
 		if !PodContainersReady(lastPod) && lastPod.DeletionTimestamp != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"lastPod": lastPod.Name}).Infof("We already asked Statefulset to scaleDown, waiting..")
+				"lastPod": lastPod.Name}).Infof("Statefulset is scaling down, waiting..")
 			return breakResyncLoop, nil
 
 		}
@@ -340,7 +349,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 			return breakResyncLoop, err
 		}
 
-		if operationMode == "NORMAL" {
+		if operationMode == NORMAL {
 			t, err := k8s.LabelTime2Time(lastPod.Labels["operation-start"])
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"operation-start": lastPod.Labels["operation-start"]}).Debugf("Can't parse time")
@@ -360,7 +369,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 			return breakResyncLoop, nil
 		}
 
-		if operationMode == "DECOMMISSIONED" || operationMode == "" {
+		if operationMode == DECOMMISSIONED || operationMode == UNKNOWN {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 				"lastPod": lastPod.Name, "operationMode": operationMode}).Infof("Node has left the ring, " +
 				"waiting for statefulset Scaledown")
@@ -438,7 +447,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 		return breakResyncLoop, err
 	}
 
-	if operationMode == "DECOMMISSIONED" || operationMode == "" || operationMode == "LEAVING" {
+	if operationMode == DECOMMISSIONED || operationMode == UNKNOWN || operationMode == LEAVING {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
 			"pod": lastPod.Name}).Info("Node is leaving or has already been decommissioned")
 		return breakResyncLoop, nil

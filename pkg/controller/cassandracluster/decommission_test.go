@@ -3,6 +3,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -40,228 +41,178 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 	return rcc, req
 }
 
+func registerJolokiaOperationModeResponder(host podName, op operationMode) {
+	fmt.Println(string(op))
+	httpmock.RegisterResponder("POST", JolokiaURL(host.FullName, jolokiaPort),
+		httpmock.NewStringResponder(200, fmt.Sprintf(`{"request":
+											{"mbean": "org.apache.cassandra.db:type=StorageService",
+											 "attribute": "OperationMode",
+											 "type": "read"},
+										"value": "%s",
+										"timestamp": 1528850319,
+										"status": 200}`, string(op))))
+}
+
+func registerFatalJolokiaResponder(t *testing.T, host podName) {
+	httpmock.RegisterResponder("POST", JolokiaURL(host.FullName, jolokiaPort),
+		httpmock.NewNotFoundResponder(t.Fatal))
+}
+
+func jolokiaCallsCount(name podName) int {
+	info := httpmock.GetCallCountInfo()
+	return info[fmt.Sprintf("POST http://%s:8778/jolokia/", name.FullName)]
+}
+
+type podName struct {
+	Name string
+	FullName string
+}
+
+func podHost(stfsName string, id int8, rcc *ReconcileCassandraCluster) podName {
+	name := stfsName + strconv.Itoa(int(id))
+	return podName{name, name + "." + rcc.cc.Name}
+}
+
+func deletePodNotDeletedByFakeClient(rcc *ReconcileCassandraCluster, host podName) {
+	// Need to manually delete pod managed by the fake client
+	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name:      host.Name,
+		Namespace: rcc.cc.Namespace}})
+}
+
 func TestOneDecommission(t *testing.T) {
 	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
 	assert := assert.New(t)
 
 	assert.Equal(int32(3), rcc.cc.Spec.NodesPerRacks)
 
 	cassandraCluster := rcc.cc.DeepCopy()
+
+	datacenters := cassandraCluster.Spec.Topology.DC
+	assert.Equal(1, len(datacenters))
+	assert.Equal(1, len(datacenters[0].Rack))
+
+	dc := datacenters[0]
+	stfsName := cassandraCluster.Name + fmt.Sprintf("-%s-%s", dc.Name, dc.Rack[0].Name)
+
 	cassandraCluster.Spec.NodesPerRacks = 2
 	rcc.client.Update(context.TODO(), cassandraCluster)
 
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	lastPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-				{"mbean": "org.apache.cassandra.db:type=StorageService",
-				 "attribute": "OperationMode",
-				 "type": "read"},
-			"value": "NORMAL",
-			"timestamp": 1528850319,
-			"status": 200}`))
+	lastPod := podHost(stfsName, 2, rcc)
 
-	for i := 0; i < 2; i++ {
-		otherPod := fmt.Sprintf("cassandra-demo-dc1-rack1%d.%s", i, rcc.cc.Name)
-
-		httpmock.RegisterResponder("POST", JolokiaURL(otherPod, jolokiaPort),
-			httpmock.NewNotFoundResponder(t.Fatal))
-
+	for id := 0; id < 2; id++ {
+		registerFatalJolokiaResponder(t, podHost(stfsName, int8(id), rcc))
 	}
+	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
-	stfsName := cassandraCluster.Name + "-dc1-rack1"
-	stfs, _ := rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-
-	assert.Equal(int32(3), *stfs.Spec.Replicas)
-
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-			{"mbean": "org.apache.cassandra.db:type=StorageService",
-			 "attribute": "OperationMode",
-			 "type": "read"},
-		"value": "LEAVING",
-		"timestamp": 1528850319,
-		"status": 200}`))
-
+	registerJolokiaOperationModeResponder(lastPod, LEAVING)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(int32(3), *stfs.Spec.Replicas)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-		{"mbean": "org.apache.cassandra.db:type=StorageService",
-		 "attribute": "OperationMode",
-		 "type": "read"},
-	"value": "DECOMMISSIONED",
-	"timestamp": 1528850319,
-	"status": 200}`))
-
+	registerJolokiaOperationModeResponder(lastPod, DECOMMISSIONED)
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	assertStatefulsetReplicas(t, rcc, 2, cassandraCluster.Namespace, stfsName)
 
-	stfs, _ = rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-	assert.Equal(int32(2), *stfs.Spec.Replicas)
+	deletedPod := podHost(stfsName, 2, rcc)
+	assert.Equal(2, jolokiaCallsCount(deletedPod))
 
-	info := httpmock.GetCallCountInfo()
-	assert.Equal(2, info["POST http://cassandra-demo-dc1-rack12.cassandra-demo:8778/jolokia/"])
+	lastPod = podHost(stfsName, 1, rcc)
+	deletePodNotDeletedByFakeClient(rcc, deletedPod)
 
-	// Need to manually delete pod managed by the fake client
-	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Name:      stfsName + "2",
-		Namespace: rcc.cc.Namespace}})
-
-	deletedPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
-	lastPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
-
-	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
-		httpmock.NewNotFoundResponder(t.Fatal))
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-				{"mbean": "org.apache.cassandra.db:type=StorageService",
-				 "attribute": "OperationMode",
-				 "type": "read"},
-			"value": "NORMAL",
-			"timestamp": 1528850319,
-			"status": 200}`))
-
+	registerFatalJolokiaResponder(t, deletedPod)
+	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(1, jolokiaCallsCount(lastPod))
+}
+
+func assertStatefulsetReplicas(t *testing.T, rcc *ReconcileCassandraCluster, expected int, namespace, stfsName string){
+	assert := assert.New(t)
+	stfs, _ := rcc.GetStatefulSet(namespace, stfsName)
+	assert.Equal(int32(expected), *stfs.Spec.Replicas)
 }
 
 func TestMultipleDecommissions(t *testing.T) {
-	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
-
-	cassandraCluster := rcc.cc.DeepCopy()
-	cassandraCluster.Spec.NodesPerRacks = 1
-	rcc.client.Update(context.TODO(), cassandraCluster)
-
+	assert := assert.New(t)
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	for i := 0; i <= 1; i++ {
-		nonLastPod := "cassandra-demo-dc1-rack10" + "." + rcc.cc.Name
+	rcc, req := createCassandraClusterWithNoDisruption(t, "cassandracluster-1DC.yaml")
 
-		httpmock.RegisterResponder("POST", JolokiaURL(nonLastPod, jolokiaPort),
-			httpmock.NewNotFoundResponder(t.Fatal))
+	cassandraCluster := rcc.cc.DeepCopy()
+
+	datacenters := cassandraCluster.Spec.Topology.DC
+	assert.Equal(1, len(datacenters))
+	dc := datacenters[0]
+	assert.Equal(1, len(dc.Rack))
+
+	stfsName := cassandraCluster.Name + fmt.Sprintf("-%s-%s", dc.Name, dc.Rack[0].Name)
+
+	cassandraCluster.Spec.NodesPerRacks = 1
+	rcc.client.Update(context.TODO(), cassandraCluster)
+
+	for id := 0; id <= 1; id++ {
+		registerFatalJolokiaResponder(t, podHost(stfsName, int8(0), rcc))
 	}
 
-	lastPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
+	lastPod := podHost(stfsName, 2, rcc)
 
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					 "attribute": "OperationMode",
-					 "type": "read"},
-				"value": "NORMAL",
-				"timestamp": 1528850319,
-				"status": 200}`))
+	registerJolokiaOperationModeResponder(lastPod, NORMAL)
+	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	numberOfReplicas := 3
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
+
+	registerJolokiaOperationModeResponder(lastPod, LEAVING)
+	reconcileValidation(t, rcc, *req)
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+
+	registerJolokiaOperationModeResponder(lastPod, DECOMMISSIONED)
+	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	numberOfReplicas -= 1
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
+
+	deletedPod := podHost(stfsName, 2, rcc)
+	deletePodNotDeletedByFakeClient(rcc, deletedPod)
+	lastPod = podHost(stfsName, 1, rcc)
 
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(deletedPod))
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
-	stfsName := cassandraCluster.Name + "-dc1-rack1"
-	stfs, _ := rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-
-	assert := assert.New(t)
-
-	assert.Equal(int32(3), *stfs.Spec.Replicas)
-
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					"attribute": "OperationMode",
-					"type": "read"},
-				"value": "LEAVING",
-				"timestamp": 1528850319,
-				"status": 200}`))
-
+	registerFatalJolokiaResponder(t, deletedPod)
+	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(int32(3), *stfs.Spec.Replicas)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					"attribute": "OperationMode",
-					"type": "read"},
-				"value": "DECOMMISSIONED",
-				"timestamp": 1528850319,
-				"status": 200}`))
-
+	registerJolokiaOperationModeResponder(lastPod, LEAVING)
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
-	stfs, _ = rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-	assert.Equal(int32(2), *stfs.Spec.Replicas)
-
-	// Need to manually delete pod managed by the fake client
-	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Name:      stfsName + "2",
-		Namespace: rcc.cc.Namespace}})
-
-	deletedPod := "cassandra-demo-dc1-rack12" + "." + rcc.cc.Name
-	lastPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
-
-	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
-		httpmock.NewNotFoundResponder(t.Fatal))
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					 "attribute": "OperationMode",
-					 "type": "read"},
-				"value": "NORMAL",
-				"timestamp": 1528850319,
-				"status": 200}`))
+	registerJolokiaOperationModeResponder(lastPod, DECOMMISSIONED)
 	reconcileValidation(t, rcc, *req)
+	assert.Equal(2, jolokiaCallsCount(lastPod))
+	numberOfReplicas -= 1
+	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
-	stfs, _ = rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-	assert.Equal(int32(2), *stfs.Spec.Replicas)
+	deletedPod = podHost(stfsName, 1, rcc)
+	deletePodNotDeletedByFakeClient(rcc, deletedPod)
+	lastPod = podHost(stfsName, 0, rcc)
 
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					"attribute": "OperationMode",
-					"type": "read"},
-				"value": "LEAVING",
-				"timestamp": 1528850319,
-				"status": 200}`))
-
+	registerFatalJolokiaResponder(t, deletedPod)
+	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(int32(2), *stfs.Spec.Replicas)
-
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-					{"mbean": "org.apache.cassandra.db:type=StorageService",
-					"attribute": "OperationMode",
-					"type": "read"},
-				"value": "DECOMMISSIONED",
-				"timestamp": 1528850319,
-				"status": 200}`))
-
-	reconcileValidation(t, rcc, *req)
-
-	stfs, _ = rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-	assert.Equal(int32(1), *stfs.Spec.Replicas)
-
-	// Need to manually delete pod managed by the fake client
-	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Name:      stfsName + "1",
-		Namespace: rcc.cc.Namespace}})
-
-	deletedPod = "cassandra-demo-dc1-rack11" + "." + rcc.cc.Name
-	lastPod = "cassandra-demo-dc1-rack10" + "." + rcc.cc.Name
-
-	httpmock.RegisterResponder("POST", JolokiaURL(deletedPod, jolokiaPort),
-		httpmock.NewNotFoundResponder(t.Fatal))
-	httpmock.RegisterResponder("POST", JolokiaURL(lastPod, jolokiaPort),
-		httpmock.NewStringResponder(200, `{"request":
-						{"mbean": "org.apache.cassandra.db:type=StorageService",
-						 "attribute": "OperationMode",
-						 "type": "read"},
-					"value": "NORMAL",
-					"timestamp": 1528850319,
-					"status": 200}`))
-
-	reconcileValidation(t, rcc, *req)
-
-	// stfs, _ = rcc.GetStatefulSet(cassandraCluster.Namespace, stfsName)
-	// assert.Equal(int32(1), *stfs.Spec.Replicas)
-
+	assert.Equal(1, jolokiaCallsCount(lastPod))
 }
+

@@ -534,7 +534,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			}
 			if breakLoop {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Debug("We just update Statefulset " +
+					"dc-rack": dcRackName}).Debug("Statefulset is getting updated " +
 					"we break ReconcileRack")
 				return nil
 			}
@@ -688,8 +688,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return nil
 	}
 
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-		"err": err}).Debug("Get first available pod")
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Debug("Get last available pod")
 
 	firstPod, err := GetLastOrFirstPodReady(podsList, true)
 	if err != nil {
