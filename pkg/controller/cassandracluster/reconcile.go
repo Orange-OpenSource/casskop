@@ -686,9 +686,9 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return nil
 	}
 
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Debug("Get last available pod")
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Debug("Get first available pod")
 
-	firstPod, err := GetLastOrFirstPodReady(podsList, true)
+	firstPod, err := GetLastOrFirstPodReady(podsList, false)
 	if err != nil {
 		return err
 	}
