@@ -315,9 +315,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 			if apierrors.IsNotFound(err) {
 				return rcc.deletePodPVC(cc, dcName, rackName, status, lastPod)
 			}
-			return breakResyncLoop, fmt.Errorf(
-				"Failed to get last cassandra's pods '%s': %v", podLastOperation.Pods[0], err,
-				)
+			return breakResyncLoop, fmt.Errorf("Failed to get pod %s: %v", podLastOperation.Pods[0], err)
 		}
 
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
@@ -512,20 +510,21 @@ func (rcc *ReconcileCassandraCluster) deletePodPVC(cc *api.CassandraCluster, dcN
 		return breakResyncLoop, nil
 	}
 
-	dcRackStatus := status.CassandraRackStatus[dcRackName]
-	if rcc.weAreScalingDown(dcRackStatus) {
-		// More decommissions to do
-		podLastOperation.Status = api.StatusContinue
-	} else {
-		// No more decommissions
-		podLastOperation.Status = api.StatusDone
-	}
+	SetStatusForMoreDecommissions(podLastOperation, rcc.weAreScalingDown(status.CassandraRackStatus[dcRackName]))
 
 	podLastOperation.PodsOK = []string{lastPod.Name}
 	now := metav1.Now()
 	podLastOperation.EndTime = &now
 	podLastOperation.Pods = []string{}
 	return breakResyncLoop, nil
+}
+
+func SetStatusForMoreDecommissions(podLastOperation *api.PodLastOperation, moreDecommisions bool) {
+	if moreDecommisions {
+		podLastOperation.Status = api.StatusContinue
+	} else {
+		podLastOperation.Status = api.StatusDone
+	}
 }
 
 func (rcc *ReconcileCassandraCluster) podsSlice(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
