@@ -15,14 +15,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
-
-var log = logf.Log.WithName("controller_cassandrabackup")
 
 // initialize local pseudorandom generator
 var random = rand.New(rand.NewSource(time.Now().Unix()))
@@ -33,7 +30,6 @@ func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileCassandraBackup{
 		client:    mgr.GetClient(),
@@ -148,7 +144,7 @@ func validateBackupSecret(secret *corev1.Secret, backup *api.CassandraBackup, lo
 
 		if len(secret.Data["awssecretaccesskey"]) != 0 && len(secret.Data["awsaccesskeyid"]) != 0 {
 			if len(secret.Data["awsregion"]) == 0 {
-				return fmt.Errorf("there is no awsregion property "+
+				return fmt.Errorf("There is no awsregion property "+
 					"while you have set both awssecretaccesskey and awsaccesskeyid in %s secret for backups", secret.Name)
 			}
 		}

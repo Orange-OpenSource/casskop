@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -38,6 +39,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/sirupsen/logrus"
+	"github.com/zput/zxcTool/ztLog/zt_formatter"
 	v1 "k8s.io/api/core/v1"
 	prometheusMetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 
@@ -104,12 +106,21 @@ func getResyncPeriod() int {
 }
 
 func main() {
-	logType, found := os.LookupEnv("LOG_TYPE")
-	if found && logType == "json" {
+	logLevel := getLogLevel()
+	logrus.SetLevel(logLevel)
+	if logLevel == logrus.DebugLevel {
+		ztFormatter := &zt_formatter.ZtFormatter{
+			CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+				filename := path.Base(f.File)
+				return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
+			},
+		}
+		logrus.SetReportCaller(true)
+		logrus.SetFormatter(ztFormatter)
+	}
+	if logType, _ := os.LookupEnv("LOG_TYPE"); logType == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
-
-	logrus.SetLevel(getLogLevel())
 
 	printVersion()
 

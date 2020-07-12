@@ -22,11 +22,11 @@ func TestPerformRestore(t *testing.T) {
 
 	cr := &v1alpha1.CassandraRestore{
 		Spec:       v1alpha1.CassandraRestoreSpec{
-			ConcurrentConnection: &concurrentConnection,
-			NoDeleteTruncates: true,
+			ConcurrentConnection:    &concurrentConnection,
+			NoDeleteTruncates:       true,
 			RestorationStrategyType: "HARDLINKS",
-			CassandraClusterRef: "cassandra-bgl",
-			BackupRef:  "gcp_backup",
+			CassandraCluster:        "cassandra-bgl",
+			CassandraBackup:         "gcp_backup",
 		},
 	}
 
@@ -45,13 +45,13 @@ func TestPerformRestore(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(cs)
 	assert.Equal(&v1alpha1.CassandraRestoreStatus{
-		TimeCreated:      "2020-06-10T04:53:05.976Z",
-		TimeStarted:      "2020-06-10T05:53:05.976Z",
-		TimeCompleted:    "2020-06-10T06:53:05.976Z",
-		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "10%",
-		RestorationPhase: v1alpha1.RestorationPhaseDownload,
-		Id:               cs.Id,
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
+		Progress:      "10%",
+		Phase:         v1alpha1.RestorationPhaseDownload,
+		Id:            cs.Id,
 	}, cs)
 
 	sr = Client{
@@ -73,18 +73,18 @@ func TestGetRestorebyId(t *testing.T) {
 	}
 
 	operationId := "d3262073-8101-450f-9a11-c851760abd57"
-	cs, err := c.GetRestoreById(operationId)
+	cs, err := c.GetRestoreStatusById(operationId)
 
 	assert.Nil(err)
 	assert.NotNil(cs)
 	assert.Equal(&v1alpha1.CassandraRestoreStatus{
-		TimeCreated:      "2020-06-10T04:53:05.976Z",
-		TimeStarted:      "2020-06-10T05:53:05.976Z",
-		TimeCompleted:    "2020-06-10T06:53:05.976Z",
-		Condition:        &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "10%",
-		RestorationPhase: v1alpha1.RestorationPhaseTruncate,
-		Id:               operationId,
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
+		Progress:      "10%",
+		Phase:         v1alpha1.RestorationPhaseTruncate,
+		Id:            operationId,
 	}, cs)
 
 	c = Client{
@@ -92,7 +92,7 @@ func TestGetRestorebyId(t *testing.T) {
 		client:            cassandrabackup.NewMockCassandraBackupClientFailOps(),
 	}
 
-	cs, err = c.GetRestoreById(operationId)
+	cs, err = c.GetRestoreStatusById(operationId)
 	assert.Equal(cassandrabackup.ErrCassandraSidecarNotReturned200, err)
 	assert.Nil(cs)
 }

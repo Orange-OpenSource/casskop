@@ -12,12 +12,9 @@ import (
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"github.com/sirupsen/logrus"
+
 )
-
-var log = logf.Log.WithName("backrest-methods")
-var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
-
 
 type Client struct {
 	client            cassandrabackup.Client
@@ -25,8 +22,7 @@ type Client struct {
 }
 
 func NewClientFromRestore(client client.Client, cc *api.CassandraCluster, restore *api.CassandraRestore, pod *corev1.Pod) (*Client, error) {
-	// Create new cassandra backup clients
-	csClient, err := common.NewCassandraBackupConnection(log, client, cc, pod)
+	csClient, err := common.NewCassandraBackupConnection(client, cc, pod)
 	if err != nil {
 		return nil, err
 	}
@@ -35,18 +31,15 @@ func NewClientFromRestore(client client.Client, cc *api.CassandraCluster, restor
 }
 
 func NewClientFromBackup(client client.Client, cc *api.CassandraCluster, backup *api.CassandraBackup, pod *corev1.Pod) (*Client, error) {
-	// Create new  cassandra backup clients
-	csClient, err := common.NewCassandraBackupConnection(log, client, cc, pod)
+	csClient, err := common.NewCassandraBackupConnection(client, cc, pod)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{client: csClient, CoordinatorMember: backup.Status.Node}, nil
+	return &Client{client: csClient, CoordinatorMember: backup.Status.CoordinatorMember}, nil
 }
 
-// PerformRestore, perform a restore
 func (c *Client) PerformRestore(restore *api.CassandraRestore, backup *api.CassandraBackup) (*api.CassandraRestoreStatus, error) {
-	// Prepare restore request
 	restoreOperationRequest := &csapi.RestoreOperationRequest {
 		Type_: "restore",
 		StorageLocation: backup.Spec.StorageLocation,
@@ -75,39 +68,33 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore, backup *api.Cassa
 		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
 	}
 
-	// Perform restore operation
 	restoreOperation, err := c.client.PerformRestoreOperation(*restoreOperationRequest)
 	if err != nil {
-		log.Error(err, "Restore gracefully failed")
+		logrus.Error(err, "Restore gracefully failed")
 		return nil, err
 	}
 
-	log.Info("Restore using CassandraBackup sidecar")
-	restoreStatus := api.ComputeStatusFromRestoreOperation(restoreOperation)
+	logrus.Info("Restore using CassandraBackup sidecar")
+	restoreStatus := api.ComputeRestorationStatus(restoreOperation)
 	return &restoreStatus, nil
 }
 
-// GetRestoreById performs a restore
-func (c *Client) GetRestoreById(restoreId string) (*api.CassandraRestoreStatus, error) {
+func (c *Client) GetRestoreStatusById(restoreId string) (*api.CassandraRestoreStatus, error) {
 
-	// Perform restore operation
 	restoreOperation, err := c.client.GetRestoreOperation(restoreId)
 	if err != nil  {
-		log.Error(err, "Find restore failed")
+		logrus.WithFields(logrus.Fields{"restoreId": restoreId}).Error("Cannot find restore operation")
 		return nil, err
 	}
 
-	log.Info("Restore status using CassandraBackup sidecar")
-	restoreStatus := api.ComputeStatusFromRestoreOperation(restoreOperation)
+	restoreStatus := api.ComputeRestorationStatus(restoreOperation)
 	return &restoreStatus, nil
 }
 
-// PerformBackup, perform a backup
 func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
 	bandwidthDataRate, err := parseBandwidth(bandwidth)
 
-	// Prepare backup request
 	backupOperationRequest := &csapi.BackupOperationRequest{
 		Type_:                 "backup",
 		StorageLocation:       backup.Spec.StorageLocation,
@@ -122,34 +109,31 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 		K8sNamespace:          backup.Namespace,
 	}
 
-	// Perform backup operation
 	backupOperation, err := c.client.PerformBackupOperation(*backupOperationRequest)
 	if err != nil {
-		log.Error(err, "Backup gracefully failed")
 		return "", err
 	}
 
-	log.Info("Backup using CassandraBackup sidecar")
 	return backupOperation.Id, nil
 }
 
-// GetBackupById performs a restore
-func (c *Client) GetBackupById(backupId string) (*api.CassandraBackupStatus, error) {
+// GetBackupStatusById returns the backup status of an existing backup
+func (c *Client) GetBackupStatusById(id string) (*api.CassandraBackupStatus, error) {
 
-	// Search backup operation
-	backupOperation, err := c.client.GetRestoreOperation(backupId)
+	backupOperation, err := c.client.GetRestoreOperation(id)
 	if err != nil  {
-		log.Error(err, "Find backup failed")
+		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find backup operation")
 		return nil, err
 	}
 
-	log.Info("Backup status using CassandraBackup sidecar")
 	backupStatus := &api.CassandraBackupStatus{
-		Progress: fmt.Sprintf("%v%%", strconv.Itoa(int(backupOperation.Progress*100))),
+		Progress: api.ProgressPercentage(backupOperation.Progress),
 		State:    api.BackupState(backupOperation.State),
 	}
 	return backupStatus, nil
 }
+
+var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
 func parseBandwidth(value string) (*csapi.DataRate, error) {
 	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))

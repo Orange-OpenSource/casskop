@@ -8,10 +8,7 @@ import (
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	corev1 "k8s.io/api/core/v1"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-var log = logf.Log.WithName("cassandra-backup-client")
 
 type Client interface {
 	PerformRestoreOperation(restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error)

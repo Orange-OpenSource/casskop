@@ -18,7 +18,6 @@ type Scheduler struct {
 	CronClient *cron.Cron
 }
 
-// NewScheduler return a new scheduler
 func NewScheduler() Scheduler {
 	cronClient := cron.New()
 	cronClient.Start()
@@ -31,13 +30,12 @@ func (schedule Scheduler) Contains(backupName string) bool {
 	return found
 }
 
-// AddOrUpdate add or update a cron task
+// AddOrUpdate a cron task
 func (schedule Scheduler) AddOrUpdate(cb *api.CassandraBackup,
 	task func(), recorder *record.EventRecorder) (skip bool, err error) {
 
 	backupName := cb.Name
 
-	// Do nothing when backup is already in the cron with the same schedule
 	if schedule.Contains(backupName) && schedule.entries[backupName].Schedule == cb.Spec.Schedule {
 		return true, nil
 	}
@@ -53,12 +51,10 @@ func (schedule Scheduler) AddOrUpdate(cb *api.CassandraBackup,
 			"BackupTaskscheduled",
 			fmt.Sprintf("Controller scheduled task %s to back up cluster %s under snapshot %s with schedule %s",
 				cb.Name, cb.Spec.CassandraCluster, cb.Spec.SnapshotTag, cb.Spec.Schedule))
-
 	}
 	return false, err
 }
 
-// Remove a function from cron client
 func (schedule Scheduler) Remove(backupName string) {
 	if schedule.Contains(backupName) {
 		schedule.CronClient.Remove(schedule.entries[backupName].ID)

@@ -25,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/swarvanusg/go_jolokia v0.0.0-20190213021437-3cd2b3fc4f36
 	github.com/thoas/go-funk v0.4.0
+	github.com/zput/zxcTool v1.3.6
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/appengine v1.6.6 // indirect
