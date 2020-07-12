@@ -62,7 +62,6 @@ func (cs *client) getCassandraBackupPodSidecarConfig() (config *csapi.Configurat
 
 	if cs.opts.UseSSL {
 		config.Scheme = "HTTPS"
-		cs.opts.TLSConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: cs.opts.TLSConfig}
 		config.HTTPClient = &http.Client{Transport: transport, Timeout: cs.opts.Timeout}
 		protocol = "https"
