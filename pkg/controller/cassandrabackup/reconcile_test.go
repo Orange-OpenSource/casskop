@@ -2,6 +2,7 @@ package cassandrabackup
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -43,7 +44,7 @@ spec:
 func helperInitCassandraBackup(cassandraBackupYaml string) api.CassandraBackup {
 	var cassandraBackup api.CassandraBackup
 	if err := yaml.Unmarshal([]byte(cassandraBackupYaml), &cassandraBackup); err != nil {
-		log.Error(err, "error: helpInitCluster")
+		logrus.Error(err)
 		os.Exit(-1)
 	}
 	return cassandraBackup
@@ -86,9 +87,9 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 
 	oldBackup := cb.DeepCopy()
 	oldBackup.Status = &api.CassandraBackupStatus{
-		Node:     "node1",
-		State:    "COMPLETED",
-		Progress: "Done",
+		CoordinatorMember: "node1",
+		State:             "COMPLETED",
+		Progress:          "Done",
 	}
 	oldBackup.Name = "prev-test-cassandra-backup"
 	rcb.client.Create(context.TODO(), oldBackup)
@@ -104,12 +105,16 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 
 	assert := assert.New(t)
 
-	// Confirms that Reconcile stops and does not return any error
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
 
-	msg := <-recorder.Events
-	assert.Contains(msg, "SnapshotTag2 because such backup already exists")
+	assertEvent(t, recorder.Events, fmt.Sprintf("%s because such backup already exists",cb.Spec.SnapshotTag))
+}
+
+func assertEvent(t *testing.T, event chan string, message string) {
+	assert := assert.New(t)
+	eventMessage := <-event
+	assert.Contains(eventMessage, message)
 }
 
 func TestCassandraBackupSecretNotFound(t *testing.T) {
@@ -127,16 +132,13 @@ func TestCassandraBackupSecretNotFound(t *testing.T) {
 
 	assert := assert.New(t)
 
-	// Confirms that Reconcile stops and does not return any error
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
 
-	msg := <-recorder.Events
-	assert.Contains(msg, "Secret cloud-backup-secrets used for backups was not found")
+	assertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cb.Spec.Secret))
 }
 
 func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
-	// awsregion must be set when both awssecretaccesskey and awsaccesskeyid are set
 	cb := helperInitCassandraBackup(cbyaml)
 
 	reqLogger := logrus.WithFields(logrus.Fields{"Name": "controller_cassandrabackup"})
@@ -151,7 +153,8 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 	resp := validateBackupSecret(secret, &cb, reqLogger)
 
 	assert := assert.New(t)
-	assert.Contains(resp.Error(), "there is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
+	assert.Contains(resp.Error(),
+		"There is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
 
 	secret.Data["awsregion"] = []byte("a region")
 
@@ -160,7 +163,6 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 }
 
 func TestCassandraBackupDatacenterNotFound(t *testing.T) {
-	// when datacenter does not exist Reconcile returns an error
 	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
 
 	secret := &corev1.Secret{
@@ -188,55 +190,9 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 
 	assert := assert.New(t)
 
-	// Confirms that Reconcile stops and does not return any error
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
 
-	msg := <-recorder.Events
-	assert.Contains(msg, "Datacenter dc1 of cluster test-cluster-dc1 to backup not found")
+	assertEvent(t, recorder.Events, fmt.Sprintf("Datacenter %s of cluster %s to backup not found",
+		cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 }
-
-// func TestCassandraBackupSidecarsCalls(t *testing.T) {
-// 	// Check that when a create a CassandraBackup the controller creates a corresponding &sidecar.BackupRequest
-
-// 	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
-
-// 	secret := &corev1.Secret{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      cb.Spec.Secret,
-// 			Namespace: cb.Namespace,
-// 		},
-// 		Data: map[string][]byte{
-// 			"awssecretaccesskey": []byte("a secret"),
-// 			"awsaccesskeyid":     []byte("an access key"),
-// 			"awsregion":          []byte("a region"),
-// 		},
-// 	}
-
-// 	rcb.client.Create(context.TODO(), secret)
-
-// 	req := reconcile.Request{
-// 		NamespacedName: types.NamespacedName{
-// 			Name:      cb.Name,
-// 			Namespace: cb.Namespace,
-// 		},
-// 	}
-
-// 	res, err := rcb.Reconcile(req)
-
-// 	assert := assert.New(t)
-
-// 	// Confirms that Reconcile stops and does not return any error
-// 	assert.Equal(reconcile.Result{}, res)
-// 	assert.Nil(err)
-
-// 	msg := <-recorder.Events
-// 	assert.Contains(msg, "Datacenter dc1 of cluster test-cluster-dc1 to backup not found")
-
-// 	// assert.Contains(resp.Error(), "there is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
-
-// 	// secret.Data["awsregion"] = []byte("a region")
-
-// 	// resp = validateBackupSecret(secret, &cb, reqLogger)
-// 	// assert.Nil(resp)
-// }

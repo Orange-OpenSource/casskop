@@ -228,23 +228,22 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	return reconcile.Result{}, r.backupData(cb, cc, reqLogger)
 }
 
-func (r *ReconcileCassandraBackup) backupData(instance *api.CassandraBackup, cc *api.CassandraCluster,
+func (r *ReconcileCassandraBackup) backupData(cassandraBackup *api.CassandraBackup, cc *api.CassandraCluster,
 	reqLogger *logrus.Entry) error {
 
-	pods, err := r.listPods(instance.Namespace, k8s.LabelsForCassandraDC(cc, instance.Spec.Datacenter))
+	pods, err := r.listPods(cassandraBackup.Namespace, k8s.LabelsForCassandraDC(cc, cassandraBackup.Spec.Datacenter))
 	if err != nil {
 		return fmt.Errorf("unable to list pods")
 	}
 
 	pod := pods.Items[random.Intn(len(pods.Items))]
-	instance.Status = &api.CassandraBackupStatus{
-		Node: pod.Name,
+	cassandraBackup.Status = &api.CassandraBackupStatus{
+		CoordinatorMember: pod.Name,
 	}
-	client := &backupClient{backup: instance, client: r.client}
+	client := &backupClient{backup: cassandraBackup, client: r.client}
 	client.updateStatus(&api.CassandraBackupStatus{},reqLogger )
 
-	//sidecarClient, _ := common.NewCassandraBackupConnection(log, r.client, cc, &pod)
-	backupClient, _ := backrest.NewClientFromBackup(r.client, cc, instance, &pod)
+	backupClient, _ := backrest.NewClientFromBackup(r.client, cc, cassandraBackup, &pod)
 
 	go backup(backupClient, client, reqLogger, r.recorder)
 

@@ -3,7 +3,6 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-
 	"github.com/antihax/optional"
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
@@ -13,7 +12,6 @@ func (client *client) PerformRestoreOperation(restoreOperationReq csapi.RestoreO
 	var restoreOperation csapi.RestoreOperationResponse
 	podClient := client.podClient
 	if podClient == nil {
-		log.Error(ErrNoCassandraBackupClientAvailable, "Error during creating cassandra backup client")
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 
@@ -39,7 +37,6 @@ func (client *client) GetRestoreOperation(operationId string) (*csapi.RestoreOpe
 
 	podClient := client.podClient
 	if podClient == nil {
-		log.Error(ErrNoCassandraBackupClientAvailable, "Error during creating cassandra backup client")
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 
@@ -63,7 +60,6 @@ func (client *client) GetBackupOperation(operationId string) (response *csapi.Ba
 
 	podClient := client.podClient
 	if podClient == nil {
-		log.Error(ErrNoCassandraBackupClientAvailable, "Error during creating cassandra backup client")
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 
@@ -82,7 +78,6 @@ func (client *client) PerformBackupOperation(request csapi.BackupOperationReques
 
 	podClient := client.podClient
 	if podClient == nil {
-		log.Error(ErrNoCassandraBackupClientAvailable, "Error during creating cassandra backup client")
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 

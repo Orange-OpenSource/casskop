@@ -38,14 +38,14 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 		"TRUNCATE",
 		schemaVersion), &restoreOperation)
 
-	cs := ComputeStatusFromRestoreOperation(&restoreOperation)
+	cs := ComputeRestorationStatus(&restoreOperation)
 	assert.Equal(CassandraRestoreStatus{
-		TimeCreated:      "2020-06-10T04:53:05.976Z",
-		TimeStarted:      "2020-06-10T05:53:05.976Z",
-		TimeCompleted:    "2020-06-10T06:53:05.976Z",
-		Condition:        &RestoreCondition{Type: RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:         "10%",
-		RestorationPhase: RestorationPhaseTruncate,
-		Id:               operationID,
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &RestoreCondition{Type: RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
+		Progress:      "10%",
+		Phase:         RestorationPhaseTruncate,
+		Id:            operationID,
 	}, cs)
 }

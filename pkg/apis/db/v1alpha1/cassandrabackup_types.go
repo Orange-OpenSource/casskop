@@ -50,7 +50,7 @@ const (
 // +k8s:openapi-gen=true
 type CassandraBackupStatus struct {
 	// name of pod / node
-	Node string `json:"node"`
+	CoordinatorMember string `json:"coordinatorMember"`
 	// State shows the status of the operation
 	State BackupState `json:"state"`
 	// Progress shows the percentage of the operation done

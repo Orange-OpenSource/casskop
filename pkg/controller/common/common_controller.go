@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
@@ -30,9 +31,9 @@ func Reconciled() (reconcile.Result, error) {
 
 // newSidecarsConnection is a convenience wrapper for creating a sidecars connection
 // and creating a safer close function
-func NewCassandraBackupConnection(log logr.Logger, client client.Client, cluster *api.CassandraCluster, pod *corev1.Pod) (csClient cassandrabackup.Client, err error) {
+func NewCassandraBackupConnection(client client.Client, cluster *api.CassandraCluster, pod *corev1.Pod) (csClient cassandrabackup.Client, err error) {
 	// Get a cassandra backup connection
-	log.Info(fmt.Sprintf("Retrieving Cassandra Sidecar client for %s/%s", cluster.Namespace, cluster.Name))
+	logrus.Info(fmt.Sprintf("Retrieving Cassandra Sidecar client for %s/%s", cluster.Namespace, cluster.Name))
 	csClient, err = newSidecarClientFromCluster(client, cluster, pod)
 	if err != nil {
 		return

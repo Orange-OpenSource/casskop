@@ -372,7 +372,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		}
 
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
-			"operationMode": operationMode}).Info("Cassandra Node is decommissioning, we need to wait")
+			"operationMode": operationMode}).Info("Cassandra node is decommissioning, we need to wait")
 		return breakResyncLoop, nil
 
 		//In case of PodLastOperation Done we set LastAction to Continue to see if we need to decommission more

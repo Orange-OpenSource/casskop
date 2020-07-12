@@ -190,13 +190,13 @@ func DCRackLabelsAndNodeSelectorForStatefulSet(cc *api.CassandraCluster, dc int,
 // LookupCassandra Cluster returns the running cluster instance based on its name and namespace
 func LookupCassandraCluster(client runtimeClient.Client, clusterName, clusterNamespace string) (cluster *api.CassandraCluster, err error) {
 	cluster = &api.CassandraCluster{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterNamespace}, cluster)
+	client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterNamespace}, cluster)
 	return
 }
 
 func LookupCassandraBackup(client runtimeClient.Client, backupName, backupNamespace string) (backup *api.CassandraBackup, err error) {
 	backup = &api.CassandraBackup{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: backupName, Namespace: backupNamespace}, backup)
+	client.Get(context.TODO(), types.NamespacedName{Name: backupName, Namespace: backupNamespace}, backup)
 	return
 }
 

@@ -1,33 +1,24 @@
 package v1alpha1
 
 import (
-	"fmt"
-	"strconv"
-
 	"github.com/Orange-OpenSource/casskop/pkg/util"
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RestoreConditionType represents a valid condition of a Restore.
+// RestoreConditionType represents a valid condition of a Restore
 type RestoreConditionType string
 
 const (
-	// RestoreRequired means the Restore has been assigned to a Cluster
-	// member for execution.
+	// RestoreRequired means the Restore has been assigned to a Cluster member for execution
 	RestoreRequired RestoreConditionType = "REQUIRED"
-	// RestorePending means the Restore operation is pending for being submitted.
 	RestorePending RestoreConditionType = "PENDING"
-	// RestoreRunning means the Restore is currently being executed by a
-	// Cluster member's mysql-agent side-car.
 	RestoreRunning RestoreConditionType = "RUNNING"
-	// RestoreComplete means the Restore has successfully executed and the
-	// resulting artifact has been stored in object storage.
+	// RestoreComplete means the Restore has successfully been executed and resulting artifact stored in object storage
 	RestoreCompleted RestoreConditionType = "COMPLETED"
-	// RestoreFailed means the Restore has failed.
 	RestoreFailed RestoreConditionType = "FAILED"
-	// RestoreCanceled means the Restore operation was interrupted while being run.
+	// RestoreCanceled means the Restore operation was interrupted while being run
 	RestoreCanceled RestoreConditionType = "CANCELED"
 )
 
@@ -56,7 +47,7 @@ func (r RestoreConditionType) IsCompleted() bool {
 }
 
 
-// RestoreCondition describes the observed state of a Restore at a certain point.
+// RestoreCondition describes the observed state of a Restore at a certain point
 type RestoreCondition struct {
 	Type   RestoreConditionType `json:"type"`
 	// +optional
@@ -92,18 +83,14 @@ const (
 
 // CassandraRestoreStatus captures the current status of a Cassandra restore.
 type CassandraRestoreStatus struct {
-	//
 	TimeCreated string `json:"timeCreated,omitempty"`
-	// TimeStarted is the time at which the restore was started.
 	TimeStarted string `json:"timeStarted,omitempty"`
-	// TimeCompleted is the time at which the restore completed.
 	TimeCompleted string `json:"timeCompleted,omitempty"`
-	//
 	Condition *RestoreCondition `json:"conditions,omitempty"`
-	// Progress is a percetange from 0% to 100%, 100% telling that operation is completed, either successfully or with errors
+	// Progress is a percentage, 100% means the operation is completed, either successfully or with errors
 	Progress string `json:"progress,omitempty"`
-	//
-	RestorationPhase RestorationPhaseType `json:"restorationPhase,omitempty"`
+
+	Phase RestorationPhaseType `json:"restorationPhase,omitempty"`
 	// unique identifier of an operation, a random id is assigned to each operation after a request is submitted,
 	// from caller's perspective, an id is sent back as a response to his request so he can further query state of that operation,
 	// referencing id, by operations/{id} endpoint
@@ -114,9 +101,9 @@ type CassandraRestoreStatus struct {
 type CassandraRestoreSpec struct {
 	// Cluster is a refeference to the Cluster to which the Restore
 	// belongs.
-	CassandraClusterRef string `json:"cassandraClusterRef"`
+	CassandraCluster string `json:"cassandraCluster"`
 	// Backup is a reference to the Backup object to be restored.
-	BackupRef string `json:"backupRef"`
+	CassandraBackup string `json:"cassandraBackup"`
 	// CoordinatorMember is the Pod name of the Cluster member on which the
 	// Restore will be executed.
 	CoordinatorMember string `json:"coordinatorMember,omitempty"`
@@ -190,62 +177,40 @@ func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreCo
 	return nil
 }
 
-func ComputeStatusFromRestoreOperation(restore *csapi.RestoreOperationResponse) CassandraRestoreStatus{
+func ComputeRestorationStatus(restoreOperationReponse *csapi.RestoreOperationResponse) CassandraRestoreStatus{
 	status := CassandraRestoreStatus{
-		Progress:      fmt.Sprintf("%v%%", strconv.Itoa(int(restore.Progress*100))),
-		Id:            restore.Id,
-		TimeCreated:   restore.CreationTime,
-		TimeStarted:   restore.StartTime,
-		TimeCompleted: restore.CompletionTime,
-		Condition: &RestoreCondition{},
+		Progress:      ProgressPercentage(restoreOperationReponse.Progress),
+		Id:            restoreOperationReponse.Id,
+		TimeCreated:   restoreOperationReponse.CreationTime,
+		TimeStarted:   restoreOperationReponse.StartTime,
+		TimeCompleted: restoreOperationReponse.CompletionTime,
+		Condition:     &RestoreCondition{},
+		Phase:         RestorationPhase(restoreOperationReponse.RestorationPhase),
 	}
 
-	status.setRestorationPhaseFromString(restore.RestorationPhase)
-	status.setRestorationConditionFromRestoreOperation(restore)
+	status.setRestorationCondition(restoreOperationReponse)
 
 	return status
 }
 
-func (status *CassandraRestoreStatus) setRestorationPhaseFromString(phase string) {
-	switch phase {
-	case string(RestorationPhaseDownload):
-		status.RestorationPhase = RestorationPhaseDownload
-	case string(RestorationPhaseImport):
-		status.RestorationPhase = RestorationPhaseImport
-	case string(RestorationPhaseTruncate):
-		status.RestorationPhase = RestorationPhaseTruncate
-	case string(RestorationPhaseCleanup):
-		status.RestorationPhase = RestorationPhaseCleanup
+func RestorationPhase(phase string) RestorationPhaseType {
+	restorationPhaseType := RestorationPhaseType(phase)
+	switch restorationPhaseType {
+	case RestorationPhaseDownload, RestorationPhaseImport, RestorationPhaseTruncate, RestorationPhaseCleanup:
+		return restorationPhaseType
 	default:
-		status.RestorationPhase = RestorePhaseUnknown
+		return RestorePhaseUnknown
 	}
 }
 
-func (status *CassandraRestoreStatus) setRestorationConditionFromRestoreOperation(restore *csapi.RestoreOperationResponse) {
+func (status *CassandraRestoreStatus) setRestorationCondition(restore *csapi.RestoreOperationResponse) {
 	status.Condition.LastTransitionTime = metav1.Now().Format(util.TimeStampLayout)
-	status.setRestorationStateFromString(restore.State)
+	status.Condition.Type = RestoreConditionType(restore.State)
 
 	if status.Condition.Type.IsInError() {
 		var failureCause FailureCause
 		mapstructure.Decode(*restore.FailureCause, &failureCause)
 
 		status.Condition.FailureCause = &failureCause
-	}
-}
-
-func (status *CassandraRestoreStatus) setRestorationStateFromString(state string) {
-	switch state {
-	case string(RestoreRequired):
-		status.Condition.Type = RestoreRequired
-	case string(RestorePending):
-		status.Condition.Type = RestorePending
-	case string(RestoreRunning):
-		status.Condition.Type = RestoreRunning
-	case string(RestoreCompleted):
-		status.Condition.Type = RestoreCompleted
-	case string(RestoreFailed):
-		status.Condition.Type = RestoreFailed
-	case string(RestoreCanceled):
-		status.Condition.Type = RestoreCanceled
 	}
 }

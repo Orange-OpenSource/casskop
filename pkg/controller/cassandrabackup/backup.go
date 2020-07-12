@@ -22,71 +22,71 @@ type backupClient struct {
 
 func backup(
 	client *backrest.Client,
-	instance *backupClient,
+	backupClient *backupClient,
 	logging *logrus.Entry,
 	recorder record.EventRecorder) {
 
-	operationID, err := client.PerformBackup(instance.backup)
+	operationID, err := client.PerformBackup(backupClient.backup)
 
 	if err == nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
-		recorder.Event(instance.backup,
+		recorder.Event(backupClient.backup,
 			corev1.EventTypeNormal,
 			"BackupNotInitiated",
 			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s failed.",
-				instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
-				instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag))
+				backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,
+				backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 		return
 	}
 
-	recorder.Event(instance.backup,
+	recorder.Event(backupClient.backup,
 		corev1.EventTypeNormal,
 		"BackupInitiated",
 		fmt.Sprintf("Task initiated to backup datacenter %s of cluster %s to %s under snapshot %s",
-			instance.backup.Spec.Datacenter, instance.backup.Spec.CassandraCluster,
-			instance.backup.Spec.StorageLocation, instance.backup.Spec.SnapshotTag))
+			backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,
+			backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 
 	for range time.NewTicker(2 * time.Second).C {
-		if status, err := client.GetBackupById(operationID); err != nil {
+		if status, err := client.GetBackupStatusById(operationID); err != nil {
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
 			break
 		} else {
-			instance.updateStatus(status, logging)
+			backupClient.updateStatus(status, logging)
 
 			if status.State == api.BackupFailed {
-				recorder.Event(instance.backup,
+				recorder.Event(backupClient.backup,
 					corev1.EventTypeWarning,
 					"BackupFailed",
-					fmt.Sprintf("Backup operation %v on node %s has failed", operationID, status.Node))
+					fmt.Sprintf("Backup operation %v on node %s has failed", operationID, status.CoordinatorMember))
 				break
 			}
 
 			if status.State == api.BackupCompleted {
-				recorder.Event(instance.backup,
+				recorder.Event(backupClient.backup,
 					corev1.EventTypeNormal,
 					"BackupCompleted",
-					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.Node))
+					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.CoordinatorMember))
 				break
 			}
 		}
 	}
 }
 
-func (si *backupClient) updateStatus(status *api.CassandraBackupStatus,
+func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus,
 	logging *logrus.Entry) {
 
-	si.backup.Status = status
+	backupClient.backup.Status = status
 
 	jsonPatch := fmt.Sprintf(`{"status":{"node": "%s", "state": "%s", "progress": "%s"}}`,
-		status.Node, status.State, status.Progress)
+		status.CoordinatorMember, status.State, status.Progress)
 	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
 	objToPatch := &api.CassandraBackup{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: si.backup.Namespace,
-			Name:      si.backup.Name,
+			Namespace: backupClient.backup.Namespace,
+			Name:      backupClient.backup.Name,
 		}}
 
-	if err := si.client.Patch(context.Background(), objToPatch, patchToApply); err != nil {
+	if err := backupClient.client.Patch(context.Background(), objToPatch, patchToApply); err != nil {
 
 		logging.Error(err, "Error updating CassandraBackup backup")
 	}
