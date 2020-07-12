@@ -457,8 +457,6 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					"initialize it in status", dcName, rackName)
 				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 				cc.InitCassandraRackinStatus(status, dcName, rackName)
-				//Return will stop operator reconcile loop until next one
-				//used here to write CassandraClusterStatus properly
 				return nil
 			}
 			dcRackStatus := status.CassandraRackStatus[dcRackName]
@@ -478,7 +476,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				//Update CassandraClusterPhase
 				rcc.UpdateCassandraRackStatusPhase(cc, dcName, rackName, storedStatefulSet, status)
 
-				//Find if there is an Action to execute or to end
+				//Find if there is an Action to execute/end
 				rcc.getNextCassandraClusterStatus(cc, dc, rack, dcName, rackName, storedStatefulSet, status)
 
 				//If not Initializing cluster execute pod operations queued

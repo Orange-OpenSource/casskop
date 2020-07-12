@@ -181,12 +181,15 @@ func TestMultipleDecommissions(t *testing.T) {
 	numberOfReplicas -= 1
 	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
+	// This reconcile does nothing as the pod has not been deleted yet by the statefulset
+	reconcileValidation(t, rcc, *req)
+
 	deletedPod := podHost(stfsName, 2, rcc)
 	deletePodNotDeletedByFakeClient(rcc, deletedPod)
 	lastPod = podHost(stfsName, 1, rcc)
 
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(2, jolokiaCallsCount(deletedPod))
+	assert.Equal(3, jolokiaCallsCount(deletedPod))
 	assertStatefulsetReplicas(t, rcc, numberOfReplicas, cassandraCluster.Namespace, stfsName)
 
 	registerFatalJolokiaResponder(t, deletedPod)

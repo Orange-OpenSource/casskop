@@ -309,33 +309,35 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 
 		return rcc.ensureDecommissionToDo(cc, dcName, rackName, status)
 
-	case api.StatusOngoing, api.StatusFinalizing:
+	case api.StatusFinalizing:
+		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return rcc.deletePodPVC(cc, dcName, rackName, status, lastPod)
+			}
+			return breakResyncLoop, fmt.Errorf(
+				"Failed to get last cassandra's pods '%s': %v", podLastOperation.Pods[0], err,
+				)
+		}
+
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
+			"lastPod": lastPod.Name}).Infof("Statefulset is scaling down, waiting..")
+		return breakResyncLoop, nil
+
+	case api.StatusOngoing:
 
 		if podLastOperation.Pods == nil || podLastOperation.Pods[0] == "" {
-			return breakResyncLoop, fmt.Errorf("For Status Ongoing we should have a PodLastOperation Pods item")
+			return breakResyncLoop, fmt.Errorf("Status is Ongoing, we should have a PodLastOperation Pods item")
 		}
 
 		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
-			//If Node is already Gone, We Delete PVC
-			if apierrors.IsNotFound(err) {
-				return rcc.ensureDecommissionFinalizing(cc, dcName, rackName, status, lastPod)
-			}
-			return breakResyncLoop, fmt.Errorf("failed to get last cassandra's pods '%s': %v",
-				podLastOperation.Pods[0], err)
-		}
-
-		//LastPod Still Exists
-		if !PodContainersReady(lastPod) && lastPod.DeletionTimestamp != nil {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"lastPod": lastPod.Name}).Infof("Statefulset is scaling down, waiting..")
-			return breakResyncLoop, nil
-
+			return breakResyncLoop, fmt.Errorf(
+				"Failed to get last pod '%s': %v", podLastOperation.Pods[0], err)
 		}
 
 		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
-		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-			cc.Spec.ImageJolokiaSecret, cc.Namespace)
+		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 		if err != nil {
 			return breakResyncLoop, err
@@ -352,27 +354,31 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		if operationMode == NORMAL {
 			t, err := k8s.LabelTime2Time(lastPod.Labels["operation-start"])
 			if err != nil {
-				logrus.WithFields(logrus.Fields{"operation-start": lastPod.Labels["operation-start"]}).Debugf("Can't parse time")
+				logrus.WithFields(logrus.Fields{
+					"operation-start": lastPod.Labels["operation-start"],
+				}).Debugf("Can't parse time")
 			}
 			now, _ := k8s.LabelTime2Time(k8s.LabelTime())
 
 			if t.Add(api.DefaultDelayWaitForDecommission * time.Second).After(now) {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-					"pod": lastPod.Name, "operationMode": operationMode,
-					"DefaultDelayWaitForDecommission": api.DefaultDelayWaitForDecommission}).Info("Decommission was applied less " +
-					"than DefaultDelayWaitForDecommission seconds, waiting")
+				logrus.WithFields(logrus.Fields{
+					"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
+					"operationMode": operationMode,
+					"DefaultDelayWaitForDecommission": api.DefaultDelayWaitForDecommission,
+				}).Info("Decommission was applied less than DefaultDelayWaitForDecommission seconds, waiting")
 			} else {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
-					"operationMode": operationMode}).Info("Seems that decommission has not correctly been applied, trying again..")
+				logrus.WithFields(logrus.Fields{
+					"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name, "operationMode": operationMode,
+				}).Info("Seems that decommission has not correctly been applied, trying again..")
 				status.CassandraRackStatus[dcRackName].PodLastOperation.Status = api.StatusToDo
 			}
 			return breakResyncLoop, nil
 		}
 
 		if operationMode == DECOMMISSIONED || operationMode == UNKNOWN {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"lastPod": lastPod.Name, "operationMode": operationMode}).Infof("Node has left the ring, " +
-				"waiting for statefulset Scaledown")
+			logrus.WithFields(logrus.Fields{
+				"cluster": cc.Name, "rack": dcRackName, "lastPod": lastPod.Name, "operationMode": operationMode,
+			}).Infof("Node has left the ring, waiting for statefulset Scaledown")
 			podLastOperation.Status = api.StatusFinalizing
 			return continueResyncLoop, nil
 		}
@@ -381,7 +387,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 			"operationMode": operationMode}).Info("Cassandra Node is decommissioning, we need to wait")
 		return breakResyncLoop, nil
 
-		//In case of PodLastOperation Done we set LastAction to Continue to see if we need to decommission more
+	//Set LastAction to Continue in case more decommissions are needed
 	case api.StatusDone:
 		if podLastOperation.PodsOK == nil || podLastOperation.PodsOK[0] == "" {
 			return breakResyncLoop, fmt.Errorf("For Status Done we should have a PodLastOperation.PodsOK item")
@@ -483,9 +489,9 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	return breakResyncLoop, nil
 }
 
-//ensureDecommissionFinalizing
+//deletePodPVC
 // State To-DO -> Ongoing
-func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.CassandraCluster, dcName, rackName string,
+func (rcc *ReconcileCassandraCluster) deletePodPVC(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, lastPod *v1.Pod) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
@@ -508,10 +514,10 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	if rcc.weAreScalingDown(dcRackStatus) {
-		// We have more decommissions to do
+		// More decommissions to do
 		podLastOperation.Status = api.StatusContinue
 	} else {
-		// We are done with decommissioning
+		// No more decommissions
 		podLastOperation.Status = api.StatusDone
 	}
 
@@ -519,7 +525,6 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 	now := metav1.Now()
 	podLastOperation.EndTime = &now
 	podLastOperation.Pods = []string{}
-	//Important, We must break loop if multipleScaleDown has been asked
 	return breakResyncLoop, nil
 }
 

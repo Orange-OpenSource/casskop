@@ -16,6 +16,7 @@ package cassandracluster
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -161,15 +162,15 @@ func needToWaitDelayBeforeCheck(cc *api.CassandraCluster, dcRackName string, sto
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
 	if lastAction.StartTime != nil {
-
 		t := *lastAction.StartTime
 		now := metav1.Now()
 
 		if t.Add(api.DefaultDelayWait * time.Second).After(now.Time) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-				"rack": dcRackName}).Info("The Operator Waits " +
-				strconv.Itoa(api.DefaultDelayWait) +
-				" seconds for the action to start correctly")
+				"rack": dcRackName}).Info(
+					fmt.Sprintf("The Operator Waits %s seconds for the action to start correctly",
+						strconv.Itoa(api.DefaultDelayWait)),
+					)
 			return true
 		}
 	}
@@ -453,7 +454,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 
 		//Do we have reach requested number of replicas ?
 		if isStatefulSetNotReady(storedStatefulSet) {
-			logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas Number Not OK")
+			logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas count is not okay")
 			return
 		}
 		//If yes, just check that lastPod is running
@@ -462,7 +463,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			return
 		}
 		if len(podsList.Items) < int(nodesPerRacks) {
-			logrus.Infof("[%s][%s]: StatefulSet is scaling up", cc.Name, dcRackName)
+			logrus.WithFields(logrusFields).Infof("StatefulSet is scaling up")
 		}
 		pod := podsList.Items[nodesPerRacks-1]
 		if cassandraPodIsReady(&pod) {
@@ -471,17 +472,17 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 			now := metav1.Now()
 			lastAction.EndTime = &now
 			lastAction.Status = api.StatusDone
-			logrus.Infof("[%s][%s]: StatefulSet(%s): Replicas Number OK: ready[%d]", cc.Name, dcRackName, lastAction.Name, storedStatefulSet.Status.ReadyReplicas)
+			logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is okay")
 		}
 	}
 
 	//No more in Initializing state
 	if isStatefulSetNotReady(storedStatefulSet) {
-		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas number not okay")
+		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is not okay")
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 	} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
-		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas number not okay")
+		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is not okay")
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
