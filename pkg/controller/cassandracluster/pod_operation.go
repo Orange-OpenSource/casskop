@@ -421,13 +421,12 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	if lastPod.Status.Phase != v1.PodRunning || lastPod.DeletionTimestamp != nil {
 		return breakResyncLoop, fmt.Errorf("Pod is not running")
 	}
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pod": lastPod.Name}).Info("ScaleDown detected, we launch decommission")
+	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name}
+	logrus.WithFields(logrusFields).Info("ScaleDown detected, we launch decommission")
 
 	//Ensure node is not leaving or absent from the ring
 	hostName := k8s.PodHostname(*lastPod)
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-		cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	if err != nil {
 		return breakResyncLoop, err
@@ -436,44 +435,43 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	operationMode, err := jolokiaClient.NodeOperationMode()
 
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"hostName": hostName, "err": err}).Error("Jolokia call failed")
+		logrusFields["err"] = err
+		logrusFields["hostname"] = hostName
+		logrus.WithFields(logrusFields).Error("Jolokia call failed")
 		return breakResyncLoop, err
 	}
 
 	if operationMode == "DECOMMISSIONED" || operationMode == "" || operationMode == "LEAVING" {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Info("Node is leaving or has already been decommissioned")
+		logrus.WithFields(logrusFields).Info("Node is leaving or has already been decommissioned")
 		return breakResyncLoop, nil
 	}
 
-	err = rcc.UpdatePodLabel(lastPod, map[string]string{
-		"operation-status": api.StatusOngoing,
-		"operation-start":  k8s.LabelTime(),
-		"operation-name":   api.OperationDecommission})
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name, "err": err}).Debug("Error updating pod")
+	if err = rcc.UpdatePodLabel(lastPod,
+		map[string]string{
+			"operation-status": api.StatusOngoing,
+			"operation-start":  k8s.LabelTime(),
+			"operation-name":   api.OperationDecommission,
+		}); err != nil {
+		logrusFields["err"] = err
+		logrus.WithFields(logrusFields).Debug("Error updating pod")
 	}
 	podLastOperation.Status = api.StatusOngoing
 	podLastOperation.Pods = append(list, lastPod.Name)
 	podLastOperation.PodsOK = []string{}
 	podLastOperation.PodsKO = []string{}
 
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pod": lastPod.Name}).Debug("Decommissioning cassandra node")
+	logrus.WithFields(logrusFields).Debug("Decommissioning cassandra node")
 
 	go func() {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Debug("Node decommission starts")
+		logrus.WithFields(logrusFields).Debug("Node decommission starts")
 		err = jolokiaClient.NodeDecommission()
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Debug("Node decommission ended")
+		logrus.WithFields(logrusFields).Debug("Node decommission ended")
 		if err != nil {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"pod": lastPod.Name, "err": err}).Debug("Node decommission failed")
+			logrusFields["err"] = err
+			logrus.WithFields(logrusFields).Debug("Node decommission failed")
 		}
 	}()
+
 	return breakResyncLoop, nil
 }
 
@@ -485,21 +483,17 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionFinalizing(cc *api.Cassa
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	pvcName := "data-" + podLastOperation.Pods[0]
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pvc": pvcName}).Info("Decommission done -> we delete PVC")
-	pvc, err := rcc.GetPVC(cc.Namespace, pvcName)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pvc": pvcName}).Error("Cannot get PVC")
-	}
-	if err == nil {
-		err = rcc.deletePVC(pvc)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"pvc": pvcName}).Error("Error deleting PVC, Please make manual Actions..")
+	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pvc": pvcName}
+	logrus.WithFields(logrusFields).Info("Decommission done, we delete PVC")
+	if pvc, err := rcc.GetPVC(cc.Namespace, pvcName); err != nil {
+		logrusFields["err"] = err
+		logrus.WithFields(logrusFields).Error("Cannot get PVC")
+	} else {
+		if err = rcc.deletePVC(pvc); err != nil {
+			logrusFields["err"] = err
+			logrus.WithFields(logrusFields).Error("Error deleting PVC, please make manual Actions..")
 		} else {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"pvc": pvcName}).Info("PVC deleted")
+			logrus.WithFields(logrusFields).Info("PVC deleted")
 		}
 	}
 

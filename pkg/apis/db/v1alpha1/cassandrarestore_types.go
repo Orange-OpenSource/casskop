@@ -99,43 +99,44 @@ type CassandraRestoreStatus struct {
 
 // CassandraRestoreSpec defines the specification for a restore of a Cassandra backup.
 type CassandraRestoreSpec struct {
-	// Cluster is a refeference to the Cluster to which the Restore
-	// belongs.
+	// Cluster is a reference to the Cluster to which the Restore belongs
 	CassandraCluster string `json:"cassandraCluster"`
-	// Backup is a reference to the Backup object to be restored.
+	// Backup is a reference to the Backup object to be restored
 	CassandraBackup string `json:"cassandraBackup"`
-	// CoordinatorMember is the Pod name of the Cluster member on which the
-	// Restore will be executed.
+	// CoordinatorMember is the Pod name of the Cluster member on which the restore will be executed
 	CoordinatorMember string `json:"coordinatorMember,omitempty"`
 	// ConcurrentConnection is the number of threads used for upload, there might be
 	// at most so many uploading threads at any given time, when not set, it defaults to 10
 	ConcurrentConnection *int32 `json:"concurrentConnection,omitempty"`
-	// directory of Cassandra, by default it is /var/lib/cassandra, in this path, one expects there is 'data' directory
+	// Directory of Cassandra where data folder resides, defaults to /var/lib/cassandra
 	CassandraDirectory string `json:"cassandraDirectory,omitempty"`
-	// NoDeleteTruncates is flag saying if we should not delete truncated SSTables
-	// after they are imported, as part of CLEANUP phase, defaults to false
+	// NoDeleteTruncates is a flag saying if we should not delete truncated SSTables after they are restored,
+	// as part of CLEANUP phase, defaults to false
 	NoDeleteTruncates bool `json:"noDeleteTruncates,omitempty"`
-	// SchemaVersion is the version of schema we want to restore from, upon backup, a schema version is automatically appended to snapshot name
-	// and its manifest is uploaded under that name. In case we have two snapshots having same name,
-	// we might distinguish between them by this schema version. If schema version is not specified,
-	// we expect that there will be one and only one backup taken with respective snapshot name.
+	// SchemaVersion is the version of the schema we want to restore from. Upon backup, a schema version is
+	// automatically appended to a snapshot name and its manifest is uploaded under that name. In case we have two
+	// snapshots having same name, we might distinguish between them by this schema version. If schema version is not
+	// specified, we expect there will be a unique backup taken with respective snapshot name.
 	// This schema version has to match the version of a Cassandra node we are doing restore for
 	// (hence, by proxy, when global request mode is used, all nodes have to be on exact same schema version).
 	SchemaVersion string `json:"schemaVersion,omitempty"`
-	// ExactSchemaVersion is a flag saying if we indeed want a schema version of a running node match with schema version a snapshot is taken on.
-	// There might be cases when we want to restore a table for which its CQL schema has not changed
-	// but it has changed for other table / keyspace but a schema for that node has changed by doing that.
+	// ExactSchemaVersion is a flag saying if we indeed want a schema version of a running node match with schema
+	// version a snapshot is taken on. There might be cases when we want to restore a table for which its CQL schema
+	// has not changed but it has changed for other table / keyspace but a schema for that node has changed by doing
+	// that.
 	ExactSchemaVersion bool `json:"exactSchemaVersion,omitempty""`
-	// strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
+	// Strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
 	// +kubebuilder:validation:Enum={"HARDLINKS","IMPORT"}
 	RestorationStrategyType string `json:"restorationStrategyType,omitempty"`
-	// name of Kubernetes secret from which credentials used for the communication to cloud storage providers are read,
-	// if not specified, secret name to be read will be automatically derived in form 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'.
-	// These secrets are used only in case protocol in storageLocation is gcp, azure or s3.
+	// Name of Kubernetes secret from which credentials used for the communication to cloud storage providers are read,
+	// if not specified, secret name to be read will be automatically derived in form
+	// 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'. These secrets are used only in case protocol in
+	// storageLocation is gcp, azure or s3
 	SecretName string `json:"secret,omitempty"`
-	// database entities to restore, it might be either only keyspaces or only tables (from different keyspaces if needed),
+	// Database entities to restore, it might be either only keyspaces or only tables (from different keyspaces if needed),
 	// e.g. 'k1,k2' if one wants to backup whole keyspaces and 'ks1.t1,ks2,t2' if one wants to restore tables.
-	// These formats can not be used together so 'k1,k2.t2' is invalid. If this field is empty, all keyspaces are restored.
+	// These formats can not be used together so 'k1,k2.t2' is invalid. If this field is empty, all keyspaces are
+	// restored.
 	Entities string `json:"entities,omitempty"`
 }
 
@@ -144,8 +145,7 @@ type CassandraRestoreSpec struct {
 // +resourceName=cassandrarestores
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CassandraRestore is a Casskop Operator resource that represents the restoration of
-// backup of a Cassandra cluster.
+// CassandraRestore is a Casskop Operator resource that represents the restoration of a backup of a Cassandra cluster
 type CassandraRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`

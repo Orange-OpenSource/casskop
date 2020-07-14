@@ -40,9 +40,6 @@ const (
 // initialize local pseudorandom generator
 var random = rand.New(rand.NewSource(time.Now().Unix()))
 
-var log = logf.Log.WithName("controller_cassandracluster")
-
-
 // Add creates a new CassandraRestore Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
@@ -70,10 +67,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				return false
 			}
 			restore, _ := object.(*api.CassandraRestore)
-			reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
+			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": restore.Namespace,
+				"Request.Name": restore.Name})
 			cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
 			if cond != nil {
-				reqLogger.Info("Restore is already scheduled on Cluster member %s", restore.Spec.CoordinatorMember)
+				reqLogger.Info("Restore is already scheduled on Cluster member %s",
+					restore.Spec.CoordinatorMember)
 				return false
 			}
 
@@ -85,9 +84,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				return false
 			}
 			restore, _ := object.(*api.CassandraRestore)
-
-			reqLogger := log.WithValues("Restore.Namespace", restore.Namespace, "Restore.Name", restore.Name)
-			//old := e.ObjectOld.(*api.CassandraRestore)
+			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": restore.Namespace,
+				"Request.Name": restore.Name})
 			new := e.ObjectNew.(*api.CassandraRestore)
 			if new.Status.Condition == nil {
 				return false

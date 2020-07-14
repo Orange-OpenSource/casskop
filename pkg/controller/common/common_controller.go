@@ -6,18 +6,15 @@ import (
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var newSidecarClientFromCluster = cassandrabackup.NewFromCluster
-
 // requeueWithError is a convenience wrapper around logging an error message
 // separate from the stacktrace and then passing the error through to the controller
 // manager
-func RequeueWithError(logger logr.Logger, msg string, err error) (reconcile.Result, error) {
+func RequeueWithError(logger *logrus.Entry, msg string, err error) (reconcile.Result, error) {
 	// Info log the error message and then let the reconciler dump the stacktrace
 	logger.Info(msg)
 	return reconcile.Result{}, err
