@@ -54,17 +54,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			return true
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			object, err := meta.Accessor(e.ObjectNew)
-			if err != nil {
+			if _, err := meta.Accessor(e.ObjectNew); err != nil {
 				return false
 			}
-			if _, ok := object.(*api.CassandraBackup); ok {
-				new := e.ObjectNew.(*api.CassandraBackup)
-				if new.Status == nil || new.Status.State != api.BackupRunning {
-					return true
-				}
-
-				return false
+			new := e.ObjectNew.(*api.CassandraBackup)
+			if new.Status == nil || new.Status.State != api.BackupRunning {
+				return true
 			}
 			return false
 		},
@@ -156,4 +151,3 @@ func validateBackupSecret(secret *corev1.Secret, backup *api.CassandraBackup, lo
 
 	return nil
 }
-

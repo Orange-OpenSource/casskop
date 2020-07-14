@@ -48,8 +48,8 @@ func newMockHttpClient(c *csapi.Configuration) *csapi.APIClient {
 
 func newMockClient() *client {
 	return &client{
-		opts:       newMockOpts(),
-		newClient:  newMockHttpClient,
+		config:    newMockOpts(),
+		newClient: newMockHttpClient,
 	}
 }
 

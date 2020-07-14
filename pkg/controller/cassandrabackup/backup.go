@@ -21,12 +21,12 @@ type backupClient struct {
 }
 
 func backup(
-	client *backrest.Client,
+	backrestClient *backrest.Client,
 	backupClient *backupClient,
 	logging *logrus.Entry,
 	recorder record.EventRecorder) {
 
-	operationID, err := client.PerformBackup(backupClient.backup)
+	operationID, err := backrestClient.PerformBackup(backupClient.backup)
 
 	if err == nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
@@ -47,7 +47,7 @@ func backup(
 			backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 
 	for range time.NewTicker(2 * time.Second).C {
-		if status, err := client.GetBackupStatusById(operationID); err != nil {
+		if status, err := backrestClient.GetBackupStatusById(operationID); err != nil {
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
 			break
 		} else {

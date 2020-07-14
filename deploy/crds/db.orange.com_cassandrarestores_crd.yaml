@@ -15,7 +15,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: CassandraRestore is a Casskop Operator resource that represents
-          the restoration of backup of a Cassandra cluster.
+          the restoration of a backup of a Cassandra cluster
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,16 +33,16 @@ spec:
             description: CassandraRestoreSpec defines the specification for a restore
               of a Cassandra backup.
             properties:
-              backupRef:
-                description: Backup is a reference to the Backup object to be restored.
+              cassandraBackup:
+                description: Backup is a reference to the Backup object to be restored
                 type: string
-              cassandraClusterRef:
-                description: Cluster is a refeference to the Cluster to which the
-                  Restore belongs.
+              cassandraCluster:
+                description: Cluster is a reference to the Cluster to which the Restore
+                  belongs
                 type: string
               cassandraDirectory:
-                description: directory of Cassandra, by default it is /var/lib/cassandra,
-                  in this path, one expects there is 'data' directory
+                description: Directory of Cassandra where data folder resides, defaults
+                  to /var/lib/cassandra
                 type: string
               concurrentConnection:
                 description: ConcurrentConnection is the number of threads used for
@@ -52,10 +52,10 @@ spec:
                 type: integer
               coordinatorMember:
                 description: CoordinatorMember is the Pod name of the Cluster member
-                  on which the Restore will be executed.
+                  on which the restore will be executed
                 type: string
               entities:
-                description: database entities to restore, it might be either only
+                description: Database entities to restore, it might be either only
                   keyspaces or only tables (from different keyspaces if needed), e.g.
                   'k1,k2' if one wants to backup whole keyspaces and 'ks1.t1,ks2,t2'
                   if one wants to restore tables. These formats can not be used together
@@ -71,40 +71,39 @@ spec:
                   doing that.
                 type: boolean
               noDeleteTruncates:
-                description: NoDeleteTruncates is flag saying if we should not delete
-                  truncated SSTables after they are imported, as part of CLEANUP phase,
+                description: NoDeleteTruncates is a flag saying if we should not delete
+                  truncated SSTables after they are restored, as part of CLEANUP phase,
                   defaults to false
                 type: boolean
               restorationStrategyType:
-                description: strategy telling how we should go about restoration,
+                description: Strategy telling how we should go about restoration,
                   please refer to details in backup and sidecar documentation
                 enum:
                 - HARDLINKS
                 - IMPORT
                 type: string
               schemaVersion:
-                description: SchemaVersion is the version of schema we want to restore
-                  from, upon backup, a schema version is automatically appended to
-                  snapshot name and its manifest is uploaded under that name. In case
-                  we have two snapshots having same name, we might distinguish between
-                  them by this schema version. If schema version is not specified,
-                  we expect that there will be one and only one backup taken with
-                  respective snapshot name. This schema version has to match the version
-                  of a Cassandra node we are doing restore for (hence, by proxy, when
-                  global request mode is used, all nodes have to be on exact same
-                  schema version).
+                description: SchemaVersion is the version of the schema we want to
+                  restore from. Upon backup, a schema version is automatically appended
+                  to a snapshot name and its manifest is uploaded under that name.
+                  In case we have two snapshots having same name, we might distinguish
+                  between them by this schema version. If schema version is not specified,
+                  we expect there will be a unique backup taken with respective snapshot
+                  name. This schema version has to match the version of a Cassandra
+                  node we are doing restore for (hence, by proxy, when global request
+                  mode is used, all nodes have to be on exact same schema version).
                 type: string
               secret:
-                description: name of Kubernetes secret from which credentials used
+                description: Name of Kubernetes secret from which credentials used
                   for the communication to cloud storage providers are read, if not
                   specified, secret name to be read will be automatically derived
                   in form 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'.
                   These secrets are used only in case protocol in storageLocation
-                  is gcp, azure or s3.
+                  is gcp, azure or s3
                 type: string
             required:
-            - backupRef
-            - cassandraClusterRef
+            - cassandraBackup
+            - cassandraCluster
             type: object
           status:
             description: CassandraRestoreStatus captures the current status of a Cassandra
@@ -112,7 +111,7 @@ spec:
             properties:
               conditions:
                 description: RestoreCondition describes the observed state of a Restore
-                  at a certain point.
+                  at a certain point
                 properties:
                   failureCause:
                     properties:
@@ -144,7 +143,7 @@ spec:
                     type: string
                   type:
                     description: RestoreConditionType represents a valid condition
-                      of a Restore.
+                      of a Restore
                     type: string
                 required:
                 - type
@@ -157,18 +156,16 @@ spec:
                   endpoint
                 type: string
               progress:
-                description: Progress is a percetange from 0% to 100%, 100% telling
-                  that operation is completed, either successfully or with errors
+                description: Progress is a percentage, 100% means the operation is
+                  completed, either successfully or with errors
                 type: string
               restorationPhase:
                 type: string
               timeCompleted:
-                description: TimeCompleted is the time at which the restore completed.
                 type: string
               timeCreated:
                 type: string
               timeStarted:
-                description: TimeStarted is the time at which the restore was started.
                 type: string
             type: object
         required:

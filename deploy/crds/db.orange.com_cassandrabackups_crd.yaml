@@ -75,7 +75,7 @@ spec:
           status:
             description: CassandraBackupStatus defines the observed state of CassandraBackup
             properties:
-              node:
+              coordinatorMember:
                 description: name of pod / node
                 type: string
               progress:
@@ -85,7 +85,7 @@ spec:
                 description: State shows the status of the operation
                 type: string
             required:
-            - node
+            - coordinatorMember
             - progress
             - state
             type: object

@@ -28,10 +28,11 @@ func Reconciled() (reconcile.Result, error) {
 
 // newSidecarsConnection is a convenience wrapper for creating a sidecars connection
 // and creating a safer close function
-func NewCassandraBackupConnection(client client.Client, cluster *api.CassandraCluster, pod *corev1.Pod) (csClient cassandrabackup.Client, err error) {
+func NewCassandraBackupConnection(client client.Client, cluster *api.CassandraCluster,
+	pod *corev1.Pod) (csClient cassandrabackup.Client, err error) {
 	// Get a cassandra backup connection
 	logrus.Info(fmt.Sprintf("Retrieving Cassandra Sidecar client for %s/%s", cluster.Namespace, cluster.Name))
-	csClient, err = newSidecarClientFromCluster(client, cluster, pod)
+	csClient, err = cassandrabackup.ClientFromCluster(client, cluster, pod)
 	if err != nil {
 		return
 	}
