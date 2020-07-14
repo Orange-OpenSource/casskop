@@ -10,7 +10,6 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/errorfactory"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/Orange-OpenSource/casskop/pkg/util"
-	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -93,7 +92,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
 			default:
-				return common.RequeueWithError(log, err.Error(), err)
+				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
 		r.recorder.Event(instance,
@@ -125,7 +124,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
 			default:
-				return common.RequeueWithError(log, err.Error(), err)
+				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
 		r.recorder.Event(instance,
@@ -155,7 +154,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					RequeueAfter: time.Duration(20) * time.Second,
 				}, nil
 			default:
-				return common.RequeueWithError(log, err.Error(), err)
+				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
 		r.recorder.Event(instance,
@@ -170,7 +169,8 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 }
 
 // requiredRestore select restore coordinator on a specific member of a Cluster
-func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraRestore, cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraRestore, cc *v1alpha1.CassandraCluster,
+	backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
 	ns := restore.Namespace
 
 	pods, err := r.listPods(ns, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
@@ -186,7 +186,7 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 					Type:               v1alpha1.RestoreRequired,
 					LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 				},
-			}, log); err != nil {
+			}, reqLogger); err != nil {
 			return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 		}
 
@@ -196,7 +196,8 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 	return errors2.New("No pods found.")
 }
 
-func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.CassandraRestore, cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.CassandraRestore,
+	cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
 	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
@@ -214,14 +215,15 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.Cass
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "cassandra backup sidecar communication error")
 	}
 
-	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, log); err != nil {
+	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
 		return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 	}
 
 	return nil
 }
 
-func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1.CassandraRestore, cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger logr.Logger) error {
+func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1.CassandraRestore,
+	cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
 
 	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
@@ -245,7 +247,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "cassandra backup sidecar communication error")
 	}
 
-	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, log); err != nil {
+	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
 		return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 	}
 
@@ -263,7 +265,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 	// TODO : Implement timeout ?
 
 	// restore operation still in progress
-	log.Info("Cassandra backup sidecar operation is still running", "restoreId", restoreId)
+	reqLogger.Info("Cassandra backup sidecar operation is still running", "restoreId", restoreId)
 	return errorfactory.New(errorfactory.CassandraBackupSidecarOperationRunning{}, errors2.New("cassandra backup sidecar restore operation still running"), fmt.Sprintf("restore operation id : %s", restoreId))
 }
 

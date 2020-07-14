@@ -3,40 +3,34 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status api.CassandraRestoreStatus, reqLogger logr.Logger) error {
+func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status api.CassandraRestoreStatus,
+	reqLogger *logrus.Entry) error {
 	typeMeta := restore.TypeMeta
 
 	restore.Status = status
 
-	err := updateRestoreStatus(c, restore)
-
-	if err != nil {
+	if err := updateRestoreStatus(c, restore); err != nil {
 		if !apierrors.IsConflict(err) {
-			return fmt.Errorf("could not update CR state")
+			return fmt.Errorf("Could not update CR state")
 		}
 
-		err := c.Get(context.TODO(), types.NamespacedName{
-			Name: restore.Name,
-			Namespace: restore.Namespace,
-		}, restore)
+		err := c.Get(context.TODO(), types.NamespacedName{Name: restore.Name, Namespace: restore.Namespace}, restore)
 
 		if err != nil {
-			return fmt.Errorf("could not get config for updating status")
+			return fmt.Errorf("Could not get config for updating status")
 		}
 		restore.Status = status
 
-		err = updateRestoreStatus(c, restore)
-
-		if err != nil {
-			return fmt.Errorf("could not update Restore state")
+		if err = updateRestoreStatus(c, restore); err != nil {
+			return fmt.Errorf("Could not update Restore state")
 		}
 	}
 	// update loses the typeMeta of the config that's used later when setting ownerrefs
@@ -46,8 +40,7 @@ func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status 
 }
 
 func updateRestoreStatus(c client.Client, restore *api.CassandraRestore) error {
-	err := c.Status().Update(context.TODO() , restore)
-	if apierrors.IsNotFound(err) {
+	if err := c.Status().Update(context.TODO() , restore); apierrors.IsNotFound(err) {
 		return c.Update(context.TODO(), restore)
 	}
 	return nil

@@ -24,8 +24,6 @@ const annotationLastApplied string = "cassandrabackups.db.orange.com/last-applie
 
 // ReconcileCassandraBackup reconciles a CassandraBackup object
 type ReconcileCassandraBackup struct {
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
 	client    client.Client
 	scheme    *runtime.Scheme
 	recorder  record.EventRecorder
