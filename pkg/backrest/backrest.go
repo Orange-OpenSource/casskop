@@ -21,25 +21,17 @@ type Client struct {
 	CoordinatorMember string
 }
 
-func NewClientFromRestore(client client.Client, cc *api.CassandraCluster, restore *api.CassandraRestore, pod *corev1.Pod) (*Client, error) {
+func NewClient(client client.Client, cc *api.CassandraCluster, pod *corev1.Pod) (*Client, error) {
 	csClient, err := common.NewCassandraBackupConnection(client, cc, pod)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{client: csClient, CoordinatorMember: restore.Spec.CoordinatorMember}, nil
+	return &Client{client: csClient, CoordinatorMember: pod.Name}, nil
 }
 
-func NewClientFromBackup(client client.Client, cc *api.CassandraCluster, backup *api.CassandraBackup, pod *corev1.Pod) (*Client, error) {
-	csClient, err := common.NewCassandraBackupConnection(client, cc, pod)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{client: csClient, CoordinatorMember: backup.Status.CoordinatorMember}, nil
-}
-
-func (c *Client) PerformRestore(restore *api.CassandraRestore, backup *api.CassandraBackup) (*api.CassandraRestoreStatus, error) {
+func (c *Client) PerformRestore(restore *api.CassandraRestore,
+	backup *api.CassandraBackup) (*api.CassandraRestoreStatus, error) {
 	restoreOperationRequest := &csapi.RestoreOperationRequest {
 		Type_: "restore",
 		StorageLocation: backup.Spec.StorageLocation,

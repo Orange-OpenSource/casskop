@@ -15,13 +15,13 @@ type entryType struct {
 }
 type Scheduler struct {
 	entries    map[string]entryType
-	CronClient *cron.Cron
+	cronClient *cron.Cron
 }
 
 func NewScheduler() Scheduler {
 	cronClient := cron.New()
 	cronClient.Start()
-	return Scheduler{entries: make(map[string]entryType), CronClient: cronClient}
+	return Scheduler{entries: make(map[string]entryType), cronClient: cronClient}
 }
 
 // Contains check if a cron task already exists
@@ -31,33 +31,34 @@ func (schedule Scheduler) Contains(backupName string) bool {
 }
 
 // AddOrUpdate a cron task
-func (schedule Scheduler) AddOrUpdate(cb *api.CassandraBackup,
+func (schedule Scheduler) AddOrUpdate(cassandraBackup *api.CassandraBackup,
 	task func(), recorder *record.EventRecorder) (skip bool, err error) {
 
-	backupName := cb.Name
+	backupName := cassandraBackup.Name
 
-	if schedule.Contains(backupName) && schedule.entries[backupName].Schedule == cb.Spec.Schedule {
+	if schedule.Contains(backupName) && schedule.entries[backupName].Schedule == cassandraBackup.Spec.Schedule {
 		return true, nil
 	}
 
 	schedule.Remove(backupName)
 
-	entryID, err := schedule.CronClient.AddFunc(cb.Spec.Schedule, task)
+	entryID, err := schedule.cronClient.AddFunc(cassandraBackup.Spec.Schedule, task)
 	if err == nil {
-		schedule.entries[backupName] = entryType{entryID, cb.Spec.Schedule}
+		schedule.entries[backupName] = entryType{entryID, cassandraBackup.Spec.Schedule}
 		(*recorder).Event(
-			cb,
+			cassandraBackup,
 			corev1.EventTypeNormal,
 			"BackupTaskscheduled",
 			fmt.Sprintf("Controller scheduled task %s to back up cluster %s under snapshot %s with schedule %s",
-				cb.Name, cb.Spec.CassandraCluster, cb.Spec.SnapshotTag, cb.Spec.Schedule))
+				cassandraBackup.Name, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.SnapshotTag,
+				cassandraBackup.Spec.Schedule))
 	}
 	return false, err
 }
 
 func (schedule Scheduler) Remove(backupName string) {
 	if schedule.Contains(backupName) {
-		schedule.CronClient.Remove(schedule.entries[backupName].ID)
+		schedule.cronClient.Remove(schedule.entries[backupName].ID)
 		delete(schedule.entries, backupName)
 	}
 }

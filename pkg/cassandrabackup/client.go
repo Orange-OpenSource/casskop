@@ -20,34 +20,27 @@ type Client interface {
 
 type client struct {
 	Client
-	opts *Config
+	config    *Config
 	podClient *csapi.APIClient
 
 	newClient func(*csapi.Configuration) *csapi.APIClient
 }
 
-func New(opts *Config) Client {
-	csClient := &client{
-		opts: opts,
-	}
-
-	csClient.newClient = csapi.NewAPIClient
-	return csClient
+func New(config *Config) Client {
+	return &client{config: config, newClient: csapi.NewAPIClient}
 }
 
 func (cs *client) Build() error {
-	cs.podClient = cs.newClient( cs.getCassandraBackupPodSidecarConfig())
+	cs.podClient = cs.newClient( cs.cassandraBackupSidecarConfig())
 	return nil
 }
 
-func NewFromCluster(k8sclient controllerclient.Client, cluster *api.CassandraCluster, pod *corev1.Pod) (Client, error) {
-	var client Client
-	var err error
+func ClientFromCluster(k8sClient controllerclient.Client, cluster *api.CassandraCluster,
+	pod *corev1.Pod) (Client, error) {
+	config := ClusterConfig(k8sClient, cluster, pod)
 
-	opts := ClusterConfig(k8sclient, cluster, pod)
-
-	client = New(opts)
-	err = client.Build()
+	client := New(config)
+	err := client.Build()
 	if err != nil {
 		return nil, err
 	}
@@ -55,20 +48,20 @@ func NewFromCluster(k8sclient controllerclient.Client, cluster *api.CassandraClu
 	return client, nil
 }
 
-func (cs *client) getCassandraBackupPodSidecarConfig() (config *csapi.Configuration) {
+func (cs *client) cassandraBackupSidecarConfig() (config *csapi.Configuration) {
 	config = csapi.NewConfiguration()
 
 	protocol := "http"
 
-	if cs.opts.UseSSL {
+	if cs.config.UseSSL {
 		config.Scheme = "HTTPS"
-		transport := &http.Transport{TLSClientConfig: cs.opts.TLSConfig}
-		config.HTTPClient = &http.Client{Transport: transport, Timeout: cs.opts.Timeout}
+		transport := &http.Transport{TLSClientConfig: cs.config.TLSConfig}
+		config.HTTPClient = &http.Client{Transport: transport, Timeout: cs.config.Timeout}
 		protocol = "https"
 	}
 
-	config.BasePath = fmt.Sprintf("%s://%s:%d", protocol,cs.opts.Host, cs.opts.Port)
-	//config.Host = cs.opts.Host
+	config.BasePath = fmt.Sprintf("%s://%s:%d", protocol,cs.config.Host, cs.config.Port)
+	//config.Host = cs.config.Host
 
 	return config
 }
