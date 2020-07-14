@@ -17,6 +17,7 @@ package v1alpha1
 import (
 	"testing"
 
+	"github.com/nsf/jsondiff"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,7 +54,12 @@ func TestCassandraBackupComputeLastAppliedConfiguration(t *testing.T) {
 	}
 
 	lastAppliedConfiguration, _ := backup.ComputeLastAppliedConfiguration()
-	result := `{"metadata":{"creationTimestamp":null},"spec":{"cassandracluster":"cluster1","datacenter":"dc1","storageLocation":"s3://cassie","schedule":"@weekly","snapshotTag":"weekly","entities":"k1.t1, k3.t3"}}`
+	result := `{"metadata": {"creationTimestamp":null},
+				"spec":{"cassandracluster":"cluster1", "datacenter":"dc1", "storageLocation":"s3://cassie",
+						"schedule":"@weekly","snapshotTag":"weekly","entities":"k1.t1, k3.t3"}
+                }`
 
-	assert.Equal(result, lastAppliedConfiguration)
+	comparison, _ := jsondiff.Compare([]byte(lastAppliedConfiguration), []byte(result), &jsondiff.Options{})
+
+	assert.Equal(jsondiff.FullMatch, comparison)
 }

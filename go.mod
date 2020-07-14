@@ -17,6 +17,7 @@ require (
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
+	github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/prometheus/client_golang v1.5.1
 	github.com/r3labs/diff v0.0.0-20190801153147-a71de73c46ad
