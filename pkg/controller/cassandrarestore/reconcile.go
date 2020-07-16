@@ -2,7 +2,7 @@ package cassandrarestore
 
 import (
 	"context"
-	errors2 "emperror.dev/errors"
+	errors "emperror.dev/errors"
 	"fmt"
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
@@ -12,7 +12,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,12 +40,12 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	ctx := context.TODO()
 
-	// Fetch the CassandraRestore instance
-	instance := &v1alpha1.CassandraRestore{}
-	err := r.client.Get(ctx, request.NamespacedName, instance)
+	// Fetch the CassandraRestore cassandraRestore
+	cassandraRestore := &v1alpha1.CassandraRestore{}
+	err := r.client.Get(ctx, request.NamespacedName, cassandraRestore)
 
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8sErrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -57,36 +57,38 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Check the referenced Cluster exists.
 	cc := &v1alpha1.CassandraCluster{}
-	if cc, err = k8s.LookupCassandraCluster(r.client, instance.Spec.CassandraCluster, instance.Namespace); err != nil {
+	if cc, err = k8s.LookupCassandraCluster(r.client, cassandraRestore.Spec.CassandraCluster,
+		cassandraRestore.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safetybelt
-		if k8s.IsMarkedForDeletion(instance.ObjectMeta) {
+		if k8s.IsMarkedForDeletion(cassandraRestore.ObjectMeta) {
 			reqLogger.Info("Cluster is gone already, there is nothing we can do")
 			return common.Reconciled()
 		}
 		r.recorder.Event(
-			instance,
+			cassandraRestore,
 			v1.EventTypeWarning,
 			"CassandraClusterNotFound",
-			fmt.Sprintf("Cassandra Cluster %s to restore not found", instance.Spec.CassandraCluster))
+			fmt.Sprintf("Cassandra Cluster %s to restore not found", cassandraRestore.Spec.CassandraCluster))
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced cluster", err)
 	}
 
 	// Check the referenced Backup exists.
-	backup := &v1alpha1.CassandraBackup{}
-	if backup, err = k8s.LookupCassandraBackup(r.client, instance.Spec.CassandraBackup, instance.Namespace); err != nil {
+	cassandraBackup := &v1alpha1.CassandraBackup{}
+	if cassandraBackup, err = k8s.LookupCassandraBackup(r.client, cassandraRestore.Spec.CassandraBackup,
+		cassandraRestore.Namespace); err != nil {
 		r.recorder.Event(
-			instance,
+			cassandraRestore,
 			v1.EventTypeWarning,
 			"BackupNotFound",
-			fmt.Sprintf("Backup %s to restore not found", instance.Spec.CassandraBackup))
-		return common.RequeueWithError(reqLogger, "failed to lookup referenced backup", err)
+			fmt.Sprintf("Backup %s to restore not found", cassandraRestore.Spec.CassandraBackup))
+		return common.RequeueWithError(reqLogger, "failed to lookup referenced cassandraBackup", err)
 	}
 
 	// Require restore on first pod of the cluster.
-	if instance.Status.Condition == nil {
-		err = r.requiredRestore(instance, cc, backup, reqLogger)
+	if cassandraRestore.Status.Condition == nil {
+		err = r.requiredRestore(cassandraRestore, cc, cassandraBackup, reqLogger)
 		if err != nil {
-			switch errors2.Cause(err).(type) {
+			switch errors.Cause(err).(type) {
 			case errorfactory.ResourceNotReady:
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
@@ -95,31 +97,31 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
-		r.recorder.Event(instance,
+		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreRequired",
-			fmt.Sprintf("Restore task required from backup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation on pod %s",
-				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
-				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
-				instance.Spec.CoordinatorMember))
+			fmt.Sprintf("Restore task required from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation on pod %s",
+				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
+				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
+				cassandraRestore.Spec.CoordinatorMember))
 	}
 
-	if len(instance.Spec.CoordinatorMember) == 0 {
+	if len(cassandraRestore.Spec.CoordinatorMember) == 0 {
 		return common.RequeueWithError(reqLogger, "No coordinator member to perform the restore", err)
 	}
 
-	if instance.Status.Condition.Type.IsRequired() {
-		err = r.handleRequiredRestore(instance, cc, backup, reqLogger)
+	if cassandraRestore.Status.Condition.Type.IsRequired() {
+		err = r.handleRequiredRestore(cassandraRestore, cc, cassandraBackup, reqLogger)
 		if err != nil {
-			switch errors2.Cause(err).(type) {
+			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:
 				r.recorder.Event(
-					instance,
+					cassandraRestore,
 					v1.EventTypeWarning,
 					"PerformRestoreOperationFailed",
-					fmt.Sprintf("Restore task from backup of datacenter %s of cluster %s to %s under snapshot %s failed to run, will retry. Restore operation on pod %s", backup.Spec.Datacenter, backup.Spec.CassandraCluster,
-						backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
-						instance.Spec.CoordinatorMember))
+					fmt.Sprintf("Restore task from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s failed to run, will retry. Restore operation on pod %s", cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
+						cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
+						cassandraRestore.Spec.CoordinatorMember))
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
@@ -127,29 +129,29 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
-		r.recorder.Event(instance,
+		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreInitiated",
-			fmt.Sprintf("Restore task initiated from backup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation %v on pod %s.",
-				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
-				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
-				instance.Status.Id, instance.Spec.CoordinatorMember))
+			fmt.Sprintf("Restore task initiated from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation %v on pod %s.",
+				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
+				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
+				cassandraRestore.Status.ID, cassandraRestore.Spec.CoordinatorMember))
 	}
 
-	if instance.Status.Condition.Type.IsInProgress() {
+	if cassandraRestore.Status.Condition.Type.IsInProgress() {
 
-		err = r.checkRestoreOperationState(instance, cc, backup, reqLogger)
+		err = r.checkRestoreOperationState(cassandraRestore, cc, cassandraBackup, reqLogger)
 		if err != nil {
-			switch errors2.Cause(err).(type) {
+			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
-			case errorfactory.CassandraBackupSidecarOperationRunning:
+			case errorfactory.CassandraBackupOperationRunning:
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(20) * time.Second,
 				}, nil
-			case errorfactory.CassandraBackupSidecarOperationFailure:
+			case errorfactory.CassandraBackupOperationFailure:
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(20) * time.Second,
 				}, nil
@@ -157,13 +159,13 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
 		}
-		r.recorder.Event(instance,
+		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreCompleted",
-			fmt.Sprintf("Restore task from backup of datacenter %s of cluster %s to %s under snapshot %s is completed. Restore operation %v on pod %s.",
-				backup.Spec.Datacenter, backup.Spec.CassandraCluster,
-				backup.Spec.StorageLocation, backup.Spec.SnapshotTag,
-				instance.Status.Id, instance.Spec.CoordinatorMember))
+			fmt.Sprintf("Restore task from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s is completed. Restore operation %v on pod %s.",
+				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
+				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
+				cassandraRestore.Status.ID, cassandraRestore.Spec.CoordinatorMember))
 	}
 	return common.Reconciled()
 }
@@ -175,7 +177,7 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 
 	pods, err := r.listPods(ns, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
-		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
+		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "No pods founds for this dc")
 	}
 
 	if len(pods.Items) > 0 {
@@ -187,13 +189,14 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 					LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 				},
 			}, reqLogger); err != nil {
-			return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+			return errors.WrapIfWithDetails(err, "Could not update status for restore",
+				"restore", restore)
 		}
 
 		return nil
 	}
 
-	return errors2.New("No pods found.")
+	return errors.New("No pods found.")
 }
 
 func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.CassandraRestore,
@@ -212,11 +215,12 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.Cass
 	restoreStatus, err := sr.PerformRestore(restore, backup)
 	if err != nil {
 		reqLogger.Info("Cassandra sidecar communication error checking running restore operation")
-		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "cassandra backup sidecar communication error")
+		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
+		"cassandra backup sidecar communication error")
 	}
 
 	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
-		return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+		return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 	}
 
 	return nil
@@ -230,31 +234,37 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
 
-	restoreId := restore.Status.Id
+	restoreId := restore.Status.ID
 	if restoreId == "" {
-		return errors2.New("no Restore operation id provided to be checked")
+		return errors.New("no Restore operation id provided to be checked")
 	}
 
 	// Check Restore operation status
 	sr, err := backrest.NewClient(r.client, cc, k8s.PodByName(pods, restore.Spec.CoordinatorMember))
 	if err != nil {
-		reqLogger.Info("cassandra backup sidecar communication error checking running Operation", "OperationId", restoreId)
-		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "cassandra backup sidecar communication error")
+		reqLogger.Info("cassandra backup sidecar communication error checking running Operation", "OperationId",
+			restoreId)
+		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
+		"cassandra backup sidecar communication error")
 	}
 	restoreStatus, err := sr.GetRestoreStatusById(restoreId)
 	if err != nil {
-		reqLogger.Info("cassandra backup sidecar communication error checking running Operation", "OperationId", restoreId)
-		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "cassandra backup sidecar communication error")
+		reqLogger.Info("cassandra backup sidecar communication error checking running Operation",
+			"OperationId", restoreId)
+		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
+		"cassandra backup sidecar communication error")
 	}
 
 	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
-		return errors2.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+		return errors.WrapIfWithDetails(err, "could not update status for restore",
+			"restore", restore)
 	}
 
 	// Restore operation failed or canceled,
 	// TODO : reschedule it by marking restore Condition.State = RestoreRequired ?
 	if restore.Status.Condition.Type.IsInError() {
-		return errorfactory.New(errorfactory.CassandraBackupSidecarOperationFailure{}, err, "cassandra backup sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
+		return errorfactory.New(errorfactory.CassandraBackupOperationFailure{}, err,
+		"cassandra backup sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
 	}
 
 	// Restore operation completed successfully
@@ -266,10 +276,13 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 
 	// restore operation still in progress
 	reqLogger.Info("Cassandra backup sidecar operation is still running", "restoreId", restoreId)
-	return errorfactory.New(errorfactory.CassandraBackupSidecarOperationRunning{}, errors2.New("cassandra backup sidecar restore operation still running"), fmt.Sprintf("restore operation id : %s", restoreId))
+	return errorfactory.New(errorfactory.CassandraBackupOperationRunning{},
+		errors.New("cassandra backup sidecar restore operation still running"),
+			fmt.Sprintf("restore operation id : %s", restoreId))
 }
 
-func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context, restore *v1alpha1.CassandraRestore) (*v1alpha1.CassandraRestore, error) {
+func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context,
+	restore *v1alpha1.CassandraRestore) (*v1alpha1.CassandraRestore, error) {
 	typeMeta := restore.TypeMeta
 	err := r.client.Update(ctx, restore)
 	if err != nil {

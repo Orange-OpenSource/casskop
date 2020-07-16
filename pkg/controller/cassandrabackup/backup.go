@@ -80,13 +80,13 @@ func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus
 	jsonPatch := fmt.Sprintf(`{"status":{"node": "%s", "state": "%s", "progress": "%s"}}`,
 		status.CoordinatorMember, status.State, status.Progress)
 	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
-	objToPatch := &api.CassandraBackup{
+	cassandraBackup := &api.CassandraBackup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: backupClient.backup.Namespace,
 			Name:      backupClient.backup.Name,
 		}}
 
-	if err := backupClient.client.Patch(context.Background(), objToPatch, patchToApply); err != nil {
+	if err := backupClient.client.Patch(context.Background(), cassandraBackup, patchToApply); err != nil {
 
 		logging.Error(err, "Error updating CassandraBackup backup")
 	}
