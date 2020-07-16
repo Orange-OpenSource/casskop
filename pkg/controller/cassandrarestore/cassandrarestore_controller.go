@@ -54,7 +54,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				"Request.Name": restore.Name})
 			cond := api.GetRestoreCondition(&restore.Status, api.RestoreRequired)
 			if cond != nil {
-				reqLogger.Info("Restore is already scheduled on Cluster member %s",
+				reqLogger.Infof("Restore is already scheduled on Cluster member %s",
 					restore.Spec.CoordinatorMember)
 				return false
 			}
