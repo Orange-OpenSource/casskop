@@ -51,7 +51,7 @@ func TestPerformRestore(t *testing.T) {
 		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
 		Progress:      "10%",
 		Phase:         v1alpha1.RestorationPhaseDownload,
-		Id:            cs.Id,
+		ID:            cs.ID,
 	}, cs)
 
 	sr = Client{
@@ -84,7 +84,7 @@ func TestGetRestorebyId(t *testing.T) {
 		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
 		Progress:      "10%",
 		Phase:         v1alpha1.RestorationPhaseTruncate,
-		Id:            operationId,
+		ID:            operationId,
 	}, cs)
 
 	c = Client{

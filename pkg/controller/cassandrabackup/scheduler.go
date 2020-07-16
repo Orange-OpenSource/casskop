@@ -32,7 +32,7 @@ func (schedule Scheduler) Contains(backupName string) bool {
 
 // AddOrUpdate a cron task
 func (schedule Scheduler) AddOrUpdate(cassandraBackup *api.CassandraBackup,
-	task func(), recorder *record.EventRecorder) (skip bool, err error) {
+	task func(), recorder *record.EventRecorder) (skipped bool, err error) {
 
 	backupName := cassandraBackup.Name
 

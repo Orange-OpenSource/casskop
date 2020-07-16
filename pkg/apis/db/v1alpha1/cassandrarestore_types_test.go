@@ -46,6 +46,6 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 		Condition:     &RestoreCondition{Type: RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
 		Progress:      "10%",
 		Phase:         RestorationPhaseTruncate,
-		Id:            operationID,
+		ID:            operationID,
 	}, cs)
 }

@@ -45,7 +45,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 			SourceDir: "/var/lib/cassandra/data/downloadedsstables",
 		},
 		Entities: restore.Spec.Entities,
-		K8sSecretName: restore.Spec.SecretName,
+		K8sSecretName: restore.Spec.Secret,
 		CassandraDirectory: restore.Spec.CassandraDirectory,
 		SchemaVersion: restore.Spec.SchemaVersion,
 		RestorationStrategyType: restore.Spec.RestorationStrategyType,
@@ -56,7 +56,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		restoreOperationRequest.Entities = backup.Spec.Entities
 	}
 
-	if len(restore.Spec.SecretName) == 0 {
+	if len(restore.Spec.Secret) == 0 {
 		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
 	}
 

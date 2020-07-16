@@ -30,11 +30,11 @@ func TestValidateSchedule(t *testing.T) {
 
 	for _, schedule := range []string{"@midnight", "1 1 */2 11 *", "@daily"} {
 		backupSpec.Schedule = schedule
-		assert.Nilf(backupSpec.ValidateSchedule(), "Schedule %s should be parseable", schedule)
+		assert.Nilf(backupSpec.ValidateScheduleFormat(), "Schedule %s should be parseable", schedule)
 	}
 
 	backupSpec.Schedule = "@noon" // Unknown descriptor
-	assert.NotNilf(backupSpec.ValidateSchedule(), "Schedule %s should not be parseable", backupSpec.Schedule)
+	assert.NotNilf(backupSpec.ValidateScheduleFormat(), "Schedule %s should not be parseable", backupSpec.Schedule)
 }
 
 func TestCassandraBackupComputeLastAppliedConfiguration(t *testing.T) {
@@ -53,7 +53,7 @@ func TestCassandraBackupComputeLastAppliedConfiguration(t *testing.T) {
 		Spec: *backupSpec,
 	}
 
-	lastAppliedConfiguration, _ := backup.ComputeLastAppliedConfiguration()
+	lastAppliedConfiguration, _ := backup.ComputeLastAppliedAnnotation()
 	result := `{"metadata": {"creationTimestamp":null},
 				"spec":{"cassandracluster":"cluster1", "datacenter":"dc1", "storageLocation":"s3://cassie",
 						"schedule":"@weekly","snapshotTag":"weekly","entities":"k1.t1, k3.t3"}

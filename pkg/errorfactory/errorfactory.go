@@ -14,11 +14,11 @@ type StatusUpdateError struct{ error }
 // CassandraBackupSidecarNotReady states that Sidecar is not ready to receive connection
 type CassandraBackupSidecarNotReady struct{ error }
 
-// CassandraBackupSidecarOperationRunning states that Sidecar Operation is still running
-type CassandraBackupSidecarOperationRunning struct{ error }
+// CassandraBackupOperationRunning states that Sidecar Operation is still running
+type CassandraBackupOperationRunning struct{ error }
 
-//CassandraBackupSidecarOperationFailure states that Sidecar Operation was not found (Sidecar restart?) or failed
-type CassandraBackupSidecarOperationFailure struct{ error }
+//CassandraBackupOperationFailure states that Sidecar Operation was not found (Sidecar restart?) or failed
+type CassandraBackupOperationFailure struct{ error }
 
 // New creates a new error factory error
 func New(t interface{}, err error, msg string, wrapArgs ...interface{}) error {
@@ -32,10 +32,10 @@ func New(t interface{}, err error, msg string, wrapArgs ...interface{}) error {
 		return StatusUpdateError{wrapped}
 	case CassandraBackupSidecarNotReady:
 		return CassandraBackupSidecarNotReady{wrapped}
-	case CassandraBackupSidecarOperationRunning:
-		return CassandraBackupSidecarOperationRunning{wrapped}
-	case CassandraBackupSidecarOperationFailure:
-		return CassandraBackupSidecarOperationFailure{wrapped}
+	case CassandraBackupOperationRunning:
+		return CassandraBackupOperationRunning{wrapped}
+	case CassandraBackupOperationFailure:
+		return CassandraBackupOperationFailure{wrapped}
 	}
 	return wrapped
 }
