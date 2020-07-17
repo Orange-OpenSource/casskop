@@ -40,7 +40,7 @@ orbs:
           - run:
               name: Set up K3d
               command: |
-                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v3.0.0 bash
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v3.0.0-rc.7 bash
                 k3d create cluster --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
                 k3d get kubeconfig 0
