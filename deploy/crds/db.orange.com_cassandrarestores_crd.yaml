@@ -48,9 +48,6 @@ spec:
                   the cloud. Defaults to 10
                 format: int32
                 type: integer
-              coordinatorMember:
-                description: Name of the pod the restore operation is executed on
-                type: string
               entities:
                 description: Database entities to restore, it might be either only
                   keyspaces or only tables prefixed by their respective keyspace,
@@ -140,6 +137,9 @@ spec:
                 required:
                 - type
                 type: object
+              coordinatorMember:
+                description: Name of the pod the restore operation is executed on
+                type: string
               id:
                 description: unique identifier of an operation, a random id is assigned
                   to each operation after a request is submitted, from caller's perspective,

@@ -90,6 +90,9 @@ type CassandraRestoreStatus struct {
 	// Progress is a percentage, 100% means the operation is completed, either successfully or with errors
 	Progress string `json:"progress,omitempty"`
 
+	// Name of the pod the restore operation is executed on
+	CoordinatorMember 		string `json:"coordinatorMember,omitempty"`
+
 	Phase RestorationPhaseType `json:"restorationPhase,omitempty"`
 	// unique identifier of an operation, a random id is assigned to each operation after a request is submitted,
 	// from caller's perspective, an id is sent back as a response to his request so he can further query state of that operation,
@@ -103,8 +106,6 @@ type CassandraRestoreSpec struct {
 	CassandraCluster 		string `json:"cassandraCluster"`
 	// Name of the CassandraBackup to restore
 	CassandraBackup 		string `json:"cassandraBackup"`
-	// Name of the pod the restore operation is executed on
-	CoordinatorMember 		string `json:"coordinatorMember,omitempty"`
 	// Maximum number of threads used to download files from the cloud. Defaults to 10
 	ConcurrentConnection 	*int32 `json:"concurrentConnection,omitempty"`
 	// Directory of Cassandra where data folder resides. Defaults to /var/lib/cassandra
