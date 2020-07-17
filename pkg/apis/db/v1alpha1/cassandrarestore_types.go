@@ -131,8 +131,7 @@ type CassandraRestoreSpec struct {
 	// keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific
 	// tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will restore all keyspaces
 	Entities 				string `json:"entities,omitempty"`
-	// Name of Secret to use when accessing cloud storage providers. If not specified, it's automatically derived from
-	// 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'
+	// Name of Secret to use when accessing cloud storage providers
 	Secret 					string `json:"secret,omitempty"`
 }
 
