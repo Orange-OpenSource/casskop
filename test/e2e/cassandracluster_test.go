@@ -47,7 +47,7 @@ func TestCassandraCluster(t *testing.T) {
 	t.Run("group", func(t *testing.T) {
 		t.Run("ClusterScaleUp", CassandraClusterTest(cassandraClusterScaleUpDC1Test))
 		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownSimpleTest))
-		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
+		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterDeleteSecondDC))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
 		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
 		t.Run("UpdateConfigMap", CassandraClusterTest(cassandraClusterUpdateConfigMapTest))
@@ -92,13 +92,12 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 		t.Fatalf("Error Creating cassandracluster: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc1-rack1", 1,
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc1-rack1",
+		1); err != nil {
 		t.Fatalf("WaitForStatefulset got an error: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatusDone(t, f, namespace, "cassandra-e2e",
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+	if err := mye2eutil.WaitForStatusDone(t, f, namespace, "cassandra-e2e"); err != nil {
 		t.Fatalf("WaitForStatusDone got an error: %v", err)
 	}
 
@@ -125,13 +124,12 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 		t.Fatalf("Could not update CassandraCluster: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc1-rack1", 1,
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+	if err := mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc1-rack1",
+		1,); err != nil {
 		t.Fatalf("WaitForStatefulset got an error: %v", err)
 	}
 
-	if err := mye2eutil.WaitForStatusDone(t, f, namespace, "cassandra-e2e",
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+	if err := mye2eutil.WaitForStatusDone(t, f, namespace, "cassandra-e2e"); err != nil {
 		t.Fatalf("WaitForStatusDone got an error: %v", err)
 	}
 
@@ -497,15 +495,13 @@ func waitForClusterToBeReady(cluster *api.CassandraCluster, f *framework.Framewo
 				f.KubeClient,
 				cluster.Namespace,
 				name,
-				int(cluster.Spec.NodesPerRacks),
-				mye2eutil.RetryInterval,
-				mye2eutil.Timeout); err != nil {
+				int(cluster.Spec.NodesPerRacks)); err != nil {
 				t.Fatalf("Waiting for StatefulSet %s failed: %v", name, err)
 			}
 		}
 	}
 
-	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name, mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+	if err := mye2eutil.WaitForStatusDone(t, f, cluster.Namespace, cluster.Name); err != nil {
 		t.Fatalf("Waiting for cluster status change to Done failed: %v", err)
 	}
 }

@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-)
+	)
 
 var (
 	RetryInterval        = time.Second * 10
@@ -113,9 +113,8 @@ func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework)
 
 }
 
-func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
-	retryInterval, timeout time.Duration) error {
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int) error {
+	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		statefulset, err := kubeclient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(), name,
 			metav1.GetOptions{})
 		if err != nil {
@@ -179,8 +178,7 @@ func WaitForStatusChange(
 	})
 }
 
-func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name string,
-	retryInterval, timeout time.Duration) error {
+func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name string) error {
 
 	cc2 := &api.CassandraCluster{
 		TypeMeta: metav1.TypeMeta{
@@ -193,7 +191,7 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 		},
 	}
 
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 
 		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2)
 		if err != nil {
@@ -221,8 +219,7 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 	return nil
 }
 
-func WaitForPodOperationDone(t *testing.T, f *framework.Framework, namespace, name string, dcRackName string,
-	retryInterval, timeout time.Duration) error {
+func WaitForPodOperationDone(t *testing.T, f *framework.Framework, namespace, name string, dcRackName string) error {
 
 	cc2 := &api.CassandraCluster{
 		TypeMeta: metav1.TypeMeta{
@@ -235,10 +232,9 @@ func WaitForPodOperationDone(t *testing.T, f *framework.Framework, namespace, na
 		},
 	}
 
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 
-		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2)
-		if err != nil {
+		if err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2); err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("CassandraCluster not found.. this is not good..\n", name)
 				return false, nil
