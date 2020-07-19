@@ -109,6 +109,6 @@ func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
 					schemaVersion))
 		})
 
-	return client.GetRestoreOperation(operationID)
+	return client.RestoreOperationByID(operationID)
 }
 

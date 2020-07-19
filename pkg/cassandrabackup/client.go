@@ -12,9 +12,9 @@ import (
 
 type Client interface {
 	PerformRestoreOperation(restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error)
-	GetRestoreOperation(operationId string) (*csapi.RestoreOperationResponse, error)
+	RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error)
 	PerformBackupOperation(request csapi.BackupOperationRequest) (*csapi.BackupOperationResponse, error)
-	GetBackupOperation(id string) (response *csapi.BackupOperationResponse, err error)
+	BackupOperationByID(id string) (response *csapi.BackupOperationResponse, err error)
 	Build() error
 }
 

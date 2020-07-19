@@ -98,7 +98,7 @@ func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation csa
 	return &restoreOp, nil
 }
 
-func (m *mockCassandraBackupClient) GetRestoreOperation(operationId string) (*csapi.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned200
 	}

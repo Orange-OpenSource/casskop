@@ -71,21 +71,9 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	return &restoreStatus, nil
 }
 
-func (c *Client) GetRestoreStatusById(restoreId string) (*api.CassandraRestoreStatus, error) {
-
-	restoreOperation, err := c.client.GetRestoreOperation(restoreId)
-	if err != nil  {
-		logrus.WithFields(logrus.Fields{"restoreId": restoreId}).Error("Cannot find restore operation")
-		return nil, err
-	}
-
-	restoreStatus := api.ComputeRestorationStatus(restoreOperation)
-	return &restoreStatus, nil
-}
-
 func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
-	bandwidthDataRate, err := parseBandwidth(bandwidth)
+	bandwidthDataRate, err := dataRateFromBandwidth(bandwidth)
 
 	backupOperationRequest := &csapi.BackupOperationRequest{
 		Type_:                 "backup",
@@ -109,25 +97,33 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	return backupOperation.Id, nil
 }
 
-// GetBackupStatusById returns the backup status of an existing backup
-func (c *Client) GetBackupStatusById(id string) (*api.CassandraBackupStatus, error) {
+func (c *Client) RestoreStatusByID(id string) (*api.CassandraRestoreStatus, error) {
 
-	backupOperation, err := c.client.GetRestoreOperation(id)
+	restoreOperation, err := c.client.RestoreOperationByID(id)
+	if err != nil  {
+		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find restore operation")
+		return nil, err
+	}
+
+	status := api.ComputeRestorationStatus(restoreOperation)
+	return &status, nil
+}
+
+func (c *Client) BackupStatusByID(id string) (*api.CassandraBackupStatus, error) {
+
+	backupOperation, err := c.client.BackupOperationByID(id)
 	if err != nil  {
 		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find backup operation")
 		return nil, err
 	}
 
-	backupStatus := &api.CassandraBackupStatus{
-		Progress: api.ProgressPercentage(backupOperation.Progress),
-		State:    api.BackupState(backupOperation.State),
-	}
-	return backupStatus, nil
+	status := api.ComputeBackupStatus(backupOperation)
+	return &status, nil
 }
 
 var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
-func parseBandwidth(value string) (*csapi.DataRate, error) {
+func dataRateFromBandwidth(value string) (*csapi.DataRate, error) {
 	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
 
 	if bandwidth == "" {
