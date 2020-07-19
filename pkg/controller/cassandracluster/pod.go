@@ -42,7 +42,7 @@ var reEndingNumber = regexp.MustCompile("[0-9]+$")
 func PodContainersReady(pod *v1.Pod) bool {
 	if pod.Status.ContainerStatuses != nil && len(pod.Status.ContainerStatuses) > 0 {
 		for _, containerStatus := range pod.Status.ContainerStatuses {
-			if containerStatus.Ready == false {
+			if !containerStatus.Ready {
 				return false
 			}
 		}

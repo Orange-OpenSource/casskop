@@ -42,7 +42,6 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 }
 
 func registerJolokiaOperationModeResponder(host podName, op operationMode) {
-	fmt.Println(string(op))
 	httpmock.RegisterResponder("POST", JolokiaURL(host.FullName, jolokiaPort),
 		httpmock.NewStringResponder(200, fmt.Sprintf(`{"request":
 											{"mbean": "org.apache.cassandra.db:type=StorageService",

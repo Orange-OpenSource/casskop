@@ -145,9 +145,6 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		now := metav1.Now()
 		lastAction.StartTime = &now
 		lastAction.Status = api.StatusOngoing
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-			"dc-rack": dcRackName, "hasDisruption": rcc.thereIsPodDisruption(),
-			"lastAction.Status": lastAction.Status}).Debug("CYRIL 4")
 	}
 
 	return nil
