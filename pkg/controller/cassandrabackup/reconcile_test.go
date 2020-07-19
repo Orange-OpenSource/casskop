@@ -61,54 +61,54 @@ func helperInitCassandraBackupController(t *testing.T, cassandraBackupYaml strin
 	}
 
 	// Register operator types with the runtime scheme.
-	s := scheme.Scheme
-	s.AddKnownTypes(api.SchemeGroupVersion, &api.CassandraCluster{})
-	s.AddKnownTypes(api.SchemeGroupVersion, &api.CassandraClusterList{})
-	s.AddKnownTypes(api.SchemeGroupVersion, &cassandraBackup)
-	s.AddKnownTypes(api.SchemeGroupVersion, &cassandraBackupList)
+	fakeClientScheme := scheme.Scheme
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &api.CassandraCluster{})
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &api.CassandraClusterList{})
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cassandraBackup)
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cassandraBackupList)
 
-	//Create Fake client
-	//Objects to track in the Fake client
 	objs := []runtime.Object{
 		&cassandraBackup,
 	}
-	fakeClient := fake.NewFakeClient(objs...)
 
-	// Create a ReconcileCassandraBackup object with the scheme and fake client.
+	fakeClient := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+
 	fakeRecorder := record.NewFakeRecorder(3)
-	reconcileCassandraBackup := ReconcileCassandraBackup{client: fakeClient, scheme: s, recorder: fakeRecorder}
+	reconcileCassandraBackup := ReconcileCassandraBackup{
+		client: fakeClient,
+		scheme: fakeClientScheme,
+		recorder: fakeRecorder,
+	}
 
 	return &reconcileCassandraBackup, &cassandraBackup, fakeRecorder
 }
 
 func TestCassandraBackupAlreadyExists(t *testing.T) {
+	assert := assert.New(t)
 	// When same CassandraBackup is recreated Reconcile stops and an event is created
-	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
+	reconcileCassandraBackup, cassandraBackup, recorder := helperInitCassandraBackupController(t, cbyaml)
 
-	oldBackup := cb.DeepCopy()
+	oldBackup := cassandraBackup.DeepCopy()
 	oldBackup.Status = &api.CassandraBackupStatus{
 		CoordinatorMember: "node1",
 		State:             "COMPLETED",
 		Progress:          "Done",
 	}
 	oldBackup.Name = "prev-test-cassandra-backup"
-	rcb.client.Create(context.TODO(), oldBackup)
+	reconcileCassandraBackup.client.Create(context.TODO(), oldBackup)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
-			Name:      cb.Name,
-			Namespace: cb.Namespace,
+			Name:      cassandraBackup.Name,
+			Namespace: cassandraBackup.Namespace,
 		},
 	}
 
-	res, err := rcb.Reconcile(req)
-
-	assert := assert.New(t)
+	res, err := reconcileCassandraBackup.Reconcile(req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-
-	assertEvent(t, recorder.Events, fmt.Sprintf("%s because such backup already exists",cb.Spec.SnapshotTag))
+	assertEvent(t, recorder.Events, fmt.Sprintf("%s because such backup already exists", cassandraBackup.Spec.SnapshotTag))
 }
 
 func assertEvent(t *testing.T, event chan string, message string) {
@@ -118,28 +118,27 @@ func assertEvent(t *testing.T, event chan string, message string) {
 }
 
 func TestCassandraBackupSecretNotFound(t *testing.T) {
+	assert := assert.New(t)
 	// When secret does not exist Reconcile stops and an event is created
-	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
+	reconcileCassandraBackup, cassandraBackup, recorder := helperInitCassandraBackupController(t, cbyaml)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
-			Name:      cb.Name,
-			Namespace: cb.Namespace,
+			Name:      cassandraBackup.Name,
+			Namespace: cassandraBackup.Namespace,
 		},
 	}
 
-	res, err := rcb.Reconcile(req)
-
-	assert := assert.New(t)
+	res, err := reconcileCassandraBackup.Reconcile(req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-
-	assertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cb.Spec.Secret))
+	assertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
 }
 
 func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
-	cb := helperInitCassandraBackup(cbyaml)
+	assert := assert.New(t)
+	cassandraBackup := helperInitCassandraBackup(cbyaml)
 
 	reqLogger := logrus.WithFields(logrus.Fields{"Name": "controller_cassandrabackup"})
 
@@ -150,20 +149,18 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 		},
 	}
 
-	resp := validateBackupSecret(secret, &cb, reqLogger)
-
-	assert := assert.New(t)
+	resp := validateBackupSecret(secret, &cassandraBackup, reqLogger)
 	assert.Contains(resp.Error(),
 		"There is no awsregion property while you have set both awssecretaccesskey and awsaccesskeyid")
 
 	secret.Data["awsregion"] = []byte("a region")
-
-	resp = validateBackupSecret(secret, &cb, reqLogger)
+	resp = validateBackupSecret(secret, &cassandraBackup, reqLogger)
 	assert.Nil(resp)
 }
 
 func TestCassandraBackupDatacenterNotFound(t *testing.T) {
-	rcb, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
+	assert := assert.New(t)
+	reconcileCassandraBackup, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -177,7 +174,7 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 		},
 	}
 
-	rcb.client.Create(context.TODO(), secret)
+	reconcileCassandraBackup.client.Create(context.TODO(), secret)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -186,13 +183,10 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 		},
 	}
 
-	res, err := rcb.Reconcile(req)
-
-	assert := assert.New(t)
+	res, err := reconcileCassandraBackup.Reconcile(req)
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-
 	assertEvent(t, recorder.Events, fmt.Sprintf("Datacenter %s of cluster %s to backup not found",
 		cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 }
