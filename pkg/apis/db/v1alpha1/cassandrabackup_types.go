@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"encoding/json"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"strings"
 
 	cron "github.com/robfig/cron/v3"
@@ -106,7 +107,6 @@ func (cb *CassandraBackup) ComputeLastAppliedAnnotation() (string, error) {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CassandraBackupList contains a list of CassandraBackup
 type CassandraBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -117,17 +117,21 @@ func init() {
 	SchemeBuilder.Register(&CassandraBackup{}, &CassandraBackupList{})
 }
 
-// IsS3Backup returns true if the backup type is Amazon S3, otherwise returns false
+func ComputeBackupStatus(backupOperationResponse *csapi.BackupOperationResponse) CassandraBackupStatus{
+	return CassandraBackupStatus{
+		Progress: ProgressPercentage(backupOperationResponse.Progress),
+		State:    BackupState(backupOperationResponse.State),
+	}
+}
+
 func (backupSpec *CassandraBackup) IsS3Backup() bool {
 	return strings.HasPrefix(backupSpec.Spec.StorageLocation, "s3://")
 }
 
-// IsAzureBackup returns true if the backup type is Azure, otherwise returns false
 func (backupSpec *CassandraBackup) IsAzureBackup() bool {
 	return strings.HasPrefix(backupSpec.Spec.StorageLocation, "azure://")
 }
 
-// IsGcpBackup returns true if the backup type is GCP, otherwise returns false
 func (backupSpec *CassandraBackup) IsGcpBackup() bool {
 	return strings.HasPrefix(backupSpec.Spec.StorageLocation, "gcp://")
 }

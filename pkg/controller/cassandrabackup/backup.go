@@ -47,7 +47,7 @@ func backup(
 			backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 
 	for range time.NewTicker(2 * time.Second).C {
-		if status, err := backrestClient.GetBackupStatusById(operationID); err != nil {
+		if status, err := backrestClient.BackupStatusByID(operationID); err != nil {
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
 			break
 		} else {

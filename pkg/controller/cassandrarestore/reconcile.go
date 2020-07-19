@@ -247,7 +247,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
 		"cassandra backup sidecar communication error")
 	}
-	restoreStatus, err := sr.GetRestoreStatusById(restoreId)
+	restoreStatus, err := sr.RestoreStatusByID(restoreId)
 	if err != nil {
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation",
 			"OperationId", restoreId)

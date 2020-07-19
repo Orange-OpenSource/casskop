@@ -184,7 +184,6 @@ func ComputeRestorationStatus(restoreOperationReponse *csapi.RestoreOperationRes
 	}
 
 	status.setRestorationCondition(restoreOperationReponse)
-
 	return status
 }
 

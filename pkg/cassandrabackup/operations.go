@@ -28,7 +28,7 @@ func (client *client) PerformRestoreOperation(restoreOperationReq csapi.RestoreO
 	return &restoreOperation, nil
 }
 
-func (client *client) GetRestoreOperation(operationId string) (*csapi.RestoreOperationResponse, error) {
+func (client *client) RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error) {
 	var restoreOperation csapi.RestoreOperationResponse
 
 	if operationId == "" {
@@ -52,7 +52,7 @@ func (client *client) GetRestoreOperation(operationId string) (*csapi.RestoreOpe
 	return &restoreOperation, nil
 }
 
-func (client *client) GetBackupOperation(operationId string) (response *csapi.BackupOperationResponse, err error) {
+func (client *client) BackupOperationByID(operationId string) (response *csapi.BackupOperationResponse, err error) {
 
 	if operationId == "" {
 		return nil, fmt.Errorf("must get a non empty id")
