@@ -723,13 +723,13 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 }
 
 //Remove elements from DC slice
-func (dc *DCSlice) Remove(i int) {
-	*dc = append((*dc)[:i], (*dc)[i+1:]...)
+func (dc *DCSlice) Remove(idx int) {
+	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
 }
 
 //Remove elements from Rack slice
-func (rack *RackSlice) Remove(i int) {
-	*rack = append((*rack)[:i], (*rack)[i+1:]...)
+func (rack *RackSlice) Remove(idx int) {
+	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
 }
 
 // CassandraClusterSpec defines the configuration of CassandraCluster

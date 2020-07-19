@@ -75,11 +75,6 @@ orbs:
                 chmod +x /usr/local/bin/kubectl
           - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
-          - run: # Check we correctly access to K8s information with kubectl cli
-              name: Test k8s
-              command: |
-                kubectl get nodes
-                kubectl get pods
           # Acceptance test
           - run: # Run acceptance test through 'docker-e2e-test-fix-arg' makefile step
               name: Operator acceptance test
