@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// requeueWithError is a convenience wrapper around logging an error message
+// RequeueWithError is a convenience wrapper around logging an error message
 // separate from the stacktrace and then passing the error through to the controller
 // manager
 func RequeueWithError(logger *logrus.Entry, msg string, err error) (reconcile.Result, error) {
@@ -26,7 +26,7 @@ func Reconciled() (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-// newSidecarsConnection is a convenience wrapper for creating a sidecars connection
+// NewCassandraBackupConnection is a convenience wrapper for creating a sidecars connection
 // and creating a safer close function
 func NewCassandraBackupConnection(client client.Client, cluster *api.CassandraCluster,
 	pod *corev1.Pod) (csClient cassandrabackup.Client, err error) {
