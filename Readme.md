@@ -34,7 +34,7 @@ For detailed installation instructions, see the [Casskop Documentation Page](htt
 
 The documentation of the Casskop operator project is available at the [Casskop Documentation Page](https://orange-opensource.github.io/casskop/docs/1_concepts/1_introduction).
 
-
+## Cassandra operator
 CassKop deals with Cassandra clusters on one datacenter. For multi-dacenters deployments, please use [MultiCassKop](multi-casskop/Readme.md) in addition to CassKop. This second operator is part of this same repository.
 
 The following features are supported by CassKop:
