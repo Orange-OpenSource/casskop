@@ -77,7 +77,7 @@ func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus
 
 	backupClient.backup.Status = status
 
-	jsonPatch := fmt.Sprintf(`{"status":{"node": "%s", "state": "%s", "progress": "%s"}}`,
+	jsonPatch := fmt.Sprintf(`{"status":{"coordinatorMember": "%s", "state": "%s", "progress": "%s"}}`,
 		status.CoordinatorMember, status.State, status.Progress)
 	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
 	cassandraBackup := &api.CassandraBackup{

@@ -117,7 +117,7 @@ func (c *Client) BackupStatusByID(id string) (*api.CassandraBackupStatus, error)
 		return nil, err
 	}
 
-	status := api.ComputeBackupStatus(backupOperation)
+	status := api.ComputeBackupStatus(backupOperation, c.CoordinatorMember)
 	return &status, nil
 }
 
