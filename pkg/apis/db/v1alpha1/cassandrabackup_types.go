@@ -117,8 +117,10 @@ func init() {
 	SchemeBuilder.Register(&CassandraBackup{}, &CassandraBackupList{})
 }
 
-func ComputeBackupStatus(backupOperationResponse *csapi.BackupOperationResponse) CassandraBackupStatus{
+func ComputeBackupStatus(backupOperationResponse *csapi.BackupOperationResponse,
+	coordinatorMember string) CassandraBackupStatus{
 	return CassandraBackupStatus{
+		CoordinatorMember: coordinatorMember,
 		Progress: ProgressPercentage(backupOperationResponse.Progress),
 		State:    BackupState(backupOperationResponse.State),
 	}
