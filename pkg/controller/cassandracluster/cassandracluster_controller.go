@@ -120,8 +120,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	}
 	cc.CheckDefaults()
 
-	err = rcc.CheckDeletePVC(cc)
-	if err != nil {
+	if err = rcc.CheckDeletePVC(cc); err != nil {
 		return forget, err
 	}
 
@@ -145,8 +144,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	}
 
 	//ReconcileRack will also add and initiate new racks, we must not go through racks before this method
-	err = rcc.ReconcileRack(cc, status)
-	if err != nil {
+	if err = rcc.ReconcileRack(cc, status); err != nil {
 		return requeue5, err
 	}
 

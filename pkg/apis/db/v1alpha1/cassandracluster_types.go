@@ -85,6 +85,7 @@ var (
 
 	ActionCorrectCRDConfig = ClusterStateInfo{11, "CorrectCRDConfig"} //The Operator has correct a bad CRD configuration
 
+	regexDCRackName = regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
 )
 
 const (
@@ -264,12 +265,9 @@ func (cc *CassandraCluster) GetRackSize(dc int) int {
 	return len(cc.Spec.Topology.DC[dc].Rack)
 }
 
-//GetRackName return the Name of the rack for DC at indice dc and Rack at indice rack
+//GetRackName return the Name of the rack for DC at index dc and Rack at index rack
 func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
-	if dc >= cc.GetDCSize() {
-		return DefaultCassandraRack
-	}
-	if rack >= cc.GetRackSize(dc) {
+	if dc >= cc.GetDCSize() || rack >= cc.GetRackSize(dc) {
 		return DefaultCassandraRack
 	}
 	return cc.Spec.Topology.DC[dc].Rack[rack].Name
@@ -278,14 +276,13 @@ func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
 // GetDCRackName compute dcName + RackName to be used in statefulsets, services..
 // it return empty if the name don't match with kubernetes domain name validation regexp
 func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string {
-	var dcRackName string
-	dcRackName = dcName + "-" + rackName
-	var regex_name = regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
-	if !regex_name.MatchString(dcRackName) {
-		logrus.Errorf("%s don't match valide name service: a DNS-1035 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character", dcRackName)
-		return ""
+	dcRackName := dcName + "-" + rackName
+	if regexDCRackName.MatchString(dcRackName) {
+		return dcRackName
 	}
-	return dcRackName
+	logrus.Errorf("%s is not a valid service name: a DNS-1035 label must consist of lower case "+
+		"alphanumeric characters or '-', and must start and end with an alphanumeric character", dcRackName)
+	return ""
 }
 
 //GetDCFromDCRackName send dc name from dcRackName (dc-rack)
@@ -304,10 +301,10 @@ func (cc *CassandraCluster) GetDCAndRackFromDCRackName(dcRackName string) (strin
 func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 	cc.Spec.Topology = Topology{
 		DC: []DC{
-			DC{
+			{
 				Name: dcName,
 				Rack: []Rack{
-					Rack{
+					{
 						Name: rackName,
 					},
 				},

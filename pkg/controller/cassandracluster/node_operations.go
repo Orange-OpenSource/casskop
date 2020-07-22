@@ -251,14 +251,14 @@ func (jolokiaClient *JolokiaClient) NodeRemove(hostid string) error {
 }
 
 /*NodeOperationMode returns OperationMode of a node using a jolokia client and returns any error*/
-func (jolokiaClient *JolokiaClient) NodeOperationMode() (string, error) {
+func (jolokiaClient *JolokiaClient) NodeOperationMode() (operationMode, error) {
 	request := go_jolokia.NewJolokiaRequest(go_jolokia.READ, "org.apache.cassandra.db:type=StorageService", nil, "OperationMode")
 	result, err := checkJolokiaErrors(jolokiaClient.executeReadRequest(request))
 	if err != nil {
-		return "", fmt.Errorf("Cannot get OperationMode: %v", err.Error())
+		return UNKNOWN, fmt.Errorf("Cannot get OperationMode: %v", err.Error())
 	}
 	v, _ := result.Value.(string)
-	return v, nil
+	return operationMode(v), nil
 }
 
 func (jolokiaClient *JolokiaClient) hasStreamingSessions() (bool, error) {

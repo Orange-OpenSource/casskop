@@ -40,10 +40,9 @@ orbs:
           - run:
               name: Set up K3d
               command: |
-                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/master/install.sh | TAG=v3.0.0-rc.1 bash
-                k3d create cluster --image ${K3S_IMAGE} --wait 0
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v3.0.0 bash
+                k3d cluster create --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
-                k3d get kubeconfig 0
           - checkout:
               path: /home/circleci/casskop
           - run:
@@ -61,7 +60,7 @@ orbs:
                   docker pull $(cat casskop-build-image-tar)
                   docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
                 fi
-                k3d load image casskop-build-image.tar
+                k3d image import casskop-build-image.tar
           - save_cache:
               name: Save Casskop build image
               key: '{{ checksum "casskop-build-image-tar" }}'
@@ -74,14 +73,8 @@ orbs:
                 sudo chmod o+w /usr/local/bin/
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
-                KUBECONFIG="$(k3d get-kubeconfig)" kubectl get nodes
           - attach_workspace:  # Attach artifact from workdir
               at: /home/circleci
-          - run: # Check we correctly access to K8s information with kubectl cli
-              name: Test k8s
-              command: |
-                kubectl get nodes
-                kubectl get pods
           # Acceptance test
           - run: # Run acceptance test through 'docker-e2e-test-fix-arg' makefile step
               name: Operator acceptance test

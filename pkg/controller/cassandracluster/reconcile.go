@@ -161,7 +161,6 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 		}
 	}
 
-
 	if needUpdate {
 		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
 		ClusterActionMetric.set(api.ActionCorrectCRDConfig, cc.Name)
@@ -449,17 +448,15 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			if dcRackName == "" {
-				return fmt.Errorf("Name uses for DC and/or Rack are not good")
+				return fmt.Errorf("Name used for DC and/or Rack are not good")
 			}
 
 			//If we have added a dc/rack to the CRD, we add it to the Status
 			if _, ok := status.CassandraRackStatus[dcRackName]; !ok {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("the DC(%s) and Rack(%s) does not exist, "+
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("DC-Rack(%s-%s) does not exist, "+
 					"initialize it in status", dcName, rackName)
 				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 				cc.InitCassandraRackinStatus(status, dcName, rackName)
-				//Return will stop operator reconcile loop until next one
-				//used here to write CassandraClusterStatus properly
 				return nil
 			}
 			dcRackStatus := status.CassandraRackStatus[dcRackName]
@@ -479,11 +476,10 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				//Update CassandraClusterPhase
 				rcc.UpdateCassandraRackStatusPhase(cc, dcName, rackName, storedStatefulSet, status)
 
-				//Find if there is an Action to execute or to end
+				//Find if there is an Action to execute/end
 				rcc.getNextCassandraClusterStatus(cc, dc, rack, dcName, rackName, storedStatefulSet, status)
 
-				//If Not in +Initial State
-				// Find if we have some Pod Operation to Execute, and execute them
+				//If not Initializing cluster execute pod operations queued
 				if dcRackStatus.Phase != api.ClusterPhaseInitial.Name {
 					breakResyncloop, err := rcc.executePodOperation(cc, dcName, rackName, status)
 					if err != nil {
@@ -535,8 +531,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				needUpdate = true
 			}
 			if breakLoop {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
-					"err": err}).Debug("We just update Statefulset " +
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Debug("Statefulset is getting updated " +
 					"we break ReconcileRack")
 				return nil
 			}
@@ -690,10 +686,9 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return nil
 	}
 
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-		"err": err}).Info("We will get first available pod")
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Debug("Get first available pod")
 
-	firstPod, err := GetLastOrFirstPodReady(podsList, true)
+	firstPod, err := GetLastOrFirstPodReady(podsList, false)
 	if err != nil {
 		return err
 	}
@@ -715,7 +710,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 
-	podToDelete, err := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion , podsList, status)
+	podToDelete, err := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion, podsList, status)
 	if err != nil {
 		return err
 	}
@@ -736,10 +731,10 @@ func (rcc *ReconcileCassandraCluster) ListCassandraClusterPods(cc *api.Cassandra
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			if dcRackName == "" {
-				return nil, fmt.Errorf("Name uses for DC and/or Rack are not good")
+				return nil, fmt.Errorf("Name used for DC and/or Rack are not good")
 			}
 
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Info("We will list available pods")
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName}).Debug("List available pods")
 			pods, err := rcc.ListPods(cc.Namespace, k8s.LabelsForCassandraDCRack(cc, dcName, rackName))
 			if err != nil {
 				return nil, err
@@ -772,12 +767,12 @@ func updateCassandraNodesStatusForPod(hostIDMap map[string]string, pod *v1.Pod, 
 
 	// Update Pod, HostId, Ip couple cached into status
 	hostId, keyFound := hostIDMap[pod.Status.PodIP]
-	if keyFound == true && cassandraPodIsReady(pod){
+	if keyFound == true && cassandraPodIsReady(pod) {
 		status.CassandraNodesStatus[pod.Name] = api.CassandraNodeStatus{HostId: hostId, NodeIp: pod.Status.PodIP}
 	}
 }
 
-func checkPodCrossIpUseCaseForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) (*v1.Pod, error){
+func checkPodCrossIpUseCaseForPod(hostIDMap map[string]string, pod *v1.Pod, status *api.CassandraClusterStatus) (*v1.Pod, error) {
 
 	// We compare the hostId associated to the pod (cached into the resource status) and the one associated
 	// to the podIp into the cassandra cluster.
@@ -789,7 +784,7 @@ func checkPodCrossIpUseCaseForPod(hostIDMap map[string]string, pod *v1.Pod, stat
 	// that the one associated into cassandra for the same IP, so we are in IP cross cases.
 	if keyFound == true && statusHostId != hostId {
 		logrus.WithFields(logrus.Fields{"pod": pod.Name}).
-			Info(fmt.Sprintf("Pod %s, have a cross Ip situation. The pod have ip : %s, with hostId : %s, " +
+			Info(fmt.Sprintf("Pod %s, have a cross Ip situation. The pod have ip : %s, with hostId : %s, "+
 				"but this ip is already associated to the hostId : %s. We force delete of the pod", pod.Name, pod.Status.PodIP, statusHostId, hostId))
 		return pod, nil
 	}
