@@ -63,7 +63,7 @@ func (rcc *ReconcileCassandraCluster) GetPod(namespace, name string) (*v1.Pod, e
 			Namespace: namespace,
 		},
 	}
-	return pod, rcc.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pod)
+	return pod, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pod)
 }
 
 // GetLastOrFirstPod returns the last or first pod satisfying the selector and being in the namespace
@@ -197,11 +197,11 @@ func (rcc *ReconcileCassandraCluster) ListPods(namespace string, selector map[st
 	}
 
 	pl := &v1.PodList{}
-	return pl, rcc.client.List(context.TODO(), pl, opt...)
+	return pl, rcc.Client.List(context.TODO(), pl, opt...)
 }
 
 func (rcc *ReconcileCassandraCluster) CreatePod(pod *v1.Pod) error {
-	err := rcc.client.Create(context.TODO(), pod)
+	err := rcc.Client.Create(context.TODO(), pod)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("pod already exists: %cc", err)
@@ -213,7 +213,7 @@ func (rcc *ReconcileCassandraCluster) CreatePod(pod *v1.Pod) error {
 }
 
 func (rcc *ReconcileCassandraCluster) UpdatePod(pod *v1.Pod) error {
-	err := rcc.client.Update(context.TODO(), pod)
+	err := rcc.Client.Update(context.TODO(), pod)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("pod already exists: %cc", err)
@@ -241,7 +241,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdatePod(namespace string, name s
 
 //DeletePod delete a pod
 func (rcc *ReconcileCassandraCluster) DeletePod(pod *v1.Pod) error {
-	err := rcc.client.Delete(context.TODO(), pod)
+	err := rcc.Client.Delete(context.TODO(), pod)
 	if err != nil {
 		return fmt.Errorf("failed to delete Pod: %cc", err)
 	}
@@ -250,7 +250,7 @@ func (rcc *ReconcileCassandraCluster) DeletePod(pod *v1.Pod) error {
 
 //ForceDeletePod delete a pod with a grace period of 0 seconds
 func (rcc *ReconcileCassandraCluster) ForceDeletePod(pod *v1.Pod) error {
-	err := rcc.client.Delete(context.TODO(), pod, client.GracePeriodSeconds(0))
+	err := rcc.Client.Delete(context.TODO(), pod, client.GracePeriodSeconds(0))
 	if err != nil {
 		return fmt.Errorf("failed to delete Pod: %cc", err)
 	}

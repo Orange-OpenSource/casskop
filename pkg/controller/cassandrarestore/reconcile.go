@@ -56,8 +56,8 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Check the referenced Cluster exists.
-	cc := &v1alpha1.CassandraCluster{}
-	if cc, err = k8s.LookupCassandraCluster(r.client, cassandraRestore.Spec.CassandraCluster,
+	cassandraCluster := &v1alpha1.CassandraCluster{}
+	if cassandraCluster, err = k8s.LookupCassandraCluster(r.client, cassandraRestore.Spec.CassandraCluster,
 		cassandraRestore.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safetybelt
 		if k8s.IsMarkedForDeletion(cassandraRestore.ObjectMeta) {
@@ -86,7 +86,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	// Require restore on first pod of the cluster.
 	if cassandraRestore.Status.Condition == nil {
-		err = r.requiredRestore(cassandraRestore, cc, cassandraBackup, reqLogger)
+		err = r.requiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.ResourceNotReady:
@@ -111,7 +111,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	if cassandraRestore.Status.Condition.Type.IsRequired() {
-		err = r.handleRequiredRestore(cassandraRestore, cc, cassandraBackup, reqLogger)
+		err = r.handleRequiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:
@@ -140,7 +140,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 
 	if cassandraRestore.Status.Condition.Type.IsInProgress() {
 
-		err = r.checkRestoreOperationState(cassandraRestore, cc, cassandraBackup, reqLogger)
+		err = r.checkRestoreOperationState(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
 			case errorfactory.CassandraBackupSidecarNotReady, errorfactory.ResourceNotReady:

@@ -165,7 +165,8 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	// Get CassandraCluster object
 	cc := &api.CassandraCluster{}
 	if err := r.client.Get(context.TODO(),
-		types.NamespacedName{Name: cassandraBackup.Spec.CassandraCluster, Namespace: cassandraBackup.Namespace}, cc); err != nil {
+		types.NamespacedName{Name: cassandraBackup.Spec.CassandraCluster,
+			Namespace: cassandraBackup.Namespace}, cc); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			r.recorder.Event(
 				cassandraBackup,

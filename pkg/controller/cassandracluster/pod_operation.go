@@ -612,7 +612,7 @@ func (rcc *ReconcileCassandraCluster) finalizeOperation(err error, cc *api.Cassa
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status, "error": err}).Debug("Got an error. Getting a new version of Cassandra Cluster")
-		if rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
+		if rcc.Client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"status": status}).Debug("Got a new version of Cassandra Cluster")
 			continue

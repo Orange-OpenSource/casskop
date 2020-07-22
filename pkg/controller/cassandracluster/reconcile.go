@@ -102,7 +102,7 @@ func (rcc *ReconcileCassandraCluster) CheckDeletePVC(cc *api.CassandraCluster) e
 	if cc.Spec.DeletePVC != oldCRD.Spec.DeletePVC {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debug("DeletePVC has been updated")
 		updateDeletePvcStrategy(cc)
-		return rcc.client.Update(context.TODO(), cc)
+		return rcc.Client.Update(context.TODO(), cc)
 	}
 
 	return nil
@@ -558,7 +558,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 	//cause PVCs have been deleted
 	if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
 		preventClusterDeletion(cc, false)
-		return rcc.client.Update(context.TODO(), cc)
+		return rcc.Client.Update(context.TODO(), cc)
 	}
 
 	return nil
@@ -719,7 +719,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 	if podToDelete != nil {
-		return rcc.client.Delete(context.TODO(), podToDelete)
+		return rcc.Client.Delete(context.TODO(), podToDelete)
 	}
 
 	return nil

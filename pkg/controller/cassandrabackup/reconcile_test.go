@@ -3,23 +3,21 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"os"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/record"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/ghodss/yaml"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var cbyaml = `
@@ -41,17 +39,10 @@ spec:
   secret: cloud-backup-secrets
 `
 
-func helperInitCassandraBackup(cassandraBackupYaml string) api.CassandraBackup {
-	var cassandraBackup api.CassandraBackup
-	if err := yaml.Unmarshal([]byte(cassandraBackupYaml), &cassandraBackup); err != nil {
-		logrus.Error(err)
-		os.Exit(-1)
-	}
-	return cassandraBackup
-}
 
-func helperInitCassandraBackupController(t *testing.T, cassandraBackupYaml string) (*ReconcileCassandraBackup, *api.CassandraBackup, *record.FakeRecorder) {
-	cassandraBackup := helperInitCassandraBackup(cassandraBackupYaml)
+func HelperInitCassandraBackupController(cassandraBackupYaml string) (*ReconcileCassandraBackup,
+	*api.CassandraBackup, *record.FakeRecorder) {
+	cassandraBackup := common.HelperInitCassandraBackup(cassandraBackupYaml)
 
 	cassandraBackupList := api.CassandraBackupList{
 		TypeMeta: metav1.TypeMeta{
@@ -75,8 +66,8 @@ func helperInitCassandraBackupController(t *testing.T, cassandraBackupYaml strin
 
 	fakeRecorder := record.NewFakeRecorder(3)
 	reconcileCassandraBackup := ReconcileCassandraBackup{
-		client: fakeClient,
-		scheme: fakeClientScheme,
+		client:   fakeClient,
+		scheme:   fakeClientScheme,
 		recorder: fakeRecorder,
 	}
 
@@ -85,8 +76,7 @@ func helperInitCassandraBackupController(t *testing.T, cassandraBackupYaml strin
 
 func TestCassandraBackupAlreadyExists(t *testing.T) {
 	assert := assert.New(t)
-	// When same CassandraBackup is recreated Reconcile stops and an event is created
-	reconcileCassandraBackup, cassandraBackup, recorder := helperInitCassandraBackupController(t, cbyaml)
+	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	oldBackup := cassandraBackup.DeepCopy()
 	oldBackup.Status = &api.CassandraBackupStatus{
@@ -108,19 +98,12 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-	assertEvent(t, recorder.Events, fmt.Sprintf("%s because such backup already exists", cassandraBackup.Spec.SnapshotTag))
-}
-
-func assertEvent(t *testing.T, event chan string, message string) {
-	assert := assert.New(t)
-	eventMessage := <-event
-	assert.Contains(eventMessage, message)
+	common.AssertEvent(t, recorder.Events, fmt.Sprintf("%s because such backup already exists", cassandraBackup.Spec.SnapshotTag))
 }
 
 func TestCassandraBackupSecretNotFound(t *testing.T) {
 	assert := assert.New(t)
-	// When secret does not exist Reconcile stops and an event is created
-	reconcileCassandraBackup, cassandraBackup, recorder := helperInitCassandraBackupController(t, cbyaml)
+	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -133,12 +116,12 @@ func TestCassandraBackupSecretNotFound(t *testing.T) {
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-	assertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
+	common.AssertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
 }
 
 func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 	assert := assert.New(t)
-	cassandraBackup := helperInitCassandraBackup(cbyaml)
+	cassandraBackup := common.HelperInitCassandraBackup(cbyaml)
 
 	reqLogger := logrus.WithFields(logrus.Fields{"Name": "controller_cassandrabackup"})
 
@@ -160,7 +143,7 @@ func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {
 
 func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 	assert := assert.New(t)
-	reconcileCassandraBackup, cb, recorder := helperInitCassandraBackupController(t, cbyaml)
+	reconcileCassandraBackup, cb, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -187,6 +170,6 @@ func TestCassandraBackupDatacenterNotFound(t *testing.T) {
 
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
-	assertEvent(t, recorder.Events, fmt.Sprintf("Datacenter %s of cluster %s to backup not found",
+	common.AssertEvent(t, recorder.Events, fmt.Sprintf("Datacenter %s of cluster %s to backup not found",
 		cb.Spec.Datacenter, cb.Spec.CassandraCluster))
 }

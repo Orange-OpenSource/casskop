@@ -48,7 +48,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCl
 	svc := generateCassandraService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service (%v)", err)
 	}
@@ -61,7 +61,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraServiceMonitoring(cc *api.C
 	svc := generateCassandraExporterService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service Monitoring: %v", err)
 	}

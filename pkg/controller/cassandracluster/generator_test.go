@@ -98,7 +98,7 @@ func TestCreatePodAntiAffinityHard(t *testing.T) {
 }
 
 func TestVolumeMounts(t *testing.T) {
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 	assert.Equal(t, 1, len(volumeMounts))
@@ -122,7 +122,7 @@ func TestVolumeMounts(t *testing.T) {
 func TestGenerateCassandraService(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	selector := k8s.LabelsForCassandra(cc)
 	svc := generateCassandraService(cc, selector, nil)
 
@@ -141,7 +141,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	rackName := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	ccDefault := cc.DeepCopy()
 	cc.CheckDefaults()
 	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
@@ -371,7 +371,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
 
-		_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+		_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 
 		for _, volumeMount := range container.VolumeMounts {
 			switch container.Name {

@@ -22,7 +22,7 @@ func TestStatefulSetsAreEqual(t *testing.T) {
 	rackName := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.CheckDefaults()
 	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)

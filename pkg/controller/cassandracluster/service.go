@@ -33,5 +33,5 @@ func (rcc *ReconcileCassandraCluster) DeleteService(namespace, name string) erro
 			Namespace: namespace,
 		},
 	}
-	return rcc.client.Delete(context.TODO(), svc)
+	return rcc.Client.Delete(context.TODO(), svc)
 }
