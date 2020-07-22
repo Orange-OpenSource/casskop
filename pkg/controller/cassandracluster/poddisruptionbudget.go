@@ -38,12 +38,12 @@ func (rcc *ReconcileCassandraCluster) GetPodDisruptionBudget(namespace,
 			Namespace: namespace,
 		},
 	}
-	return pdb, rcc.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pdb)
+	return pdb, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, pdb)
 }
 
 //CreatePodDisruptionBudget create a new PodDisruptionBudget pdb
 func (rcc *ReconcileCassandraCluster) CreatePodDisruptionBudget(pdb *policyv1beta1.PodDisruptionBudget) error {
-	err := rcc.client.Create(context.TODO(), pdb)
+	err := rcc.Client.Create(context.TODO(), pdb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("PodDisruptionBudget already exists: %cc", err)
@@ -55,7 +55,7 @@ func (rcc *ReconcileCassandraCluster) CreatePodDisruptionBudget(pdb *policyv1bet
 
 //DeletePodDisruptionBudget delete a new PodDisruptionBudget pdb
 func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1beta1.PodDisruptionBudget) error {
-	err := rcc.client.Delete(context.TODO(), pdb)
+	err := rcc.Client.Delete(context.TODO(), pdb)
 	if err != nil {
 		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %cc", err)
 	}
@@ -64,7 +64,7 @@ func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1bet
 
 //UpdatePodDisruptionBudget updates an existing PodDisruptionBudget pdb
 func (rcc *ReconcileCassandraCluster) UpdatePodDisruptionBudget(pdb *policyv1beta1.PodDisruptionBudget) error {
-	err := rcc.client.Update(context.TODO(), pdb)
+	err := rcc.Client.Update(context.TODO(), pdb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("PodDisruptionBudget already exists: %cc", err)

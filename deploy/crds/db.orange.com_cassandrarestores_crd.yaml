@@ -87,8 +87,7 @@ spec:
                   to False
                 type: string
               secret:
-                description: Name of Secret to use when accessing cloud storage providers.
-                  If not specified, it's automatically derived from 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'
+                description: Name of Secret to use when accessing cloud storage providers
                 type: string
             required:
             - cassandraBackup

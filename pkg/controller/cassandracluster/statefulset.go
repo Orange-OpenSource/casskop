@@ -54,7 +54,7 @@ func (rcc *ReconcileCassandraCluster) GetStatefulSet(namespace, name string) (*a
 			Namespace: namespace,
 		},
 	}
-	return ss, rcc.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, ss)
+	return ss, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, ss)
 }
 
 func (rcc *ReconcileCassandraCluster) DeleteStatefulSet(namespace, name string) error {
@@ -69,12 +69,12 @@ func (rcc *ReconcileCassandraCluster) DeleteStatefulSet(namespace, name string) 
 			Namespace: namespace,
 		},
 	}
-	return rcc.client.Delete(context.TODO(), ss)
+	return rcc.Client.Delete(context.TODO(), ss)
 }
 
 //CreateStatefulSet create a new statefulset ss
 func (rcc *ReconcileCassandraCluster) CreateStatefulSet(statefulSet *appsv1.StatefulSet) error {
-	err := rcc.client.Create(context.TODO(), statefulSet)
+	err := rcc.Client.Create(context.TODO(), statefulSet)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("statefulset already exists: %cc", err)
@@ -87,7 +87,7 @@ func (rcc *ReconcileCassandraCluster) CreateStatefulSet(statefulSet *appsv1.Stat
 
 //UpdateStatefulSet updates an existing statefulset ss
 func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.StatefulSet) error {
-	err := rcc.client.Update(context.TODO(), statefulSet)
+	err := rcc.Client.Update(context.TODO(), statefulSet)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("statefulset already exists: %cc", err)

@@ -37,7 +37,7 @@ func (rcc *ReconcileCassandraCluster) GetPVC(namespace, name string) (*v1.Persis
 			Namespace: namespace,
 		},
 	}
-	return o, rcc.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, o)
+	return o, rcc.Client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, o)
 }
 
 func (rcc *ReconcileCassandraCluster) ListPVC(namespace string,
@@ -55,11 +55,11 @@ func (rcc *ReconcileCassandraCluster) ListPVC(namespace string,
 		},
 	}
 
-	return o, rcc.client.List(context.TODO(), o, opt...)
+	return o, rcc.Client.List(context.TODO(), o, opt...)
 }
 
 func (rcc *ReconcileCassandraCluster) deletePVC(pvc *v1.PersistentVolumeClaim) error {
 
-	return rcc.client.Delete(context.TODO(), pvc)
+	return rcc.Client.Delete(context.TODO(), pvc)
 
 }
