@@ -3,6 +3,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"strconv"
 	"testing"
 
@@ -24,7 +25,7 @@ func reconcileValidation(t *testing.T, rcc *ReconcileCassandraCluster, request r
 
 func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileName string) (*ReconcileCassandraCluster,
 	*reconcile.Request) {
-	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-1DC.yaml")
+	rcc, req := helperCreateCassandraCluster(t, cassandraClusterFileName)
 
 	pdb := &policyv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
@@ -123,9 +124,16 @@ func TestOneDecommission(t *testing.T) {
 
 	lastPod = podHost(stfsName, 1, rcc)
 	deletePodNotDeletedByFakeClient(rcc, deletedPod)
+	stfs, _ := rcc.GetStatefulSet(namespace, stfsName)
+	stfs.Status.ReadyReplicas = 2
+	rcc.client.Update(context.TODO(), stfs)
 
 	registerFatalJolokiaResponder(t, deletedPod)
 	registerJolokiaOperationModeResponder(lastPod, NORMAL)
+	reconcileValidation(t, rcc, *req)
+	assert.Equal(0, jolokiaCallsCount(lastPod))
+	assert.Equal(api.StatusDone, rcc.cc.Status.CassandraRackStatus["dc1-rack1"].PodLastOperation.Status)
+
 	reconcileValidation(t, rcc, *req)
 	assert.Equal(0, jolokiaCallsCount(lastPod))
 }

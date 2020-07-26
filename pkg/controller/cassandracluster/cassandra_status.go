@@ -433,8 +433,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 
 	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "Replicas": storedStatefulSet.Status.Replicas,
-		"RequestedReplicas": *storedStatefulSet.Spec.Replicas}
+		"ReadyReplicas": storedStatefulSet.Status.ReadyReplicas, "RequestedReplicas": *storedStatefulSet.Spec.Replicas}
 
 	if status.CassandraRackStatus[dcRackName].Phase == api.ClusterPhaseInitial.Name {
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
@@ -479,7 +478,7 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhasePending.Name
 		ClusterPhaseMetric.set(api.ClusterPhasePending, cc.Name)
 	} else if status.CassandraRackStatus[dcRackName].Phase != api.ClusterPhaseRunning.Name {
-		logrus.WithFields(logrusFields).Infof("StatefulSet: Replicas count is not okay")
+		logrus.WithFields(logrusFields).Infof("StatefulSet: Rack Phase is not %s", api.ClusterPhaseRunning.Name)
 		status.CassandraRackStatus[dcRackName].Phase = api.ClusterPhaseRunning.Name
 		ClusterPhaseMetric.set(api.ClusterPhaseRunning, cc.Name)
 	}
