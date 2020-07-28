@@ -33,8 +33,12 @@ spec:
 
 The following storage options for storing the backups are:
 
-- S3 compatible (as in the example above)
-- ???
+- s3 (as in the example above)
+- gcp
+- azure
+- oracle cloud
+
+More details can be found on [Instaclustr's Cassandra backup page](https://github.com/instaclustr/cassandra-backup)
 
 ### Life cycle of the CassandraBackup object
 
