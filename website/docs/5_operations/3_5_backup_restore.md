@@ -70,4 +70,9 @@ spec:
   backup:
     name: nightly-cassandra-backup
   cluster: test-cluster
+  entites: k1.t1
 ```
+
+### Entities
+
+In the restore phase, you can specify a subset of the entities specified in the backup. You can then backup 2 tables and only restore one.
