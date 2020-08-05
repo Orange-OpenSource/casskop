@@ -31,7 +31,11 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileCassandraRestore{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileCassandraRestore{
+		client: mgr.GetClient(),
+		scheme: mgr.GetScheme(),
+		recorder:  mgr.GetEventRecorderFor("cassandrabackup-controller"),
+	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
