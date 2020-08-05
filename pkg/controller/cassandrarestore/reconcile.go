@@ -181,13 +181,13 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 	}
 
 	if len(pods.Items) > 0 {
-		restore.Status.CoordinatorMember = pods.Items[0].Name
 		if err := UpdateRestoreStatus(r.client, restore,
 			v1alpha1.CassandraRestoreStatus{
 				Condition: &v1alpha1.RestoreCondition{
 					Type:               v1alpha1.RestoreRequired,
 					LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 				},
+				CoordinatorMember: pods.Items[0].Name,
 			}, reqLogger); err != nil {
 			return errors.WrapIfWithDetails(err, "Could not update status for restore",
 				"restore", restore)
@@ -219,6 +219,7 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.Cass
 		"cassandra backup sidecar communication error")
 	}
 
+	restoreStatus.CoordinatorMember = restore.Status.CoordinatorMember
 	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
 		return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
 	}
@@ -255,6 +256,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		"cassandra backup sidecar communication error")
 	}
 
+	restoreStatus.CoordinatorMember = restore.Status.CoordinatorMember
 	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
 		return errors.WrapIfWithDetails(err, "could not update status for restore",
 			"restore", restore)
