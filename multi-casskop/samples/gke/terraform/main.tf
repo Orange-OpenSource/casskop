@@ -100,9 +100,6 @@ provider "kubernetes" {
 
 // Define Helm provider
 provider "helm" {
-    install_tiller  = true
-    tiller_image    = "gcr.io/kubernetes-helm/tiller:${var.helm_version}"
-    service_account = kubernetes_service_account.tiller.metadata.0.name
     debug           = true
     
     kubernetes {
