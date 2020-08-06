@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csapi "github.com/erdrix/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	corev1 "k8s.io/api/core/v1"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
