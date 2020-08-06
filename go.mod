@@ -13,7 +13,8 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200702175106-0a1b67f43f2d
+	//	github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200702175106-0a1b67f43f2d
+	github.com/erdrix/cassandra-sidecar-go-client v0.0.0-20200806081112-66adca190982
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
