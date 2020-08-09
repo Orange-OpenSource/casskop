@@ -106,17 +106,17 @@ func TestOneDecommission(t *testing.T) {
 	registerFatalJolokiaResponder(t, podHost(stfsName, int8(1), rcc))
 	registerJolokiaOperationModeResponder(lastPod, NORMAL)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(1, jolokiaCallsCount(lastPod))
+	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
 	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
 	registerJolokiaOperationModeResponder(lastPod, LEAVING)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(1, jolokiaCallsCount(lastPod))
+	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
 	assertStatefulsetReplicas(t, rcc, 3, cassandraCluster.Namespace, stfsName)
 
 	registerJolokiaOperationModeResponder(lastPod, DECOMMISSIONED)
 	reconcileValidation(t, rcc, *req)
-	assert.Equal(1, jolokiaCallsCount(lastPod))
+	assert.GreaterOrEqual(jolokiaCallsCount(lastPod), 1)
 	assertStatefulsetReplicas(t, rcc, 2, cassandraCluster.Namespace, stfsName)
 
 	deletedPod := podHost(stfsName, 2, rcc)
