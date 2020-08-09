@@ -25,7 +25,7 @@ spec:
   autoUpdateSeedList: false
   resources:
     requests: &requests
-      cpu: 500m
+      cpu: 150m
       memory: 1Gi
     limits: *requests
   topology:
