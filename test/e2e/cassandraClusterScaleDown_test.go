@@ -135,8 +135,6 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	res, _, _ = mye2eutil.ExecPodFromName(t, f, namespace, "cassandra-e2e-dc2-rack1-0", grepNumTokens)
 	assert.Equal(t, "num_tokens: 32", res)
 
-	const Strategy1DC = "cqlsh -u cassandra -p cassandra -e \"ALTER KEYSPACE %s WITH REPLICATION = {'class" +
-		"' : 'NetworkTopologyStrategy', 'dc1' : 1};\""
 	const Strategy2DC = "cqlsh -u cassandra -p cassandra -e \"ALTER KEYSPACE %s WITH REPLICATION = {'class" +
 		"' : 'NetworkTopologyStrategy', 'dc1' : 1, 'dc2' : 1};\""
 	keyspaces := []string{"system_auth", "system_distributed", "system_traces"}
@@ -168,6 +166,8 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 
 	f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e-dc1-rack1-0", Namespace: namespace}, pod)
 
+	const Strategy1DC = "cqlsh -u cassandra -p cassandra -e \"ALTER KEYSPACE %s WITH REPLICATION = {'class" +
+		"' : 'NetworkTopologyStrategy', 'dc1' : 1};\""
 	for i := range keyspaces {
 		cmd := fmt.Sprintf(Strategy1DC, keyspaces[i])
 		_, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd})
@@ -186,7 +186,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	}
 
 	if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc2-rack1", 0,
-		mye2eutil.RetryInterval, 2 * mye2eutil.Timeout); err != nil {
+		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatal(err)
 	}
 
