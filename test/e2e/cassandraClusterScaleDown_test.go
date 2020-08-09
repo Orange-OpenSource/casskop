@@ -135,14 +135,14 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	res, _, _ = mye2eutil.ExecPodFromName(t, f, namespace, "cassandra-e2e-dc2-rack1-0", grepNumTokens)
 	assert.Equal(t, "num_tokens: 32", res)
 
-	const Strategy2DC = "cqlsh -u cassandra -p cassandra -e \"ALTER KEYSPACE %s WITH REPLICATION = {'class" +
+	const Strategy2DCs = "cqlsh -u cassandra -p cassandra -e \"ALTER KEYSPACE %s WITH REPLICATION = {'class" +
 		"' : 'NetworkTopologyStrategy', 'dc1' : 1, 'dc2' : 1};\""
 	keyspaces := []string{"system_auth", "system_distributed", "system_traces"}
 	pod := &v1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"}}
 
-	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e-dc1-rack1-0", Namespace: namespace}, pod)
+	f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e-dc1-rack1-0", Namespace: namespace}, pod)
 	for _, keyspace := range keyspaces {
-		cmd := fmt.Sprintf(Strategy2DC, keyspace)
+		cmd := fmt.Sprintf(Strategy2DCs, keyspace)
 		if _, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd}); err != nil {
 			t.Fatalf("Error exec change keyspace %s = %v", keyspace, err)
 		}
@@ -175,10 +175,12 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 			t.Fatalf("Error exec change keyspace %s{%s} = %v", keyspaces[i], cmd, err)
 		}
 	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	mye2eutil.K8sGetCassandraCluster(t, f, err, cc)
 
+	t.Logf("Current number of NodesPerRacks in 2nd rack: %d", cc.Spec.Topology.DC[1].NodesPerRacks)
+	t.Logf("Scale down to %d nodes in 2nd rack", nodesPerRack)
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nodesPerRack
 
 	if err = f.Client.Update(goctx.TODO(), cc); err != nil {

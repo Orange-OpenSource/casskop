@@ -129,8 +129,8 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 		if int(statefulset.Status.ReadyReplicas) == replicas {
 			return true, nil
 		}
-		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name, statefulset.Status.ReadyReplicas,
-			replicas)
+		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name,
+			statefulset.Status.ReadyReplicas, replicas)
 		return false, nil
 	})
 	if err != nil {
