@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -31,7 +32,6 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 	DC := &cc.Spec.Topology.DC[0]
 	DC.Rack = append(DC.Rack, api.Rack{Name: "rack2"})
 
-	t.Logf("Create CassandraCluster cassandracluster-1DC.yaml in namespace %s", namespace)
 	if err = f.Client.Create(goctx.TODO(), cc, &framework.CleanupOptions{TestContext: ctx,
 		Timeout:       mye2eutil.CleanupTimeout,
 		RetryInterval: mye2eutil.CleanupRetryInterval}); err != nil && !apierrors.IsAlreadyExists(err) {
@@ -42,7 +42,7 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 	for _, rack := range DC.Rack {
 		if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace,
 			fmt.Sprintf("%s-%s-%s", cc.Name, DC.Name, rack.Name),
-			int(cc.Spec.NodesPerRacks), mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+			int(cc.Spec.NodesPerRacks), mye2eutil.RetryInterval, 2 * mye2eutil.Timeout); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -75,7 +75,7 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 	for _, rack := range DC.Rack {
 		if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace,
 			fmt.Sprintf("%s-%s-%s", cc.Name, DC.Name, rack.Name),
-			int(cc.Spec.NodesPerRacks), mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+			int(cc.Spec.NodesPerRacks), mye2eutil.RetryInterval, 2 * mye2eutil.Timeout); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -88,7 +88,7 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 	numberOfNodesSeenCmd := "nodetool status|grep -ic rack"
 	numberOfNodesSeen, _, _ := mye2eutil.ExecPodFromName(t, f, namespace,
 		fmt.Sprintf("%s-%s-%s", cc.Name, DC.Name, DC.Rack[0].Name), numberOfNodesSeenCmd)
-	assert.Equal(t, "2", numberOfNodesSeen)
+	assert.Equal(t, strconv.Itoa(int(2 * cc.Spec.NodesPerRacks)), numberOfNodesSeen)
 }
 
 func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx *framework.Context) {
@@ -108,14 +108,12 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	}
 
 	if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc1-rack1", 1,
-		mye2eutil.RetryInterval,
-		mye2eutil.Timeout); err != nil {
+		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatal(err)
 	}
 
 	if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc2-rack1", 1,
-		mye2eutil.RetryInterval,
-		mye2eutil.Timeout); err != nil {
+		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,7 +186,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	}
 
 	if err = mye2eutil.WaitForStatefulset(t, f.KubeClient, namespace, "cassandra-e2e-dc2-rack1", 0,
-		mye2eutil.RetryInterval, mye2eutil.Timeout); err != nil {
+		mye2eutil.RetryInterval, 2 * mye2eutil.Timeout); err != nil {
 		t.Fatal(err)
 	}
 
