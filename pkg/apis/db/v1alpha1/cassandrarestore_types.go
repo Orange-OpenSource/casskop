@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/util"
-	csapi "github.com/erdrix/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
