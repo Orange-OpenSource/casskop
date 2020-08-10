@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
-	csapi "github.com/erdrix/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/mitchellh/mapstructure"
 )
 

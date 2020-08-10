@@ -5,7 +5,7 @@ import (
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
-	csapi "github.com/erdrix/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"github.com/stretchr/testify/assert"
 )
 

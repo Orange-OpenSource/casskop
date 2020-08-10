@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"encoding/json"
-	csapi "github.com/erdrix/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
 	"strings"
 
 	cron "github.com/robfig/cron/v3"

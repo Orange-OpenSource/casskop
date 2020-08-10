@@ -245,8 +245,8 @@ github.com/emicklei/go-restful v2.11.1+incompatible/go.mod h1:otzb+WCGbkyDHkqmQm
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
-github.com/erdrix/cassandra-sidecar-go-client v0.0.0-20200702175106-0a1b67f43f2d/go.mod h1:HvvSNvbFZ2UwNhbwZUP3RG+UHcFCAy/lFahKX1xKfFc=
-github.com/erdrix/cassandra-sidecar-go-client v0.0.0-20200806081112-66adca190982/go.mod h1:2SKh6jBgQr26wrGgdMc0WXkPWAQoytpgfPzCwB9FLX0=
+github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200702175106-0a1b67f43f2d/go.mod h1:HvvSNvbFZ2UwNhbwZUP3RG+UHcFCAy/lFahKX1xKfFc=
+github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200806081112-66adca190982/go.mod h1:2SKh6jBgQr26wrGgdMc0WXkPWAQoytpgfPzCwB9FLX0=
 github.com/erdrix/cassandrasidecar-go-client v0.0.0-20200609153614-70cb316d1300/go.mod h1:8pSzQqHFXyWjlxd6k7CRAGspeP/oYMRyjuIACP8D0gk=
 github.com/evanphx/json-patch v4.1.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
@@ -640,6 +640,7 @@ github.com/imdario/mergo v0.3.7/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJ
 github.com/imdario/mergo v0.3.8/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/influxdb v1.7.7/go.mod h1:qZna6X/4elxqT3yI9iZYdZrWWdeFOOprn86kgg4+IzY=
+github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200806083402-194994f71666/go.mod h1:HvvSNvbFZ2UwNhbwZUP3RG+UHcFCAy/lFahKX1xKfFc=
 github.com/jackc/fake v0.0.0-20150926172116-812a484cc733/go.mod h1:WrMFNQdiFJ80sQsxDoMokWK1W5TQtxBFNpzWTD84ibQ=
 github.com/jackc/pgx v3.2.0+incompatible/go.mod h1:0ZGrqGqkRlliWnWB4zKnWtjbSWbGkVEFm4TeybAXq+I=
 github.com/jarcoal/httpmock v1.0.4/go.mod h1:ATjnClrvW/3tijVmpL/va5Z3aAyGvqU3gCT8nX0Txik=
