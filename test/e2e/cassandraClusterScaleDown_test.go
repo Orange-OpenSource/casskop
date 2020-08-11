@@ -2,13 +2,13 @@ package e2e
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"strconv"
 	"testing"
 	"time"
-
-	v1 "k8s.io/api/core/v1"
-
-	"github.com/stretchr/testify/assert"
 
 	goctx "context"
 
@@ -16,8 +16,6 @@ import (
 	mye2eutil "github.com/Orange-OpenSource/casskop/test/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework.Framework, ctx *framework.Context) {
@@ -175,12 +173,12 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 			t.Fatalf("Error exec change keyspace %s{%s} = %v", keyspaces[i], cmd, err)
 		}
 	}
+
 	time.Sleep(10 * time.Second)
 
 	mye2eutil.K8sGetCassandraCluster(t, f, err, cc)
 
-	t.Logf("Current number of NodesPerRacks in 2nd rack: %d", cc.Spec.Topology.DC[1].NodesPerRacks)
-	t.Logf("Scale down to %d nodes in 2nd rack", nodesPerRack)
+	nodesPerRack = int32(0)
 	cc.Spec.Topology.DC[1].NodesPerRacks = &nodesPerRack
 
 	if err = f.Client.Update(goctx.TODO(), cc); err != nil {
@@ -212,23 +210,24 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	if err = f.Client.Update(goctx.TODO(), cc); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(30 * time.Second)
 
-	statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
-		"cassandra-e2e-dc2-rack1", metav1.GetOptions{})
-
-	svc := &v1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Service", APIVersion: "v1"}}
-	names := []string{"cassandra-e2e-dc2"}
-	for _, name := range names {
-		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, svc)
-		assert.Equal(t, true, apierrors.IsNotFound(err))
+	for attempt:=0;  attempt < 30; attempt++ {
+		time.Sleep(5 * time.Second)
+		statefulset, err = f.KubeClient.AppsV1().StatefulSets(namespace).Get(goctx.TODO(),
+			"cassandra-e2e-dc2-rack1", metav1.GetOptions{})
+		svc := &v1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Service", APIVersion: "v1"}}
+		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e-dc2", Namespace: namespace}, svc)
+		if apierrors.IsNotFound(err) {
+			break
+		}
 	}
 
-	cc = &api.CassandraCluster{}
+	assert.Equal(t, true, apierrors.IsNotFound(err))
+
+	cc.Status = api.CassandraClusterStatus {}
 	mye2eutil.K8sGetCassandraCluster(t, f, err, cc)
 
 	assert.Equal(t, 1, len(cc.Status.CassandraRackStatus))
 	assert.Equal(t, api.ActionDeleteDC.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 }
-
