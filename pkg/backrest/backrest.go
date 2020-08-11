@@ -10,10 +10,9 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"github.com/sirupsen/logrus"
-
 )
 
 type Client struct {
@@ -50,6 +49,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		SchemaVersion: restore.Spec.SchemaVersion,
 		RestorationStrategyType: restore.Spec.RestorationStrategyType,
 		ConcurrentConnections: *restore.Spec.ConcurrentConnection,
+		ResolveHostIdFromTopology: true,
 	}
 
 	if len(restore.Spec.Entities) == 0 {
