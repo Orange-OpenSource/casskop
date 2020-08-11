@@ -46,8 +46,8 @@ func TestCassandraCluster(t *testing.T) {
 	// run subtests
 	t.Run("group", func(t *testing.T) {
 		t.Run("ClusterScaleUp", CassandraClusterTest(cassandraClusterScaleUpDC1Test))
-		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDown2RacksFrom3NodesTo1Node))
-		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
+		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDown2RacksFrom3NodesTo1Node))
+		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
 		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
 		t.Run("UpdateConfigMap", CassandraClusterTest(cassandraClusterUpdateConfigMapTest))
