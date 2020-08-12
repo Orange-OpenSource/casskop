@@ -26,7 +26,8 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 
 	cc := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC.yaml", namespace)
 	cc.Namespace = namespace
-	cc.Spec.NodesPerRacks = int32(3)
+	//cc.Spec.NodesPerRacks = int32(3)
+	cc.Spec.NodesPerRacks = int32(2)
 	DC := &cc.Spec.Topology.DC[0]
 	DC.Rack = append(DC.Rack, api.Rack{Name: "rack2"})
 
@@ -83,9 +84,9 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 		t.Fatal(err)
 	}
 
-	numberOfNodesSeenCmd := "nodetool status|grep -ic rack"
+	numberOfNodesSeenCmd := "nodetool status|grep -ic 'rack[0-9]'"
 	numberOfNodesSeen, _, _ := mye2eutil.ExecPodFromName(t, f, namespace,
-		fmt.Sprintf("%s-%s-%s", cc.Name, DC.Name, DC.Rack[0].Name), numberOfNodesSeenCmd)
+		fmt.Sprintf("%s-%s-%s-0", cc.Name, DC.Name, DC.Rack[0].Name), numberOfNodesSeenCmd)
 	assert.Equal(t, strconv.Itoa(int(2 * cc.Spec.NodesPerRacks)), numberOfNodesSeen)
 }
 
