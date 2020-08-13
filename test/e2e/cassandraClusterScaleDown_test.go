@@ -26,7 +26,6 @@ func cassandraClusterScaleDown2RacksFrom3NodesTo1Node(t *testing.T, f *framework
 
 	cc := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC.yaml", namespace)
 	cc.Namespace = namespace
-	//cc.Spec.NodesPerRacks = int32(3)
 	cc.Spec.NodesPerRacks = int32(2)
 	DC := &cc.Spec.Topology.DC[0]
 	DC.Rack = append(DC.Rack, api.Rack{Name: "rack2"})

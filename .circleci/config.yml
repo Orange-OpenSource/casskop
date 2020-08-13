@@ -40,8 +40,8 @@ orbs:
           - run:
               name: Set up K3d
               command: |
-                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v3.0.0 bash
-                k3d cluster create --image ${K3S_IMAGE} --servers 2 --wait 0
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+                k3d cluster create --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
           - checkout:
               path: /home/circleci/casskop
