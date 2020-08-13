@@ -28,7 +28,7 @@ orbs:
             description: relative path where the build must be run
             default: casskop
         executor: vm
-        parallelism: 2
+        parallelism: 1
         working_directory: /home/circleci/<< parameters.operatorDir >>
         environment:
           K3S_IMAGE: rancher/k3s:v1.18.4-k3s1
