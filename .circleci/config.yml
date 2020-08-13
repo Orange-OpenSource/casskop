@@ -28,7 +28,6 @@ orbs:
             description: relative path where the build must be run
             default: casskop
         executor: vm
-        parallelism: 1
         working_directory: /home/circleci/<< parameters.operatorDir >>
         environment:
           K3S_IMAGE: rancher/k3s:v1.18.4-k3s1
@@ -429,12 +428,12 @@ workflows:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ScaleDown
-          test_name: ClusterScaleDown
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+#      - k3d/e2e-orb:
+#          name: e2e-test ScaleDown
+#          test_name: ClusterScaleDown
+#          requires:
+#            - build-casskop
+#          <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
           name: e2e-test ScaleDownSimple
