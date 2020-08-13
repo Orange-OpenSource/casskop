@@ -28,7 +28,7 @@ func backup(
 
 	operationID, err := backrestClient.PerformBackup(backupClient.backup)
 
-	if err == nil {
+	if err != nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
 		recorder.Event(backupClient.backup,
 			corev1.EventTypeNormal,
