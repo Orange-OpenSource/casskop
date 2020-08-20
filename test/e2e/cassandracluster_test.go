@@ -46,8 +46,8 @@ func TestCassandraCluster(t *testing.T) {
 	// run subtests
 	t.Run("group", func(t *testing.T) {
 		t.Run("ClusterScaleUp", CassandraClusterTest(cassandraClusterScaleUpDC1Test))
-		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownSimpleTest))
-		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
+		t.Run("ClusterScaleDown", CassandraClusterTest(cassandraClusterScaleDown2RacksFrom3NodesTo1Node))
+		t.Run("ClusterScaleDownSimple", CassandraClusterTest(cassandraClusterScaleDownDC2Test))
 		t.Run("RollingRestart", CassandraClusterTest(cassandraClusterRollingRestartDCTest))
 		t.Run("CreateOneClusterService", CassandraClusterTest(cassandraClusterServiceTest))
 		t.Run("UpdateConfigMap", CassandraClusterTest(cassandraClusterUpdateConfigMapTest))
@@ -57,7 +57,7 @@ func TestCassandraCluster(t *testing.T) {
 }
 
 func CassandraClusterTest(code func(t *testing.T, f *framework.Framework,
-	ctx *framework.TestCtx)) func(t *testing.T) {
+	ctx *framework.Context)) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx, f := mye2eutil.HelperInitOperator(t)
 		defer ctx.Cleanup()
@@ -75,7 +75,7 @@ func CassandraClusterTest(code func(t *testing.T, f *framework.Framework,
 // 3. We trigger a rolling restart of DC dc2-rack2
 //    We check the 2nd statefulset has a new version
 func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetWatchNamespace()
 	if err != nil {
 		t.Fatalf("Could not get namespace: %v", err)
 	}
@@ -165,7 +165,7 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 }
 
 func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetWatchNamespace()
 	clusterName := "cassandra-e2e"
 	kind := "CassandraCluster"
 
@@ -222,7 +222,7 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 }
 
 func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetWatchNamespace()
 	if err != nil {
 		t.Fatalf("Could not get namespace: %v", err)
 	}
@@ -277,7 +277,7 @@ func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, c
 }
 
 func cassandraClusterCleanupTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
-	namespace, _ := ctx.GetNamespace()
+	namespace, _ := ctx.GetWatchNamespace()
 	clusterName := "cassandra-e2e"
 
 	logrus.Debugf("Creating cluster")

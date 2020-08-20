@@ -481,7 +481,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 
 				//If not Initializing cluster execute pod operations queued
 				if dcRackStatus.Phase != api.ClusterPhaseInitial.Name {
-					breakResyncloop, err := rcc.executePodOperation(cc, dcName, rackName, status)
+					breakResyncloop, err := rcc.executePodOperation(cc, dcName, rackName, status,
+						!isStatefulSetNotReady(storedStatefulSet))
 					if err != nil {
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"err": err}).Error("Executing pod operation failed")

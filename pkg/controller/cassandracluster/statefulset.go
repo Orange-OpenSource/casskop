@@ -318,8 +318,7 @@ func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 }
 
 func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool {
-	if storedStatefulSet.Status.Replicas != *storedStatefulSet.Spec.Replicas ||
-		storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
+	if storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
 		return true
 	}
 	return false

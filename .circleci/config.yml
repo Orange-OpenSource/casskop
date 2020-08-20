@@ -40,7 +40,7 @@ orbs:
           - run:
               name: Set up K3d
               command: |
-                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v3.0.0 bash
+                wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
                 k3d cluster create --image ${K3S_IMAGE} --wait 0
                 mkdir -p ${HOME}/.kube
           - checkout:
@@ -428,12 +428,12 @@ workflows:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: e2e-test ScaleDown
-          test_name: ClusterScaleDown
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+#      - k3d/e2e-orb:
+#          name: e2e-test ScaleDown
+#          test_name: ClusterScaleDown
+#          requires:
+#            - build-casskop
+#          <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
           name: e2e-test ScaleDownSimple

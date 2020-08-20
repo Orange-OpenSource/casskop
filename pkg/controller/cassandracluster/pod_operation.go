@@ -86,16 +86,16 @@ func randomPodOperationKey() string {
 //It may return a breakResyncloop order meaning that the Operator won't update the statefulset until
 //PodOperations are finishing gracefully.
 func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraCluster, dcName, rackName string,
-	status *api.CassandraClusterStatus) (bool, error) {
+	status *api.CassandraClusterStatus, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var breakResyncLoopSwitch = false
 	var err error
 
-	// If we ask a ScaleDown, We can't update the Statefulset before the nodetool decommission has finished
+	// If we ask a ScaleDown, We can't update the Statefulset before the decommission is done
 	if rcc.weAreScalingDown(dcRackStatus) {
 		//If a Decommission is Ongoing, we want to break the Resyncloop until the Decommission is succeed
-		breakResyncLoopSwitch, err = rcc.ensureDecommission(cc, dcName, rackName, status)
+		breakResyncLoopSwitch, err = rcc.ensureDecommission(cc, dcName, rackName, status, statefulsetIsReady)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc": dcName, "rack": rackName,
 				"err": err}).Error("Error with decommission")
@@ -293,13 +293,13 @@ func (rcc *ReconcileCassandraCluster) runOperation(operationName, hostName strin
   it return breakResyncloop=true is we need to bypass update of the Statefulset.
   it return breakResyncloop=false if we want to call the ensureStatefulset method. */
 func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluster, dcName, rackName string,
-	status *api.CassandraClusterStatus) (bool, error) {
+	status *api.CassandraClusterStatus, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
 	if podLastOperation.Name != api.OperationDecommission {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"lastOperation": podLastOperation.Name}).Warnf("There is another operation than decommission that was asked")
+			"lastOperation": podLastOperation.Name}).Warnf("Another operation than decommission was asked")
 		return continueResyncLoop, nil
 	}
 
@@ -313,7 +313,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		lastPod, err := rcc.GetPod(cc.Namespace, podLastOperation.Pods[0])
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				return rcc.deletePodPVC(cc, dcName, rackName, status, lastPod)
+				return rcc.deletePodPVC(cc, dcName, rackName, status, lastPod, statefulsetIsReady)
 			}
 			return breakResyncLoop, fmt.Errorf("Failed to get pod %s: %v", podLastOperation.Pods[0], err)
 		}
@@ -490,7 +490,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 //deletePodPVC
 // State To-DO -> Ongoing
 func (rcc *ReconcileCassandraCluster) deletePodPVC(cc *api.CassandraCluster, dcName, rackName string,
-	status *api.CassandraClusterStatus, lastPod *v1.Pod) (bool, error) {
+	status *api.CassandraClusterStatus, lastPod *v1.Pod, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	podLastOperation := &status.CassandraRackStatus[dcRackName].PodLastOperation
 
@@ -510,7 +510,7 @@ func (rcc *ReconcileCassandraCluster) deletePodPVC(cc *api.CassandraCluster, dcN
 		return breakResyncLoop, nil
 	}
 
-	SetStatusForMoreDecommissions(podLastOperation, rcc.weAreScalingDown(status.CassandraRackStatus[dcRackName]))
+	SetStatusForMoreDecommissions(podLastOperation, !statefulsetIsReady)
 
 	podLastOperation.PodsOK = []string{lastPod.Name}
 	now := metav1.Now()

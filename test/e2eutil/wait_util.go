@@ -129,8 +129,8 @@ func WaitForStatefulset(t *testing.T, kubeclient kubernetes.Interface, namespace
 		if int(statefulset.Status.ReadyReplicas) == replicas {
 			return true, nil
 		}
-		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name, statefulset.Status.ReadyReplicas,
-			replicas)
+		t.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name,
+			statefulset.Status.ReadyReplicas, replicas)
 		return false, nil
 	})
 	if err != nil {
@@ -263,8 +263,7 @@ func WaitForPodOperationDone(t *testing.T, f *framework.Framework, namespace, na
 }
 
 func ExecPodFromName(t *testing.T, f *framework.Framework, namespace string, podName string, cmd string) (string,
-	string,
-	error) {
+	string, error) {
 	pod := &v1.Pod{TypeMeta: metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"}}
 
 	err := f.Client.Get(goctx.TODO(), types.NamespacedName{Name: podName, Namespace: namespace}, pod)
@@ -339,5 +338,12 @@ func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx *fra
 		}
 	default:
 		t.Fatalf("Expected a ConfigMap but got a %T", cm)
+	}
+}
+
+func K8sGetCassandraCluster(t *testing.T, f *framework.Framework, err error, cc *api.CassandraCluster) {
+	if err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace},
+		cc); err != nil {
+		t.Fatal(err)
 	}
 }
