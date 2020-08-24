@@ -304,6 +304,22 @@ spec:
                 format: int64
                 minimum: 1
                 type: integer
+              serverType:
+                description: 'Server type: "cassandra" or "dse"'
+                enum:
+                - cassandra
+                - dse
+                type: string
+              serverVersion:
+                description: Version string for config builder, used to generate Cassandra
+                  server configuration
+                enum:
+                - 6.8.0
+                - 6.8.1
+                - 3.11.6
+                - 3.11.7
+                - 4.0.0
+                type: string
               service:
                 description: ServicePolicy defines the policy for headless service
                   owned by CassKop operator.
@@ -1629,6 +1645,8 @@ spec:
                 description: Very special Flag to hack CassKop reconcile loop - use
                   with really good Care
                 type: boolean
+            required:
+            - serverVersion
             type: object
           status:
             description: CassandraClusterStatus defines Global state of CassandraCluster
@@ -1731,5 +1749,6 @@ spec:
                 type: array
             type: object
         type: object
+        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true

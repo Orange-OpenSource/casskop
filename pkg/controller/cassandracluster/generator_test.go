@@ -15,6 +15,7 @@
 package cassandracluster
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/ghodss/yaml"
@@ -171,6 +172,130 @@ func TestGenerateCassandraService(t *testing.T) {
 		svc.Labels)
 	assert.Equal(map[string]string{"external-dns.alpha.kubernetes.io/hostname": "my.custom.domain.com."},
 		svc.Annotations)
+}
+
+func TestInitContainerConfiguration(t *testing.T) {
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.Spec.ServerVersion = "3.11.7"
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"initial_heap_size": "800M",
+			"max_heap_size": "4G",
+		},
+	})
+	cassieResources := cc.Spec.Resources
+	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc)
+
+	assert := assert.New(t)
+
+	assert.Equal(len(bootstrapEnvVar), 1)
+	assert.Equal(len(initEnvVar), 7)
+
+	envVar := map[string]string{}
+
+	for name, value := range envVar {
+		assert.Equal(value, envVar[name])
+	}
+
+	configFileData := NodeConfig{
+		"cassandra-yaml": {
+			"authenticator":"org.apache.cassandra.auth.PasswordAuthenticator",
+			"authorizer":"org.apache.cassandra.auth.CassandraAuthorizer",
+			"counter_write_request_timeout_in_ms":5000,
+			"num_tokens":256,
+			"read_request_timeout_in_ms":5000,
+			"role_manager":"org.apache.cassandra.auth.CassandraRoleManager",
+			"write_request_timeout_in_ms":5000,
+		},
+		"cluster-info": {
+			"name":"cassandra-demo",
+			"seeds":"",
+		},
+		"datacenter-info": {
+			"name":"dc1",
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms":30000,
+			"initial_heap_size":"800M",
+			"jmx-connection-type":"remote-no-auth",
+			"max_heap_size": "4G",
+		},
+		"logback-xml": {
+			"debuglog-enabled":false,
+		},
+	}
+
+	vars := map[string]interface{}{
+		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
+		"PRODUCT_NAME": "cassandra",
+		"PRODUCT_VERSION": "3.11.7",
+	}
+
+	for _, env := range initEnvVar {
+		if value, ok := vars[env.Name]; ok {
+			assert.Equal(value, env.Value)
+		}
+	}
+
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"cassandra-yaml": {
+			"read_request_timeout_in_ms":10000,
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms":10000,
+			"initial_heap_size": "800M",
+			"max_heap_size": "4G",
+		},
+	})
+
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	assert.Equal(len(initEnvVar), 7)
+
+	configFileData = NodeConfig{
+		"cassandra-yaml": {
+			"authenticator":"org.apache.cassandra.auth.PasswordAuthenticator",
+			"authorizer":"org.apache.cassandra.auth.CassandraAuthorizer",
+			"counter_write_request_timeout_in_ms":5000,
+			"num_tokens":256,
+			"read_request_timeout_in_ms":10000,
+			"role_manager":"org.apache.cassandra.auth.CassandraRoleManager",
+			"write_request_timeout_in_ms":5000,
+		},
+		"cluster-info": {
+			"name":"cassandra-demo",
+			"seeds":"",
+		},
+		"datacenter-info": {
+			"name":"dc1",
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms":10000,
+			"initial_heap_size":"800M",
+			"jmx-connection-type":"remote-no-auth",
+			"max_heap_size": "4G",
+		},
+		"logback-xml": {
+			"debuglog-enabled":false,
+		},
+	}
+
+	vars = map[string]interface{}{
+		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
+		"PRODUCT_NAME": "cassandra",
+		"PRODUCT_VERSION": "3.11.7",
+	}
+
+	for _, env := range initEnvVar {
+		if value, ok := vars[env.Name]; ok {
+			assert.Equal(value, env.Value)
+		}
+	}
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
@@ -486,28 +611,60 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cc.Spec.Resources
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	initContainerEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc)
 
 	assert := assert.New(t)
 
+	assert.Equal(len(bootstrapContainerEnvVar), 1)
+	assert.Equal(len(containers), 3)
+	assert.Equal(len(initContainerEnvVar), 6)
+
 	envVar := map[string]string{}
-	cassandraMaxHeapSet := false
-
-	for _, env := range bootstrapEnvVar {
-		envVar[env.Name] = env.Value
-		if env.Name == cassandraMaxHeap {
-			cassandraMaxHeapSet = true
-		}
-	}
-
-	assert.True(cassandraMaxHeapSet)
-	assert.Equal(envVar[cassandraMaxHeap], "512M")
-
-	// The cassandra heap should not be set on other containers
-	delete(envVar, cassandraMaxHeap)
 
 	for name, value := range envVar {
 		assert.Equal(value, envVar[name])
+	}
+
+	configFileData := map[string]map[string]interface{}{
+		"cassandra-yaml": {
+			"authenticator":                       "org.apache.cassandra.auth.PasswordAuthenticator",
+			"authorizer":                          "org.apache.cassandra.auth.CassandraAuthorizer",
+			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens":                          256, "read_request_timeout_in_ms": 5000,
+			"role_manager":                "org.apache.cassandra.auth.CassandraRoleManager",
+			"write_request_timeout_in_ms": 5000,
+		},
+		"cluster-info": {
+			"name":  "cassandra-demo",
+			"seeds": "",
+		},
+		"datacenter-info": {
+			"name": "dc1",
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms":           30000,
+			"initial_heap_size":                 "128M",
+			"jmx-connection-type":               "remote-no-auth",
+			"log_gc":                            true,
+			"max_heap_size":                     "512M",
+			"print_flss_statistics":             true,
+			"print_gc_application_stopped_time": true,
+			"print_gc_date_stamps":              true,
+			"print_gc_details":                  true,
+			"print_heap_at_gc":                  true,
+			"print_promotion_failure":           true,
+			"print_tenuring_distribution":       true,
+		},
+		"logback-xml": {
+			"debuglog-enabled": false,
+		},
+	}
+
+	vars := map[string]interface{}{
+		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
+		"PRODUCT_NAME":     "cassandra",
+		"PRODUCT_VERSION":  "",
 	}
 
 	for _, container := range containers {
@@ -528,6 +685,12 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 				},
 			}
 			assert.Contains(container.Env, podIP)
+
+			for _, env := range initContainerEnvVar {
+				if value, ok := vars[env.Name]; ok {
+					assert.Equal(value, env.Value)
+				}
+			}
 		}
 	}
 }

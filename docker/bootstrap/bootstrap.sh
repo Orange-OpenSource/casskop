@@ -15,7 +15,7 @@ fi
 if [[ -d /${BOOTSTRAP_LIBS} && ! -z `ls -A /${BOOTSTRAP_LIBS}` ]] ; then
     echo "We have additional libraries, we copy them over"
     cp -v ${BOOTSTRAP_LIBS}/* $CASSANDRA_LIBS/
-   fi
+fi
 
 cp -v /${BOOTSTRAP_TOOLS}/* $CASSANDRA_TOOLS/
 

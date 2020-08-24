@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	json "encoding/json"
+
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -247,6 +249,11 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = make(json.RawMessage, len(*in))
+		copy(*out, *in)
 	}
 	out.ImagePullSecret = in.ImagePullSecret
 	out.ImageJolokiaSecret = in.ImageJolokiaSecret

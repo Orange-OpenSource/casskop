@@ -822,6 +822,18 @@ type CassandraClusterSpec struct {
 	// If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
 	ConfigMapName string `json:"configMapName,omitempty"`
 
+	// Version string for config builder,
+	// used to generate Cassandra server configuration
+	// +kubebuilder:validation:Enum="6.8.0";"6.8.1";"3.11.6";"3.11.7";"4.0.0"
+	ServerVersion string `json:"serverVersion"`
+
+	// Server type: "cassandra" or "dse"
+	// +kubebuilder:validation:Enum=cassandra;dse
+	ServerType string `json:"serverType,omitempty"`
+
+	// Config for the Cassandra nodes
+	Config json.RawMessage `json:"config,omitempty"`
+
 	// Name of the secret to uses to authenticate on Docker registries
 	// If this is empty, operator do nothing
 	// If this is not empty, propagate the imagePullSecrets to the statefulsets
