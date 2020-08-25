@@ -87,6 +87,10 @@ spec:
               cassandraImage:
                 description: Image + version to use for Cassandra
                 type: string
+              config:
+                description: Config for the Cassandra nodes
+                format: byte
+                type: string
               configMapName:
                 description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml)
                   If this is empty, operator will uses default cassandra.yaml from
@@ -1648,6 +1652,7 @@ spec:
             required:
             - serverVersion
             type: object
+            x-kubernetes-preserve-unknown-fields: true
           status:
             description: CassandraClusterStatus defines Global state of CassandraCluster
             properties:
@@ -1749,6 +1754,5 @@ spec:
                 type: array
             type: object
         type: object
-        x-kubernetes-preserve-unknown-fields: true
     served: true
     storage: true

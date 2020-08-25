@@ -1063,6 +1063,7 @@ type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Spec   CassandraClusterSpec   `json:"spec,omitempty"`
 	Status CassandraClusterStatus `json:"status,omitempty"`
 }
