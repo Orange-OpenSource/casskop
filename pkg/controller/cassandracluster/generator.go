@@ -567,15 +567,21 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 			"write_request_timeout_in_ms": 5000,
 			"counter_write_request_timeout_in_ms": 5000,
 		},
-		"jvm-options": {
-			"initial_heap_size": defineJvmMemory(resources).newHeapSize,
-			"max_heap_size": defineJvmMemory(resources).maxHeapSize,
-			"cassandra_ring_delay_ms": 30000,
-			"jmx-connection-type": "remote-no-auth",
-		},
 		"logback-xml": {
 			"debuglog-enabled": false,
 		},
+	}
+
+	jvmOption := "jvm-options"
+	if strings.HasPrefix(cc.Spec.ServerVersion, "4") {
+		jvmOption = "jvm-server-options"
+	}
+
+	defaultConfig[jvmOption] = map[string] interface{} {
+		"initial_heap_size": defineJvmMemory(resources).newHeapSize,
+		"max_heap_size": defineJvmMemory(resources).maxHeapSize,
+		"cassandra_ring_delay_ms": 30000,
+		"jmx-connection-type": "remote-no-auth",
 	}
 
 	config := NodeConfig{

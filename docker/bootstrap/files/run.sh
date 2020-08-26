@@ -81,15 +81,6 @@ do
   fi
 done
 
-# set the seed to itself.  This is only for the first pod, otherwise
-# it will be able to get seeds from the seed provider
-if [[ $CASSANDRA_SEEDS == 'false' ]]
-then
-  sed -ri 's/- seeds:.*/- seeds: "'"$POD_IP"'"/' $CASSANDRA_CFG
-else # if we have seeds set them.  Probably StatefulSet
-  sed -ri 's/- seeds:.*/- seeds: "'"$CASSANDRA_SEEDS"'"/' $CASSANDRA_CFG
-fi
-
 sed -ri 's/- class_name: .*/- class_name: '"$CASSANDRA_SEED_PROVIDER"'/' $CASSANDRA_CFG
 
 [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]] && CASSANDRA_ENABLE_JMX=true
