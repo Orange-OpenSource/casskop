@@ -33,7 +33,7 @@ spec:
   serverVersion: 3.11.6
   bootstrapImage: cscetbon/cassandra-bootstrap:0.1.5-beta
   config:
-    jvm-server-options:
+    jvm-options:
       initial_heap_size: 128M
       max_heap_size: 256M
   topology:
