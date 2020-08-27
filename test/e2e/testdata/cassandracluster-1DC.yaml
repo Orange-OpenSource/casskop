@@ -28,7 +28,6 @@ spec:
       cpu: 100m
       memory: 512Mi
     limits: *requests
-  nodesPerRacks: 1
   cassandraImage: cassandra:3.11.6
   serverVersion: 3.11.6
   bootstrapImage: cscetbon/cassandra-bootstrap:0.1.5-beta
