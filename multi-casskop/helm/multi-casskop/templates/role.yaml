@@ -12,9 +12,16 @@ rules:
 - apiGroups:
   - db.orange.com
   resources:
-  - "*"
+    - "cassandraclusters"
   verbs:
-  - "*"
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+    - deletecollection
 - apiGroups:
   - ""
   resources:
