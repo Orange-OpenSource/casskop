@@ -12,9 +12,16 @@ rules:
 - apiGroups:
   - db.orange.com
   resources:
-  - "*"
+  - "cassandraclusters"
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - deletecollection
 - apiGroups:
   - ""
   resources:
@@ -27,7 +34,13 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -42,13 +55,25 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - policy
   resources:
     - poddisruptionbudgets
   verbs:
-    - "*"
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
   - monitoring.coreos.com
   resources:

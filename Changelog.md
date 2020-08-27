@@ -5,6 +5,8 @@
 
 ### Added
 
+- [PR #245](https://github.com/Orange-OpenSource/casskop/pull/245) - **[Chart]** Explicit roles
+
 ### Changed
 
 ### Deprecated
