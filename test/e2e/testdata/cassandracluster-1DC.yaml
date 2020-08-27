@@ -28,9 +28,16 @@ spec:
       cpu: 100m
       memory: 512Mi
     limits: *requests
+  nodesPerRacks: 1
+  cassandraImage: cassandra:3.11.6
+  serverVersion: 3.11.6
+  bootstrapImage: cscetbon/cassandra-bootstrap:0.1.5-beta
+  config:
+    jvm-server-options:
+      initial_heap_size: 128M
+      max_heap_size: 256M
   topology:
     dc:
       - name: dc1
         rack:
           - name: rack1
-

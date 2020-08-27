@@ -387,7 +387,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 			break
 		}
 	}
-
+	
 	// Merge cassandra main container environment variables into sidecars.
 
 	var sidecarEnv []v1.EnvVar
@@ -560,9 +560,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	defaultConfig := NodeConfig{
 		"cassandra-yaml": {
 			"num_tokens": numTokensPerRacks,
-			"authenticator": "org.apache.cassandra.auth.PasswordAuthenticator",
-			"authorizer": "org.apache.cassandra.auth.CassandraAuthorizer",
-			"role_manager": "org.apache.cassandra.auth.CassandraRoleManager",
 			"read_request_timeout_in_ms": 5000,
 			"write_request_timeout_in_ms": 5000,
 			"counter_write_request_timeout_in_ms": 5000,

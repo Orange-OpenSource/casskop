@@ -18,43 +18,12 @@ set -e
 
 CASSANDRA_CFG=$CASSANDRA_CONF/cassandra.yaml
 
-HOSTNAME=$(hostname -f)
-
-# we are doing StatefulSet or just setting our seeds
-if [ -n "$CASSANDRA_SEEDS" ]; then
-    echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
-    # Try to connect to each seed and if no one is found then it's the first node
-    echo $IFS
-    IFS=',' read -a array <<<$CASSANDRA_SEEDS
-    firstNode=true
-    for cassandra in ${array[@]}
-    do
-        echo "Try to connect to $cassandra"
-        if nc -z -w5 $cassandra 8778
-        then
-            echo "Connected!"
-            firstNode=false
-            break
-        fi
-    done
-
-    [ "$firstNode" = true ] && CASSANDRA_SEEDS=$HOSTNAME
-
-fi
-
-echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
-
 # The following vars relate to there counter parts in $CASSANDRA_CFG for instance rpc_address
-CASSANDRA_SEEDS="${CASSANDRA_SEEDS:-false}"
 CASSANDRA_SEED_PROVIDER="${CASSANDRA_SEED_PROVIDER:-org.apache.cassandra.locator.SimpleSeedProvider}"
 
 # Enable cassandra exporter
 CASSANDRA_EXPORTER_AGENT="${CASSANDRA_EXPORTER_AGENT:-true}"
 
-# Enable JMX
-#CASSANDRA_ENABLE_JMX="${CASSANDRA_ENABLE_JMX:-true}"
-# Enable Jolokia
-CASSANDRA_ENABLE_JOLOKIA="${CASSANDRA_ENABLE_JOLOKIA:-true}"
 # Activate basic authentication. Expects JMX_USER and JMX_PASSWORD to be set
 CASSANDRA_AUTH_JOLOKIA="${CASSANDRA_AUTH_JOLOKIA:-false}"
 
@@ -68,7 +37,7 @@ then
 fi
 
 echo "apply configuration changes"
-# TODO what else needs to be modified
+# Until https://github.com/datastax/cass-config-definitions/pull/20 is merged
 for yaml in \
   disk_optimization_strategy \
   memtable_cleanup_threshold
@@ -83,28 +52,18 @@ done
 
 sed -ri 's/- class_name: .*/- class_name: '"$CASSANDRA_SEED_PROVIDER"'/' $CASSANDRA_CFG
 
-[[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]] && CASSANDRA_ENABLE_JMX=true
+JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
 
-  if [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]]
-  then
-      JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
+if [[ $JOLOKIA_USER == 'true' ]]
+then
+    JAVA_AGENT="${JAVA_AGENT},authMode=basic,user=$JOLOKIA_USER,password=$JOLOKIA_PASSWORD"
+fi
 
-      if [[ $CASSANDRA_AUTH_JOLOKIA == 'true' ]]
-      then
-
-          [[ -z $JOLOKIA_USER ]] && { echo "Jolokia authentication requires at least JOLOKIA_USER to be set !" >&2; exit 1; }
-
-          JAVA_AGENT="${JAVA_AGENT},authMode=basic,user=$JOLOKIA_USER,password=$JOLOKIA_PASSWORD"
-
-      fi
-
-      cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
+cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
 
 # Enable Jolokia
 JVM_OPTS="\$JVM_OPTS $JAVA_AGENT"
 EOF
-
-  fi
 
 if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]
 then
@@ -113,4 +72,5 @@ then
 # Prometheus exporter from Instaclustr
 JVM_OPTS="\$JVM_OPTS -javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
 EOF
+
 fi
