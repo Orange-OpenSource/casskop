@@ -8,6 +8,7 @@ metadata:
 spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
+  serverVersion: 3.11.7
   imagePullPolicy: "IfNotPresent"
   rollingPartition: 0
   configMapName: cassandra-configmap-v1

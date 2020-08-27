@@ -150,12 +150,13 @@ func TestVolumeMounts(t *testing.T) {
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 
 	volumeMounts = generateContainerVolumeMount(cc, cassandraContainer)
-	assert.Equal(t, 5, len(volumeMounts))
+	assert.Equal(t, 6, len(volumeMounts))
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 	assert.Equal(t, "/tmp", volumeMounts[getPos(volumeMounts, "tmp")].MountPath)
 	assert.Equal(t, "/var/lib/cassandra", volumeMounts[getPos(volumeMounts, "data")].MountPath)
+	assert.Equal(t, "/var/log/cassandra", volumeMounts[getPos(volumeMounts, "log")].MountPath)
 }
 
 func TestGenerateCassandraService(t *testing.T) {
@@ -204,12 +205,9 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	configFileData := NodeConfig{
 		"cassandra-yaml": {
-			"authenticator":"org.apache.cassandra.auth.PasswordAuthenticator",
-			"authorizer":"org.apache.cassandra.auth.CassandraAuthorizer",
 			"counter_write_request_timeout_in_ms":5000,
 			"num_tokens":256,
 			"read_request_timeout_in_ms":5000,
-			"role_manager":"org.apache.cassandra.auth.CassandraRoleManager",
 			"write_request_timeout_in_ms":5000,
 		},
 		"cluster-info": {
@@ -259,12 +257,9 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	configFileData = NodeConfig{
 		"cassandra-yaml": {
-			"authenticator":"org.apache.cassandra.auth.PasswordAuthenticator",
-			"authorizer":"org.apache.cassandra.auth.CassandraAuthorizer",
 			"counter_write_request_timeout_in_ms":5000,
 			"num_tokens":256,
 			"read_request_timeout_in_ms":10000,
-			"role_manager":"org.apache.cassandra.auth.CassandraRoleManager",
 			"write_request_timeout_in_ms":5000,
 		},
 		"cluster-info": {
@@ -537,7 +532,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
-			assert.Equal(t, len(container.VolumeMounts), 7)
+			assert.Equal(t, len(container.VolumeMounts), 8)
 		case "gc-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
@@ -616,9 +611,9 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	assert := assert.New(t)
 
-	assert.Equal(len(bootstrapContainerEnvVar), 1)
-	assert.Equal(len(containers), 3)
-	assert.Equal(len(initContainerEnvVar), 6)
+	assert.Equal(1, len(bootstrapContainerEnvVar))
+	assert.Equal(3, len(containers))
+	assert.Equal(7, len(initContainerEnvVar))
 
 	envVar := map[string]string{}
 
@@ -628,12 +623,9 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	configFileData := map[string]map[string]interface{}{
 		"cassandra-yaml": {
-			"authenticator":                       "org.apache.cassandra.auth.PasswordAuthenticator",
-			"authorizer":                          "org.apache.cassandra.auth.CassandraAuthorizer",
-			"counter_write_request_timeout_in_ms": 5000,
-			"num_tokens":                          256, "read_request_timeout_in_ms": 5000,
-			"role_manager":                "org.apache.cassandra.auth.CassandraRoleManager",
-			"write_request_timeout_in_ms": 5000,
+			"counter_write_request_timeout_in_ms":5000,
+			"num_tokens":256, "read_request_timeout_in_ms":5000,
+			"write_request_timeout_in_ms":5000,
 		},
 		"cluster-info": {
 			"name":  "cassandra-demo",
@@ -643,18 +635,10 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 			"name": "dc1",
 		},
 		"jvm-options": {
-			"cassandra_ring_delay_ms":           30000,
-			"initial_heap_size":                 "128M",
-			"jmx-connection-type":               "remote-no-auth",
-			"log_gc":                            true,
-			"max_heap_size":                     "512M",
-			"print_flss_statistics":             true,
-			"print_gc_application_stopped_time": true,
-			"print_gc_date_stamps":              true,
-			"print_gc_details":                  true,
-			"print_heap_at_gc":                  true,
-			"print_promotion_failure":           true,
-			"print_tenuring_distribution":       true,
+			"cassandra_ring_delay_ms":30000,
+			"initial_heap_size":"128M",
+			"jmx-connection-type":"remote-no-auth",
+			"max_heap_size":"512M",
 		},
 		"logback-xml": {
 			"debuglog-enabled": false,

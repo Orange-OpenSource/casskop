@@ -8,6 +8,7 @@ metadata:
 spec:
   nodesPerRacks: 7
   cassandraImage: cassandra:latest
+  serverVersion: 3.11.7
   rollingPartition: 0
   dataCapacity: "3Gi"
   dataStorageClass: "local-storage"
