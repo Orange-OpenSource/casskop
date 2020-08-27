@@ -28,10 +28,13 @@ spec:
       cpu: 100m
       memory: 512Mi
     limits: *requests
+#  cassandraImage: cscetbon/cassandra:4.0-beta1
+#  serverVersion: 4.0.0
   cassandraImage: cassandra:3.11.6
   serverVersion: 3.11.6
   bootstrapImage: cscetbon/cassandra-bootstrap:0.1.5-beta
   config:
+#    jvm-server-options:
     jvm-options:
       initial_heap_size: 128M
       max_heap_size: 256M
