@@ -35,7 +35,7 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage         string        = "cassandra:latest"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
+	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.5"
 	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultNbMaxConcurrentCleanup               = 2
 	defaultMaxPodUnavailable                    = 1
