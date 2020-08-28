@@ -39,6 +39,7 @@
 - PR [#234](https://github.com/Orange-OpenSource/casskop/pull/234) - **[CassandraCluster]** Fix having pod to fail during decommissioning / joining, replacing liveness probe.
 - PR [#235](https://github.com/Orange-OpenSource/casskop/pull/235) - **[CassandraCluster]** Fix multi decommissioning
 - PR [#241](https://github.com/Orange-OpenSource/casskop/pull/241) - **[CassandraCluster]** Do not do more decommissions than needed
+- PR [#247](https://github.com/Orange-OpenSource/casskop/pull/247) - **[CassandraCluster]** Update pre-stop bootstrap script
 
 ## 0.5.3
 
