@@ -26,6 +26,7 @@
 - [ ] Implementation tested
 - [ ] Logging code meets the guideline
 - [ ] User guide and development docs updated (if needed)
+- [ ] Append changelog
 
 ### To Do
 <!-- (Please remove this section if you don't need it.) -->
