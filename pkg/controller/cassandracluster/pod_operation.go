@@ -82,10 +82,10 @@ func randomPodOperationKey() string {
 	return "" // will never happen but make the compiler happy ¯\_(ツ)_/¯
 }
 
-//executePodOperation will ensure that all Pod Operations which needed to be performed are done accordingly.
+//handlePodOperation will ensure that all Pod Operations which needed to be performed are done accordingly.
 //It may return a breakResyncloop order meaning that the Operator won't update the statefulset until
 //PodOperations are finishing gracefully.
-func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraCluster, dcName, rackName string,
+func (rcc *ReconcileCassandraCluster) handlePodOperation(cc *api.CassandraCluster, dcName, rackName string,
 	status *api.CassandraClusterStatus, statefulsetIsReady bool) (bool, error) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
@@ -101,6 +101,28 @@ func (rcc *ReconcileCassandraCluster) executePodOperation(cc *api.CassandraClust
 				"err": err}).Error("Error with decommission")
 		}
 		return breakResyncLoopSwitch, err
+	}
+
+	podsList, err := rcc.ListCassandraClusterPods(cc)
+	if err != nil {
+		return true, err
+	}
+	firstPod, err := GetLastOrFirstPodReady(podsList, false)
+	if err != nil {
+		return true, err
+	}
+
+	hostName := fmt.Sprintf("%s.%s", firstPod.Spec.Hostname, firstPod.Spec.Subdomain)
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
+
+	hasJoiningNodes, err := jolokiaClient.hasJoiningNodes()
+	if err != nil {
+		return true, err
+	}
+	if hasJoiningNodes {
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc": dcName, "rack": rackName,
+			"err": err}).Error("Can't continue cause some nodes are joining the cluster")
+		return hasJoiningNodes, nil
 	}
 
 	// If LastClusterAction was a ScaleUp and It is Done then

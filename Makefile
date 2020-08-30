@@ -428,6 +428,7 @@ DC ?= dc1
 USERNAME ?= cassandra
 PASSWORD ?= cassandra
 
+.PHONY: cassandra-stress
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
 	cp cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/

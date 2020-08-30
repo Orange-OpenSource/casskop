@@ -274,13 +274,15 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 		//We check if some nodes of the newSeedList are missing from Actual one
 		if !k8s.ContainSlice(storedSeedListTab, newSeedListTab) {
 			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Add Nodes): %v -> %v", cc.Name, dcRackName, storedSeedListTab, status.SeedList)
+			logrus.Infof("[%s][%s]: We may need to update the seedlist (Add Nodes): %v -> %v", cc.Name,
+				dcRackName, storedSeedListTab, status.SeedList)
 		}
 
 		//We Check if some nodes disapears from new SeedList (that should be a scale down, ore simply add nodes in another rack ??
 		if !k8s.ContainSlice(newSeedListTab, storedSeedListTab) {
 			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Remove Nodes): %v -> %v", cc.Name, dcRackName, storedSeedListTab, status.SeedList)
+			logrus.Infof("[%s][%s]: We may need to update the seedlist (Remove Nodes): %v -> %v", cc.Name,
+				dcRackName, storedSeedListTab, status.SeedList)
 		}
 	}
 
@@ -304,8 +306,8 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 }
 
 //UpdateStatusIfScaling will detect any change of replicas
-//For Scale Down the operator will need to first Decommission the last node from Cassandra before remooving it from kubernetes.
-//For Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
+//To Scale Down the operator will need to first decommission the last node from Cassandra before removing it from kubernetes.
+//To Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
 func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
