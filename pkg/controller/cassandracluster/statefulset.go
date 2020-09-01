@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -244,18 +245,20 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		}
 	}
 
-	//Hack for ScaleDown:
-	//because before applying a scaledown at Kubernetes (statefulset) level we need to execute a cassandra decommission
-	//we want the statefulset to only perform one scaledown at a time.
-	//we have some call which will block the call of this method as long as the decommission is running, so here
-	//we just need to change the scaledown value if more than 1 at a time.
-
-	if *rcc.storedStatefulSet.Spec.Replicas-*statefulSet.Spec.Replicas > 1 {
+	//Scaling operations must be done one node at a time to fully support decommissions and bootstraps
+	replicaCountDiff := float64(*statefulSet.Spec.Replicas - *rcc.storedStatefulSet.Spec.Replicas)
+	if math.Abs(replicaCountDiff) > 1 {
+		scaleOperation := "up"
+		incrementValue := int32(1)
+		if replicaCountDiff < 0 {
+			scaleOperation = "down"
+			incrementValue *= -1
+		}
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-			"dc-rack": dcRackName}).Debugf("Must scale down one node at a time. Update stfs " +
-				"replicas to %d instead of %d for now",
-			*rcc.storedStatefulSet.Spec.Replicas-1, *statefulSet.Spec.Replicas)
-		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
+			"dc-rack": dcRackName}).Debugf("Must scale %s one node at a time. Update stfs " +
+			"replicas to %d instead of %d for now",
+			scaleOperation, *rcc.storedStatefulSet.Spec.Replicas + incrementValue, *statefulSet.Spec.Replicas)
+		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas + incrementValue
 	}
 
 	if dcRackStatus.CassandraLastAction.Name == api.ActionRollingRestart.Name &&
