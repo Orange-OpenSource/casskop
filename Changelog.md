@@ -13,6 +13,8 @@
 
 ### Bug Fixes
 
+- PR [#252](https://github.com/Orange-OpenSource/casskop/pull/252) - **[Plugin]** Remove metadata.resourceVersion from the applied resource
+
 
 ## 0.5.4
 
