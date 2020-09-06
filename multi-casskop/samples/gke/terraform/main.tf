@@ -68,7 +68,7 @@ variable "managed_zone" {
 variable "casskop_image_tag" {
   description = ""
   type        = string
-  default     = "v0.5.3-release"
+  default     = "v0.5.4-release"
 }
 
 // Provider definition
@@ -100,6 +100,9 @@ provider "kubernetes" {
 
 // Define Helm provider
 provider "helm" {
+    install_tiller  = true
+    tiller_image    = "gcr.io/kubernetes-helm/tiller:${var.helm_version}"
+    service_account = kubernetes_service_account.tiller.metadata.0.name
     debug           = true
     
     kubernetes {

@@ -4,9 +4,8 @@ name: cassandra-operator
 home: https://github.com/Orange-OpenSource/casskop
 sources:
   - https://github.com/Orange-OpenSource/casskop
-version: 0.5.3
-appVersion: 0.5.3-release
-icon: 
+version: 0.5.4
+appVersion: 0.5.4-release
 maintainers:
   - name: allamand
     email: sebastien.allamand@orange.com

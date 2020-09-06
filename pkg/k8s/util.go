@@ -65,10 +65,6 @@ func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
 	return MergeLabels(cc.GetLabels(), m)
 }
 
-//RemoveString remove a string from a slice
-//s := []string{"one", "two", "three"}
-//s = RemoveString(s, "two")
-//fmt.Println(s) // Prints [one three]
 func RemoveString(s []string, r string) []string {
 	for i, v := range s {
 		if v == r {

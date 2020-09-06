@@ -578,8 +578,8 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	name := cc.GetName()
 	//in statefulset.go we surcharge this value with conditions
-	seedList := cc.GetSeedList(&status.SeedList)
-	numTokensPerRacks := cc.GetNumTokensPerRacks(dcRackName)
+	seedList := cc.SeedList(&status.SeedList)
+	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
 
 	return []v1.EnvVar{
 		{
@@ -792,7 +792,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 					Command: []string{
 						"/bin/bash",
 						"-c",
-						"/etc/cassandra/liveness-probe.sh",
+						"/etc/cassandra/readiness-probe.sh",
 					},
 				},
 			},

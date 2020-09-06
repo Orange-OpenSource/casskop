@@ -12,9 +12,16 @@ rules:
 - apiGroups:
   - db.orange.com
   resources:
-  - "*"
+  - "cassandraclusters"
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - deletecollection
 - apiGroups:
   - ""
   resources:
@@ -27,7 +34,13 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -42,13 +55,25 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - policy
   resources:
     - poddisruptionbudgets
   verbs:
-    - "*"
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -56,24 +81,4 @@ rules:
   verbs:
   - "get"
   - "create"
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: {{ template "cassandra-operator.name" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    heritage: {{ .Release.Service }}
-    release: {{ .Release.Name }}
-  name: {{ template "cassandra-operator.name" . }}-cluster-node
-rules:
-  - apiGroups: ['policy']
-    resources: ['podsecuritypolicies']
-    verbs:     ['use']
-  - apiGroups: [""]
-    resources: ["pods", "configmaps", "secrets" ]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["get","create"]
 {{- end }}

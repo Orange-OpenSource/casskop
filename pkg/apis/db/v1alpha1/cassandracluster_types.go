@@ -27,7 +27,7 @@ import (
 
 const (
 	// Backup Restore default config
-	DefaultBackRestSidecarImage         string = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha5"
+	DefaultBackRestSidecarImage         = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha5"
 	DefaultBackRestSidecarContainerPort int32  = 4567
 
 	DefaultLivenessInitialDelaySeconds int32 = 120
@@ -38,17 +38,17 @@ const (
 	DefaultReadinessHealthCheckTimeout  int32 = 10
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
-	defaultCassandraImage         string        = "cassandra:3.11"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.4"
-	defaultServiceAccountName     string        = "cassandra-cluster-node"
-	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
-	defaultNbMaxConcurrentCleanup               = 2
-	defaultMaxPodUnavailable                    = 1
-	defaultNumTokens                            = 256
-	defaultImagePullPolicy        v1.PullPolicy = v1.PullAlways
+	defaultCassandraImage         = "cassandra:3.11"
+	defaultBootstrapImage         = "orangeopensource/cassandra-bootstrap:0.1.5"
+	defaultServiceAccountName     = "cassandra-cluster-node"
+	InitContainerCmd              = "cp -vr /etc/cassandra/* /bootstrap"
+	defaultNbMaxConcurrentCleanup = 2
+	defaultMaxPodUnavailable      = 1
+	defaultNumTokens              = 256
+	defaultImagePullPolicy        = v1.PullAlways
 
-	DefaultCassandraDC   string = "dc1"
-	DefaultCassandraRack string = "rack1"
+	DefaultCassandraDC   = "dc1"
+	DefaultCassandraRack = "rack1"
 
 	DefaultTerminationGracePeriodSeconds = 1800
 
@@ -91,6 +91,7 @@ var (
 
 	ActionCorrectCRDConfig = ClusterStateInfo{11, "CorrectCRDConfig"} //The Operator has correct a bad CRD configuration
 
+	regexDCRackName = regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
 )
 
 const (
@@ -283,12 +284,9 @@ func (cc *CassandraCluster) GetRackSize(dc int) int {
 	return len(cc.Spec.Topology.DC[dc].Rack)
 }
 
-//GetRackName return the Name of the rack for DC at indice dc and Rack at indice rack
+//GetRackName return the Name of the rack for DC at index dc and Rack at index rack
 func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
-	if dc >= cc.GetDCSize() {
-		return DefaultCassandraRack
-	}
-	if rack >= cc.GetRackSize(dc) {
+	if dc >= cc.GetDCSize() || rack >= cc.GetRackSize(dc) {
 		return DefaultCassandraRack
 	}
 	return cc.Spec.Topology.DC[dc].Rack[rack].Name
@@ -297,14 +295,13 @@ func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
 // GetDCRackName compute dcName + RackName to be used in statefulsets, services..
 // it return empty if the name don't match with kubernetes domain name validation regexp
 func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string {
-	var dcRackName string
-	dcRackName = dcName + "-" + rackName
-	var regex_name = regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
-	if !regex_name.MatchString(dcRackName) {
-		logrus.Errorf("%s don't match valide name service: a DNS-1035 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character", dcRackName)
-		return ""
+	dcRackName := dcName + "-" + rackName
+	if regexDCRackName.MatchString(dcRackName) {
+		return dcRackName
 	}
-	return dcRackName
+	logrus.Errorf("%s is not a valid service name: a DNS-1035 label must consist of lower case "+
+		"alphanumeric characters or '-', and must start and end with an alphanumeric character", dcRackName)
+	return ""
 }
 
 //GetDCFromDCRackName send dc name from dcRackName (dc-rack)
@@ -323,10 +320,10 @@ func (cc *CassandraCluster) GetDCAndRackFromDCRackName(dcRackName string) (strin
 func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 	cc.Spec.Topology = Topology{
 		DC: []DC{
-			DC{
+			{
 				Name: dcName,
 				Rack: []Rack{
-					Rack{
+					{
 						Name: rackName,
 					},
 				},
@@ -431,7 +428,7 @@ func (cc *CassandraCluster) InitSeedList() []string {
 	return seedList
 }
 
-func (cc *CassandraCluster) GetSeedList(seedListTab *[]string) string {
+func (cc *CassandraCluster) SeedList(seedListTab *[]string) string {
 	seedList := strings.Join(*seedListTab, ",")
 	return seedList
 }
@@ -630,7 +627,7 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) 
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
-func (cc *CassandraCluster) GetNumTokensPerRacks(dcRackName string) int32 {
+func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()
 
 	if dcsize < 1 {

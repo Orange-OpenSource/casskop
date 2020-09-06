@@ -15,20 +15,12 @@
 # limitations under the License.
 
 
-set -e
-
 echo "running PreStop Hook"
-echo "**disablegossip**"
-nodetool disablegossip
-sleep 1
-echo "**disablebinary**"
-nodetool disablebinary
-sleep 1
-echo "**drain**"
-nodetool drain
-sleep 1
-echo "**stop**"
-nodetool stop
-echo "**stopdaemon**"
-nodetool stopdaemon || true
 
+for action in disablegossip disablebinary drain stop
+do
+    echo "**$action**"
+    echo nodetool $action
+done
+
+exit 0

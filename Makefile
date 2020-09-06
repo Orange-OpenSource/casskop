@@ -178,7 +178,6 @@ ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
 
-
 docker-generate-k8s:
 	echo "Generate zzz-deepcopy objects"
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
@@ -261,12 +260,14 @@ debug-pod-logs:
 	kubectl logs -f `kubectl get pod -l app=casskop -o jsonpath="{.items[0].metadata.name}"`
 
 define debug_telepresence
-	# export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ;
+	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
 	echo "execute : cat cassandra-operator.env" ; \
 	sudo mkdir -p /var/run/secrets/kubernetes.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ || true ; \
 	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
-        telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
+  echo kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}' ; \
+	echo telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2 ; \
+  telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
 endef
 
 debug-telepresence:
@@ -318,6 +319,11 @@ unit-test:
 unit-test-with-vendor:
 	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
 	cat test-report.out
+	$(UNIT_TEST_COVERAGE)
+
+unit-test-with-vendor:
+	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
+	cat test-report.out 
 	$(UNIT_TEST_COVERAGE)
 
 define run-operator-cmd
@@ -394,8 +400,7 @@ endif
 
 #docker-e2e-test-fix and docker-e2e-test-fix-args need vendor rep to be filled (go mod vendor)
 docker-e2e-test-fix:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --namespace cassandra-e2e'
-
+	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --operator-namespace cassandra-e2e'
 
 #execute Test filter based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
@@ -407,7 +412,7 @@ docker-e2e-test-fix-arg:
 ifeq ($(E2E_ARGS),)
 	@echo "args are: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
 endif
-	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
@@ -436,6 +441,7 @@ DC ?= dc1
 USERNAME ?= cassandra
 PASSWORD ?= cassandra
 
+.PHONY: cassandra-stress
 cassandra-stress:
 	kubectl delete configmap cassandra-stress-$(STRESS_TYPE) || true
 	cp cassandra-stress/$(STRESS_TYPE)_stress.yaml /tmp/

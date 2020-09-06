@@ -39,7 +39,6 @@ spec:
   secret: cloud-backup-secrets
 `
 
-
 func HelperInitCassandraBackupController(cassandraBackupYaml string) (*ReconcileCassandraBackup,
 	*api.CassandraBackup, *record.FakeRecorder) {
 	cassandraBackup := common.HelperInitCassandraBackup(cassandraBackupYaml)

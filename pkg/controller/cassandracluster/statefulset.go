@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -87,20 +88,20 @@ func (rcc *ReconcileCassandraCluster) CreateStatefulSet(statefulSet *appsv1.Stat
 
 //UpdateStatefulSet updates an existing statefulset ss
 func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.StatefulSet) error {
-	err := rcc.Client.Update(context.TODO(), statefulSet)
-	if err != nil {
+	revision := statefulSet.ResourceVersion
+	if err := rcc.Client.Update(context.TODO(), statefulSet); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("statefulset already exists: %cc", err)
 		}
 		return fmt.Errorf("failed to update cassandra statefulset: %cc", err)
 	}
 	//Check that the new revision of statefulset has been taken into account
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		newSts, err := rcc.GetStatefulSet(statefulSet.Namespace, statefulSet.Name)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, fmt.Errorf("failed to get cassandra statefulset: %cc", err)
 		}
-		if statefulSet.ResourceVersion != newSts.ResourceVersion {
+		if revision != newSts.ResourceVersion {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "statefulset": statefulSet.Name}).Info(
 				"Statefulset has new revision, we continue")
 			return true, nil
@@ -116,7 +117,18 @@ func (rcc *ReconcileCassandraCluster) UpdateStatefulSet(statefulSet *appsv1.Stat
 	return nil
 }
 
-// sts1 = stored statefulset and sts2 = new generated statefulset
+func sortPVCs(pvcs *[]v1.PersistentVolumeClaim) {
+	sort.Slice(*pvcs, func(i, j int) bool {
+		return (*pvcs)[i].Name < (*pvcs)[j].Name
+	})
+}
+
+func sortContainers(containers *[]v1.Container) {
+	sort.Slice(*containers, func(i, j int) bool {
+		return (*containers)[i].Name < (*containers)[j].Name
+	})
+}
+
 func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	//updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
@@ -148,25 +160,14 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 		return false
 	}
 
-	sort.Slice(sts1.Spec.VolumeClaimTemplates, func(i, j int) bool {
-		return sts1.Spec.VolumeClaimTemplates[i].Name < sts1.Spec.VolumeClaimTemplates[j].Name
-	})
+	sortPVCs(&sts1.Spec.VolumeClaimTemplates)
+	sortPVCs(&sts2.Spec.VolumeClaimTemplates)
 
-	sort.Slice(sts2.Spec.VolumeClaimTemplates, func(i, j int) bool {
-		return sts2.Spec.VolumeClaimTemplates[i].Name < sts2.Spec.VolumeClaimTemplates[j].Name
-	})
-
-	sort.Slice(sts1Spec.Containers, func(i, j int) bool {
-		return sts1Spec.Containers[i].Name < sts1Spec.Containers[j].Name
-	})
-
-	sort.Slice(sts2Spec.Containers, func(i, j int) bool {
-		return sts2Spec.Containers[i].Name < sts2Spec.Containers[j].Name
-	})
+	sortContainers(&sts1Spec.Containers)
+	sortContainers(&sts2Spec.Containers)
 
 	for i := 0; i < len(sts1.Spec.VolumeClaimTemplates); i++ {
 		sts2.Spec.VolumeClaimTemplates[i].TypeMeta = sts1.Spec.VolumeClaimTemplates[i].TypeMeta
-
 		sts2.Spec.VolumeClaimTemplates[i].Status = sts1.Spec.VolumeClaimTemplates[i].Status
 		if sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode == nil {
 			sts2.Spec.VolumeClaimTemplates[i].Spec.VolumeMode = sts1.Spec.VolumeClaimTemplates[i].Spec.VolumeMode
@@ -175,13 +176,8 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 
 	sts2.Status.Replicas = sts1.Status.Replicas
 
-	patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2)
-	if err != nil {
-		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
-		return false
-	}
-	if !patchResult.IsEmpty() {
-		logrus.Infof("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
+	if patchResult, err := patch.DefaultPatchMaker.Calculate(sts1, sts2); err != nil || !patchResult.IsEmpty() {
+		logrus.Debug("Template is different: " + pretty.Compare(sts1.Spec, sts2.Spec))
 		return false
 	}
 
@@ -208,18 +204,14 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	// if there is existing disruptions on Pods
 	// Or if we are not scaling Down the current statefulset
 	if rcc.thereIsPodDisruption() {
-		if rcc.weAreScalingDown(dcRackStatus) && rcc.hasOneDisruptedPod() {
+		if rcc.cc.Spec.UnlockNextOperation {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Info("Cluster has 1 Pod Disrupted" +
-				"but that may be normal as we are decommissioning")
-		} else if rcc.cc.Spec.UnlockNextOperation {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Warn("Cluster has 1 Pod Disrupted" +
+				"dc-rack": dcRackName}).Warn("Cluster has a disruption " +
 				"but we have unlock the next operation")
 		} else {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Info("Cluster has Disruption on Pods, " +
-				"we wait before applying any change to statefulset")
+				"dc-rack": dcRackName}).Info("Cluster has a disruption, " +
+				"waiting before applying any changes to statefulset")
 			return api.ContinueResyncLoop, nil
 		}
 	}
@@ -253,13 +245,20 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		}
 	}
 
-	//Hack for ScaleDown:
-	//because before applying a scaledown at Kubernetes (statefulset) level we need to execute a cassandra decommission
-	//we want the statefulset to only perform one scaledown at a time.
-	//we have some call which will block the call of this method until the decommission is not OK, so here
-	//we just need to change the scaledown value if more than 1 at a time.
-	if *rcc.storedStatefulSet.Spec.Replicas-*statefulSet.Spec.Replicas > 1 {
-		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas - 1
+	//Scaling operations must be done one node at a time to fully support decommissions and bootstraps
+	replicaCountDiff := float64(*statefulSet.Spec.Replicas - *rcc.storedStatefulSet.Spec.Replicas)
+	if math.Abs(replicaCountDiff) > 1 {
+		scaleOperation := "up"
+		incrementValue := int32(1)
+		if replicaCountDiff < 0 {
+			scaleOperation = "down"
+			incrementValue *= -1
+		}
+		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
+			"dc-rack": dcRackName}).Debugf("Must scale %s one node at a time. Update stfs " +
+			"replicas to %d instead of %d for now",
+			scaleOperation, *rcc.storedStatefulSet.Spec.Replicas + incrementValue, *statefulSet.Spec.Replicas)
+		*statefulSet.Spec.Replicas = *rcc.storedStatefulSet.Spec.Replicas + incrementValue
 	}
 
 	if dcRackStatus.CassandraLastAction.Name == api.ActionRollingRestart.Name &&
@@ -322,8 +321,7 @@ func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
 }
 
 func isStatefulSetNotReady(storedStatefulSet *appsv1.StatefulSet) bool {
-	if storedStatefulSet.Status.Replicas != *storedStatefulSet.Spec.Replicas ||
-		storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
+	if storedStatefulSet.Status.ReadyReplicas != *storedStatefulSet.Spec.Replicas {
 		return true
 	}
 	return false

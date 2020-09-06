@@ -30,6 +30,9 @@ RE_RACK_NAME = re.compile(r"(\w+)\W(\w+)")
 
 def k_apply_with_input(input, error, *args):
     try:
+        resource = json.loads(input)
+        del resource["metadata"]["resourceVersion"]
+        input = json.dumps(resource)
         check_output(["kubectl", "apply", "-f", "-"], stderr=STDOUT, input=str.encode(input))
     except CalledProcessError:
         die(error)

@@ -16,6 +16,12 @@ package cassandracluster
 
 import (
 	"fmt"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"github.com/ghodss/yaml"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -27,6 +33,38 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 )
+
+func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *api.CassandraCluster) {
+	var cc api.CassandraCluster
+	err := yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
+	if err != nil {
+		log.Error(err, "error: helpInitCluster")
+		os.Exit(-1)
+	}
+
+	ccList := api.CassandraClusterList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraClusterList",
+			APIVersion: api.SchemeGroupVersion.String(),
+		},
+	}
+	//Create Fake client
+	//Objects to track in the Fake client
+	objs := []runtime.Object{
+		&cc,
+		//&ccList,
+	}
+	// Register operator types with the runtime scheme.
+	fakeClientScheme := scheme.Scheme
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cc)
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &ccList)
+	cl := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	// Create a ReconcileCassandraCluster object with the scheme and fake client.
+	rcc := ReconcileCassandraCluster{Client: cl, Scheme: fakeClientScheme}
+
+	cc.InitCassandraRackList()
+	return &rcc, &cc
+}
 
 func TestCreateNodeAffinity(t *testing.T) {
 	assert := assert.New(t)
@@ -98,7 +136,7 @@ func TestCreatePodAntiAffinityHard(t *testing.T) {
 }
 
 func TestVolumeMounts(t *testing.T) {
-	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 	assert.Equal(t, 1, len(volumeMounts))
@@ -122,7 +160,7 @@ func TestVolumeMounts(t *testing.T) {
 func TestGenerateCassandraService(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	selector := k8s.LabelsForCassandra(cc)
 	svc := generateCassandraService(cc, selector, nil)
 
@@ -371,7 +409,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
 
-		_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+		_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
 		for _, volumeMount := range container.VolumeMounts {
 			switch container.Name {

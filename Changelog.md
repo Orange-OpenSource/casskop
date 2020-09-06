@@ -13,6 +13,33 @@
 
 ### Bug Fixes
 
+- PR [#252](https://github.com/Orange-OpenSource/casskop/pull/252) - **[Plugin]** Remove metadata.resourceVersion from the applied resource
+
+## 0.5.4
+
+### Added
+
+- PR [#233](https://github.com/Orange-OpenSource/casskop/pull/233) - **[CassandraCluster]** Add [ShareProcessNamespace](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) option for operator and cassandra nodes
+- PR [#245](https://github.com/Orange-OpenSource/casskop/pull/245) - **[Chart]** Explicit roles needed by casskop
+
+### Changed
+
+- PR [#245](https://github.com/Orange-OpenSource/casskop/pull/245) - **[Chart]** Explicit roles
+- PR [#240](https://github.com/Orange-OpenSource/casskop/pull/240) - **[Documentation]** Bump lodasg from 4.17.15 to 4.17.19
+- PR [#242](https://github.com/Orange-OpenSource/casskop/pull/242) - **[Documentation]** Bump elliptic from 6.5.2 to 6.5.3
+- PR [#244](https://github.com/Orange-OpenSource/casskop/pull/244) - **[Documentation]** Bump prismjs from 1.20.0 to 1.21.0
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- PR [#234](https://github.com/Orange-OpenSource/casskop/pull/234) - **[CassandraCluster]** Fix having pod to fail during decommissioning / joining, replacing liveness probe.
+- PR [#235](https://github.com/Orange-OpenSource/casskop/pull/235) - **[CassandraCluster]** Fix multi decommissioning
+- PR [#241](https://github.com/Orange-OpenSource/casskop/pull/241) - **[CassandraCluster]** Do not do more decommissions than needed
+- PR [#247](https://github.com/Orange-OpenSource/casskop/pull/247) - **[CassandraCluster]** Update pre-stop bootstrap script
+
 ## 0.5.3
 
 ### Added

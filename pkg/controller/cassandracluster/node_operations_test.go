@@ -1,17 +1,3 @@
-// Copyright 2019 Orange
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// 	You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// 	See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cassandracluster
 
 import (
@@ -30,7 +16,7 @@ var allKeyspaces = []string{"system", "system_auth", "system_schema", "demo1", "
 
 const (
 	host                   = "cassandra-0.cassandra.cassie1"
-	port                   = 8778
+	jolokiaPort            = 8778
 	KeyspacesJolokiaQueryP = `{"request": {"mbean": "org.apache.cassandra.db:type=StorageService",
 					       "attribute": "Keyspaces",
 					       "type": "read"},
@@ -52,8 +38,8 @@ func keyspaceListString() string {
 		`"`+strings.Join(allKeyspaces, `","`)+`"`)
 }
 func TestJolokiaURL(t *testing.T) {
-	jolokiaURL := JolokiaURL(host, port)
-	if jolokiaURL != fmt.Sprintf("http://%s:%d/jolokia/", host, port) {
+	jolokiaURL := JolokiaURL(host, jolokiaPort)
+	if jolokiaURL != fmt.Sprintf("http://%s:%d/jolokia/", host, jolokiaPort) {
 		t.Errorf("Malformed jolokia_url")
 	}
 }
@@ -61,7 +47,7 @@ func TestJolokiaURL(t *testing.T) {
 func TestNodeCleanupKeyspace(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		httpmock.NewStringResponder(200,
 			`{"request": {"mbean": "org.apache.cassandra.db:type=StorageService",
                           "arguments": ["demo", []],
@@ -82,7 +68,7 @@ func TestNodeCleanup(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	keyspacescleaned := []string{}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			var execrequestdata execRequestData
 			if err := json.NewDecoder(req.Body).Decode(&execrequestdata); err != nil {
@@ -126,7 +112,7 @@ func TestNodeUpgradeSSTables(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	keyspacesUpgraded := []string{}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			var execrequestdata execRequestData
 			if err := json.NewDecoder(req.Body).Decode(&execrequestdata); err != nil {
@@ -168,7 +154,7 @@ func TestNodeUpgradeSSTables(t *testing.T) {
 func TestNodeRebuild(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request": {"mbean": "org.apache.cassandra.db:type=StorageService",
 							       "arguments": ["dc1"],
 							       "type": "exec",
@@ -188,7 +174,7 @@ func TestHasStreamingSessions(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(200, `{"request":
                        {"mbean": "org.apache.cassandra.net:type=StreamManager",
@@ -249,7 +235,7 @@ func TestHasStreamingSessions(t *testing.T) {
 		t.Errorf("hasStreamingSessions returns a bad answer")
 	}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(200, `{"request":
                    {"mbean": "org.apache.cassandra.net:type=StreamManager",
@@ -273,7 +259,7 @@ func TestHasCleanupCompactions(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(200, `{
 				"request":
@@ -316,7 +302,7 @@ func TestHasCleanupCompactions(t *testing.T) {
 		t.Errorf("hasCleanupCompactions returns a bad answer")
 	}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewStringResponse(200, `{"request":
                     {"mbean": "org.apache.cassandra.db:type=CompactionManager",
@@ -352,7 +338,7 @@ func TestReplicateData(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	keyspacesDescribed := []string{}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			var execrequestdata execRequestData
 			if err := json.NewDecoder(req.Body).Decode(&execrequestdata); err != nil {
@@ -414,7 +400,7 @@ func TestReplicateData(t *testing.T) {
 func TestNodeDecommission(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request": {"mbean": "org.apache.cassandra.db:type=StorageService",
 							       "arguments": [],
 							       "type": "exec",
@@ -422,7 +408,7 @@ func TestNodeDecommission(t *testing.T) {
 						   "value": null,
 					  	   "timestamp": 1528848808,
 						   "status": 200}`))
-	jolokiaClient, _ := NewJolokiaClient(host, port, nil, v1.LocalObjectReference{}, "ns")
+	jolokiaClient, _ := NewJolokiaClient(host, jolokiaPort, nil, v1.LocalObjectReference{}, "ns")
 	err := jolokiaClient.NodeDecommission()
 	if err != nil {
 		t.Errorf("NodeDecommision failed with : %v", err)
@@ -432,29 +418,35 @@ func TestNodeDecommission(t *testing.T) {
 func TestNodeOperationMode(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
-		httpmock.NewStringResponder(200, `{"request":
-				{"mbean": "org.apache.cassandra.db:type=StorageService",
-				 "attribute": "OperationMode",
-				 "type": "read"},
-			"value": "NORMAL",
-			"timestamp": 1528850319,
-			"status": 200}`))
+	registerJolokiaOperationModeResponder(podName{FullName: host}, NORMAL)
 	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
 	operationMode, err := jolokiaClient.NodeOperationMode()
 	if err != nil {
 		t.Errorf("NodeOperationMode failed with : %v", err)
 	}
-	if operationMode != "NORMAL" {
+	if operationMode != NORMAL {
 		t.Errorf("NodeOperationMode returned a bad answer: %s", operationMode)
 	}
+}
+
+func registerJolokiaLeavingNodesResponder(value interface{}) {
+	jsonValue, _ := json.Marshal(value)
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
+		httpmock.NewStringResponder(200, fmt.Sprintf(`{"request":
+				{"mbean": "org.apache.cassandra.db:type=StorageService",
+				 "attribute": "LeavingNodes",
+				 "type": "read"},
+			"value": %v,
+			"timestamp": 1528850319,
+			"status": 200}`, string(jsonValue))))
 }
 
 func TestLeavingNodes(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
+	registerJolokiaLeavingNodesResponder([]string{"127.0.0.1"})
+	httpmock.RegisterResponder("POST", JolokiaURL(host, jolokiaPort),
 		httpmock.NewStringResponder(200, `{"request":
 				{"mbean": "org.apache.cassandra.db:type=StorageService",
 				 "attribute": "LeavingNodes",
@@ -476,14 +468,7 @@ func TestLeavingNodes(t *testing.T) {
 func TestHostIDMap(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("POST", JolokiaURL(host, port),
-		httpmock.NewStringResponder(200, `{"request":
-				{"mbean": "org.apache.cassandra.db:type=StorageService",
-				 "attribute": "LeavingNodes",
-				 "type": "read"},
-			"value": {"10.244.3.20": "ac0b9f2b-1eb4-40ca-bc6e-68b37575f019"},
-			"timestamp": 1528850319,
-			"status": 200}`))
+	registerJolokiaLeavingNodesResponder(map[string]string{"10.244.3.20": "ac0b9f2b-1eb4-40ca-bc6e-68b37575f019"})
 	jolokiaClient, _ := NewJolokiaClient(host, JolokiaPort, nil,
 		v1.LocalObjectReference{}, "ns")
 	hostIDMap, err := jolokiaClient.hostIDMap()

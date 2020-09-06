@@ -63,7 +63,6 @@ func checkStatefulsetEquality(t *testing.T, dcName, dcRackName string, stsOld *a
 }
 
 func generateNewCC(cc *api.CassandraCluster, field string, newValue int32) *api.CassandraCluster {
-
 	ccNew := cc.DeepCopy()
 	v := reflect.ValueOf(&ccNew.Spec).Elem().FieldByName(field)
 	if v.IsValid() {

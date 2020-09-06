@@ -91,7 +91,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
 	//Simulate the Update of SeedList (field CASSANDRA_SEEDLIST of init-container bootstrap
-	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.SeedList(&b)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc2-rack1", dc1rack1sts, status)
@@ -280,7 +280,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert.Equal(true, reflect.DeepEqual(b, status.SeedList), "Status: %v", status.SeedList)
 
 	//3. Simulate the Update of SeedList
-	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.GetSeedList(&b)
+	dc1rack1sts.Spec.Template.Spec.InitContainers[1].Env[1].Value = cc.SeedList(&b)
 
 	//4. Ask for ScaleDown on dc1
 	cc.Spec.NodesPerRacks = cc.Spec.NodesPerRacks - 1
@@ -540,7 +540,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 	keyspacesDescribed := []string{}
 
-	httpmock.RegisterResponder("POST", JolokiaURL(hostName, port),
+	httpmock.RegisterResponder("POST", JolokiaURL(hostName, jolokiaPort),
 		func(req *http.Request) (*http.Response, error) {
 			var execrequestdata execRequestData
 			if err := json.NewDecoder(req.Body).Decode(&execrequestdata); err != nil {
