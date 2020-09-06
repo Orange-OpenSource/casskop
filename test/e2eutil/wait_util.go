@@ -293,6 +293,7 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 		Namespace(namespace).
 		SubResource("exec")
 
+	t.Logf("**CYRIL** Running Exec in container: %s", pod.Spec.Containers[0].Name)
 	req.VersionedParams(&corev1.PodExecOptions{
 		Container: pod.Spec.Containers[0].Name,
 		Command:   cmd,
