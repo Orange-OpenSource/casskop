@@ -87,10 +87,10 @@ func HelperInitCluster(t *testing.T, f *framework.Framework, ctx *framework.Test
 	return cc
 }
 
-func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework) {
+func HelperInitOperator(t *testing.T) (*framework.Context, *framework.Framework) {
 	//Comment the line below if we want to have sequential tests
 	t.Parallel()
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout,
 		RetryInterval: CleanupRetryInterval})
@@ -98,7 +98,7 @@ func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework)
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func ExecPodFromName(t *testing.T, f *framework.Framework, namespace string, pod
 		t.Logf("Error getting pod: %v", err)
 	}
 
-	stdout, stderr, err := ExecPod(t, f, namespace, pod, []string{"bash", "-c", cmd})
+	stdout, stderr, err := ExecPod(f, namespace, pod, []string{"bash", "-c", cmd})
 	if err != nil {
 		t.Logf("Error exec pod %s = %v", podName, err)
 	}
