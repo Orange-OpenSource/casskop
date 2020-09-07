@@ -13,6 +13,8 @@ rules:
   - db.orange.com
   resources:
   - "cassandraclusters"
+  - "cassandrabackups"
+  - "cassandrarestores"
   verbs:
   - create
   - delete
