@@ -279,12 +279,8 @@ func ExecPodFromName(t *testing.T, f *framework.Framework, namespace string, pod
 	return stdout, stderr, err
 }
 
-func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1.Pod, cmd []string) (string, string,
+func ExecPod(f *framework.Framework, namespace string, pod *corev1.Pod, cmd []string) (string, string,
 	error) {
-
-	if len(pod.Spec.Containers) != 1 {
-		return "", "", fmt.Errorf("could not determine which container to use")
-	}
 
 	// build the remoteexec
 	req := f.KubeClient.CoreV1().RESTClient().Post().
