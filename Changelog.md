@@ -14,6 +14,7 @@
 ### Bug Fixes
 
 - PR [#252](https://github.com/Orange-OpenSource/casskop/pull/252) - **[Plugin]** Remove metadata.resourceVersion from the applied resource
+- PR [#250](https://github.com/Orange-OpenSource/casskop/pull/250) - **[CassandraCluster]** Scale up node at a time
 
 
 ## 0.5.4
