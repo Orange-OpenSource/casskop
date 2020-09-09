@@ -48,8 +48,11 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		CassandraDirectory: restore.Spec.CassandraDirectory,
 		SchemaVersion: restore.Spec.SchemaVersion,
 		RestorationStrategyType: restore.Spec.RestorationStrategyType,
-		ConcurrentConnections: *restore.Spec.ConcurrentConnection,
 		ResolveHostIdFromTopology: true,
+	}
+
+	if restore.Spec.ConcurrentConnection != nil {
+		restoreOperationRequest.ConcurrentConnections = *restore.Spec.ConcurrentConnection
 	}
 
 	if len(restore.Spec.Entities) == 0 {
