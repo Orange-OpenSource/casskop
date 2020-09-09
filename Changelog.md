@@ -1,7 +1,18 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
-
 ## Unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.5.5
 
 ### Added
 
