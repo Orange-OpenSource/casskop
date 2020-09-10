@@ -1,9 +1,9 @@
 | Q               | A
 | --------------- | ---
-| Bug fix?        | no|yes
-| New feature?    | no|yes
-| API breaks?     | no|yes
-| Deprecations?   | no|yes
+| Bug fix?        | []
+| New feature?    | []
+| API breaks?     | []
+| Deprecations?   | []
 | Related tickets | fixes #X, partially #Y, mentioned in #Z
 | License         | Apache 2.0
 
