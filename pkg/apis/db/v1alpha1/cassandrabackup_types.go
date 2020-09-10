@@ -28,6 +28,8 @@ type CassandraBackupSpec struct {
 	// Specify a schedule to assigned to the backup. The schedule doesn't enforce anything so if you schedule multiple
 	// backups around the same time they would conflict. See https://godoc.org/github.com/robfig/cron for more information regarding the supported formats
 	Schedule           	  string `json:"schedule,omitempty"`
+	// name of snapshot to make so this snapshot will be uploaded to storage location. If not specified, the name of
+	// snapshot will be automatically generated and it will have name 'autosnap-milliseconds-since-epoch'
 	SnapshotTag      	  string `json:"snapshotTag"`
 	// Specify a duration the backup should try to last. See https://golang.org/pkg/time/#ParseDuration for an
 	// exhaustive list of the supported units. You can use values like .25h, 15m, 900s all meaning 15 minutes
@@ -41,6 +43,7 @@ type CassandraBackupSpec struct {
 	// keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific
 	// tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will backup all keyspaces
 	Entities              string `json:"entities,omitempty"`
+	// Name of Secret to use when accessing cloud storage providers
 	Secret                string `json:"secret,omitempty"`
 }
 

@@ -68,8 +68,12 @@ spec:
                   for more information regarding the supported formats
                 type: string
               secret:
+                description: Name of Secret to use when accessing cloud storage providers
                 type: string
               snapshotTag:
+                description: name of snapshot to make so this snapshot will be uploaded
+                  to storage location. If not specified, the name of snapshot will
+                  be automatically generated and it will have name 'autosnap-milliseconds-since-epoch'
                 type: string
               storageLocation:
                 description: URI for the backup target location e.g. s3 bucket, filepath

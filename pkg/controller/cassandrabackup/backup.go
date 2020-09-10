@@ -51,7 +51,9 @@ func backup(
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
 			break
 		} else {
-			backupClient.updateStatus(status, logging)
+			if !backupClient.updateStatus(status, logging){
+				continue
+			}
 
 			if status.State == api.BackupFailed {
 				recorder.Event(backupClient.backup,
@@ -73,7 +75,7 @@ func backup(
 }
 
 func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus,
-	logging *logrus.Entry) {
+	logging *logrus.Entry) bool {
 
 	backupClient.backup.Status = status
 
@@ -87,7 +89,8 @@ func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus
 		}}
 
 	if err := backupClient.client.Patch(context.Background(), cassandraBackup, patchToApply); err != nil {
-
 		logging.Error(err, "Error updating CassandraBackup backup")
+		return false
 	}
+	return true
 }
