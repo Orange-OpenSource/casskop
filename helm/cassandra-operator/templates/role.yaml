@@ -23,6 +23,14 @@ rules:
   - watch
   - deletecollection
 - apiGroups:
+    - db.orange.com
+  resources:
+    - cassandraclusters/status
+  verbs:
+    - get
+    - update
+    - patch
+- apiGroups:
   - ""
   resources:
   - pods
