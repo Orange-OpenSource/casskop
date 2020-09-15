@@ -1,5 +1,6 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
+
 ## Unreleased
 
 ### Added
@@ -12,6 +13,8 @@
 
 ### Bug Fixes
 
+- PR [#256](https://github.com/Orange-OpenSource/casskop/pull/256) - **[Chart]** Fix multi-casskop role
+ 
 ## v0.5.5
 
 ### Added
