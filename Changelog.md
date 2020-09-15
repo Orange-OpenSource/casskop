@@ -13,6 +13,18 @@
 
 ### Bug Fixes
 
+## v0.5.6
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
 - PR [#256](https://github.com/Orange-OpenSource/casskop/pull/256) - **[Chart]** Fix multi-casskop role
  
 ## v0.5.5
