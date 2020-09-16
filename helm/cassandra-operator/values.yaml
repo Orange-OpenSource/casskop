@@ -31,3 +31,7 @@ metricService: false
 
 debug:
   enabled: false
+
+##
+clusterServiceAccountsName:
+  - cassandra-cluster-node

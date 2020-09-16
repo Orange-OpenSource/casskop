@@ -141,7 +141,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 	f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "cassandra-e2e-dc1-rack1-0", Namespace: namespace}, pod)
 	for _, keyspace := range keyspaces {
 		cmd := fmt.Sprintf(Strategy2DCs, keyspace)
-		if _, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd}); err != nil {
+		if _, _, err = mye2eutil.ExecPod(f, cc.Namespace, pod, []string{"bash", "-c", cmd}); err != nil {
 			t.Fatalf("Error exec change keyspace %s = %v", keyspace, err)
 		}
 	}
@@ -168,7 +168,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 		"' : 'NetworkTopologyStrategy', 'dc1' : 1};\""
 	for i := range keyspaces {
 		cmd := fmt.Sprintf(Strategy1DC, keyspaces[i])
-		_, _, err = mye2eutil.ExecPod(t, f, cc.Namespace, pod, []string{"bash", "-c", cmd})
+		_, _, err = mye2eutil.ExecPod(f, cc.Namespace, pod, []string{"bash", "-c", cmd})
 		if err != nil {
 			t.Fatalf("Error exec change keyspace %s{%s} = %v", keyspaces[i], cmd, err)
 		}

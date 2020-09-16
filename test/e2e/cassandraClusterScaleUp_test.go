@@ -20,7 +20,7 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
-	t.Logf("1. We Create the Cluster (1dc/1rack/1node")
+	t.Logf("Create Cluster with 1 DC of 1 rack of 1 node")
 	cc := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-1DC.yaml", namespace)
 	cc.Namespace = namespace
 	t.Logf("Create CassandraCluster cassandracluster-1DC.yaml in namespace %s", namespace)
@@ -43,12 +43,14 @@ func cassandraClusterScaleUpDC1Test(t *testing.T, f *framework.Framework, ctx *f
 		cc); err != nil {
 		t.Fatal(err)
 	}
+
 	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Name)
 	assert.Equal(t, api.StatusDone, cc.Status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
+
 	assert.Equal(t, api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
 	assert.Equal(t, api.StatusDone, cc.Status.LastClusterActionStatus)
 
-	t.Logf(" 2. We Request a ScaleUp (add 1 node in the first dc-rack)")
+	t.Logf("Add 1 node to first statefulset)")
 	cc.Spec.Topology.DC[0].NodesPerRacks = func(i int32) *int32 { return &i }(2)
 	if err = f.Client.Update(goctx.TODO(), cc); err != nil {
 		t.Fatal(err)

@@ -12,7 +12,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/sirupsen/logrus v1.5.0
-	k8s.io/apimachinery v0.18.3
+	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/sample-controller v0.0.0-20181221200518-c3a5aa93b2bf
 	sigs.k8s.io/controller-runtime v0.6.0

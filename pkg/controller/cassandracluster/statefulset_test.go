@@ -14,7 +14,7 @@ import (
 
 type liveAndReadinessProbeExpected struct {
 	replaceValue int32
-	areEquals bool
+	areEquals    bool
 }
 
 func TestStatefulSetsAreEqual(t *testing.T) {
@@ -22,11 +22,11 @@ func TestStatefulSetsAreEqual(t *testing.T) {
 	rackName := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.CheckDefaults()
-	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
-	
+
 	testSetup := make(map[string]liveAndReadinessProbeExpected)
 
 	// Readiness update test
@@ -56,14 +56,13 @@ func TestStatefulSetsAreEqual(t *testing.T) {
 func checkStatefulsetEquality(t *testing.T, dcName, dcRackName string, stsOld *appsv1.StatefulSet, ccNew *api.CassandraCluster, expectedResult bool) {
 
 	ccNew.CheckDefaults()
-	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccNew, 0, 0)
+	labelsDefault, nodeSelectorDefault := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(ccNew, 0, 0)
 	stsDefault, _ := generateCassandraStatefulSet(ccNew, &ccNew.Status, dcName, dcRackName, labelsDefault, nodeSelectorDefault, nil)
 
 	assert.Equal(t, expectedResult, statefulSetsAreEqual(stsOld, stsDefault))
 }
 
-func generateNewCC(cc *api.CassandraCluster, field string, newValue int32) *api.CassandraCluster{
-
+func generateNewCC(cc *api.CassandraCluster, field string, newValue int32) *api.CassandraCluster {
 	ccNew := cc.DeepCopy()
 	v := reflect.ValueOf(&ccNew.Spec).Elem().FieldByName(field)
 	if v.IsValid() {

@@ -26,6 +26,10 @@ import (
 )
 
 const (
+	// Backup Restore default config
+	DefaultBackRestSidecarImage         = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha5"
+	DefaultBackRestSidecarContainerPort int32  = 4567
+
 	DefaultLivenessInitialDelaySeconds int32 = 120
 	DefaultLivenessHealthCheckTimeout  int32 = 20
 	DefaultLivenessHealthCheckPeriod   int32 = 10
@@ -34,22 +38,23 @@ const (
 	DefaultReadinessHealthCheckTimeout  int32 = 10
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
-	defaultCassandraImage         string        = "cassandra:latest"
-	defaultBootstrapImage         string        = "orangeopensource/cassandra-bootstrap:0.1.5"
-	InitContainerCmd              string        = "cp -vr /etc/cassandra/* /bootstrap"
-	defaultNbMaxConcurrentCleanup               = 2
-	defaultMaxPodUnavailable                    = 1
-	defaultNumTokens                            = 256
-	defaultImagePullPolicy        v1.PullPolicy = v1.PullAlways
+	defaultCassandraImage         = "cassandra:3.11"
+	defaultBootstrapImage         = "orangeopensource/cassandra-bootstrap:0.1.5"
+	defaultServiceAccountName     = "cassandra-cluster-node"
+	InitContainerCmd              = "cp -vr /etc/cassandra/* /bootstrap"
+	defaultNbMaxConcurrentCleanup = 2
+	defaultMaxPodUnavailable      = 1
+	defaultNumTokens              = 256
+	defaultImagePullPolicy        = v1.PullAlways
 
-	DefaultCassandraDC   string = "dc1"
-	DefaultCassandraRack string = "rack1"
+	DefaultCassandraDC   = "dc1"
+	DefaultCassandraRack = "rack1"
 
 	DefaultTerminationGracePeriodSeconds = 1800
 
-	//DefaultDelayWait: wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
 	DefaultResyncPeriod = 10
-	DefaultDelayWait    = 2 * DefaultResyncPeriod
+	//DefaultDelayWait wait 20 seconds (2x resyncPeriod) prior to follow status of an operation
+	DefaultDelayWait = 2 * DefaultResyncPeriod
 
 	//DefaultDelayWaitForDecommission is the time to wait for the decommission to happen on the Pod
 	//The operator will start again if it is not the case
@@ -59,8 +64,9 @@ const (
 	DefaultUserID int64 = 999
 )
 
+// ClusterStateInfo describe a cluster state
 type ClusterStateInfo struct {
-	Id   float64
+	ID   float64
 	Name string
 }
 
@@ -126,6 +132,10 @@ func (cc *CassandraCluster) CheckDefaults() {
 		ccs.BootstrapImage = defaultBootstrapImage
 	}
 
+	if len(ccs.ServiceAccountName) == 0 {
+		ccs.ServiceAccountName = defaultServiceAccountName
+	}
+
 	//Init-Container 1 : init-config
 	if len(ccs.InitContainerImage) == 0 {
 		ccs.InitContainerImage = ccs.CassandraImage
@@ -162,6 +172,14 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if ccs.ReadinessHealthCheckPeriod == nil {
 		ccs.ReadinessHealthCheckPeriod = func(i int32) *int32 { return &i }(DefaultReadinessHealthCheckPeriod)
 	}
+
+	// BackupRestore default config
+	if ccs.BackRestSidecar == nil {
+		ccs.BackRestSidecar = &BackRestSidecar{}
+	}
+	if len(ccs.BackRestSidecar.Image) == 0 {
+		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
+	}
 }
 
 // SetDefaults sets the default values for the cassandra spec and returns true if the spec was changed
@@ -185,6 +203,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 	}
 	if ccs.MaxPodUnavailable == 0 {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
+		changed = true
 	}
 	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
@@ -701,13 +720,13 @@ func (cc *CassandraCluster) IsValidDC(dcName string) bool {
 }
 
 //Remove elements from DC slice
-func (dc *DCSlice) Remove(i int) {
-	*dc = append((*dc)[:i], (*dc)[i+1:]...)
+func (dc *DCSlice) Remove(idx int) {
+	*dc = append((*dc)[:idx], (*dc)[idx+1:]...)
 }
 
 //Remove elements from Rack slice
-func (rack *RackSlice) Remove(i int) {
-	*rack = append((*rack)[:i], (*rack)[i+1:]...)
+func (rack *RackSlice) Remove(idx int) {
+	*rack = append((*rack)[:idx], (*rack)[idx+1:]...)
 }
 
 // CassandraClusterSpec defines the configuration of CassandraCluster
@@ -724,10 +743,10 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
-	// Image used for bootstrapping cluster (use the form : base:version)
+	// Image used for bootstrapping cluster (use the form base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
 
-	// Image used in the initContainer (use the form : base:version)
+	// Image used in the initContainer (use the form base:version)
 	InitContainerImage string `json:"initContainerImage,omitempty"`
 
 	// Command to execute in the initContainer in the targeted image
@@ -855,6 +874,9 @@ type CassandraClusterSpec struct {
 	// +k8s:conversion-gen=false
 	// +optional
 	ShareProcessNamespace *bool `json:"shareProcessNamespace,omitempty" protobuf:"varint,27,opt,name=shareProcessNamespace"`
+
+	BackRestSidecar    *BackRestSidecar `json:"backRestSidecar,omitempty"`
+	ServiceAccountName string           `json:"serviceAccountName,omitempty"`
 }
 
 // StorageConfig defines additional storage configurations
@@ -926,13 +948,13 @@ type PodPolicy struct {
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 }
 
-// PodPolicy defines the policy for headless service owned by CassKop operator.
+// ServicePolicy defines the policy for headless service owned by CassKop operator.
 type ServicePolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-// CassandraClusterResources sets the limits and requests for a container
+// CassandraResources sets the limits and requests for a container
 type CassandraResources struct {
 	Requests CPUAndMem `json:"requests,omitempty"`
 	Limits   CPUAndMem `json:"limits,omitempty"`
@@ -944,6 +966,16 @@ type CPUAndMem struct {
 	CPU string `json:"cpu"`
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
 	Memory string `json:"memory"`
+}
+
+// BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
+type BackRestSidecar struct {
+	// Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
+	Image string `json:"image,omitempty"`
+	// ImagePullPolicy define the pull policy for backrest sidecar docker image
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)

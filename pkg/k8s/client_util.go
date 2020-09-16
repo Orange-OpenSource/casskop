@@ -125,7 +125,7 @@ func ExecPod(namespace string, pod *corev1.Pod, cmd []string) (string, string, e
 		SubResource("exec")
 
 	req.VersionedParams(&corev1.PodExecOptions{
-		Container: pod.Spec.Containers[0].Name,
+		Container: "cassandra",
 		Command:   cmd,
 		Stdin:     false,
 		Stdout:    true,

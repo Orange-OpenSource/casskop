@@ -2,3 +2,6 @@
 // +k8s:deepcopy-gen=package,register
 // +groupName=db.orange.com
 package v1alpha1
+
+
+

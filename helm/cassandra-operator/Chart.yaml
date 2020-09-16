@@ -6,7 +6,6 @@ sources:
   - https://github.com/Orange-OpenSource/casskop
 version: 0.5.6
 appVersion: 0.5.6-release
-icon: 
 maintainers:
   - name: allamand
     email: sebastien.allamand@orange.com

@@ -48,7 +48,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraService(cc *api.CassandraCl
 	svc := generateCassandraService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service (%v)", err)
 	}
@@ -61,7 +61,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraServiceMonitoring(cc *api.C
 	svc := generateCassandraExporterService(cc, selector, nil)
 
 	k8s.AddOwnerRefToObject(svc, k8s.AsOwner(cc))
-	err := rcc.client.Create(context.TODO(), svc)
+	err := rcc.Client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create cassandra service Monitoring: %v", err)
 	}
@@ -88,7 +88,7 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraPodDisruptionBudget(cc *api
 func (rcc *ReconcileCassandraCluster) ensureCassandraStatefulSet(cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus, dcName string, dcRackName string, dc int, rack int) (bool, error) {
 
-	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, dc, rack)
 
 	ss, err := generateCassandraStatefulSet(cc, status, dcName, dcRackName, labels, nodeSelector, nil)
 	if err != nil {

@@ -6,7 +6,8 @@ into CassKop.
 
 ## Email and Chat
 
-You can reach developpers directly on slack : https://casskop.slack.com
+You can reach developpers directly on slack : https://casskop.slack.com or by email
+at prj.casskop.support@list.orangeportails.net
 
 ## Getting started
 

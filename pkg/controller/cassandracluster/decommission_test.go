@@ -34,10 +34,10 @@ func createCassandraClusterWithNoDisruption(t *testing.T, cassandraClusterFileNa
 		},
 	}
 
-	rcc.client.Get(context.TODO(), req.NamespacedName, pdb)
+	rcc.Client.Get(context.TODO(), req.NamespacedName, pdb)
 	// No disruption
 	pdb.Status.DisruptionsAllowed = 1
-	rcc.client.Update(context.TODO(), pdb)
+	rcc.Client.Update(context.TODO(), pdb)
 
 	return rcc, req
 }
@@ -75,7 +75,7 @@ func podHost(stfsName string, id int8, rcc *ReconcileCassandraCluster) podName {
 
 func deletePodNotDeletedByFakeClient(rcc *ReconcileCassandraCluster, host podName) {
 	// Need to manually delete pod managed by the fake client
-	rcc.client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
+	rcc.Client.Delete(context.TODO(), &v1.Pod{ObjectMeta: metav1.ObjectMeta{
 		Name:      host.Name,
 		Namespace: rcc.cc.Namespace}})
 }
@@ -99,7 +99,7 @@ func TestOneDecommission(t *testing.T) {
 	stfsName := cassandraCluster.Name + fmt.Sprintf("-%s-%s", dc.Name, dc.Rack[0].Name)
 
 	cassandraCluster.Spec.NodesPerRacks = 2
-	rcc.client.Update(context.TODO(), cassandraCluster)
+	rcc.Client.Update(context.TODO(), cassandraCluster)
 
 	lastPod := podHost(stfsName, 2, rcc)
 
@@ -126,7 +126,7 @@ func TestOneDecommission(t *testing.T) {
 	deletePodNotDeletedByFakeClient(rcc, deletedPod)
 	stfs, _ := rcc.GetStatefulSet(namespace, stfsName)
 	stfs.Status.ReadyReplicas = 2
-	rcc.client.Update(context.TODO(), stfs)
+	rcc.Client.Update(context.TODO(), stfs)
 
 	registerFatalJolokiaResponder(t, deletedPod)
 	registerJolokiaOperationModeResponder(lastPod, NORMAL)

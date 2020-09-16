@@ -17,84 +17,24 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"net/http"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	"github.com/ghodss/yaml"
+	"github.com/Orange-OpenSource/casskop/pkg/k8s"
+	"github.com/jarcoal/httpmock"
 	"github.com/r3labs/diff"
 	"github.com/stretchr/testify/assert"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func helperLoadBytes(t *testing.T, name string) []byte {
-	path := filepath.Join("testdata", name) // relative path
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return bytes
-}
-
-func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *api.CassandraCluster) {
-	var cc api.CassandraCluster
-	err := yaml.Unmarshal(helperLoadBytes(t, name), &cc)
-	if err != nil {
-		log.Error(err, "error: helpInitCluster")
-		os.Exit(-1)
-	}
-
-	ccList := api.CassandraClusterList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CassandraClusterList",
-			APIVersion: api.SchemeGroupVersion.String(),
-		},
-	}
-	//Create Fake client
-	//Objects to track in the Fake client
-	objs := []runtime.Object{
-		&cc,
-		//&ccList,
-	}
-	// Register operator types with the runtime scheme.
-	s := scheme.Scheme
-	s.AddKnownTypes(api.SchemeGroupVersion, &cc)
-	s.AddKnownTypes(api.SchemeGroupVersion, &ccList)
-	cl := fake.NewFakeClient(objs...)
-	// Create a ReconcileCassandraCluster object with the scheme and fake client.
-	rcc := ReconcileCassandraCluster{client: cl, scheme: s}
-
-	cc.InitCassandraRackList()
-	return &rcc, &cc
-}
-
-func helperGetStatefulset(t *testing.T, dcRackName string) *appsv1.StatefulSet {
-	var sts appsv1.StatefulSet
-	name := fmt.Sprintf("cassandracluster-2DC-%s-sts.yaml", dcRackName)
-	err := yaml.Unmarshal(helperLoadBytes(t, name), &sts)
-	if err != nil {
-		log.Error(err, "error: helperGetStatefulset")
-		os.Exit(-1)
-	}
-	return &sts
-}
-
 func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = true
 
@@ -126,7 +66,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 
-	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
+	dc1rack1sts := common.HelperGetStatefulset(t, "dc1-rack1")
 
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
@@ -168,7 +108,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = false
 
@@ -198,7 +138,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	}
 	cc.Status.SeedList = newSeedList
 
-	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
+	dc1rack1sts := common.HelperGetStatefulset(t, "dc1-rack1")
 
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
@@ -227,7 +167,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = true
 
@@ -254,7 +194,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
 	}
 
-	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
+	dc1rack1sts := common.HelperGetStatefulset(t, "dc1-rack1")
 
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack1", dc1rack1sts, status)
 	UpdateStatusIfSeedListHasChanged(cc, "dc1-rack2", dc1rack1sts, status)
@@ -284,11 +224,11 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	assert := assert.New(t)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = true
 
-	dc1rack1sts := helperGetStatefulset(t, "dc1-rack1")
+	dc1rack1sts := common.HelperGetStatefulset(t, "dc1-rack1")
 
 	//1. Init
 	cc.Status.SeedList = cc.InitSeedList()
@@ -379,7 +319,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 func TestCheckNonAllowedChangesNodesTo0(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
@@ -396,7 +336,7 @@ func TestCheckNonAllowedChangesNodesTo0(t *testing.T) {
 
 func TestCheckNonAllowedChangesMix1(t *testing.T) {
 	assert := assert.New(t)
-	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 
@@ -423,7 +363,7 @@ func TestCheckNonAllowedChangesMix1(t *testing.T) {
 func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 
@@ -452,7 +392,7 @@ func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) 
 func TestCheckNonAllowedChangesRemove2DC(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 
@@ -468,7 +408,7 @@ func TestCheckNonAllowedChangesRemove2DC(t *testing.T) {
 func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 	assert.Equal(4, cc.GetDCRackSize())
@@ -505,7 +445,7 @@ func TestCheckNonAllowedChangesUpdateRack(t *testing.T) {
 func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
@@ -528,7 +468,7 @@ func TestCheckNonAllowedChangesRemoveDCNot0(t *testing.T) {
 
 func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 	assert := assert.New(t)
-	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 
 	//Simulate old spec with nodes at 0
 	var nb int32
@@ -562,11 +502,11 @@ func TestCheckNonAllowedChangesRemoveDC(t *testing.T) {
 
 // TestCheckNonAllowedChangesScaleDown test that operator won't allowed a Scale Down to 0 if there are Pods in dc and
 // still has datas replicated
-//Uses K8s fake client, & Jolokia Mock
+//Uses K8s fake Client, & Jolokia Mock
 func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	assert := assert.New(t)
 
-	rcc, cc := helperInitCluster(t, "cassandracluster-3DC.yaml")
+	rcc, cc := HelperInitCluster(t, "cassandracluster-3DC.yaml")
 	status := cc.Status.DeepCopy()
 	rcc.updateCassandraStatus(cc, status)
 
@@ -592,7 +532,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 	pod.Status.Phase = v1.PodRunning
 	pod.Spec.Hostname = "cassandra-demo2-dc2-rack1-0"
 	pod.Spec.Subdomain = "cassandra-demo2-dc2-rack1"
-	hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+	hostName := k8s.PodHostname(*pod)
 	rcc.CreatePod(pod)
 
 	//Mock Jolokia Call to NonLocalKeyspacesInDC
@@ -667,7 +607,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 
 func TestInitClusterWithDeletePVC(t *testing.T) {
 	assert := assert.New(t)
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	updateDeletePvcStrategy(cc)
 	assert.Equal([]string{"kubernetes.io/pvc-to-delete"}, cc.Finalizers)
@@ -714,7 +654,7 @@ func TestUpdateCassandraNodesStatusForPod(t *testing.T) {
 	defaultIP := "127.0.0.1"
 	defaultHostID := "a1d1e7fa-8073-408c-94c1-e3678013f90f"
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	mkPod := func(podName string, podIp string, ccReady bool) *v1.Pod {
@@ -802,7 +742,7 @@ func TestCheckPodCrossIpUseCaseForPodKey(t *testing.T) {
 		}
 	}
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	// Pod Ip change but the Ip is not in the Jolokia Hostid - Ip map.
@@ -867,32 +807,32 @@ func TestProcessingPods(t *testing.T) {
 		}
 	}
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.Status.CassandraNodesStatus = make(map[string]api.CassandraNodeStatus)
 
 	// Pod ip change and hostId are not the same in cache.
 	dc2Rack10PodName := "dc2-rack1-0"
-	oldDc2Rack10PodIP := "10.180.150.109"
-	dc2Rack10PodIP := "10.100.150.109"
-	cachedHostID := "ca716bef-dc68-427d-be27-b4eeede1e072"
-	dc2Rack10HostID := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
-	hostIDMap[dc2Rack10PodIP] = cachedHostID
+	oldDc2Rack10PodIp := "10.180.150.109"
+	dc2Rack10PodIp := "10.100.150.109"
+	cachedHostId := "ca716bef-dc68-427d-be27-b4eeede1e072"
+	dc2Rack10HostId := "fsdf6716-dc54-414d-ef27-sdzdgkds04bf"
+	hostIDMap[dc2Rack10PodIp] = cachedHostId
 
 	// No enough restart
 	returnedPod, _ := processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 1)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
-	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIP, 100)
+	pod := mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
 		[]v1.Pod{*pod}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.Equal(t, returnedPod, pod)
 
 	// Test with option disabled
@@ -900,17 +840,17 @@ func TestProcessingPods(t *testing.T) {
 
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 1)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 1)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// No enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, cc.Spec.RestartCountBeforePodDeletion)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 	// Enough restart
 	returnedPod, _ = processingPods(hostIDMap, cc.Spec.RestartCountBeforePodDeletion,
-		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIP, 100)}, &cc.Status)
-	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIP, HostId: dc2Rack10HostID}
+		[]v1.Pod{*mkPod(dc2Rack10PodName, dc2Rack10PodIp, 100)}, &cc.Status)
+	cc.Status.CassandraNodesStatus[dc2Rack10PodName] = api.CassandraNodeStatus{NodeIp: oldDc2Rack10PodIp, HostId: dc2Rack10HostId}
 	assert.True(t, returnedPod == nil)
 }

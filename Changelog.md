@@ -42,7 +42,6 @@
 - PR [#252](https://github.com/Orange-OpenSource/casskop/pull/252) - **[Plugin]** Remove metadata.resourceVersion from the applied resource
 - PR [#250](https://github.com/Orange-OpenSource/casskop/pull/250) - **[CassandraCluster]** Scale up node at a time
 
-
 ## 0.5.4
 
 ### Added
@@ -50,14 +49,12 @@
 - PR [#233](https://github.com/Orange-OpenSource/casskop/pull/233) - **[CassandraCluster]** Add [ShareProcessNamespace](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) option for operator and cassandra nodes
 - PR [#245](https://github.com/Orange-OpenSource/casskop/pull/245) - **[Chart]** Explicit roles needed by casskop
 
-
 ### Changed
 
 - PR [#245](https://github.com/Orange-OpenSource/casskop/pull/245) - **[Chart]** Explicit roles
 - PR [#240](https://github.com/Orange-OpenSource/casskop/pull/240) - **[Documentation]** Bump lodasg from 4.17.15 to 4.17.19
 - PR [#242](https://github.com/Orange-OpenSource/casskop/pull/242) - **[Documentation]** Bump elliptic from 6.5.2 to 6.5.3
 - PR [#244](https://github.com/Orange-OpenSource/casskop/pull/244) - **[Documentation]** Bump prismjs from 1.20.0 to 1.21.0
-
 
 ### Deprecated
 

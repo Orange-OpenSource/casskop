@@ -44,7 +44,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileCassandraCluster{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileCassandraCluster{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -56,8 +56,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource CassandraCluster
-	err = c.Watch(&source.Kind{Type: &api.CassandraCluster{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
+	if err = c.Watch(&source.Kind{Type: &api.CassandraCluster{}}, &handler.EnqueueRequestForObject{}); err != nil {
 		return err
 	}
 
@@ -68,11 +67,11 @@ var _ reconcile.Reconciler = &ReconcileCassandraCluster{}
 
 // ReconcileCassandraCluster reconciles a CassandraCluster object
 type ReconcileCassandraCluster struct {
-	// This client, initialized using mgr.Client() above, is a split client
+	// This Client, initialized using mgr.Client() above, is a split Client
 	// that reads objects from the cache and writes to the apiserver
 	cc     *api.CassandraCluster
-	client client.Client
-	scheme *runtime.Scheme
+	Client client.Client
+	Scheme *runtime.Scheme
 
 	storedPdb         *policyv1beta1.PodDisruptionBudget
 	storedStatefulSet *appsv1.StatefulSet
@@ -80,7 +79,6 @@ type ReconcileCassandraCluster struct {
 
 // Reconcile reads that state of the cluster for a CassandraCluster object and makes changes based on the state read
 // and what is in the CassandraCluster.Spec
-// a Pod as an example
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
@@ -96,7 +94,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	// Fetch the CassandraCluster instance
 	rcc.cc = &api.CassandraCluster{}
 	cc := rcc.cc
-	err := rcc.client.Get(context.TODO(), request.NamespacedName, cc)
+	err := rcc.Client.Get(context.TODO(), request.NamespacedName, cc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -115,7 +113,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 		if changed {
 			updateDeletePvcStrategy(cc)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Info("Initialization: Update CassandraCluster")
-			return requeue, rcc.client.Update(context.TODO(), cc)
+			return requeue, rcc.Client.Update(context.TODO(), cc)
 		}
 	}
 	cc.CheckDefaults()

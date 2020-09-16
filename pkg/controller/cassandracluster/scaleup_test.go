@@ -52,7 +52,7 @@ func TestAddTwoNodes(t *testing.T) {
 	stfsName := cassandraCluster.Name + fmt.Sprintf("-%s-%s", dc.Name, dc.Rack[0].Name)
 
 	cassandraCluster.Spec.NodesPerRacks = 5
-	rcc.client.Update(context.TODO(), cassandraCluster)
+	rcc.Client.Update(context.TODO(), cassandraCluster)
 
 	firstPod := podHost(stfsName, 0, rcc)
 	reconcileValidation(t, rcc, *req)

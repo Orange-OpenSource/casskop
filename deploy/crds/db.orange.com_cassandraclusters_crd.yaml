@@ -43,9 +43,46 @@ spec:
                   update the SeedList according to new cluster CRD topology by default
                   a boolean is false
                 type: boolean
+              backRestSidecar:
+                description: BackRestSidecar defines details about cassandra-sidecar
+                  to load along with each C* pod
+                properties:
+                  image:
+                    description: 'Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"'
+                    type: string
+                  imagePullPolicy:
+                    description: ImagePullPolicy define the pull policy for backrest
+                      sidecar docker image
+                    type: string
+                  resources:
+                    description: 'Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements'
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                type: object
               bootstrapImage:
-                description: 'Image used for bootstrapping cluster (use the form :
-                  base:version)'
+                description: Image used for bootstrapping cluster (use the form base:version)
                 type: string
               cassandraImage:
                 description: Image + version to use for Cassandra
@@ -109,7 +146,7 @@ spec:
                   image
                 type: string
               initContainerImage:
-                description: 'Image used in the initContainer (use the form : base:version)'
+                description: Image used in the initContainer (use the form base:version)
                 type: string
               livenessFailureThreshold:
                 description: 'LivenessFailureThreshold defines failure threshold for
@@ -275,8 +312,8 @@ spec:
                 minimum: 1
                 type: integer
               service:
-                description: PodPolicy defines the policy for headless service owned
-                  by CassKop operator.
+                description: ServicePolicy defines the policy for headless service
+                  owned by CassKop operator.
                 properties:
                   annotations:
                     additionalProperties:
@@ -285,6 +322,8 @@ spec:
                       headless service the CassKop operator creates
                     type: object
                 type: object
+              serviceAccountName:
+                type: string
               shareProcessNamespace:
                 description: 'When process namespace sharing is enabled, processes
                   in a container are visible to all other containers in that pod.

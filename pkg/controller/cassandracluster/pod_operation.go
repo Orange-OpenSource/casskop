@@ -58,16 +58,19 @@ const (
 )
 
 var podOperationMap = map[string]op{
-	api.OperationCleanup:         op{(*ReconcileCassandraCluster).runCleanup, (*JolokiaClient).hasCleanupCompactions, nil},
-	api.OperationRebuild:         op{(*ReconcileCassandraCluster).runRebuild, (*JolokiaClient).hasStreamingSessions, nil},
-	api.OperationUpgradeSSTables: op{(*ReconcileCassandraCluster).runUpgradeSSTables, (*JolokiaClient).hasUpgradeSSTablesCompactions, nil},
-	api.OperationRemove: op{(*ReconcileCassandraCluster).runRemove, (*JolokiaClient).hasLeavingNodes,
-		(*ReconcileCassandraCluster).postRunRemove}}
+	api.OperationCleanup:         {(*ReconcileCassandraCluster).runCleanup,
+		(*JolokiaClient).hasCleanupCompactions, nil},
+	api.OperationRebuild:         {(*ReconcileCassandraCluster).runRebuild,
+		(*JolokiaClient).hasStreamingSessions, nil},
+	api.OperationUpgradeSSTables: {(*ReconcileCassandraCluster).runUpgradeSSTables,
+		(*JolokiaClient).hasUpgradeSSTablesCompactions, nil},
+	api.OperationRemove:          {(*ReconcileCassandraCluster).runRemove,
+		(*JolokiaClient).hasLeavingNodes,(*ReconcileCassandraCluster).postRunRemove}}
 
-const breakResyncLoop bool = true
-const continueResyncLoop bool = false
-const monitorSleepDelay = 10 * time.Second
-const deletedPvcTimeout = 30 * time.Second
+const breakResyncLoop    = true
+const continueResyncLoop = false
+const monitorSleepDelay  = 10 * time.Second
+const deletedPvcTimeout  = 30 * time.Second
 
 var chanRunningOp = make(chan finalizedOp, 100)
 
@@ -112,7 +115,7 @@ func (rcc *ReconcileCassandraCluster) handlePodOperation(cc *api.CassandraCluste
 		return true, err
 	}
 
-	hostName := fmt.Sprintf("%s.%s", firstPod.Spec.Hostname, firstPod.Spec.Subdomain)
+	hostName := k8s.PodHostname(*firstPod)
 	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	hasJoiningNodes, err := jolokiaClient.hasJoiningNodes()
@@ -264,7 +267,7 @@ func (rcc *ReconcileCassandraCluster) ensureOperation(cc *api.CassandraCluster, 
 
 	// For each pod where we need to run the operation on
 	for _, pod := range podsSlice {
-		hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+		hostName := k8s.PodHostname(pod)
 		// We check if an operation is running
 		if checkOnly {
 			go rcc.monitorOperation(hostName, cc, dcRackName, pod, operationName)
@@ -356,7 +359,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 				"Failed to get last pod '%s': %v", podLastOperation.Pods[0], err)
 		}
 
-		hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
+		hostName := k8s.PodHostname(*lastPod)
 		jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 		if err != nil {
@@ -404,7 +407,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 		}
 
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
-			"operationMode": operationMode}).Info("Cassandra Node is decommissioning, we need to wait")
+			"operationMode": operationMode}).Info("Cassandra node is decommissioning, we need to wait")
 		return breakResyncLoop, nil
 
 	//Set LastAction to Continue in case more decommissions are needed
@@ -453,13 +456,12 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	if lastPod.Status.Phase != v1.PodRunning || lastPod.DeletionTimestamp != nil {
 		return breakResyncLoop, fmt.Errorf("Pod is not running")
 	}
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pod": lastPod.Name}).Info("ScaleDown detected, we launch decommission")
+	logrusFields := logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name}
+	logrus.WithFields(logrusFields).Info("ScaleDown detected, we launch decommission")
 
 	//Ensure node is not leaving or absent from the ring
-	hostName := fmt.Sprintf("%s.%s", lastPod.Spec.Hostname, lastPod.Spec.Subdomain)
-	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
-		cc.Spec.ImageJolokiaSecret, cc.Namespace)
+	hostName := k8s.PodHostname(*lastPod)
+	jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc, cc.Spec.ImageJolokiaSecret, cc.Namespace)
 
 	if err != nil {
 		return breakResyncLoop, err
@@ -468,23 +470,25 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	operationMode, err := jolokiaClient.NodeOperationMode()
 
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"hostName": hostName, "err": err}).Error("Jolokia call failed")
+		logrusFields["err"] = err
+		logrusFields["hostname"] = hostName
+		logrus.WithFields(logrusFields).Error("Jolokia call failed")
 		return breakResyncLoop, err
 	}
 
 	if operationMode == DECOMMISSIONED || operationMode == UNKNOWN || operationMode == LEAVING {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Info("Node is leaving or has already been decommissioned")
+		logrus.WithFields(logrusFields).Info("Node is leaving or has already been decommissioned")
 		return breakResyncLoop, nil
 	}
 
-	if err = rcc.UpdatePodLabel(lastPod, map[string]string{
-		"operation-status": api.StatusOngoing,
-		"operation-start":  k8s.LabelTime(),
-		"operation-name":   api.OperationDecommission}); err != nil {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name, "err": err}).Debug("Error updating pod")
+	if err = rcc.UpdatePodLabel(lastPod,
+		map[string]string{
+			"operation-status": api.StatusOngoing,
+			"operation-start":  k8s.LabelTime(),
+			"operation-name":   api.OperationDecommission,
+		}); err != nil {
+		logrusFields["err"] = err
+		logrus.WithFields(logrusFields).Debug("Error updating pod")
 	}
 
 	podLastOperation.Status = api.StatusOngoing
@@ -492,20 +496,18 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 	podLastOperation.PodsOK = []string{}
 	podLastOperation.PodsKO = []string{}
 
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-		"pod": lastPod.Name}).Debug("Decommissioning cassandra node")
+	logrus.WithFields(logrusFields).Debug("Decommissioning cassandra node")
 
 	go func() {
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Debug("Node decommission starts")
+		logrus.WithFields(logrusFields).Debug("Node decommission starts")
 		err = jolokiaClient.NodeDecommission()
-		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-			"pod": lastPod.Name}).Debug("Node decommission ended")
+		logrus.WithFields(logrusFields).Debug("Node decommission ended")
 		if err != nil {
-			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName,
-				"pod": lastPod.Name, "err": err}).Debug("Node decommission failed")
+			logrusFields["err"] = err
+			logrus.WithFields(logrusFields).Debug("Node decommission failed")
 		}
 	}()
+
 	return breakResyncLoop, nil
 }
 
@@ -655,7 +657,7 @@ func (rcc *ReconcileCassandraCluster) finalizeOperation(err error, cc *api.Cassa
 		}
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 			"status": status, "error": err}).Debug("Got an error. Getting a new version of Cassandra Cluster")
-		if rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
+		if rcc.Client.Get(context.TODO(), types.NamespacedName{Name: cc.Name, Namespace: cc.Namespace}, ccRefreshed) == nil {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName, "pod": pod.Name,
 				"status": status}).Debug("Got a new version of Cassandra Cluster")
 			continue

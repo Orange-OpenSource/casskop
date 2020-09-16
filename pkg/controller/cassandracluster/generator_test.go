@@ -16,6 +16,12 @@ package cassandracluster
 
 import (
 	"fmt"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"github.com/ghodss/yaml"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -27,6 +33,38 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 )
+
+func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *api.CassandraCluster) {
+	var cc api.CassandraCluster
+	err := yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
+	if err != nil {
+		log.Error(err, "error: helpInitCluster")
+		os.Exit(-1)
+	}
+
+	ccList := api.CassandraClusterList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraClusterList",
+			APIVersion: api.SchemeGroupVersion.String(),
+		},
+	}
+	//Create Fake client
+	//Objects to track in the Fake client
+	objs := []runtime.Object{
+		&cc,
+		//&ccList,
+	}
+	// Register operator types with the runtime scheme.
+	fakeClientScheme := scheme.Scheme
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cc)
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &ccList)
+	cl := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	// Create a ReconcileCassandraCluster object with the scheme and fake client.
+	rcc := ReconcileCassandraCluster{Client: cl, Scheme: fakeClientScheme}
+
+	cc.InitCassandraRackList()
+	return &rcc, &cc
+}
 
 func TestCreateNodeAffinity(t *testing.T) {
 	assert := assert.New(t)
@@ -141,10 +179,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	rackName := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
-	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
 	ccDefault := cc.DeepCopy()
 	cc.CheckDefaults()
-	labels, nodeSelector := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
 	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
 
 	assert.Equal(map[string]string{
@@ -171,6 +209,13 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
+	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
+		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
+		v1.PullAlways,
+		v1.ResourceRequirements{
+			Requests: generateResourceList("1", "1Gi"),
+			Limits:   generateResourceList("2", "3Gi"),
+		})
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -183,14 +228,20 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	setupForDefaultTest(ccDefault)
 
 	ccDefault.CheckDefaults()
-	labelsDefault, nodeSelectorDefault := k8s.GetDCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
+	labelsDefault, nodeSelectorDefault := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
 	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault, labelsDefault, nodeSelectorDefault, nil)
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
 		60, 10, 10, 0, 0, 120, 20, 10, 0, 0)
 	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
-
+	checkBackRestSidecar(t, stsDefault.Spec.Template.Spec.Containers,
+		api.DefaultBackRestSidecarImage,
+		"",
+		v1.ResourceRequirements{
+			Requests: nil,
+			Limits:   nil,
+		})
 }
 
 func setupForDefaultTest(cc *api.CassandraCluster) {
@@ -204,6 +255,21 @@ func setupForDefaultTest(cc *api.CassandraCluster) {
 	cc.Spec.ReadinessInitialDelaySeconds = nil
 	cc.Spec.ReadinessFailureThreshold = nil
 	cc.Spec.ReadinessSuccessThreshold = nil
+	cc.Spec.BackRestSidecar = nil
+}
+
+func checkBackRestSidecar(t *testing.T, containers []v1.Container,
+	image string,
+	imagePullPolicy v1.PullPolicy,
+	resources v1.ResourceRequirements,
+) {
+	for _, c := range containers {
+		if c.Name == "backrest-sidecar" {
+			assert.Equal(t, image, c.Image)
+			assert.Equal(t, imagePullPolicy, c.ImagePullPolicy)
+			assert.Equal(t, resources, c.Resources)
+		}
+	}
 }
 
 func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
@@ -328,7 +394,7 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 }
 
 func checkVolumeMount(t *testing.T, containers []v1.Container) {
-	assert.Equal(t, len(containers), 3)
+	assert.Equal(t, len(containers), 4)
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
@@ -337,6 +403,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
+		case "backrest-sidecar":
+			assert.Equal(t, len(container.VolumeMounts), 4)
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -352,6 +420,8 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "cassandra-logs":
 				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
+			case "backrest-sidecar":
+				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
 			default:
 				t.Errorf("unexpected container: %s.", container.Name)
 			}

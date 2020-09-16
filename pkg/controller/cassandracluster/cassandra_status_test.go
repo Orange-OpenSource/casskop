@@ -17,6 +17,10 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"reflect"
 
@@ -36,8 +40,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var clusterName string = "cassandra-demo"
-var namespace string = "ns"
+var clusterName = "cassandra-demo"
+var namespace   = "ns"
 
 var cc2Dcs = `
 apiVersion: "db.orange.com/v1alpha1"
@@ -86,6 +90,34 @@ spec:
               location.dfy.orange.com/street : street3
 `
 
+func HelperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster,
+	*api.CassandraCluster) {
+	var cc api.CassandraCluster
+	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
+
+	ccList := api.CassandraClusterList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CassandraClusterList",
+			APIVersion: api.SchemeGroupVersion.String(),
+		},
+	}
+	//Create Fake client
+	//Objects to track in the Fake client
+	objs := []runtime.Object{
+		&cc,
+	}
+	// Register operator types with the runtime scheme.
+	fakeClientScheme := scheme.Scheme
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cc)
+	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &ccList)
+	cl := fake.NewFakeClientWithScheme(fakeClientScheme, objs...)
+	// Create a ReconcileCassandraCluster object with the scheme and fake client.
+	rcc := ReconcileCassandraCluster{Client: cl, Scheme: fakeClientScheme}
+
+	cc.InitCassandraRackList()
+	return &rcc, &cc
+}
+
 func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 	assert := assert.New(t)
 
@@ -103,15 +135,17 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 
 	cc.Status.SeedList = cc.InitSeedList()
 
-	var a = []string{"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
+	var expectedSeedList = []string{
+		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
 		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
 		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
-		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns"}
+		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
+	}
 
-	assert.Equal(5, len(cc.Status.SeedList))
+	assert.Equal(len(expectedSeedList), len(cc.Status.SeedList))
 
-	assert.Equal(true, reflect.DeepEqual(a, cc.Status.SeedList))
+	assert.Equal(true, reflect.DeepEqual(expectedSeedList, cc.Status.SeedList))
 
 }
 
@@ -119,7 +153,7 @@ func TestUpdateStatusIfSeedListHasChanged(t *testing.T) {
 func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string) (*ReconcileCassandraCluster,
 	*reconcile.Request) {
 	assert := assert.New(t)
-	rcc, cc := helperInitCluster(t, cassandraClusterFileName)
+	rcc, cc := HelperInitCluster(t, cassandraClusterFileName)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -133,7 +167,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
-	err = rcc.client.Get(context.TODO(), req.NamespacedName, cc)
+	err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc)
 	if err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
@@ -158,7 +192,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 			dcRackName := cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: cc.Name + "-" + dcRackName,
 				Namespace: cc.Namespace},
 				sts)
 			if err != nil {
@@ -192,7 +226,8 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 					Phase: v1.PodRunning,
 					ContainerStatuses: []v1.ContainerStatus{
 						{
-							Name:  "cassandra",
+							Name: "cassandra",
+							//Image: cc.Spec.BaseImage + ":" + cc.Spec.Version
 							Ready: true,
 						},
 					},
@@ -205,7 +240,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 				pod.Spec.Hostname = pod.Name
 				pod.Spec.Subdomain = cc.Name
 				if err = rcc.CreatePod(pod); err != nil {
-					t.Fatalf("can't create pod %s: (%v)", pod.Name, err)
+					t.Fatalf("can't create pod: (%v)", err)
 				}
 			}
 
@@ -217,7 +252,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	}
 
 	//Check creation Statuses
-	if err = rcc.client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
+	if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
 	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning.Name)
@@ -242,7 +277,7 @@ func TestReconcileCassandraCluster(t *testing.T) {
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
 
-	//WARNING: ListPod with fieldselector is not working on client-side
+	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
 	res, err := rcc.Reconcile(*req)
@@ -261,7 +296,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC.yaml")
 
-	//WARNING: ListPod with fieldselector is not working on client-side
+	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
 	res, err := rcc.Reconcile(*req)
@@ -278,7 +313,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -296,7 +331,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithNoConfigMap(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -314,7 +349,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
 
-	//WARNING: ListPod with fieldselector is not working on client-side
+	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
 	res, err := rcc.Reconcile(*req)
@@ -331,7 +366,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -349,7 +384,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -367,7 +402,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -385,7 +420,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 	// watched resource .
 	rcc, req := helperCreateCassandraCluster(t, "cassandracluster-2DC-configmap.yaml")
 
-	//WARNING: ListPod with fieldselector is not working on client-side
+	//WARNING: ListPod with fieldselector is not working on Client-side
 	//So CassKop will try to execute podActions in pods without succeed (they are fake pod)
 	//https://github.com/kubernetes/client-go/issues/326
 	res, err := rcc.Reconcile(*req)
@@ -402,7 +437,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {
@@ -420,7 +455,7 @@ func TestUpdateStatusIfDockerImageHasChanged(t *testing.T) {
 			dcRackName := rcc.cc.GetDCRackName(dc.Name, rack.Name)
 			//Update Statefulset fake status
 			sts := &appsv1.StatefulSet{}
-			err = rcc.client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
+			err = rcc.Client.Get(context.TODO(), types.NamespacedName{Name: rcc.cc.Name + "-" + dcRackName,
 				Namespace: rcc.cc.Namespace},
 				sts)
 			if err != nil {

@@ -59,7 +59,7 @@ const topologyChangeRefused = "The Operator has refused the Topology change. "
 func (metric gaugeVec) set(phase api.ClusterStateInfo, clusterName string) {
 	metric.With(
 		prometheus.Labels{"cluster": clusterName},
-	).Set(phase.Id)
+	).Set(phase.ID)
 }
 
 func preventClusterDeletion(cc *api.CassandraCluster, value bool) {
@@ -102,7 +102,7 @@ func (rcc *ReconcileCassandraCluster) CheckDeletePVC(cc *api.CassandraCluster) e
 	if cc.Spec.DeletePVC != oldCRD.Spec.DeletePVC {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debug("DeletePVC has been updated")
 		updateDeletePvcStrategy(cc)
-		return rcc.client.Update(context.TODO(), cc)
+		return rcc.Client.Update(context.TODO(), cc)
 	}
 
 	return nil
@@ -409,7 +409,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 			if pod.Status.Phase != v1.PodRunning || pod.DeletionTimestamp != nil {
 				continue
 			}
-			hostName := fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+			hostName := k8s.PodHostname(pod)
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Debugf("The Operator will ask node %s", hostName)
 			jolokiaClient, err := NewJolokiaClient(hostName, JolokiaPort, rcc,
 				cc.Spec.ImageJolokiaSecret, cc.Namespace)
@@ -557,7 +557,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 	//cause PVCs have been deleted
 	if cc.DeletionTimestamp != nil && cc.Spec.DeletePVC {
 		preventClusterDeletion(cc, false)
-		return rcc.client.Update(context.TODO(), cc)
+		return rcc.Client.Update(context.TODO(), cc)
 	}
 
 	return nil
@@ -695,7 +695,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 
-	hostName := fmt.Sprintf("%s.%s", firstPod.Spec.Hostname, firstPod.Spec.Subdomain)
+	hostName := k8s.PodHostname(*firstPod)
 
 	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 		"err": err}).Info(fmt.Sprintf("We will request : %s to catch hostIdMap", hostName))
@@ -717,7 +717,7 @@ func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
 		return err
 	}
 	if podToDelete != nil {
-		return rcc.client.Delete(context.TODO(), podToDelete)
+		return rcc.Client.Delete(context.TODO(), podToDelete)
 	}
 
 	return nil

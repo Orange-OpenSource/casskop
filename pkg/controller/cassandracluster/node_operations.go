@@ -36,7 +36,7 @@ func JolokiaURL(host string, port int) string {
 	return fmt.Sprintf("http://%s:%d/jolokia/", host, port)
 }
 
-// JolokiaClient is a structure that exposes a host and a jolokia client
+// JolokiaClient is a structure that exposes a host and a jolokia Client
 type JolokiaClient struct {
 	client *go_jolokia.JolokiaClient
 	host   string
@@ -52,7 +52,7 @@ func (jolokiaClient *JolokiaClient) executeOperation(mBean, operation string,
 	return (*go_jolokia.JolokiaClient)(jolokiaClient.client).ExecuteOperation(mBean, operation, arguments, pattern)
 }
 
-/*NewJolokiaClient returns a new Joloka client for the host name and port provided*/
+/*NewJolokiaClient returns a new Joloka Client for the host name and port provided*/
 func NewJolokiaClient(host string, port int, rcc *ReconcileCassandraCluster,
 	secretRef v1.LocalObjectReference, namespace string) (*JolokiaClient, error) {
 	jolokiaClient := JolokiaClient{go_jolokia.NewJolokiaClient(JolokiaURL(host, port)), host}
@@ -71,7 +71,7 @@ func NewJolokiaClient(host string, port int, rcc *ReconcileCassandraCluster,
 				Namespace: namespace,
 			},
 		}
-		err := rcc.client.Get(context.TODO(), types.NamespacedName{Name: secretRef.Name, Namespace: namespace}, secret)
+		err := rcc.Client.Get(context.TODO(), types.NamespacedName{Name: secretRef.Name, Namespace: namespace}, secret)
 
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"host": host, "port": port,
@@ -197,7 +197,7 @@ func (jolokiaClient *JolokiaClient) NodeCleanupKeyspaces(keyspaces []string) err
 	return nil
 }
 
-/*NodeUpgradeSSTables triggers an upgradeSSTables of each keyspaces through a jolokia client and returns any error*/
+/*NodeUpgradeSSTables triggers an upgradeSSTables of each keyspaces through a jolokia Client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeUpgradeSSTables(threads int) error {
 	keyspaces, err := jolokiaClient.keyspaces()
 	if err != nil {
@@ -224,7 +224,7 @@ func (jolokiaClient *JolokiaClient) NodeUpgradeSSTablesKeyspaces(keyspaces []str
 	return nil
 }
 
-/*NodeRebuild triggers a rebuild of all keyspaces on the pod using a jolokia client and returns any error*/
+/*NodeRebuild triggers a rebuild of all keyspaces on the pod using a jolokia Client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"rebuild(java.lang.String)",
@@ -245,7 +245,7 @@ func (jolokiaClient *JolokiaClient) NodeDecommission() error {
 	return nil
 }
 
-/*NodeRemove remove node hostid on the pod using a jolokia client and returns any error*/
+/*NodeRemove remove node hostid on the pod using a jolokia Client and returns any error*/
 func (jolokiaClient *JolokiaClient) NodeRemove(hostid string) error {
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
 		"removeNode",

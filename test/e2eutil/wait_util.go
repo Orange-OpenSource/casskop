@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-)
+	)
 
 var (
 	RetryInterval        = time.Second * 10
@@ -87,10 +87,10 @@ func HelperInitCluster(t *testing.T, f *framework.Framework, ctx *framework.Test
 	return cc
 }
 
-func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework) {
+func HelperInitOperator(t *testing.T) (*framework.Context, *framework.Framework) {
 	//Comment the line below if we want to have sequential tests
 	t.Parallel()
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout,
 		RetryInterval: CleanupRetryInterval})
@@ -98,7 +98,7 @@ func HelperInitOperator(t *testing.T) (*framework.TestCtx, *framework.Framework)
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
-	namespace, err := ctx.GetNamespace()
+	namespace, err := ctx.GetOperatorNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func WaitForStatusDone(t *testing.T, f *framework.Framework, namespace, name str
 		},
 	}
 
-	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 
 		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, cc2)
 		if err != nil {
@@ -271,7 +271,7 @@ func ExecPodFromName(t *testing.T, f *framework.Framework, namespace string, pod
 		t.Logf("Error getting pod: %v", err)
 	}
 
-	stdout, stderr, err := ExecPod(t, f, namespace, pod, []string{"bash", "-c", cmd})
+	stdout, stderr, err := ExecPod(f, namespace, pod, []string{"bash", "-c", cmd})
 	if err != nil {
 		t.Logf("Error exec pod %s = %v", podName, err)
 	}
@@ -279,12 +279,8 @@ func ExecPodFromName(t *testing.T, f *framework.Framework, namespace string, pod
 	return stdout, stderr, err
 }
 
-func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1.Pod, cmd []string) (string, string,
+func ExecPod(f *framework.Framework, namespace string, pod *corev1.Pod, cmd []string) (string, string,
 	error) {
-
-	if len(pod.Spec.Containers) != 1 {
-		return "", "", fmt.Errorf("could not determine which container to use")
-	}
 
 	// build the remoteexec
 	req := f.KubeClient.CoreV1().RESTClient().Post().
@@ -294,7 +290,7 @@ func ExecPod(t *testing.T, f *framework.Framework, namespace string, pod *corev1
 		SubResource("exec")
 
 	req.VersionedParams(&corev1.PodExecOptions{
-		Container: pod.Spec.Containers[0].Name,
+		Container: "cassandra",
 		Command:   cmd,
 		Stdin:     false,
 		Stdout:    true,

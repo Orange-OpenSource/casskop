@@ -54,7 +54,7 @@ func (rcc *ReconcileCassandraCluster) updateCassandraStatus(cc *api.CassandraClu
 	cc.Status = *status.DeepCopy()
 	cc.Annotations[api.AnnotationLastApplied] = string(lastApplied)
 
-	err := rcc.client.Update(context.TODO(), cc)
+	err := rcc.Client.Update(context.TODO(), cc)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "err": err}).Errorf("Issue when updating CassandraCluster")
 	}
