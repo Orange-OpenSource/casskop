@@ -6532,7 +6532,7 @@ data:
               "targets": [
                 {
                   "expr": "cluster_action",
-                  "interval": "",
+                  "instant": true,
                   "legendFormat": "",
                   "refId": "A"
                 }
