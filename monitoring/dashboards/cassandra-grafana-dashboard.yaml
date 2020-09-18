@@ -6475,7 +6475,7 @@ data:
               "pluginVersion": "7.0.1",
               "targets": [
                 {
-                  "expr": "cluster_phase",
+                  "expr": "cluster_phase{cluster=~\"$cluster\"}",
                   "instant": true,
                   "interval": "",
                   "legendFormat": "",
@@ -6531,7 +6531,7 @@ data:
               "pluginVersion": "7.0.1",
               "targets": [
                 {
-                  "expr": "cluster_action",
+                  "expr": "cluster_action{cluster=~\"$cluster\"}",
                   "instant": true,
                   "legendFormat": "",
                   "refId": "A"
