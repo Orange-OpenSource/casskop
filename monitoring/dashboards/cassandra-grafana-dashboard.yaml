@@ -130,6 +130,7 @@ data:
                       "displayType": "Regular",
                       "displayValueWithAlias": "Never",
                       "expr": "topk (1, cassandra_endpoint_active{cassandra_cluster=~\"$cluster\"} < 1) by(exported_endpoint)\n",
+                      "instant": true,
                       "legendFormat": "{{exported_endpoint}}",
                       "refId": "A",
                       "units": "none",
