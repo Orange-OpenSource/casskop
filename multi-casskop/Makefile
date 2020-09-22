@@ -154,11 +154,7 @@ generate:
 	operator-sdk generate k8s
 
 .PHONY: build
-build:
-	@echo "Generate zzz-deepcopy objects"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health ../tools/health/main.go
-	operator-sdk version
-	operator-sdk generate k8s
+build: generate
 	@echo "Build Cassandra Operator"
 	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
 ifdef PUSHLATEST
@@ -166,18 +162,15 @@ ifdef PUSHLATEST
 endif
 #
 
-build-local:
-	@echo "Generate zzz-deepcopy objects"
-	operator-sdk version
-	operator-sdk generate k8s
+build-local: generate
 	@echo "Build Cassandra Operator for $(GOOS)"
 	go build -o build/_output/bin/multi-casskop-$(GOOS) -gcflags all=-trimpath=github.com/Orange-OpenSource -asmflags all=-trimpath=github.com/Orange-OpenSource github.com/Orange-OpenSource/casskop/multi-casskop/cmd/manager
 
 debug-telepresence:
 	export TELEPRESENCE_REGISTRY=$(TELEPRESENCE_REGISTRY) ; \
 	echo "execute : cat multi-casskop.env" ; \
-  sudo mkdir -p /var/run/secrets/kubernetes.io ; \
-  sudo mkdir -p /var/run/secrets/admiralty.io ; \
+	sudo mkdir -p /var/run/secrets/kubernetes.io ; \
+	sudo mkdir -p /var/run/secrets/admiralty.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ ; \
 	sudo ln -s /tmp/known/var/run/secrets/admiralty.io/serviceaccountimports /var/run/secrets/admiralty.io/ ; \
 	tdep=$(shell kubectl get deployment -l app=multi-casskop -o jsonpath='{.items[0].metadata.name}') ; \

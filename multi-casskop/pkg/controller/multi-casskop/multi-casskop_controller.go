@@ -59,14 +59,16 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 	}
 
 	// Configure watch for MultiCassKop on Local only
-	if err := co.WatchResourceReconcileObject(context.TODO(), clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	if err := co.WatchResourceReconcileObject(context.TODO(), clusters.Local.Cluster,
+		&cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
 		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
 	}
 
 	// Configure watch for CassandraCluster on remote (
 	for _, cluster := range clusters.Remotes {
-		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster, &ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster,
+			&ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 			controller.WatchOptions{Namespace: namespace}); err != nil {
 			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
 		}

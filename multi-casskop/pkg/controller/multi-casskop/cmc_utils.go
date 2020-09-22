@@ -52,6 +52,9 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 	}
 
 	needUpdate := false
+
+	UnsetRollingRestart(storedCC)
+
 	//TODO: need new way to detect changes
 	if !apiequality.Semantic.DeepEqual(storedCC.Spec, cc.Spec) {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).
@@ -76,6 +79,14 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 		return true, newCC, err
 	}
 	return false, storedCC, nil
+}
+
+func UnsetRollingRestart(storedCC *ccv1.CassandraCluster) {
+	for _, dc := range storedCC.Spec.Topology.DC {
+		for _, rack := range dc.Rack {
+			rack.RollingRestart = false
+		}
+	}
 }
 
 func (r *reconciler) CreateCassandraCluster(client *models.Client, cc *ccv1.CassandraCluster) (*ccv1.CassandraCluster, error) {
