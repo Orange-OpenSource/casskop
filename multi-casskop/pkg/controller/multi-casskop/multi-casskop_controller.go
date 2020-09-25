@@ -124,12 +124,10 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		return requeue, err
 	}
 
-	if ok := r.updateDeletetrategy(); ok == true {
+	if r.updateDeletetrategy() == true {
 		err := localClient.Update(context.TODO(), r.cmc)
 		return requeue, err
 	}
-
-	//var storedCC *ccv1.CassandraCluster`
 
 	// For all clients (local & remotes)
 	clients := r.clients.FlatClients()
