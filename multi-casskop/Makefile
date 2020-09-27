@@ -145,18 +145,44 @@ helm-package:
 export CGO_ENABLED:=0
 export PURE:="on"
 
+DOCKER_BUILD = docker run --rm -v $(PWD)/..:$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
+               		-v /var/run/docker.sock:/var/run/docker.sock \
+               		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
+               		--env CGO_ENABLED=$(CGO_ENABLED) --env GOOS=linux --env GOARCH=amd64 \
+               		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
+               		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c
+
+MULTI_CASSKOP = cd multi-casskop
+GENERATE_CMD = CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health \
+				 ../tools/health/main.go
+GENERATE_K8S = operator-sdk generate k8s
+BUILD_CMD = operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args \
+				"--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+
+docker-generate-k8s:
+	echo "Generate zzz-deepcopy objects"
+	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_CMD)'
+	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_K8S)'
+
+docker-build-operator:
+	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
+	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(BUILD_CMD)'
+
+# Build the Operator and its Docker Image
+docker-build: docker-generate-k8s docker-build-operator
+
 .PHONY: generate
 generate:
 	@echo "Generate zzz-deepcopy objects"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health ../tools/health/main.go
+	$(GENERATE_CMD)
 	echo "Generate zzz-deepcopy objects"
 	operator-sdk version
-	operator-sdk generate k8s
+	$(GENERATE_K8S)
 
 .PHONY: build
 build: generate
 	@echo "Build Cassandra Operator"
-	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+	$(BUILD_CMD)
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
@@ -199,7 +225,6 @@ run-local:
 	export WATCH_NAMESPACE=$(NAMESPACE); \
 	export LOG_LEVEL=Debug; \
 	./build/_output/bin/multi-casskop-$(GOOS) $(RUN_ARGS)
-
 
 .PHONY: push
 push:
