@@ -22,9 +22,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//thereIsNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
-func (rcc *ReconcileCassandraCluster) thereIsPodDisruption() bool {
-
+//hasNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
+func (rcc *ReconcileCassandraCluster) hasNoPodDisruption() bool {
 	return rcc.storedPdb.Status.DisruptionsAllowed == 0
 }
 

@@ -103,7 +103,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 	// We don't want to check for new operation while there are already ongoing one in order not to break them (ie decommission..)
 	// Meanwhile we allow to check for new changes if unlockNextOperation	 has been set (to recover from problems)
 	if unlockNextOperation ||
-		(!rcc.thereIsPodDisruption() &&
+		(rcc.hasNoPodDisruption() &&
 			lastAction.Status != api.StatusOngoing &&
 			lastAction.Status != api.StatusToDo &&
 			lastAction.Status != api.StatusFinalizing) {

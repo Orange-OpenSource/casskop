@@ -203,15 +203,13 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	//We will not Update the Statefulset
 	// if there is existing disruptions on Pods
 	// Or if we are not scaling Down the current statefulset
-	if rcc.thereIsPodDisruption() {
+	if !rcc.hasNoPodDisruption() {
 		if rcc.cc.Spec.UnlockNextOperation {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Warn("Cluster has a disruption " +
-				"but we have unlock the next operation")
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
+				"Cluster has a disruption but we have unlock the next operation")
 		} else {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name,
-				"dc-rack": dcRackName}).Info("Cluster has a disruption, " +
-				"waiting before applying any changes to statefulset")
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
+				"Cluster has a disruption, waiting before applying any changes to statefulset")
 			return api.ContinueResyncLoop, nil
 		}
 	}
