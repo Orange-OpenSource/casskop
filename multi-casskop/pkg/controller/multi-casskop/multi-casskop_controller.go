@@ -152,14 +152,15 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		}
 		if update {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-				"kubernetes": client.Name}).Infof("Just Update CassandraCluster, returning for now..")
+				"kubernetes": client.Name}).Infof("CassandraCluster created/updated, returning for now..")
 			return requeue30, err
 		}
 
 		if !r.ReadyCassandraCluster(storedCC) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
 				"kubernetes": client.Name}).Infof("Cluster is not Ready, "+
-				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase, storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
+				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase,
+				storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
 			return requeue30, err
 		}
 	}

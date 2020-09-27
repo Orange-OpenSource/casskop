@@ -76,20 +76,26 @@ func UnsetRollingRestart(storedCC *ccv1.CassandraCluster) {
 	}
 }
 
-func (r *reconciler) CreateCassandraCluster(client *models.Client, cc *ccv1.CassandraCluster) (*ccv1.CassandraCluster, error) {
+func (r *reconciler) CreateCassandraCluster(client *models.Client,
+	cc *ccv1.CassandraCluster) (*ccv1.CassandraCluster, error) {
 	var err error
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).Debug("Create CassandraCluster")
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).Debug(
+		"Create CassandraCluster")
 	if err = client.Client.Create(context.TODO(), cc); err != nil {
 		if errors.IsAlreadyExists(err) {
+			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
+				"kubernetes": client.Name}).Debug("CassandraCluster already exists !")
 			return cc, nil
 		}
 	}
 	return cc, err
 }
 
-func (r *reconciler) UpdateCassandraCluster(client *models.Client, cc *ccv1.CassandraCluster) (*ccv1.CassandraCluster, error) {
+func (r *reconciler) UpdateCassandraCluster(client *models.Client,
+	cc *ccv1.CassandraCluster) (*ccv1.CassandraCluster, error) {
 	var err error
-	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).Debug("Update CassandraCluster")
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).Debug(
+		"Update CassandraCluster")
 	if err = client.Client.Update(context.TODO(), cc); err != nil {
 		if errors.IsAlreadyExists(err) {
 			return cc, nil
