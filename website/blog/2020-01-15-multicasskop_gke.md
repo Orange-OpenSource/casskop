@@ -55,7 +55,7 @@ $ terraform init
 
 #### Master provisionning
 
-![MultiCasskop architecture](/casskop/img/blog/2020-01-15-multicasskop_gke/multicasskop_architecture.jpeg)
+![MultiCasskop architecture](/img/blog/2020-01-15-multicasskop_gke/multicasskop_architecture.jpeg)
 
 With the master provisionning, we will deploy firewall and Cloud dns configuration :
 

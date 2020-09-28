@@ -323,11 +323,11 @@ TELEPRESENCE_REGISTRY=you-private-registry/datawire  make debug-telepresence-wit
 
 Now we just need to configure the IDE :
 
-![](/casskop/img/8_contributing/ide_debug_configutation.png)
+![](/img/8_contributing/ide_debug_configutation.png)
 
 and let's the magic happened
 
-![](/casskop/img/8_contributing/ide_debug_action.png)
+![](/img/8_contributing/ide_debug_action.png)
 
 
 
