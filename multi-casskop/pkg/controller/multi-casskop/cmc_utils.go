@@ -69,9 +69,10 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 }
 
 func UnsetRollingRestart(storedCC *ccv1.CassandraCluster) {
-	for _, dc := range storedCC.Spec.Topology.DC {
-		for _, rack := range dc.Rack {
-			rack.RollingRestart = false
+	DC := (*storedCC).Spec.Topology.DC
+	for dcID := range DC {
+		for rackID := range DC[dcID].Rack {
+			DC[dcID].Rack[rackID].RollingRestart = false
 		}
 	}
 }
