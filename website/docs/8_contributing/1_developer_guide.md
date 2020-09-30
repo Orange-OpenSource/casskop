@@ -329,7 +329,65 @@ and let's the magic happened
 
 ![](/casskop/img/8_contributing/ide_debug_action.png)
 
+### Build Multi-CassKop
 
+#### Using your docker environment
+```
+cd $(git rev-parse --show-toplevel)/multi-casskop
+make docker-build
+```
+
+### Run Multi-CassKop
+
+We can quickly setup a k3d cluster with casskop and multi-casskop to test a PR on multi-casskop. 
+
+- [Build your multi-casskop docker image](#### Using your docker environment) which should print
+```
+echo "Generate zzz-deepcopy objects"
+Generate zzz-deepcopy objects
+...
+Successfully built bf57e90615bb
+Successfully tagged orangeopensource/multi-casskop:0.5.6-my-pr
+```
+- Create a k3 cluster with 2 namespaces and install casskop
+```
+k3d cluster create multi-casskop-qa
+cd $(git rev-parse --show-toplevel)
+k apply -f deploy/crds/
+k create namespace cluster1
+k create namespace cluster2
+helm install casskop -n cluster1 orange-incubator/cassandra-operator --set debug.enabled=true
+helm install casskop -n cluster2 orange-incubator/cassandra-operator --set debug.enabled=true
+kubemcsa export --context=k3d-multi-casskop-qa cassandra-operator --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
+```
+- Update generated secret to use `server: https://kubernetes.default.svc/` in its config (We won't need that method 
+anymore and will be able to create 2 different clusters when https://github.com/rancher/k3d/issues/101 is solved)
+```
+k get secrets -n cluster1 k8s-cluster2 -o json|jq -r '.data.config'|base64 -d|pbcopy
+# set server to https://kubernetes.default.svc in the output, then copy it in the clipboard and run
+pbpaste|base64 -w10000|pbcopy
+# You now have to edit the secret and replace config's value by what you have in your clipboard
+```
+- load the docker image you built in the first step into your k3d cluster
+```
+k3d image import orangeopensource/multi-casskop:0.5.6-my-pr -c multi-casskop-qa
+INFO[0000] Loading images into 'multi-casskop-qa'
+INFO[0000] Starting k3d-tools node...
+INFO[0000] Saving 1 image(s) from runtime...
+INFO[0004] Importing images into nodes...
+INFO[0004] Importing images from tarball '/k3d/images/k3d-multi-casskop-qa-images-20200929124019.tar' into node 'k3d-multi-casskop-qa-server-0'...
+INFO[0006] Removing the tarball(s) from image volume...
+INFO[0007] Removing k3d-tools node...
+INFO[0008] Deleted k3d-multi-casskop-qa-tools
+INFO[0008] Successfully imported image(s)
+INFO[0008] DONE
+```
+- Install multi-casskop using the image you just imported
+```
+helm install multi-casskop orange-incubator/multi-casskop --set k8s.local=k3d-multi-casskop-qa \
+    --set k8s.remote={k8s-cluster2} --set image.tag=0.5.6-my-pr --set debug.enabled=true -n cluster1 \
+    --set image.pullPolicy=IfNotPresent
+```
 
 ## How this repository was initially build
 
