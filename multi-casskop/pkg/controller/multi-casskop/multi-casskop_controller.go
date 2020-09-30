@@ -66,7 +66,7 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 			clusters.Local.Name, err)
 	}
 
-	// Configure watch for CassandraCluster on remote (
+	// Configure watch for CassandraCluster on all sites (
 	for _, cluster := range append(clusters.Remotes, clusters.Local) {
 		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster,
 			&ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
