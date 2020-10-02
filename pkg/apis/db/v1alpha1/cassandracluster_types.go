@@ -1006,7 +1006,7 @@ type CassandraClusterStatus struct {
 	// Indicates if we need to paused specific actions
 	//ActionPaused bool `json:"actionPaused,omitempty"`
 
-	//seeList to be used in Cassandra's Pods (computed by the Operator)
+	//seedList to be used in Cassandra's Pods (computed by the Operator)
 	SeedList []string `json:"seedlist,omitempty"`
 
 	//

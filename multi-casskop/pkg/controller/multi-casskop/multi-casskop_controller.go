@@ -59,16 +59,19 @@ func NewController(clusters models.Clusters, namespace string) (*controller.Cont
 	}
 
 	// Configure watch for MultiCassKop on Local only
-	if err := co.WatchResourceReconcileObject(context.TODO(), clusters.Local.Cluster, &cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	if err := co.WatchResourceReconcileObject(context.TODO(), clusters.Local.Cluster,
+		&cmcv1.MultiCasskop{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 		controller.WatchOptions{Namespace: namespace}); err != nil {
-		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
+		return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v",
+			clusters.Local.Name, err)
 	}
 
-	// Configure watch for CassandraCluster on remote (
-	for _, cluster := range clusters.Remotes {
-		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster, &ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
+	// Configure watch for CassandraCluster on all sites (
+	for _, cluster := range append(clusters.Remotes, clusters.Local) {
+		if err := co.WatchResourceReconcileObject(context.TODO(), cluster.Cluster,
+			&ccv1.CassandraCluster{ObjectMeta: metav1.ObjectMeta{Namespace: namespace}},
 			controller.WatchOptions{Namespace: namespace}); err != nil {
-			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", clusters.Local.Name, err)
+			return nil, fmt.Errorf("setting up MultiCasskop watch in Cluster %s Cluster: %v", cluster.Name, err)
 		}
 	}
 	return co, nil
@@ -122,12 +125,10 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		return requeue, err
 	}
 
-	if ok := r.updateDeletetrategy(); ok == true {
+	if r.updateDeletetrategy() == true {
 		err := localClient.Update(context.TODO(), r.cmc)
 		return requeue, err
 	}
-
-	//var storedCC *ccv1.CassandraCluster`
 
 	// For all clients (local & remotes)
 	clients := r.clients.FlatClients()
@@ -152,14 +153,15 @@ func (r *reconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) 
 		}
 		if update {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
-				"kubernetes": client.Name}).Infof("Just Update CassandraCluster, returning for now..")
+				"kubernetes": client.Name}).Infof("CassandraCluster created/updated, returning for now..")
 			return requeue30, err
 		}
 
 		if !r.ReadyCassandraCluster(storedCC) {
 			logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace,
 				"kubernetes": client.Name}).Infof("Cluster is not Ready, "+
-				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase, storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
+				"we requeue [phase=%s / action=%s / status=%s]", storedCC.Status.Phase,
+				storedCC.Status.LastClusterAction, storedCC.Status.LastClusterActionStatus)
 			return requeue30, err
 		}
 	}

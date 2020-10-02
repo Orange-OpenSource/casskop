@@ -12,8 +12,8 @@ rules:
 - apiGroups:
   - db.orange.com
   resources:
-    - "multicasskops"
-    - "cassandraclusters"
+    - multicasskops
+    - cassandraclusters
   verbs:
     - create
     - delete
