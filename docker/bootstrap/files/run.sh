@@ -36,20 +36,6 @@ then
    echo "-Dcassandra.replace_address=$CASSANDRA_REPLACE_NODE/" >> "$CASSANDRA_CONF/jvm.options"
 fi
 
-echo "apply configuration changes"
-# Until https://github.com/datastax/cass-config-definitions/pull/20 is merged
-for yaml in \
-  disk_optimization_strategy \
-  memtable_cleanup_threshold
-do
-  var="CASSANDRA_${yaml^^}"
-  val="${!var}"
-  if [ "$val" ]
-  then
-    sed -ri 's/^(# )?('"$yaml"':).*/\2 '"$val"'/' "$CASSANDRA_CFG"
-  fi
-done
-
 sed -ri 's/- class_name: .*/- class_name: '"$CASSANDRA_SEED_PROVIDER"'/' $CASSANDRA_CFG
 
 JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"

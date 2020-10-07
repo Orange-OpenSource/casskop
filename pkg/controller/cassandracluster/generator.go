@@ -750,7 +750,7 @@ func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraCl
 
 	return v1.Container{
 		Name:            "init-config",
-		Image:           "datastax/cass-config-builder:1.0.2",
+		Image:           "datastax/cass-config-builder:1.0.3",
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             initContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
 		VolumeMounts:    volumeMounts,
