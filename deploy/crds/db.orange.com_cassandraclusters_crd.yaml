@@ -1703,8 +1703,8 @@ spec:
                   in. Phase goes as one way as below:   Initial -> Running <-> updating'
                 type: string
               seedlist:
-                description: seeList to be used in Cassandra's Pods (computed by the
-                  Operator)
+                description: seedList to be used in Cassandra's Pods (computed by
+                  the Operator)
                 items:
                   type: string
                 type: array

@@ -46,7 +46,7 @@ spec:
                 to load along with each C* pod
               properties:
                 image:
-                  description: 'Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"'
+                  description: 'Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha8"'
                   type: string
                 imagePullPolicy:
                   description: ImagePullPolicy define the pull policy for backrest
