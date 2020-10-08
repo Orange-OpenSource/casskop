@@ -35,6 +35,6 @@ We are currently looking to provide an alternative to use the [Management API](h
 
 Multi-CassKop goal is to bring the ability to deploy a Cassandra cluster within different regions, each of them running an independant Kubernetes cluster. Multi-Casskop insure that the Cassandra nodes deployed by each local CassKop will be part of the same Cassandra ring by managing a coherent creation of CassandraCluster objects from it's own MultiCasskop custom ressource.
 
-![multi casskop design](/casskop/img/1_concepts/multi-casskop.png)
+![multi casskop design](/img/1_concepts/multi-casskop.png)
 
 MultiCassKop starts by iterrating on every contexts passed in parameters then it register the controller. The controller needs to be able to interract with MultiCasskop and CassandraCluster CRD objetcs. In addition the controller needs to watch for MultiCasskop as it will need to react on any changes that occured on thoses objects for the given namespace.

@@ -1,19 +1,20 @@
 module.exports = {
-  title: 'Casskop',
+  title: 'CassKop',
   tagline: 'Open-Source, Apache Cassandra operator for Kubernetes',
   url: 'https://orange-opensource.github.io',
   baseUrl: '/casskop/',
+  onBrokenLinks: 'throw',
   favicon: 'img/casskop.ico',
   organizationName: 'Orange-OpenSource', // Usually your GitHub org/user name.
   projectName: 'casskop', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'Casskop',
+      title: 'CassKop',
       logo: {
-        alt: 'Casskop Logo',
+        alt: 'CassKop Logo',
         src: 'img/casskop_alone.png',
       },
-      links: [
+      items: [
         {to: 'docs/1_concepts/1_introduction', label: 'Docs', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
@@ -73,15 +74,21 @@ module.exports = {
       copyright: `Copyright © ${new Date().getFullYear()} Orange, Inc. Built with Docusaurus.`,
     },
   },
-  themes: ['@docusaurus/theme-classic', '@docusaurus/theme-live-codeblock'],
   presets: [
     [
       '@docusaurus/preset-classic',
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
+          // Please change this to your repo.
           editUrl:
-              'https://github.com/Orange-OpenSource//casskop/edit/master/website/',
+            'https://github.com/Orange-OpenSource//casskop/edit/master/website/',
+        },
+        blog: {
+          showReadingTime: true,
+          // Please change this to your repo.
+          editUrl:
+            'https://github.com/Orange-OpenSource//casskop/edit/master/website/blog',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -90,5 +97,3 @@ module.exports = {
     ],
   ],
 };
-
-

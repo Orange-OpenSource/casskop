@@ -39,7 +39,7 @@ Cassandra will run on Kubernetes nodes, which may already have some labels repre
 
 Example :
 
-![](/static/slides/assets/kubernetes-operators/topology-custom-example.png)
+![](/slides/assets/kubernetes-operators/topology-custom-example.png)
 
 Example of labels for node001 in our dc:
 
@@ -54,7 +54,7 @@ location.myorg.com/street=Rue_3
 
 In the cloud the labels used for topology may better look like :
 
-![](/static/slides/assets/kubernetes-operators/topology-gke-example.png)
+![](/slides/assets/kubernetes-operators/topology-gke-example.png)
 
 ```bash
 beta.kubernetes.io/fluentd-ds-ready=true

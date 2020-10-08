@@ -64,7 +64,6 @@ module.exports = {
                 "8_contributing/2_release_guide",
                 "8_contributing/3_reporting_bugs",
                 "8_contributing/4_credits",
-
             ]
         }
 };
