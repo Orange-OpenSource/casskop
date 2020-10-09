@@ -305,20 +305,16 @@ spec:
                 minimum: 1
                 type: integer
               serverType:
-                description: 'Server type: "cassandra" or "dse"'
+                default: cassandra
+                description: 'Server type: "cassandra" or "dse" for config builder,
+                  default to cassandra ServerType string `json:"serverType,omitempty"`'
                 enum:
                 - cassandra
                 - dse
                 type: string
               serverVersion:
-                description: Version string for config builder, used to generate Cassandra
-                  server configuration
-                enum:
-                - 6.8.0
-                - 6.8.1
-                - 3.11.6
-                - 3.11.7
-                - 4.0.0
+                description: Version string for config builder https://github.com/datastax/cass-config-definitions,
+                  used to generate Cassandra server configuration
                 type: string
               service:
                 description: ServicePolicy defines the policy for headless service
@@ -1646,7 +1642,7 @@ spec:
                   with really good Care
                 type: boolean
             required:
-            - serverVersion
+            - serverType
             type: object
             x-kubernetes-preserve-unknown-fields: true
           status:

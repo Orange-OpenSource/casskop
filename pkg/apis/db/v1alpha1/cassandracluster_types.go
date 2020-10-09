@@ -822,14 +822,15 @@ type CassandraClusterSpec struct {
 	// If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
 	ConfigMapName string `json:"configMapName,omitempty"`
 
-	// Version string for config builder,
+	// Version string for config builder https://github.com/datastax/cass-config-definitions,
 	// used to generate Cassandra server configuration
-	// +kubebuilder:validation:Enum="6.8.0";"6.8.1";"3.11.6";"3.11.7";"4.0.0"
-	ServerVersion string `json:"serverVersion"`
+	ServerVersion string `json:"serverVersion,omitempty"`
 
-	// Server type: "cassandra" or "dse"
+	// Server type: "cassandra" or "dse" for config builder, default to cassandra
 	// +kubebuilder:validation:Enum=cassandra;dse
-	ServerType string `json:"serverType,omitempty"`
+	// +kubebuilder:default:=cassandra
+	//ServerType string `json:"serverType,omitempty"`
+	ServerType string `json:"serverType"`
 
 	// Config for the Cassandra nodes
 	Config json.RawMessage `json:"config,omitempty"`
