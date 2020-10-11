@@ -236,7 +236,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		60, 10, 10, 0, 0, 120, 20, 10, 0, 0)
 	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
 	checkBackRestSidecar(t, stsDefault.Spec.Template.Spec.Containers,
-		api.DefaultBackRestSidecarImage,
+		"",
 		"",
 		v1.ResourceRequirements{
 			Requests: nil,

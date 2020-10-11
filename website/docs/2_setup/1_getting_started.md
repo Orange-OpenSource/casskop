@@ -111,43 +111,21 @@ You can find example [helm value.yaml](https://github.com/Orange-OpenSource/cass
 
 ```console
 kubectl create namespace monitoring
-helm install --namespace monitoring --name prometheus stable/prometheus-operator
+helm install --namespace monitoring prometheus-monitoring stable/prometheus-operator \
+    --set prometheusOperator.createCustomResource=false \
+    --set grafana.image.tag=7.0.1 \
+    --set grafana.plugins="{briangann-gauge-panel,grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel,savantly-heatmap-panel,vonage-status-panel}"
 ```
 
 #### Add ServiceMonitor for Cassandra
 
-Then you have to define a ServiceMonitor object to monitor
-cluster deployed by your cassandra operator (one time), update this to specify which namespace to monitor.
+Then you have to create ServiceMonitor objects to monitor Cassandra nodes and CassKop. You can update this to specify 
+which namespace to monitor (Your namespace need to be listed in the `namespaceSelector` section.)
 
-cassandra-service-monitor.yml
+`k apply -f monitoring/servicemonitor/`
 
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kube-prometheus-cassandra-k8s-jmx
-  labels:
-    k8s-apps: cassandra-k8s-jmx
-    prometheus: kube-prometheus
-    component: cassandra
-    release: prometheus
-spec:
-  jobLabel: kube-prometheus-cassandra-k8s-jmx
-  selector:
-    matchLabels:
-      k8s-app: exporter-cassandra-jmx
-  namespaceSelector:
-      matchNames:
-      - cassandra
-      - cassandra-demo
-      - default
-  endpoints:
-  - port: promjmx
-    interval: 15s
-```
-
-Your namespace need to be listed in the `namespaceSelector` section.
 
 #### Add Grafana dashboard for Cassandra
 
-You can import this [dashboard](https://github.com/Orange-OpenSource/casskop/blob/master/samples/prometheus-grafana-cassandra-dashboard.json) to retrieve metrics about your Cassandra cluster.
+You can use our dashboard that monitors both Cassandra nodes and CassKop by running:
+`k apply -f monitoring/dashboards/`
