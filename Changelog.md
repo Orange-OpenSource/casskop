@@ -13,6 +13,25 @@
 
 ### Bug Fixes
 
+## v1.0.0
+
+### Added
+
+- PR [#258](https://github.com/Orange-OpenSource/casskop/pull/268)
+- PR [#267](https://github.com/Orange-OpenSource/casskop/pull/267)
+- PR [#260](ttps://github.com/Orange-OpenSource/casskop/pull/260)
+
+### Changed
+- PR [#265](https://github.com/Orange-OpenSource/casskop/pull/265)
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- PR [#263](https://github.com/Orange-OpenSource/casskop/pull/263)
+
 ## v0.5.6
 
 ### Added

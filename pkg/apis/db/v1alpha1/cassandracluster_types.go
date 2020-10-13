@@ -26,10 +26,6 @@ import (
 )
 
 const (
-	// Backup Restore default config
-	DefaultBackRestSidecarImage         = "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha8"
-	DefaultBackRestSidecarContainerPort int32  = 4567
-
 	DefaultLivenessInitialDelaySeconds int32 = 120
 	DefaultLivenessHealthCheckTimeout  int32 = 20
 	DefaultLivenessHealthCheckPeriod   int32 = 10
@@ -42,7 +38,6 @@ const (
 	defaultBootstrapImage         = "orangeopensource/cassandra-bootstrap:0.1.5"
 	defaultServiceAccountName     = "cassandra-cluster-node"
 	InitContainerCmd              = "cp -vr /etc/cassandra/* /bootstrap"
-	defaultNbMaxConcurrentCleanup = 2
 	defaultMaxPodUnavailable      = 1
 	defaultNumTokens              = 256
 	defaultImagePullPolicy        = v1.PullAlways
@@ -176,9 +171,6 @@ func (cc *CassandraCluster) CheckDefaults() {
 	// BackupRestore default config
 	if ccs.BackRestSidecar == nil {
 		ccs.BackRestSidecar = &BackRestSidecar{}
-	}
-	if len(ccs.BackRestSidecar.Image) == 0 {
-		ccs.BackRestSidecar.Image = DefaultBackRestSidecarImage
 	}
 }
 
@@ -970,7 +962,8 @@ type CPUAndMem struct {
 
 // BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
-	// Image of backup/restore sidecar, default : "gcr.io/cassandra-operator/cassandra-sidecar:2.0.0-alpha3"
+	// Image of backup/restore sidecar
+	// +kubebuilder:default:="gcr.io/cassandra-operator/instaclustr-icarus:1.0.0"
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`

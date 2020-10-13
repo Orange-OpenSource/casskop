@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-casskop
+  labels:
+    app: cassandra
+    release: prometheus-monitoring
+spec:
+  jobLabel: kube-prometheus-cassandra-k8s
+  selector:
+    matchLabels:
+      name: cassandra-operator
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: http-metrics
+      interval: 15s
