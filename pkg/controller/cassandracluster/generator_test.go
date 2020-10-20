@@ -499,6 +499,18 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 				assert.Contains(envVar, env.Name)
 				assert.Equal(envVar[env.Name], env.Value)
 			}
+		} else {
+			// Check cassandra container env vars
+			podIP := v1.EnvVar{
+				Name: "POD_IP",
+				ValueFrom: &v1.EnvVarSource{
+					FieldRef: &v1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "status.podIP",
+					},
+				},
+			}
+			assert.Contains(container.Env, podIP)
 		}
 	}
 }
