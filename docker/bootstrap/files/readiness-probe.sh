@@ -14,8 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Add Jolokia credentials, if defined in environment.
+if [[ -z $JOLOKIA_USER ]] || [[ -z $JOLOKIA_PASSWORD ]]; then
+    USER_OPT=""
+else
+    USER_OPT="--user $JOLOKIA_USER:$JOLOKIA_PASSWORD"
+fi
+
 # We check when the node is up and in normal state
-CURL="/opt/bin/curl -s --connect-timeout 0.5"
+CURL="/opt/bin/curl $USER_OPT -s --connect-timeout 0.5"
 BASE_CMD="http://$POD_IP:8778/jolokia/read/org.apache.cassandra.db:type=StorageService"
 
 if $CURL ${BASE_CMD}/LiveNodes | grep -q $POD_IP; then
