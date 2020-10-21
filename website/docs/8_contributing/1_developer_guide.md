@@ -40,10 +40,10 @@ and not all steps could be executed.
 
 Casskop has been validated with :
 
-- [dep](dep_tool) version v0.5.1+.
-- [go](go_tool) version v1.13+.
-- [docker](docker_tool) version 18.09+.
-- [kubectl](kubectl_tool) version v1.13.3+.
+- [dep](https://golang.github.io/dep/) version v0.5.1+.
+- [go](https://golang.org) version v1.13+.
+- [docker](https://www.docker.com) version 18.09+.
+- [kubectl](https://kubernetes.io/fr/docs/tasks/tools/install-kubectl/) version v1.13.3+.
 - [Helm](https://helm.sh/) version v2.12.2.
 - Fork from [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.18.0 : [Operator sdk - forked](https://github.com/erdrix/operator-sdk/tree/v0.18.0-forked-pr317)
 
