@@ -374,7 +374,9 @@ jobs:
   filters:
     # ignore any commit on any branch by default
     branches:
-      only: master
+      only:
+      - master
+      - fix-website-doc
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
