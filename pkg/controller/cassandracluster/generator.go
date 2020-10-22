@@ -596,10 +596,6 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	return bootstrapEnvVars
 }
 
-func cassandraContainerEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
-	return commonBootstrapCassandraEnvVar(cc)
-}
-
 func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
 	commonEnvVars := []v1.EnvVar{
 		{
@@ -768,7 +764,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 				},
 			},
 		},
-		Env: cassandraContainerEnvVar(cc),
+		Env: commonBootstrapCassandraEnvVar(cc),
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,
