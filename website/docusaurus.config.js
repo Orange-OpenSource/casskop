@@ -69,6 +69,12 @@ module.exports = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Orange, Inc. Built with Docusaurus.`,
     },
+
+    // Search option
+    algolia: {
+      apiKey: 'b623b706636e1055eb80efe0e61979e0',
+      indexName: 'orange-opensource',
+    },
   },
   presets: [
     [
