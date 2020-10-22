@@ -51,10 +51,6 @@ module.exports = {
               label: 'Blog',
               to: 'blog',
             },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com',
-            },
           ],
         },
         {
