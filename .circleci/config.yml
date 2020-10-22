@@ -376,7 +376,6 @@ jobs:
     branches:
       only:
       - master
-      - fix-website-doc
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
