@@ -15,9 +15,7 @@
 # limitations under the License.
 
 # Add Jolokia credentials, if defined in environment.
-if [[ -z $JOLOKIA_USER ]] || [[ -z $JOLOKIA_PASSWORD ]]; then
-    USER_OPT=""
-else
+if [[ -n $JOLOKIA_USER ]] && [[ -n $JOLOKIA_PASSWORD ]]; then
     USER_OPT="--user $JOLOKIA_USER:$JOLOKIA_PASSWORD"
 fi
 
