@@ -32,6 +32,7 @@ orbs:
         working_directory: /home/circleci/<< parameters.operatorDir >>
         environment:
           K3S_IMAGE: rancher/k3s:v1.18.4-k3s1
+          K3S_CLUSTER: k3s-default
           K8S_VERSION: v1.18.4
           GOPATH: /go
           GO111MODULE: on
@@ -42,7 +43,7 @@ orbs:
               name: Set up K3d
               command: |
                 wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-                k3d cluster create --image ${K3S_IMAGE} --wait 0
+                k3d cluster create --image ${K3S_IMAGE} ${K3S_CLUSTER} --wait 0
                 mkdir -p ${HOME}/.kube
           - checkout:
               path: /home/circleci/casskop
@@ -61,7 +62,7 @@ orbs:
                   docker pull $(cat casskop-build-image-tar)
                   docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
                 fi
-                k3d image import casskop-build-image.tar
+                k3d image import casskop-build-image.tar -c ${K3S_CLUSTER}
           - save_cache:
               name: Save Casskop build image
               key: '{{ checksum "casskop-build-image-tar" }}'
