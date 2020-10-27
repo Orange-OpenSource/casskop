@@ -48,8 +48,11 @@ Then the chart itself depending on your installed version of Helm:
 <TabItem value="helm3">
 
 ```bash
-# You have to create the namespace before executing following command
-kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+# You have to create the namespace before executing following commands
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml 
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandrabackups_crd.yaml 
+kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandrarestores_crd.yaml
+
 helm install casskop --namespace=cassandra orange-incubator/cassandra-operator
 ```
 

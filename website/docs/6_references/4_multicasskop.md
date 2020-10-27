@@ -106,8 +106,8 @@ spec:
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
 |deleteCassandraCluster|bool|If you have set to true, then when deleting the `MultiCassKop` object, it will cascade the deletion of the `CassandraCluster` object in the targeted k8s clusters. Then each local CassKop will delete their Cassandra clusters.|Yes|true|
-|base|[CassandraCluster](/casskop/docs/6_references/1_cassandra_cluster/1_cassandra_cluster#cassandracluster)|Define for all `CassandraCluster` the default configuration|Yes| - |
-|override|map\[string\][CassandraCluster](/casskop/docs/6_references/1_cassandra_cluster/1_cassandra_cluster#cassandracluster)|Define for each `CassandraCluster` a specific configuration not shared across all of them| Yes | -  |
+|base|[CassandraCluster](/casskop/docs/6_references/1_cassandra_cluster#cassandracluster)|Define for all `CassandraCluster` the default configuration|Yes| - |
+|override|map\[string\][CassandraCluster](/casskop/docs/6_references/1_cassandra_cluster#cassandracluster)|Define for each `CassandraCluster` a specific configuration not shared across all of them| Yes | -  |
 
 ## MultiCasskopStatus
 

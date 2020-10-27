@@ -306,7 +306,7 @@ jobs:
   deploy-website:
     working_directory: /home/circleci/casskop/website
     docker: # run the steps with Docker
-      - image: node:13.5.0
+      - image: node:14.13.1
     steps:
       - checkout:
           path: /home/circleci/casskop
@@ -374,7 +374,8 @@ jobs:
   filters:
     # ignore any commit on any branch by default
     branches:
-      only: master
+      only:
+      - master
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop

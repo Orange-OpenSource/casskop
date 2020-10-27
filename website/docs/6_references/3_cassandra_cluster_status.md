@@ -6,7 +6,7 @@ sidebar_label: Cassandra cluster Status
 
 ## CassandraClusterStatus
 
-[Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/11_cassandra_cluster_status)
+[Check documentation for more informations](/casskop/docs/3_configuration_deployment/11_cassandra_cluster_status)
 
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|

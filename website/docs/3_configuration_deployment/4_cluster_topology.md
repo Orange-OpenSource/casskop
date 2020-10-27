@@ -39,7 +39,7 @@ Cassandra will run on Kubernetes nodes, which may already have some labels repre
 
 Example :
 
-![](/slides/assets/kubernetes-operators/topology-custom-example.png)
+![](/img/3_configuration_deployment/topology-custom-example.png)
 
 Example of labels for node001 in our dc:
 
@@ -54,7 +54,7 @@ location.myorg.com/street=Rue_3
 
 In the cloud the labels used for topology may better look like :
 
-![](/slides/assets/kubernetes-operators/topology-gke-example.png)
+![](/img/3_configuration_deployment/topology-gke-example.png)
 
 ```bash
 beta.kubernetes.io/fluentd-ds-ready=true
@@ -82,7 +82,7 @@ placement constraints for each Cassandra rack we define.
 >topology-aware dynamic provisioning feature proposed in future version of K8S (more information here :
 >https://kubernetes.io/blog/2018/10/11/topology-aware-volume-provisioning-in-kubernetes/
 
-See an example of configuration with topology : [cassandracluster-demo-gke.yaml](/samples/cassandracluster-demo-gke.yaml)
+See an example of configuration with topology : [cassandracluster-demo-gke.yaml](https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/samples/cassandracluster-demo.yaml)
 
 ## Configuring pod scheduling
 

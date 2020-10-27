@@ -50,8 +50,8 @@ spec:
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
 |metadata|[ObjectMetadata](https://godoc.org/k8s.io/apimachinery/pkg/apis/meta/v1#ObjectMeta)|is metadata that all persisted resources must have, which includes all objects users must create.|No|nil|
-|spec|[CassandraClusterSpec](#cassandraclusterspec)|defines the desired state of CassandraCluster.|No|nil|
-|status|[CassandraClusterStatus](/casskop/docs/6_references/1_cassandra_cluster/3_cassandra_cluster_status#cassandraclusterstatus)|defines the observed state of CassandraCluster.|No|nil|
+|spec|[CassandraClusterSpec](/casskop/docs/6_references/1_cassandra_cluster#cassandraclusterspec)|defines the desired state of CassandraCluster.|No|nil|
+|status|[CassandraClusterStatus](/casskop/docs/6_references/3_cassandra_cluster_status#cassandraclusterstatus)|defines the observed state of CassandraCluster.|No|nil|
 
 ## CassandraClusterSpec
 
@@ -78,16 +78,16 @@ spec:
 |gcStdout|bool|Set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default|Yes|true|
 |autoUpdateSeedList|bool| Defines if the Operator automatically update the SeedList according to new cluster CRD topology|Yes|false|
 |maxPodUnavailable|int32|Number of MaxPodUnavailable used in the [PodDisruptionBudget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)|Yes|1|
-|restartCountBeforePodDeletion|int32|defines the number of restart allowed for a cassandra container allowed before deleting the pod  to force its restart from scratch. if set to 0 or omit, no action will be performed based on restart count. [Check documentation for more informations](http://localhost:3000/casskop/docs/3_tasks/2_configuration_deployment/9_advanced_configuration#ip-cross-situation-detection)|Yes|0|
+|restartCountBeforePodDeletion|int32|defines the number of restart allowed for a cassandra container allowed before deleting the pod  to force its restart from scratch. if set to 0 or omit, no action will be performed based on restart count. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/9_advanced_configuration#ip-cross-situation-detection)|Yes|0|
 |unlockNextOperation|bool|Very special Flag to hack CassKop reconcile loop - use with really good Care|Yes|false|
-|dataCapacity|string|Define the Capacity for Persistent Volume Claims in the local storage. [Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/3_storage#configuration)|Yes||
-|dataStorageClass|string|Define StorageClass for Persistent Volume Claims in the local storage. [Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/3_storage#configuration)|Yes||
-|storageConfigs|\[  \][StorageConfig](#storageconfig)|Defines additional storage configurations. [Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/3_storage#additionnals-storages-configuration)|No| - |
-|sidecarConfigs|\[  \][Container](https://godoc.org/k8s.io/api/core/v1#Container)|Defines additional sidecar configurations. [Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/4_sidecars)|No| - |
-|configMapName|string|Name of the ConfigMap for Cassandra configuration (cassandra.yaml). If this is empty, operator will uses default cassandra.yaml from the baseImage. If this is not empty, operator will uses the cassandra.yaml from the Configmap instead. [Check documentation for more informations](/casskop/docs/3_tasks/2_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)|No| - |
+|dataCapacity|string|Define the Capacity for Persistent Volume Claims in the local storage. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/3_storage#configuration)|Yes||
+|dataStorageClass|string|Define StorageClass for Persistent Volume Claims in the local storage. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/3_storage#configuration)|Yes||
+|storageConfigs|\[  \][StorageConfig](#storageconfig)|Defines additional storage configurations. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/3_storage#additionnals-storages-configuration)|No| - |
+|sidecarConfigs|\[  \][Container](https://godoc.org/k8s.io/api/core/v1#Container)|Defines additional sidecar configurations. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/5_sidecars)|No| - |
+|configMapName|string|Name of the ConfigMap for Cassandra configuration (cassandra.yaml). If this is empty, operator will uses default cassandra.yaml from the baseImage. If this is not empty, operator will uses the cassandra.yaml from the Configmap instead. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/2_cassandra_configuration#configuration-override-using-configmap)|No| - |
 |imagePullSecret|[LocalObjectReference](https://godoc.org/k8s.io/api/core/v1#LocalObjectReference)|Name of the secret to uses to authenticate on Docker registries. If this is empty, operator do nothing. If this is not empty, propagate the imagePullSecrets to the statefulsets|No| - |
 |imageJolokiaSecret|[LocalObjectReference](https://godoc.org/k8s.io/api/core/v1#LocalObjectReference)|JMX Secret if Set is used to set JMX_USER and JMX_PASSWORD|No| - |
-|topology|[Topology](/casskop/docs/6_references/1_cassandra_cluster/2_topology#topology)|To create Cassandra DC and Racks and to target appropriate Kubernetes Nodes|Yes| - |
+|topology|[Topology](/casskop/docs/6_references/2_topology#topology)|To create Cassandra DC and Racks and to target appropriate Kubernetes Nodes|Yes| - |
 |livenessInitialDelaySeconds|int32|Defines initial delay for the liveness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|120|
 |livenessHealthCheckTimeout|int32|Defines health check timeout for the liveness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|20|
 |livenessHealthCheckPeriod|int32|Defines health check period for the liveness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|10|
