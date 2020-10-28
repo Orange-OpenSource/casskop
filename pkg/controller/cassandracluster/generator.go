@@ -378,35 +378,6 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		}
 	}
 
-	for idx, container := range ss.Spec.Template.Spec.Containers {
-		if container.Name == cassandraContainerName {
-			if (cc.Spec.ImageJolokiaSecret != v1.LocalObjectReference{}) {
-				ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env,
-					v1.EnvVar{
-						Name: "JOLOKIA_USER",
-						ValueFrom: &v1.EnvVarSource{
-							SecretKeyRef: &v1.SecretKeySelector{
-								LocalObjectReference: cc.Spec.ImageJolokiaSecret,
-								Key:                  "username",
-							},
-						},
-					},
-					v1.EnvVar{
-						Name: "JOLOKIA_PASSWORD",
-						ValueFrom: &v1.EnvVarSource{
-							SecretKeyRef: &v1.SecretKeySelector{
-								LocalObjectReference: cc.Spec.ImageJolokiaSecret,
-								Key:                  "password",
-							},
-						},
-					},
-					v1.EnvVar{
-						Name:  "CASSANDRA_AUTH_JOLOKIA",
-						Value: "true"})
-			}
-		}
-	}
-
 	// Merge cassandra main container environment variables into sidecars.
 
 	var sidecarEnv []v1.EnvVar
@@ -580,8 +551,7 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	//in statefulset.go we surcharge this value with conditions
 	seedList := cc.SeedList(&status.SeedList)
 	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
-
-	return []v1.EnvVar{
+	bootstrapEnvVars := []v1.EnvVar{
 		{
 			Name:  "CASSANDRA_MAX_HEAP",
 			Value: defineJvmMemory(resources).maxHeapSize,
@@ -593,15 +563,6 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 		{
 			Name:  "CASSANDRA_CLUSTER_NAME",
 			Value: name,
-		},
-		{
-			Name: "POD_IP",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "status.podIP",
-				},
-			},
 		},
 		{
 			Name:  "CASSANDRA_GC_STDOUT",
@@ -630,6 +591,51 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 			},
 		},
 	}
+	commonEnvVars := commonBootstrapCassandraEnvVar(cc)
+	bootstrapEnvVars = append(bootstrapEnvVars, commonEnvVars...)
+	return bootstrapEnvVars
+}
+
+func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
+	commonEnvVars := []v1.EnvVar{
+		{
+			Name: "POD_IP",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "status.podIP",
+				},
+			},
+		},
+	}
+	if (cc.Spec.ImageJolokiaSecret != v1.LocalObjectReference{}) {
+		jolokiaEnvVars := []v1.EnvVar{
+			{
+				Name: "JOLOKIA_USER",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: cc.Spec.ImageJolokiaSecret,
+						Key:                  "username",
+					},
+				},
+			},
+			{
+				Name: "JOLOKIA_PASSWORD",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: cc.Spec.ImageJolokiaSecret,
+						Key:                  "password",
+					},
+				},
+			},
+			{
+				Name:  "CASSANDRA_AUTH_JOLOKIA",
+				Value: "true",
+			},
+		}
+		commonEnvVars = append(commonEnvVars, jolokiaEnvVars...)
+	}
+	return commonEnvVars
 }
 
 // createInitConfigContainer allows to copy origin config files from init-config container to /bootstrap directory
@@ -758,17 +764,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 				},
 			},
 		},
-		Env: []v1.EnvVar{
-			{
-				Name: "POD_IP",
-				ValueFrom: &v1.EnvVarSource{
-					FieldRef: &v1.ObjectFieldSelector{
-						APIVersion: "v1",
-						FieldPath:  "status.podIP",
-					},
-				},
-			},
-		},
+		Env: commonBootstrapCassandraEnvVar(cc),
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
 			TimeoutSeconds:      *cc.Spec.ReadinessHealthCheckTimeout,

@@ -13,6 +13,8 @@
 
 ### Bug Fixes
 
+- PR [#273](https://github.com/Orange-OpenSource/casskop/pull/273) - **[CassandraCluster]** Fix Jolokia auth.
+
 ## v1.0.0
 
 ### Added
