@@ -60,7 +60,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	cassandraCluster := &v1alpha1.CassandraCluster{}
 	if cassandraCluster, err = k8s.LookupCassandraCluster(r.client, cassandraRestore.Spec.CassandraCluster,
 		cassandraRestore.Namespace); err != nil {
-		// This shouldn't trigger anymore, but leaving it here as a safetybelt
+		// This shouldn't trigger anymore, but leaving it here as a safety belt
 		if k8s.IsMarkedForDeletion(cassandraRestore.ObjectMeta) {
 			reqLogger.Info("Cluster is gone already, there is nothing we can do")
 			return common.Reconciled()
@@ -86,7 +86,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Require restore on first pod of the cluster.
-	if cassandraRestore.Status.Condition == nil {
+	if len(cassandraRestore.Status.CoordinatorMember) == 0 {
 		err = r.requiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
