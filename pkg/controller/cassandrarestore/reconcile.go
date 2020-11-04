@@ -36,12 +36,13 @@ type ReconcileCassandraRestore struct {
 func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 
 	reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": request.Namespace, "Request.Name": request.Name})
-	reqLogger.Info("Reconciling CassandraBackup")
+	reqLogger.Info("Reconciling CassandraRestore")
 
 	ctx := context.TODO()
 
 	// Fetch the CassandraRestore cassandraRestore
 	cassandraRestore := &v1alpha1.CassandraRestore{}
+
 	err := r.client.Get(ctx, request.NamespacedName, cassandraRestore)
 
 	if err != nil {
@@ -110,7 +111,9 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		return common.RequeueWithError(reqLogger, "No coordinator member to perform the restore", err)
 	}
 
-	if cassandraRestore.Status.Condition.Type.IsRequired() {
+	restoreConditionType := v1alpha1.RestoreConditionType(cassandraRestore.Status.Condition.Type)
+
+	if restoreConditionType.IsRequired() {
 		err = r.handleRequiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
@@ -138,8 +141,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				cassandraRestore.Status.ID, cassandraRestore.Status.CoordinatorMember))
 	}
 
-	if cassandraRestore.Status.Condition.Type.IsInProgress() {
-
+	if restoreConditionType.IsInProgress() {
 		err = r.checkRestoreOperationState(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
 			switch errors.Cause(err).(type) {
@@ -183,16 +185,17 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 	if len(pods.Items) > 0 {
 		if err := UpdateRestoreStatus(r.client, restore,
 			v1alpha1.CassandraRestoreStatus{
-				Condition: &v1alpha1.RestoreCondition{
-					Type:               v1alpha1.RestoreRequired,
-					LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
+				BackRestStatus: v1alpha1.BackRestStatus{
+					Condition: &v1alpha1.BackRestCondition{
+						Type:               string(v1alpha1.RestoreRequired),
+						LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
+					},
+					CoordinatorMember: pods.Items[0].Name,
 				},
-				CoordinatorMember: pods.Items[0].Name,
 			}, reqLogger); err != nil {
 			return errors.WrapIfWithDetails(err, "Could not update status for restore",
 				"restore", restore)
 		}
-
 		return nil
 	}
 
@@ -262,15 +265,17 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 			"restore", restore)
 	}
 
+	restoreConditionType := v1alpha1.RestoreConditionType(restore.Status.Condition.Type)
+
 	// Restore operation failed or canceled,
 	// TODO : reschedule it by marking restore Condition.State = RestoreRequired ?
-	if restore.Status.Condition.Type.IsInError() {
+	if restoreConditionType.IsInError() {
 		return errorfactory.New(errorfactory.CassandraBackupOperationFailure{}, err,
 		"cassandra backup sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
 	}
 
 	// Restore operation completed successfully
-	if restore.Status.Condition.Type.IsCompleted() {
+	if restoreConditionType.IsCompleted() {
 		return nil
 	}
 

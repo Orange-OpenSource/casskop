@@ -9,7 +9,7 @@ import (
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,7 +31,7 @@ func NewClient(client client.Client, cc *api.CassandraCluster, pod *corev1.Pod) 
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	backup *api.CassandraBackup) (*api.CassandraRestoreStatus, error) {
-	restoreOperationRequest := &csapi.RestoreOperationRequest {
+	restoreOperationRequest := &icarus.RestoreOperationRequest {
 		Type_: "restore",
 		StorageLocation: backup.Spec.StorageLocation,
 		SnapshotTag: backup.Spec.SnapshotTag,
@@ -39,7 +39,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		ExactSchemaVersion: restore.Spec.ExactSchemaVersion,
 		RestorationPhase: string(api.RestorationPhaseDownload),
 		GlobalRequest: true,
-		Import_: &csapi.AllOfRestoreOperationRequestImport_{
+		Import_: &icarus.AllOfRestoreOperationRequestImport_{
 			Type_: "import",
 			SourceDir: "/var/lib/cassandra/data/downloadedsstables",
 		},
@@ -78,7 +78,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	bandwidth := strings.Replace(backup.Spec.Bandwidth, " ", "", -1)
 	bandwidthDataRate, err := dataRateFromBandwidth(bandwidth)
 
-	backupOperationRequest := &csapi.BackupOperationRequest{
+	backupOperationRequest := &icarus.BackupOperationRequest{
 		Type_:                 "backup",
 		StorageLocation:       backup.Spec.StorageLocation,
 		SnapshotTag:           backup.Spec.SnapshotTag,
@@ -112,21 +112,21 @@ func (c *Client) RestoreStatusByID(id string) (*api.CassandraRestoreStatus, erro
 	return &status, nil
 }
 
-func (c *Client) BackupStatusByID(id string) (*api.CassandraBackupStatus, error) {
+func (c *Client) BackupStatusByID(id string) (api.CassandraBackupStatus, error) {
 
 	backupOperation, err := c.client.BackupOperationByID(id)
 	if err != nil  {
 		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find backup operation")
-		return nil, err
+		return api.CassandraBackupStatus{}, err
 	}
 
 	status := api.ComputeBackupStatus(backupOperation, c.CoordinatorMember)
-	return &status, nil
+	return status, nil
 }
 
 var regexBandwidthSupportedFormat = regexp.MustCompile(`(?i)^(?P<Value>\d+)(?P<Unit>[kmg]?)$`)
 
-func dataRateFromBandwidth(value string) (*csapi.DataRate, error) {
+func dataRateFromBandwidth(value string) (*icarus.DataRate, error) {
 	bandwidth := strings.ToUpper(strings.Replace(value, " ", "", -1))
 
 	if bandwidth == "" {
@@ -138,5 +138,5 @@ func dataRateFromBandwidth(value string) (*csapi.DataRate, error) {
 		return nil, fmt.Errorf("Format of %s not supported", value)
 	}
 	dataValue, _ := strconv.Atoi(matches[1])
-	return &csapi.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil
+	return &icarus.DataRate{Value: int32(dataValue), Unit: matches[2] + "BPS"}, nil
 }

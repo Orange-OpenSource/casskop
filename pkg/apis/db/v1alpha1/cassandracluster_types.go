@@ -1070,7 +1070,7 @@ type CassandraCluster struct {
 type CassandraClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CassandraCluster `json:"items"`
+	Items []CassandraCluster `json:"items"`
 }
 
 func init() {

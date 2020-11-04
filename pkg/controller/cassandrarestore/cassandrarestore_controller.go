@@ -77,12 +77,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if new.Status.Condition == nil {
 				return false
 			}
-			if new.Status.Condition.Type.IsCompleted() {
+			restoreConditionType := api.RestoreConditionType(new.Status.Condition.Type)
+			if restoreConditionType.IsCompleted() {
 				reqLogger.Info("Restore is completed, skipping.")
 				return false
 			}
 
-			if new.Status.Condition.Type.IsInError() {
+			if restoreConditionType.IsInError() {
 				reqLogger.Info("Restore is in error state, skipping.")
 				return false
 			}

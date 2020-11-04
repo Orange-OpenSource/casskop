@@ -7,7 +7,7 @@ import (
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,13 +40,13 @@ func TestGetRestoreOperation(t *testing.T) {
 }
 
 
-func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
+func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 	client := newBuildedMockClient()
 	defer httpmock.DeactivateAndReset()
 
 	sourceDir         := "/var/lib/cassandra/data/downloadedsstables"
 
-	restoreOperationRequest := csapi.RestoreOperationRequest {
+	restoreOperationRequest := icarus.RestoreOperationRequest {
 		Type_: "restore",
 		StorageLocation: storageLocation,
 		SnapshotTag: snapshotTag,
@@ -55,7 +55,7 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 		ExactSchemaVersion: false,
 		RestorationPhase: string(api.RestorationPhaseDownload),
 		GlobalRequest: true,
-		Import_: &csapi.AllOfRestoreOperationRequestImport_{
+		Import_: &icarus.AllOfRestoreOperationRequestImport_{
 			Type_: "import",
 			SourceDir: sourceDir,
 		},
@@ -86,7 +86,7 @@ func performRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error)
 	return client.PerformRestoreOperation(restoreOperationRequest)
 }
 
-func getRestoreMock(codeStatus int) (*csapi.RestoreOperationResponse, error) {
+func getRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 	client := newBuildedMockClient()
 	defer httpmock.DeactivateAndReset()
 

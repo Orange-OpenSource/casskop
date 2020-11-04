@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/mitchellh/mapstructure"
 )
 
-func (client *client) PerformRestoreOperation(restoreOperationReq csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error) {
-	var restoreOperation csapi.RestoreOperationResponse
+func (client *client) PerformRestoreOperation(restoreOperationReq icarus.RestoreOperationRequest) (
+	*icarus.RestoreOperationResponse, error) {
+	var restoreOperation icarus.RestoreOperationResponse
 	podClient := client.podClient
 	if podClient == nil {
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 
-	body, _, err := podClient.OperationsApi.OperationsPost(context.Background(), &csapi.OperationsApiOperationsPostOpts{
+	body, _, err := podClient.OperationsApi.OperationsPost(context.Background(), &icarus.OperationsApiOperationsPostOpts{
 		Body: optional.NewInterface(restoreOperationReq),
 	},)
 
@@ -24,12 +25,11 @@ func (client *client) PerformRestoreOperation(restoreOperationReq csapi.RestoreO
 	}
 
 	mapstructure.Decode(body, &restoreOperation)
-
 	return &restoreOperation, nil
 }
 
-func (client *client) RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error) {
-	var restoreOperation csapi.RestoreOperationResponse
+func (client *client) RestoreOperationByID(operationId string) (*icarus.RestoreOperationResponse, error) {
+	var restoreOperation icarus.RestoreOperationResponse
 
 	if operationId == "" {
 		return nil, fmt.Errorf("must get a non empty id")
@@ -48,11 +48,10 @@ func (client *client) RestoreOperationByID(operationId string) (*csapi.RestoreOp
 	}
 
 	mapstructure.Decode(body, &restoreOperation)
-
 	return &restoreOperation, nil
 }
 
-func (client *client) BackupOperationByID(operationId string) (response *csapi.BackupOperationResponse, err error) {
+func (client *client) BackupOperationByID(operationId string) (response *icarus.BackupOperationResponse, err error) {
 
 	if operationId == "" {
 		return nil, fmt.Errorf("must get a non empty id")
@@ -73,15 +72,16 @@ func (client *client) BackupOperationByID(operationId string) (response *csapi.B
 	return
 }
 
-func (client *client) PerformBackupOperation(request csapi.BackupOperationRequest) (*csapi.BackupOperationResponse, error) {
-	var backupOperationResponse csapi.BackupOperationResponse
+func (client *client) PerformBackupOperation(request icarus.BackupOperationRequest) (
+	*icarus.BackupOperationResponse, error) {
+	var backupOperationResponse icarus.BackupOperationResponse
 
 	podClient := client.podClient
 	if podClient == nil {
 		return nil, ErrNoCassandraBackupClientAvailable
 	}
 
-	body, _, err := podClient.OperationsApi.OperationsPost(context.Background(), &csapi.OperationsApiOperationsPostOpts{
+	body, _, err := podClient.OperationsApi.OperationsPost(context.Background(), &icarus.OperationsApiOperationsPostOpts{
 		Body: optional.NewInterface(request),
 	},)
 

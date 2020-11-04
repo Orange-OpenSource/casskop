@@ -2,8 +2,7 @@ package v1alpha1
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/util"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
-	"github.com/mitchellh/mapstructure"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,30 +45,6 @@ func (r RestoreConditionType) IsCompleted() bool {
 	return r == RestoreCompleted
 }
 
-
-// RestoreCondition describes the observed state of a Restore at a certain point
-type RestoreCondition struct {
-	Type   RestoreConditionType `json:"type"`
-	// +optional
-	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
-	// +optional
-	FailureCause *FailureCause `json:"failureCause,omitempty"`
-}
-
-type FailureCause struct {
-	StackTrace       []StackTrace  `json:"stackTrace"`
-	Message          string        `json:"message"`
-	LocalizedMessage string        `json:"localizedMessage"`
-}
-
-type StackTrace struct {
-	MethodName   string `json:"methodName,omitempty"`
-	FileName     string `json:"fileName,omitempty"`
-	LineNumber   string `json:"lineNumber,omitempty"`
-	ClassName    string `json:"className,omitempty"`
-	NativeMethod string `json:"nativeMethod,omitempty"`
-}
-
 type RestorationPhaseType string
 
 const (
@@ -83,21 +58,8 @@ const (
 
 // CassandraRestoreStatus captures the current status of a Cassandra restore.
 type CassandraRestoreStatus struct {
-	TimeCreated string `json:"timeCreated,omitempty"`
-	TimeStarted string `json:"timeStarted,omitempty"`
-	TimeCompleted string `json:"timeCompleted,omitempty"`
-	Condition *RestoreCondition `json:"conditions,omitempty"`
-	// Progress is a percentage, 100% means the operation is completed, either successfully or with errors
-	Progress string `json:"progress,omitempty"`
-
-	// Name of the pod the restore operation is executed on
-	CoordinatorMember 		string `json:"coordinatorMember,omitempty"`
-
-	Phase RestorationPhaseType `json:"restorationPhase,omitempty"`
-	// unique identifier of an operation, a random id is assigned to each operation after a request is submitted,
-	// from caller's perspective, an id is sent back as a response to his request so he can further query state of that operation,
-	// referencing id, by operations/{id} endpoint
-	ID string `json:"id,omitempty"`
+	BackRestStatus `json:",inline"`
+	Phase    RestorationPhaseType `json:"restorationPhase,omitempty"`
 }
 
 // CassandraRestoreSpec defines the specification for a restore of a Cassandra backup.
@@ -165,26 +127,29 @@ func init() {
 
 // GetRestoreCondition extracts the provided condition from the given status and returns that.
 // Returns nil and -1 if the condition is not present, and the index of the located condition.
-func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *RestoreCondition {
-	if status.Condition != nil && status.Condition.Type == conditionType {
+func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *BackRestCondition {
+	if status.Condition != nil && status.Condition.Type == string(conditionType) {
 		return status.Condition
 	}
 	return nil
 }
 
-func ComputeRestorationStatus(restoreOperationReponse *csapi.RestoreOperationResponse) CassandraRestoreStatus{
-	status := CassandraRestoreStatus{
-		Progress:      ProgressPercentage(restoreOperationReponse.Progress),
-		ID:            restoreOperationReponse.Id,
-		TimeCreated:   restoreOperationReponse.CreationTime,
-		TimeStarted:   restoreOperationReponse.StartTime,
-		TimeCompleted: restoreOperationReponse.CompletionTime,
-		Condition:     &RestoreCondition{},
-		Phase:         RestorationPhase(restoreOperationReponse.RestorationPhase),
+func ComputeRestorationStatus(restoreOperationReponse *icarus.RestoreOperationResponse) CassandraRestoreStatus{
+	return CassandraRestoreStatus{
+		BackRestStatus: BackRestStatus{
+			Progress:      ProgressPercentage(restoreOperationReponse.Progress),
+			ID:            restoreOperationReponse.Id,
+			TimeCreated:   restoreOperationReponse.CreationTime,
+			TimeStarted:   restoreOperationReponse.StartTime,
+			TimeCompleted: restoreOperationReponse.CompletionTime,
+			Condition: &BackRestCondition{
+				LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
+				Type: restoreOperationReponse.State,
+				FailureCause: failureCause(restoreOperationReponse.Errors),
+			},
+		},
+		Phase: RestorationPhase(restoreOperationReponse.RestorationPhase),
 	}
-
-	status.setRestorationCondition(restoreOperationReponse)
-	return status
 }
 
 func RestorationPhase(phase string) RestorationPhaseType {
@@ -194,17 +159,5 @@ func RestorationPhase(phase string) RestorationPhaseType {
 		return restorationPhaseType
 	default:
 		return RestorePhaseUnknown
-	}
-}
-
-func (status *CassandraRestoreStatus) setRestorationCondition(restore *csapi.RestoreOperationResponse) {
-	status.Condition.LastTransitionTime = metav1.Now().Format(util.TimeStampLayout)
-	status.Condition.Type = RestoreConditionType(restore.State)
-
-	if status.Condition.Type.IsInError() {
-		var failureCause FailureCause
-		mapstructure.Decode(*restore.FailureCause, &failureCause)
-
-		status.Condition.FailureCause = &failureCause
 	}
 }

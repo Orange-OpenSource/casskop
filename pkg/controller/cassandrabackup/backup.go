@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"encoding/json"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
@@ -46,41 +47,64 @@ func backup(
 			backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,
 			backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 
-	for range time.NewTicker(2 * time.Second).C {
+	ticker := time.NewTicker(2 * time.Second)
+	for range ticker.C {
 		if status, err := backrestClient.BackupStatusByID(operationID); err != nil {
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
+			ticker.Stop()
 			break
 		} else {
 			if !backupClient.updateStatus(status, logging){
 				continue
 			}
-
-			if status.State == api.BackupFailed {
+			switch api.BackupConditionType(status.Condition.Type) {
+			case api.BackupFailed:
 				recorder.Event(backupClient.backup,
 					corev1.EventTypeWarning,
 					"BackupFailed",
-					fmt.Sprintf("Backup operation %v on node %s has failed", operationID, status.CoordinatorMember))
+					fmt.Sprintf("Backup operation %v on node %s has failed",
+						operationID, status.CoordinatorMember))
+				ticker.Stop()
 				break
-			}
-
-			if status.State == api.BackupCompleted {
+			case api.BackupCompleted:
 				recorder.Event(backupClient.backup,
 					corev1.EventTypeNormal,
 					"BackupCompleted",
 					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.CoordinatorMember))
+				ticker.Stop()
 				break
 			}
 		}
 	}
 }
 
-func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus,
-	logging *logrus.Entry) bool {
-
+func (backupClient *backupClient) updateStatus(status api.CassandraBackupStatus, logging *logrus.Entry) bool {
 	backupClient.backup.Status = status
 
-	jsonPatch := fmt.Sprintf(`{"status":{"coordinatorMember": "%s", "state": "%s", "progress": "%s"}}`,
-		status.CoordinatorMember, status.State, status.Progress)
+	condition := "{}"
+
+	if status.Condition != nil {
+		conditionBytes, err := json.Marshal(status.Condition)
+		if err != nil {
+			logging.Error(err, "Error updating CassandraBackup backup")
+			return false
+		}
+		condition = string(conditionBytes)
+	}
+
+	jsonPatch := fmt.Sprintf(`{
+		"status": {
+			"timeCreated": "%s",
+			"timeStarted": "%s",
+			"timeCompleted": "%s",
+			"condition": %s,
+			"coordinatorMember": "%s",
+			"progress": "%s",
+			"id": "%s"
+		}
+	}`, status.TimeCreated, status.TimeStarted, status.TimeCompleted, condition, status.CoordinatorMember,
+	status.Progress, status.ID)
+
 	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
 	cassandraBackup := &api.CassandraBackup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -89,7 +113,7 @@ func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus
 		}}
 
 	if err := backupClient.client.Patch(context.Background(), cassandraBackup, patchToApply); err != nil {
-		logging.Error(err, "Error updating CassandraBackup backup")
+		logging.Error(err, "Error updating CassandraBackup object")
 		return false
 	}
 	return true

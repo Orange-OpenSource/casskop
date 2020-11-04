@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +24,7 @@ const (
 func TestComputeStatusFromRestoreOperation(t *testing.T) {
 	assert := assert.New(t)
 
-	var restoreOperation csapi.RestoreOperationResponse
+	var restoreOperation icarus.RestoreOperationResponse
 
 	mapstructure.Decode(common.MockRestoreResponse(
 		noDeleteDownloads,
@@ -40,12 +40,17 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 
 	cs := ComputeRestorationStatus(&restoreOperation)
 	assert.Equal(CassandraRestoreStatus{
-		TimeCreated:   "2020-06-10T04:53:05.976Z",
-		TimeStarted:   "2020-06-10T05:53:05.976Z",
-		TimeCompleted: "2020-06-10T06:53:05.976Z",
-		Condition:     &RestoreCondition{Type: RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
-		Progress:      "10%",
+		BackRestStatus: BackRestStatus{
+			TimeCreated:   "2020-06-10T04:53:05.976Z",
+			TimeStarted:   "2020-06-10T05:53:05.976Z",
+			TimeCompleted: "2020-06-10T06:53:05.976Z",
+			Condition:     &BackRestCondition{
+				Type: string(RestoreRunning),
+				LastTransitionTime: cs.Condition.LastTransitionTime,
+			},
+			Progress:      "10%",
+			ID:            operationID,
+		},
 		Phase:         RestorationPhaseTruncate,
-		ID:            operationID,
 	}, cs)
 }

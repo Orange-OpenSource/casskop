@@ -2,7 +2,8 @@ package v1alpha1
 
 import (
 	"encoding/json"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	"github.com/Orange-OpenSource/casskop/pkg/util"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"strings"
 
 	cron "github.com/robfig/cron/v3"
@@ -47,21 +48,28 @@ type CassandraBackupSpec struct {
 	Secret                string `json:"secret,omitempty"`
 }
 
-type BackupState string
+type BackupConditionType string
 
 const (
-	BackupRunning   BackupState = "RUNNING"
-	BackupCompleted BackupState = "COMPLETED"
-	BackupFailed    BackupState = "FAILED"
+	BackupRunning   BackupConditionType = "RUNNING"
+	BackupCompleted BackupConditionType = "COMPLETED"
+	BackupFailed    BackupConditionType = "FAILED"
 )
 
+func (b BackupConditionType) IsRunning() bool {
+	return b == BackupRunning
+}
+
+func (b BackupConditionType) IsCompleted() bool {
+	return b == BackupCompleted
+}
+
+func (b BackupConditionType) HasFailed() bool {
+	return b == BackupFailed
+}
+
 type CassandraBackupStatus struct {
-	// name of pod / node
-	CoordinatorMember string `json:"coordinatorMember"`
-	// State shows the status of the operation
-	State BackupState `json:"state"`
-	// Progress shows the percentage of the operation done
-	Progress string `json:"progress"`
+	BackRestStatus `json:",inline"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -73,7 +81,7 @@ type CassandraBackup struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   CassandraBackupSpec    `json:"spec"`
-	Status *CassandraBackupStatus `json:"status,omitempty"`
+	Status CassandraBackupStatus `json:"status,omitempty"`
 }
 
 func (cb *CassandraBackup) PreventBackupDeletion(value bool) {
@@ -88,7 +96,7 @@ func (cb *CassandraBackup) IsScheduled() bool {
 	return cb.Spec.Schedule != ""
 }
 func (cb *CassandraBackup) Ran() bool {
-	return cb.Status != nil
+	return cb.Status.Condition != nil
 }
 
 func (cb *CassandraBackup) ComputeLastAppliedAnnotation() (string, error) {
@@ -96,7 +104,7 @@ func (cb *CassandraBackup) ComputeLastAppliedAnnotation() (string, error) {
 	//remove unnecessary fields
 	lastcb.Annotations = nil
 	lastcb.ResourceVersion = ""
-	lastcb.Status = nil
+	lastcb.Status = CassandraBackupStatus{}
 	lastcb.Finalizers = nil
 	lastcb.ObjectMeta = metav1.ObjectMeta{Name: lastcb.Name, Namespace: lastcb.Namespace,
 		CreationTimestamp: lastcb.CreationTimestamp}
@@ -120,12 +128,24 @@ func init() {
 	SchemeBuilder.Register(&CassandraBackup{}, &CassandraBackupList{})
 }
 
-func ComputeBackupStatus(backupOperationResponse *csapi.BackupOperationResponse,
+func ComputeBackupStatus(backupOperationResponse *icarus.BackupOperationResponse,
 	coordinatorMember string) CassandraBackupStatus{
+	logrus.Infof("backupOperationResponse object: %+v", backupOperationResponse)
+
 	return CassandraBackupStatus{
-		CoordinatorMember: coordinatorMember,
-		Progress: ProgressPercentage(backupOperationResponse.Progress),
-		State:    BackupState(backupOperationResponse.State),
+		BackRestStatus: BackRestStatus{
+			Progress:      ProgressPercentage(backupOperationResponse.Progress),
+			ID:            backupOperationResponse.Id,
+			TimeCreated:   backupOperationResponse.CreationTime,
+			TimeStarted:   backupOperationResponse.StartTime,
+			TimeCompleted: backupOperationResponse.CompletionTime,
+			CoordinatorMember: coordinatorMember,
+			Condition: &BackRestCondition{
+				LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
+				Type:               backupOperationResponse.State,
+				FailureCause:       failureCause(backupOperationResponse.Errors),
+			},
+		},
 	}
 }
 
