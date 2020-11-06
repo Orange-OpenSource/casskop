@@ -116,7 +116,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return common.Reconciled()
 	}
 
-	cassandraBackup.Status = api.CassandraBackupStatus{}
+	cassandraBackup.Status = api.BackRestStatus{}
 
 	if exists, err := existingNotScheduledSnapshot(r.client, cassandraBackup); err != nil {
 		return reconcile.Result{}, err
@@ -238,9 +238,9 @@ func (r *ReconcileCassandraBackup) backupData(cassandraBackup *api.CassandraBack
 	}
 
 	pod := pods.Items[random.Intn(len(pods.Items))]
-	cassandraBackup.Status = api.CassandraBackupStatus{BackRestStatus: api.BackRestStatus{CoordinatorMember: pod.Name}}
+	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 	backupClient := &backupClient{backup: cassandraBackup, client: r.client}
-	backupClient.updateStatus(api.CassandraBackupStatus{},reqLogger )
+	backupClient.updateStatus(api.BackRestStatus{},reqLogger )
 
 	backrestClient, _ := backrest.NewClient(r.client, cc, &pod)
 

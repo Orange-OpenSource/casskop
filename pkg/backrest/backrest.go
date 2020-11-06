@@ -112,12 +112,12 @@ func (c *Client) RestoreStatusByID(id string) (*api.BackRestStatus, error) {
 	return &status, nil
 }
 
-func (c *Client) BackupStatusByID(id string) (api.CassandraBackupStatus, error) {
+func (c *Client) BackupStatusByID(id string) (api.BackRestStatus, error) {
 
 	backupOperation, err := c.client.BackupOperationByID(id)
 	if err != nil  {
 		logrus.WithFields(logrus.Fields{"id": id}).Error("Cannot find backup operation")
-		return api.CassandraBackupStatus{}, err
+		return api.BackRestStatus{}, err
 	}
 
 	status := api.ComputeBackupStatus(backupOperation, c.CoordinatorMember)

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
@@ -53,7 +52,7 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 		NoDeleteDownloads: noDeleteDownloads,
 		SchemaVersion: schemaVersion,
 		ExactSchemaVersion: false,
-		RestorationPhase: string(api.RestorationPhaseDownload),
+		RestorationPhase: "DOWNLOAD",
 		GlobalRequest: true,
 		Import_: &icarus.AllOfRestoreOperationRequestImport_{
 			Type_: "import",

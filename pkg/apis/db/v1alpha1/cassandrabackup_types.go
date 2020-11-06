@@ -68,10 +68,6 @@ func (b BackupConditionType) HasFailed() bool {
 	return b == BackupFailed
 }
 
-type CassandraBackupStatus struct {
-	BackRestStatus `json:",inline"`
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Defines a backup operation and its details
@@ -81,7 +77,7 @@ type CassandraBackup struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   CassandraBackupSpec    `json:"spec"`
-	Status CassandraBackupStatus `json:"status,omitempty"`
+	Status BackRestStatus `json:"status,omitempty"`
 }
 
 func (cb *CassandraBackup) PreventBackupDeletion(value bool) {
@@ -104,7 +100,7 @@ func (cb *CassandraBackup) ComputeLastAppliedAnnotation() (string, error) {
 	//remove unnecessary fields
 	lastcb.Annotations = nil
 	lastcb.ResourceVersion = ""
-	lastcb.Status = CassandraBackupStatus{}
+	lastcb.Status = BackRestStatus{}
 	lastcb.Finalizers = nil
 	lastcb.ObjectMeta = metav1.ObjectMeta{Name: lastcb.Name, Namespace: lastcb.Namespace,
 		CreationTimestamp: lastcb.CreationTimestamp}
@@ -129,22 +125,20 @@ func init() {
 }
 
 func ComputeBackupStatus(backupOperationResponse *icarus.BackupOperationResponse,
-	coordinatorMember string) CassandraBackupStatus{
+	coordinatorMember string) BackRestStatus{
 	logrus.Infof("backupOperationResponse object: %+v", backupOperationResponse)
 
-	return CassandraBackupStatus{
-		BackRestStatus: BackRestStatus{
-			Progress:      ProgressPercentage(backupOperationResponse.Progress),
-			ID:            backupOperationResponse.Id,
-			TimeCreated:   backupOperationResponse.CreationTime,
-			TimeStarted:   backupOperationResponse.StartTime,
-			TimeCompleted: backupOperationResponse.CompletionTime,
-			CoordinatorMember: coordinatorMember,
-			Condition: &BackRestCondition{
-				LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
-				Type:               backupOperationResponse.State,
-				FailureCause:       failureCause(backupOperationResponse.Errors),
-			},
+	return BackRestStatus{
+		Progress:      ProgressPercentage(backupOperationResponse.Progress),
+		ID:            backupOperationResponse.Id,
+		TimeCreated:   backupOperationResponse.CreationTime,
+		TimeStarted:   backupOperationResponse.StartTime,
+		TimeCompleted: backupOperationResponse.CompletionTime,
+		CoordinatorMember: coordinatorMember,
+		Condition: &BackRestCondition{
+			LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
+			Type:               backupOperationResponse.State,
+			FailureCause:       failureCause(backupOperationResponse.Errors),
 		},
 	}
 }

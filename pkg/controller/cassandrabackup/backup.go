@@ -76,7 +76,7 @@ func backup(
 	}
 }
 
-func (backupClient *backupClient) updateStatus(status api.CassandraBackupStatus, logging *logrus.Entry) bool {
+func (backupClient *backupClient) updateStatus(status api.BackRestStatus, logging *logrus.Entry) bool {
 	backupClient.backup.Status = status
 
 	patchToApply, err := common.JsonPatch(map[string]interface{}{"status": status})

@@ -44,8 +44,7 @@ func TestPerformRestore(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.CassandraRestoreStatus{
-		BackRestStatus: v1alpha1.BackRestStatus{
+	assert.Equal(&v1alpha1.BackRestStatus{
 			TimeCreated:   "2020-06-10T04:53:05.976Z",
 			TimeStarted:   "2020-06-10T05:53:05.976Z",
 			TimeCompleted: "2020-06-10T06:53:05.976Z",
@@ -55,9 +54,7 @@ func TestPerformRestore(t *testing.T) {
 			},
 			Progress:      "10%",
 			ID:            cs.ID,
-		},
-		Phase:         v1alpha1.RestorationPhaseDownload,
-	}, cs)
+		}, cs)
 
 	sr = Client{
 		CoordinatorMember: "podA",
@@ -82,8 +79,7 @@ func TestGetRestorebyId(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.CassandraRestoreStatus{
-		BackRestStatus: v1alpha1.BackRestStatus{
+	assert.Equal(&v1alpha1.BackRestStatus{
 			TimeCreated:   "2020-06-10T04:53:05.976Z",
 			TimeStarted:   "2020-06-10T05:53:05.976Z",
 			TimeCompleted: "2020-06-10T06:53:05.976Z",
@@ -93,9 +89,7 @@ func TestGetRestorebyId(t *testing.T) {
 			},
 			Progress:      "10%",
 			ID:            operationId,
-		},
-		Phase:         v1alpha1.RestorationPhaseTruncate,
-	}, cs)
+		}, cs)
 
 	c = Client{
 		CoordinatorMember: "podA",

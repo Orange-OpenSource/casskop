@@ -825,12 +825,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 
 func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 
-	resources := api.CassandraResources{
-		Limits:   api.CPUAndMem{
-			Memory: defaultBackRestContainerRequestsMemory,
-			CPU: defaultBackRestContainerRequestsCPU,
-		},
-	}
+	resources := generateResourceList(defaultBackRestContainerRequestsCPU, defaultBackRestContainerRequestsMemory)
 
 	container := v1.Container{
 		Name:            "backrest-sidecar",
@@ -838,8 +833,8 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
 		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
 		Resources: 		 v1.ResourceRequirements{
-			Limits:   limits(resources),
-			Requests: limits(resources),
+			Limits:   resources,
+			Requests: resources,
 		},
 	}
 

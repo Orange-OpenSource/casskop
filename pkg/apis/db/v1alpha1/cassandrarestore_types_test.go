@@ -39,8 +39,7 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 		schemaVersion), &restoreOperation)
 
 	cs := ComputeRestorationStatus(&restoreOperation)
-	assert.Equal(CassandraRestoreStatus{
-		BackRestStatus: BackRestStatus{
+	assert.Equal(BackRestStatus{
 			TimeCreated:   "2020-06-10T04:53:05.976Z",
 			TimeStarted:   "2020-06-10T05:53:05.976Z",
 			TimeCompleted: "2020-06-10T06:53:05.976Z",
@@ -50,7 +49,5 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 			},
 			Progress:      "10%",
 			ID:            operationID,
-		},
-		Phase:         RestorationPhaseTruncate,
-	}, cs)
+		}, cs)
 }
