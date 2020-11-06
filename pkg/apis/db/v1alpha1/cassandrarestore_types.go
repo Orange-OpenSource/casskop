@@ -45,23 +45,6 @@ func (r RestoreConditionType) IsCompleted() bool {
 	return r == RestoreCompleted
 }
 
-type RestorationPhaseType string
-
-const (
-	RestorationPhaseDownload RestorationPhaseType = "DOWNLOAD"
-	RestorationPhaseImport RestorationPhaseType = "IMPORT"
-	RestorationPhaseTruncate RestorationPhaseType = "TRUNCATE"
-	RestorationPhaseCleanup RestorationPhaseType = "CLEANUP"
-	RestorePhaseUnknown RestorationPhaseType = "UNKNOWN"
-)
-
-
-// CassandraRestoreStatus captures the current status of a Cassandra restore.
-type CassandraRestoreStatus struct {
-	BackRestStatus `json:",inline"`
-	Phase    RestorationPhaseType `json:"restorationPhase,omitempty"`
-}
-
 // CassandraRestoreSpec defines the specification for a restore of a Cassandra backup.
 type CassandraRestoreSpec struct {
 	// Name of the CassandraCluster the restore belongs to
@@ -108,7 +91,7 @@ type CassandraRestore struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   CassandraRestoreSpec   `json:"spec"`
-	Status CassandraRestoreStatus `json:"status,omitempty"`
+	Status BackRestStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -127,16 +110,15 @@ func init() {
 
 // GetRestoreCondition extracts the provided condition from the given status and returns that.
 // Returns nil and -1 if the condition is not present, and the index of the located condition.
-func GetRestoreCondition(status *CassandraRestoreStatus, conditionType RestoreConditionType) *BackRestCondition {
+func GetRestoreCondition(status *BackRestStatus, conditionType RestoreConditionType) *BackRestCondition {
 	if status.Condition != nil && status.Condition.Type == string(conditionType) {
 		return status.Condition
 	}
 	return nil
 }
 
-func ComputeRestorationStatus(restoreOperationReponse *icarus.RestoreOperationResponse) CassandraRestoreStatus{
-	return CassandraRestoreStatus{
-		BackRestStatus: BackRestStatus{
+func ComputeRestorationStatus(restoreOperationReponse *icarus.RestoreOperationResponse) BackRestStatus{
+	return BackRestStatus{
 			Progress:      ProgressPercentage(restoreOperationReponse.Progress),
 			ID:            restoreOperationReponse.Id,
 			TimeCreated:   restoreOperationReponse.CreationTime,
@@ -147,17 +129,5 @@ func ComputeRestorationStatus(restoreOperationReponse *icarus.RestoreOperationRe
 				Type: restoreOperationReponse.State,
 				FailureCause: failureCause(restoreOperationReponse.Errors),
 			},
-		},
-		Phase: RestorationPhase(restoreOperationReponse.RestorationPhase),
-	}
-}
-
-func RestorationPhase(phase string) RestorationPhaseType {
-	restorationPhaseType := RestorationPhaseType(phase)
-	switch restorationPhaseType {
-	case RestorationPhaseDownload, RestorationPhaseImport, RestorationPhaseTruncate, RestorationPhaseCleanup:
-		return restorationPhaseType
-	default:
-		return RestorePhaseUnknown
 	}
 }

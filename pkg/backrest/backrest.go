@@ -30,14 +30,14 @@ func NewClient(client client.Client, cc *api.CassandraCluster, pod *corev1.Pod) 
 }
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
-	backup *api.CassandraBackup) (*api.CassandraRestoreStatus, error) {
+	backup *api.CassandraBackup) (*api.BackRestStatus, error) {
 	restoreOperationRequest := &icarus.RestoreOperationRequest {
 		Type_: "restore",
 		StorageLocation: backup.Spec.StorageLocation,
 		SnapshotTag: backup.Spec.SnapshotTag,
 		NoDeleteTruncates: restore.Spec.NoDeleteTruncates,
 		ExactSchemaVersion: restore.Spec.ExactSchemaVersion,
-		RestorationPhase: string(api.RestorationPhaseDownload),
+		RestorationPhase: "DOWNLOAD",
 		GlobalRequest: true,
 		Import_: &icarus.AllOfRestoreOperationRequestImport_{
 			Type_: "import",
@@ -100,7 +100,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 	return backupOperation.Id, nil
 }
 
-func (c *Client) RestoreStatusByID(id string) (*api.CassandraRestoreStatus, error) {
+func (c *Client) RestoreStatusByID(id string) (*api.BackRestStatus, error) {
 
 	restoreOperation, err := c.client.RestoreOperationByID(id)
 	if err != nil  {

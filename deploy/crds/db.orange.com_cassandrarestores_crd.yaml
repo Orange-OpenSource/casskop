@@ -94,8 +94,6 @@ spec:
             - cassandraCluster
             type: object
           status:
-            description: CassandraRestoreStatus captures the current status of a Cassandra
-              restore.
             properties:
               condition:
                 description: BackRestCondition describes the observed state of a Restore
@@ -132,8 +130,6 @@ spec:
               progress:
                 description: Progress is a percentage, 100% means the operation is
                   completed, either successfully or with errors
-                type: string
-              restorationPhase:
                 type: string
               timeCompleted:
                 type: string

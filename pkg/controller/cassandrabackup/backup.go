@@ -3,17 +3,15 @@ package cassandrabackup
 import (
 	"context"
 	"fmt"
-	"time"
-	"encoding/json"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 type backupClient struct {
@@ -81,31 +79,11 @@ func backup(
 func (backupClient *backupClient) updateStatus(status api.CassandraBackupStatus, logging *logrus.Entry) bool {
 	backupClient.backup.Status = status
 
-	condition := "{}"
-
-	if status.Condition != nil {
-		conditionBytes, err := json.Marshal(status.Condition)
-		if err != nil {
-			logging.Error(err, "Error updating CassandraBackup backup")
-			return false
-		}
-		condition = string(conditionBytes)
+	patchToApply, err := common.JsonPatch(map[string]interface{}{"status": status})
+	if err != nil {
+		return false
 	}
 
-	jsonPatch := fmt.Sprintf(`{
-		"status": {
-			"timeCreated": "%s",
-			"timeStarted": "%s",
-			"timeCompleted": "%s",
-			"condition": %s,
-			"coordinatorMember": "%s",
-			"progress": "%s",
-			"id": "%s"
-		}
-	}`, status.TimeCreated, status.TimeStarted, status.TimeCompleted, condition, status.CoordinatorMember,
-	status.Progress, status.ID)
-
-	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
 	cassandraBackup := &api.CassandraBackup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: backupClient.backup.Namespace,

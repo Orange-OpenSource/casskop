@@ -3,15 +3,16 @@ package cassandrarestore
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status api.CassandraRestoreStatus,
+func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status api.BackRestStatus,
 	reqLogger *logrus.Entry) error {
 	typeMeta := restore.TypeMeta
 
@@ -40,8 +41,18 @@ func UpdateRestoreStatus(c client.Client, restore *api.CassandraRestore, status 
 }
 
 func updateRestoreStatus(c client.Client, restore *api.CassandraRestore) error {
-	if err := c.Status().Update(context.TODO() , restore); apierrors.IsNotFound(err) {
-		return c.Update(context.TODO(), restore)
+	patchToApply, err := common.JsonPatch(map[string]interface{}{"status": restore.Status})
+	if err != nil {
+		return err
+	}
+	cassandraRestore := &api.CassandraRestore{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: restore.Namespace,
+			Name:      restore.Name,
+		}}
+
+	if err := c.Patch(context.Background(), cassandraRestore, patchToApply); err != nil {
+		return err
 	}
 	return nil
 }

@@ -85,7 +85,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		return common.RequeueWithError(reqLogger, "failed to lookup referenced cassandraBackup", err)
 	}
 
-	// Require restore on first pod of the cluster.
+	// Require restore
 	if len(cassandraRestore.Status.CoordinatorMember) == 0 {
 		err = r.requiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
 		if err != nil {
@@ -139,6 +139,8 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
 				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
 				cassandraRestore.Status.ID, cassandraRestore.Status.CoordinatorMember))
+
+		return controllerruntime.Result{RequeueAfter: time.Duration(5) * time.Second}, nil
 	}
 
 	if restoreConditionType.IsInProgress() {
@@ -182,16 +184,16 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "No pods founds for this dc")
 	}
 
-	if len(pods.Items) > 0 {
+	numberOfPods := len(pods.Items)
+
+	if numberOfPods > 0 {
 		if err := UpdateRestoreStatus(r.client, restore,
-			v1alpha1.CassandraRestoreStatus{
-				BackRestStatus: v1alpha1.BackRestStatus{
+			v1alpha1.BackRestStatus{
 					Condition: &v1alpha1.BackRestCondition{
 						Type:               string(v1alpha1.RestoreRequired),
 						LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 					},
-					CoordinatorMember: pods.Items[0].Name,
-				},
+					CoordinatorMember: pods.Items[random.Intn(numberOfPods)].Name,
 			}, reqLogger); err != nil {
 			return errors.WrapIfWithDetails(err, "Could not update status for restore",
 				"restore", restore)
@@ -209,7 +211,7 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.Cass
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
 	}
 
-	sr, err := backrest.NewClient(r.client, cc, &pods.Items[random.Intn(len(pods.Items))])
+	sr, err := backrest.NewClient(r.client, cc, k8s.PodByName(pods, restore.Status.CoordinatorMember))
 	if err != nil {
 		reqLogger.Info("Cassandra backup sidecar communication error checking running restore operation")
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "sidecar communication error")
@@ -278,8 +280,6 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 	if restoreConditionType.IsCompleted() {
 		return nil
 	}
-
-	// TODO : Implement timeout ?
 
 	// restore operation still in progress
 	reqLogger.Info("Cassandra backup sidecar operation is still running", "restoreId", restoreId)
