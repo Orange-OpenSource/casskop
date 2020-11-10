@@ -140,7 +140,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
 				cassandraRestore.Status.ID, cassandraRestore.Status.CoordinatorMember))
 
-		return controllerruntime.Result{RequeueAfter: time.Duration(5) * time.Second}, nil
+		return common.Reconciled()
 	}
 
 	if restoreConditionType.IsInProgress() {
@@ -213,23 +213,26 @@ func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.Cass
 
 	sr, err := backrest.NewClient(r.client, cc, k8s.PodByName(pods, restore.Status.CoordinatorMember))
 	if err != nil {
-		reqLogger.Info("Cassandra backup sidecar communication error checking running restore operation")
-		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err, "sidecar communication error")
+		return sidecarError(reqLogger, err)
 	}
 
 	restoreStatus, err := sr.PerformRestore(restore, backup)
 	if err != nil {
-		reqLogger.Info("Cassandra sidecar communication error checking running restore operation")
-		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
-		"cassandra backup sidecar communication error")
+		return sidecarError(reqLogger, err)
 	}
 
 	restoreStatus.CoordinatorMember = restore.Status.CoordinatorMember
 	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
-		return errors.WrapIfWithDetails(err, "could not update status for restore", "restore", restore)
+		return errors.WrapIfWithDetails(err, "Could not update status for restore", "restore", restore)
 	}
 
 	return nil
+}
+
+func sidecarError(reqLogger *logrus.Entry, err error) error {
+	reqLogger.Info("Cassandra sidecar communication error checking running restore operation")
+	return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
+		"cassandra sidecar communication error")
 }
 
 func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1.CassandraRestore,
