@@ -915,6 +915,9 @@ type DC struct {
 
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
+
+	// Define the set of resource requested and limits for the DC
+	Resources CassandraResources `json:"resources,omitempty"`
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
