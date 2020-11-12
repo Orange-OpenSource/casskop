@@ -35,7 +35,7 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage         = "cassandra:3.11"
-	defaultBootstrapImage         = "orangeopensource/cassandra-bootstrap:0.1.6"
+	defaultBootstrapImage         = "orangeopensource/cassandra-bootstrap:0.1.7"
 	defaultServiceAccountName     = "cassandra-cluster-node"
 	InitContainerCmd              = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable      = 1
