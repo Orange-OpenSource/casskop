@@ -476,6 +476,22 @@ func TestSetDefaults(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: CassandraClusterSpec{
+			Topology: Topology{
+				[]DC{
+					{
+						Name: "dc1",
+					},
+					{
+						Name: "dc2",
+						Resources: CassandraResources{
+							Requests: CPUAndMem{
+								CPU:    "400m",
+								Memory: "0.5Gi",
+							},
+						},
+					},
+				},
+			},
 			Resources: CassandraResources{
 				Requests: CPUAndMem{
 					CPU:    "500m",
@@ -497,6 +513,8 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
 	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
+	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.getDCFromIndex(0).Resources.Limits)
+	assert.Equal(CPUAndMem{CPU: "400m", Memory: "0.5Gi"}, cluster.getDCFromIndex(0).Resources.Limits)
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
