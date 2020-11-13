@@ -197,7 +197,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 		changed = true
 	}
-	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
+	if cc.Spec.Resources.Limits.Cpu().IsZero() && cc.Spec.Resources.Limits.Memory().IsZero() {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
 		changed = true
 	}
@@ -754,7 +754,7 @@ type CassandraClusterSpec struct {
 	// Pod defines the policy for pods owned by cassandra operator.
 	// This field cannot be updated once the CR is created.
 	//Pod       *PodPolicy         `json:"pod,omitempty"`
-	Resources CassandraResources `json:"resources,omitempty"`
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 
 	// HardAntiAffinity defines if the PodAntiAffinity of the
 	// statefulset has to be hard (it's soft by default)
@@ -917,7 +917,7 @@ type DC struct {
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
 	// Define the set of resource requested and limits for the DC
-	Resources CassandraResources `json:"resources,omitempty"`
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -947,12 +947,6 @@ type PodPolicy struct {
 type ServicePolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
-}
-
-// CassandraResources sets the limits and requests for a container
-type CassandraResources struct {
-	Requests CPUAndMem `json:"requests,omitempty"`
-	Limits   CPUAndMem `json:"limits,omitempty"`
 }
 
 // CPUAndMem defines how many cpu and ram the container will request/limit

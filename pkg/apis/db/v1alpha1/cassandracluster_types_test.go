@@ -16,6 +16,8 @@ package v1alpha1
 
 import (
 	"io/ioutil"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"path/filepath"
 	"sort"
@@ -483,19 +485,19 @@ func TestSetDefaults(t *testing.T) {
 					},
 					{
 						Name: "dc2",
-						Resources: CassandraResources{
-							Requests: CPUAndMem{
-								CPU:    "400m",
-								Memory: "0.5Gi",
+						Resources: &v1.ResourceRequirements{
+							Requests: v1.ResourceList {
+								"cpu":    resource.MustParse("400m"),
+								"memory": resource.MustParse("0.5Gi"),
 							},
 						},
 					},
 				},
 			},
-			Resources: CassandraResources{
-				Requests: CPUAndMem{
-					CPU:    "500m",
-					Memory: "1Gi",
+			Resources: &v1.ResourceRequirements{
+				Requests: v1.ResourceList{
+					"cpu":    resource.MustParse("500m"),
+					"memory": resource.MustParse("1Gi"),
 				},
 			},
 		},
@@ -512,9 +514,14 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
-	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.Spec.Resources.Limits)
-	assert.Equal(CPUAndMem{CPU: "500m", Memory: "1Gi"}, cluster.getDCFromIndex(0).Resources.Limits)
-	assert.Equal(CPUAndMem{CPU: "400m", Memory: "0.5Gi"}, cluster.getDCFromIndex(0).Resources.Limits)
+	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
+
+	assert.Equal(resource.MustParse("500m"), *cluster.getDCFromIndex(0).Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("1Gi"), *cluster.getDCFromIndex(0).Resources.Limits.Memory())
+
+	assert.Equal(resource.MustParse("400m"), *cluster.getDCFromIndex(1).Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("0.5Gi"), *cluster.getDCFromIndex(1).Resources.Limits.Memory())
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
