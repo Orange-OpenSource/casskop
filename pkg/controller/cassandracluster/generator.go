@@ -446,30 +446,17 @@ func generatePodDisruptionBudget(name string, namespace string, labels map[strin
 	}
 }
 
-func cassandraResources(spec api.CassandraClusterSpec) v1.ResourceRequirements {
-	return v1.ResourceRequirements{
-		Requests: requests(spec.Resources),
-		Limits:   limits(spec.Resources),
-	}
-}
-
 func initContainerResources() v1.ResourceRequirements {
-	resources := api.CassandraResources{
-		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
-		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
-	}
 	return v1.ResourceRequirements{
-		Limits:   requests(resources),
-		Requests: limits(resources),
+		Limits: v1.ResourceList{
+			"cpu":    resource.MustParse(defaultInitContainerLimitsCPU),
+			"memory": resource.MustParse(defaultInitContainerLimitsMemory),
+		},
+		Requests: v1.ResourceList{
+			"cpu":    resource.MustParse(defaultInitContainerRequestsCPU),
+			"memory": resource.MustParse(defaultInitContainerRequestsMemory),
+		},
 	}
-}
-
-func limits(resources api.CassandraResources) v1.ResourceList {
-	return generateResourceList(resources.Limits.CPU, resources.Limits.Memory)
-}
-
-func requests(resources api.CassandraResources) v1.ResourceList {
-	return generateResourceList(resources.Requests.CPU, resources.Requests.Memory)
 }
 
 func generateResourceList(cpu string, memory string) v1.ResourceList {
@@ -664,7 +651,7 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 		Name:            bootstrapContainerName,
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Env:             bootstrapContainerEnvVar(cc, status, cassandraResources(cc.Spec), dcRackName),
+		Env:             bootstrapContainerEnvVar(cc, status, *cc.Spec.Resources, dcRackName),
 		VolumeMounts:    volumeMounts,
 		Resources:       initContainerResources(),
 	}
@@ -694,7 +681,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 
-	resources := cassandraResources(cc.Spec)
+	resources := cc.Spec.Resources
 	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
@@ -794,7 +781,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			},
 		},
 		VolumeMounts: volumeMounts,
-		Resources:    resources,
+		Resources:    *resources,
 	}
 
 	if cc.Spec.LivenessFailureThreshold != nil {
