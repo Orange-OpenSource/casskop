@@ -105,10 +105,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
 				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
 				cassandraRestore.Status.CoordinatorMember))
-	}
-
-	if len(cassandraRestore.Status.CoordinatorMember) == 0 {
-		return common.RequeueWithError(reqLogger, "No coordinator member to perform the restore", err)
+		return common.Reconciled()
 	}
 
 	restoreConditionType := v1alpha1.RestoreConditionType(cassandraRestore.Status.Condition.Type)
@@ -256,7 +253,10 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
 		"cassandra backup sidecar communication error")
 	}
-	restoreStatus, err := sr.RestoreStatusByID(restoreId)
+
+	status, err := sr.RestoreStatusByID(restoreId)
+	status.CoordinatorMember = restore.Status.CoordinatorMember
+
 	if err != nil {
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation",
 			"OperationId", restoreId)
@@ -264,8 +264,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		"cassandra backup sidecar communication error")
 	}
 
-	restoreStatus.CoordinatorMember = restore.Status.CoordinatorMember
-	if err := UpdateRestoreStatus(r.client, restore, *restoreStatus, reqLogger); err != nil {
+	if err := UpdateRestoreStatus(r.client, restore, *status, reqLogger); err != nil {
 		return errors.WrapIfWithDetails(err, "could not update status for restore",
 			"restore", restore)
 	}
