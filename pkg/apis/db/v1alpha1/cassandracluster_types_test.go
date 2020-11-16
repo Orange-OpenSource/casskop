@@ -514,11 +514,11 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(defaultBootstrapImage, cluster.Spec.BootstrapImage)
 	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
-	
-	assert.NotNil(*cluster.getDCFromIndex(1))
-	assert.NotNil(*cluster.getDCFromIndex(1).Resources)
-	assert.Equal(resource.MustParse("400m"), *cluster.getDCFromIndex(1).Resources.Limits.Cpu())
-	assert.Equal(resource.MustParse("0.5Gi"), *cluster.getDCFromIndex(1).Resources.Limits.Memory())
+
+	assert.NotNil(cluster.getDCFromIndex(1))
+	assert.NotNil(cluster.getDCFromIndex(1).Resources)
+	assert.Equal(resource.MustParse("400m"), cluster.getDCFromIndex(1).Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("0.5Gi"), cluster.getDCFromIndex(1).Resources.Limits.Memory())
 
 	assert.NotNil(*cluster.getDCFromIndex(0))
 	fmt.Println("DC NAME = " + cluster.getDCFromIndex(0).Name)
