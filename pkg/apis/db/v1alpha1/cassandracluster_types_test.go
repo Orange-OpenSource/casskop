@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -513,17 +514,18 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(defaultBootstrapImage, cluster.Spec.BootstrapImage)
 	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
-
-	assert.NotNil(*cluster.getDCFromIndex(0))
-	log.Println("DC NAME = " + cluster.getDCFromIndex(0).Name)
-	assert.NotNil(*cluster.getDCFromIndex(0).Resources)
-	assert.Equal(resource.MustParse("500m"), *cluster.getDCFromIndex(0).Resources.Limits.Cpu())
-	assert.Equal(resource.MustParse("1Gi"), *cluster.getDCFromIndex(0).Resources.Limits.Memory())
-
+	
 	assert.NotNil(*cluster.getDCFromIndex(1))
 	assert.NotNil(*cluster.getDCFromIndex(1).Resources)
 	assert.Equal(resource.MustParse("400m"), *cluster.getDCFromIndex(1).Resources.Limits.Cpu())
 	assert.Equal(resource.MustParse("0.5Gi"), *cluster.getDCFromIndex(1).Resources.Limits.Memory())
+
+	assert.NotNil(*cluster.getDCFromIndex(0))
+	fmt.Println("DC NAME = " + cluster.getDCFromIndex(0).Name)
+	assert.NotNil(*cluster.getDCFromIndex(0).Resources)
+	assert.Equal(resource.MustParse("500m"), *cluster.getDCFromIndex(0).Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("1Gi"), *cluster.getDCFromIndex(0).Resources.Limits.Memory())
+
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
