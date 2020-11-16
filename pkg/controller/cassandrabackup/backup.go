@@ -2,13 +2,12 @@ package cassandrabackup
 
 import (
 	"context"
+	"emperror.dev/errors"
 	"fmt"
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
-	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
@@ -77,22 +76,15 @@ func backup(
 }
 
 func (backupClient *backupClient) updateStatus(status api.BackRestStatus, logging *logrus.Entry) bool {
+
+	patch := client.MergeFrom(backupClient.backup.DeepCopy())
 	backupClient.backup.Status = status
 
-	patchToApply, err := common.JsonPatch(map[string]interface{}{"status": status})
-	if err != nil {
+	if err := backupClient.client.Patch(context.Background(), backupClient.backup, patch); err != nil {
+		logging.Error(err, errors.WrapIfWithDetails(err, "could not update status for restore",
+			"restore", backupClient.backup))
 		return false
 	}
 
-	cassandraBackup := &api.CassandraBackup{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: backupClient.backup.Namespace,
-			Name:      backupClient.backup.Name,
-		}}
-
-	if err := backupClient.client.Patch(context.Background(), cassandraBackup, patchToApply); err != nil {
-		logging.Error(err, "Error updating CassandraBackup object")
-		return false
-	}
 	return true
 }

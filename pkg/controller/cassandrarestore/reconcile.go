@@ -2,7 +2,7 @@ package cassandrarestore
 
 import (
 	"context"
-	errors "emperror.dev/errors"
+	"emperror.dev/errors"
 	"fmt"
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"

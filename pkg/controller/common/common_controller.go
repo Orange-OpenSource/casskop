@@ -1,13 +1,10 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/types"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -39,15 +36,4 @@ func NewCassandraBackupConnection(client client.Client, cluster *api.CassandraCl
 		return
 	}
 	return
-}
-
-func JsonPatch(restore map[string]interface{}) (client.Patch, error) {
-	statusBytes, err := json.Marshal(restore)
-	if err != nil {
-		return nil, err
-	}
-
-	jsonPatch := string(statusBytes)
-	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
-	return patchToApply, nil
 }

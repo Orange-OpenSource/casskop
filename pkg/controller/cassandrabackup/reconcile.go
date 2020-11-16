@@ -240,7 +240,7 @@ func (r *ReconcileCassandraBackup) backupData(cassandraBackup *api.CassandraBack
 	pod := pods.Items[random.Intn(len(pods.Items))]
 	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 	backupClient := &backupClient{backup: cassandraBackup, client: r.client}
-	backupClient.updateStatus(api.BackRestStatus{},reqLogger )
+	backupClient.updateStatus(api.BackRestStatus{},reqLogger)
 
 	backrestClient, _ := backrest.NewClient(r.client, cc, &pod)
 
