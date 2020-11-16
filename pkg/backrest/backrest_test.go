@@ -45,16 +45,16 @@ func TestPerformRestore(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(cs)
 	assert.Equal(&v1alpha1.BackRestStatus{
-			TimeCreated:   "2020-06-10T04:53:05.976Z",
-			TimeStarted:   "2020-06-10T05:53:05.976Z",
-			TimeCompleted: "2020-06-10T06:53:05.976Z",
-			Condition:     &v1alpha1.BackRestCondition{
-				Type: string(v1alpha1.RestorePending),
-				LastTransitionTime: cs.Condition.LastTransitionTime,
-			},
-			Progress:      "10%",
-			ID:            cs.ID,
-		}, cs)
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &v1alpha1.BackRestCondition{
+			Type: string(v1alpha1.RestorePending),
+			LastTransitionTime: cs.Condition.LastTransitionTime,
+		},
+		Progress:      "10%",
+		ID:            cs.ID,
+	}, cs)
 
 	sr = Client{
 		CoordinatorMember: "podA",
@@ -80,16 +80,16 @@ func TestGetRestorebyId(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(cs)
 	assert.Equal(&v1alpha1.BackRestStatus{
-			TimeCreated:   "2020-06-10T04:53:05.976Z",
-			TimeStarted:   "2020-06-10T05:53:05.976Z",
-			TimeCompleted: "2020-06-10T06:53:05.976Z",
-			Condition:     &v1alpha1.BackRestCondition{
-				Type: string(v1alpha1.RestoreRunning),
-				LastTransitionTime: cs.Condition.LastTransitionTime,
-			},
-			Progress:      "10%",
-			ID:            operationId,
-		}, cs)
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &v1alpha1.BackRestCondition{
+			Type: string(v1alpha1.RestoreRunning),
+			LastTransitionTime: cs.Condition.LastTransitionTime,
+		},
+		Progress:      "10%",
+		ID:            operationId,
+	}, cs)
 
 	c = Client{
 		CoordinatorMember: "podA",

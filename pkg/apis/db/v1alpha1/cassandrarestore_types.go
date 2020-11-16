@@ -119,15 +119,15 @@ func GetRestoreCondition(status *BackRestStatus, conditionType RestoreConditionT
 
 func ComputeRestorationStatus(restoreOperationReponse *icarus.RestoreOperationResponse) BackRestStatus{
 	return BackRestStatus{
-			Progress:      ProgressPercentage(restoreOperationReponse.Progress),
-			ID:            restoreOperationReponse.Id,
-			TimeCreated:   restoreOperationReponse.CreationTime,
-			TimeStarted:   restoreOperationReponse.StartTime,
-			TimeCompleted: restoreOperationReponse.CompletionTime,
-			Condition: &BackRestCondition{
-				LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
-				Type: restoreOperationReponse.State,
-				FailureCause: failureCause(restoreOperationReponse.Errors),
-			},
+		Progress:      ProgressPercentage(restoreOperationReponse.Progress),
+		ID:            restoreOperationReponse.Id,
+		TimeCreated:   restoreOperationReponse.CreationTime,
+		TimeStarted:   restoreOperationReponse.StartTime,
+		TimeCompleted: restoreOperationReponse.CompletionTime,
+		Condition: &BackRestCondition{
+			LastTransitionTime: metav1.Now().Format(util.TimeStampLayout),
+			Type: restoreOperationReponse.State,
+			FailureCause: failureCause(restoreOperationReponse.Errors),
+		},
 	}
 }

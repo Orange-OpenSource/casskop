@@ -40,14 +40,14 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 
 	cs := ComputeRestorationStatus(&restoreOperation)
 	assert.Equal(BackRestStatus{
-			TimeCreated:   "2020-06-10T04:53:05.976Z",
-			TimeStarted:   "2020-06-10T05:53:05.976Z",
-			TimeCompleted: "2020-06-10T06:53:05.976Z",
-			Condition:     &BackRestCondition{
-				Type: string(RestoreRunning),
-				LastTransitionTime: cs.Condition.LastTransitionTime,
-			},
-			Progress:      "10%",
-			ID:            operationID,
-		}, cs)
+		TimeCreated:   "2020-06-10T04:53:05.976Z",
+		TimeStarted:   "2020-06-10T05:53:05.976Z",
+		TimeCompleted: "2020-06-10T06:53:05.976Z",
+		Condition:     &BackRestCondition{
+			Type: string(RestoreRunning),
+			LastTransitionTime: cs.Condition.LastTransitionTime,
+		},
+		Progress:      "10%",
+		ID:            operationID,
+	}, cs)
 }
