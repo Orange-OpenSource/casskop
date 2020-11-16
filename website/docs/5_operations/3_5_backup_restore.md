@@ -8,9 +8,8 @@ In order to provide Backup/Restore abilities we use InstaCluster's [cassandra-si
 
 ## Backup
 
-It is possible to backup keyspaces or tables from cluster managed by Casskop.
-
-To start or schedule a backup, you create an object of type CassandraBackup:
+It is possible to backup keyspaces or tables from a cluster managed by Casskop. To start or schedule a backup, you 
+create an object of type CassandraBackup:
 
 ```yaml
 apiVersion: db.orange.com/v1alpha1
@@ -29,6 +28,9 @@ spec:
   entities: k1.t1,k2.t3
 ```
 
+If there is no schedule defined, the backup will start as soon as it's created and won't be start again with that object.
+You can always delete the object and recreate it though.
+
 ### Supported storage
 
 The following storage options for storing the backups are:
@@ -42,11 +44,12 @@ More details can be found on [Instaclustr's Cassandra backup page](https://githu
 
 ### Life cycle of the CassandraBackup object
 
-When this object gets created, CassKop does a few checks to ensure :
+When this object gets created, CassKop does a few checks to ensure:
 
-- the specified Cassandra cluster exists
-- if there is a secret that it has the expected parameters depending on the chosen backend
-- if there is a schedule that its format is correct (crontab like)
+- The specified Cassandra cluster exists
+- If there is a secret that it has the expected parameters depending on the chosen backend
+- If there is a schedule that its format is correct ([Cron expressions](https://godoc.org/gopkg.in/robfig/cron.v3#hdr-CRON_Expression_Format),
+[Predefined schedules](https://godoc.org/gopkg.in/robfig/cron.v3#hdr-Predefined_schedules) or [Intervals](https://godoc.org/gopkg.in/robfig/cron.v3#hdr-Intervals))
 
 Then, if all those checks pass, it triggers the backup if there is no schedule, or creates a Cron task with the specified schedule.
 
@@ -56,8 +59,8 @@ When this object gets updated, and the change is located in the spec section, Ca
 
 ## Restore
 
-Following the same logic, a CassandraRestore object must be created to trigger a restore:
-A restore must refer to a Backup object in K8S
+Following the same logic, a CassandraRestore object must be created to trigger a restore, and it must refer to an
+existing CassandraBackup object in K8S:
 
 ```yaml
 apiVersion: db.orange.com/v1alpha1
@@ -70,9 +73,10 @@ spec:
   backup:
     name: nightly-cassandra-backup
   cluster: test-cluster
-  entites: k1.t1
+  entities: k1.t1
 ```
 
 ### Entities
 
-In the restore phase, you can specify a subset of the entities specified in the backup. You can then backup 2 tables and only restore one.
+In the restore phase, you can specify a subset of the entities specified in the backup. For instance, you can backup 2
+tables and only restore one.
