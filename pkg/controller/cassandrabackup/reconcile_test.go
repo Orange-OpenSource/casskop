@@ -78,9 +78,11 @@ func TestCassandraBackupAlreadyExists(t *testing.T) {
 	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyaml)
 
 	oldBackup := cassandraBackup.DeepCopy()
-	oldBackup.Status = &api.CassandraBackupStatus{
+	oldBackup.Status = api.BackRestStatus{
 		CoordinatorMember: "node1",
-		State:             "COMPLETED",
+		Condition: &api.BackRestCondition{
+			Type: "COMPLETED",
+		},
 		Progress:          "Done",
 	}
 	oldBackup.Name = "prev-test-cassandra-backup"

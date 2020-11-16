@@ -86,19 +86,48 @@ spec:
             type: object
           status:
             properties:
+              condition:
+                description: BackRestCondition describes the observed state of a Restore
+                  at a certain point
+                properties:
+                  failureCause:
+                    items:
+                      properties:
+                        message:
+                          description: message explaining the error
+                          type: string
+                        source:
+                          description: hostame of a node where this error has occurred
+                          type: string
+                      type: object
+                    type: array
+                  lastTransitionTime:
+                    type: string
+                  type:
+                    type: string
+                required:
+                - type
+                type: object
               coordinatorMember:
-                description: name of pod / node
+                description: Name of the pod the restore operation is executed on
+                type: string
+              id:
+                description: unique identifier of an operation, a random id is assigned
+                  to each operation after a request is submitted, from caller's perspective,
+                  an id is sent back as a response to his request so he can further
+                  query state of that operation, referencing id, by operations/{id}
+                  endpoint
                 type: string
               progress:
-                description: Progress shows the percentage of the operation done
+                description: Progress is a percentage, 100% means the operation is
+                  completed, either successfully or with errors
                 type: string
-              state:
-                description: State shows the status of the operation
+              timeCompleted:
                 type: string
-            required:
-            - coordinatorMember
-            - progress
-            - state
+              timeCreated:
+                type: string
+              timeStarted:
+                type: string
             type: object
         required:
         - spec

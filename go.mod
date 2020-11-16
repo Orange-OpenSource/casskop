@@ -12,7 +12,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/instaclustr/cassandra-sidecar-go-client v0.0.0-20200806083402-194994f71666
+	github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20201103172213-3e9c434b280c
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2

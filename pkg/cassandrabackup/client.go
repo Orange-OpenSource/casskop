@@ -5,29 +5,29 @@ import (
 	"net/http"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	corev1 "k8s.io/api/core/v1"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Client interface {
-	PerformRestoreOperation(restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error)
-	RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error)
-	PerformBackupOperation(request csapi.BackupOperationRequest) (*csapi.BackupOperationResponse, error)
-	BackupOperationByID(id string) (response *csapi.BackupOperationResponse, err error)
+	PerformRestoreOperation(restoreOperation icarus.RestoreOperationRequest) (*icarus.RestoreOperationResponse, error)
+	RestoreOperationByID(operationId string) (*icarus.RestoreOperationResponse, error)
+	PerformBackupOperation(request icarus.BackupOperationRequest) (*icarus.BackupOperationResponse, error)
+	BackupOperationByID(id string) (response *icarus.BackupOperationResponse, err error)
 	Build() error
 }
 
 type client struct {
 	Client
 	config    *Config
-	podClient *csapi.APIClient
+	podClient *icarus.APIClient
 
-	newClient func(*csapi.Configuration) *csapi.APIClient
+	newClient func(*icarus.Configuration) *icarus.APIClient
 }
 
 func New(config *Config) Client {
-	return &client{config: config, newClient: csapi.NewAPIClient}
+	return &client{config: config, newClient: icarus.NewAPIClient}
 }
 
 func (cs *client) Build() error {
@@ -48,8 +48,8 @@ func ClientFromCluster(k8sClient controllerclient.Client, cluster *api.Cassandra
 	return client, nil
 }
 
-func (cs *client) cassandraBackupSidecarConfig() (config *csapi.Configuration) {
-	config = csapi.NewConfiguration()
+func (cs *client) cassandraBackupSidecarConfig() (config *icarus.Configuration) {
+	config = icarus.NewConfiguration()
 
 	protocol := "http"
 

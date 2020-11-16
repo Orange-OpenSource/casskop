@@ -55,6 +55,9 @@ const (
 	defaultInitContainerRequestsCPU    = "0.5"
 	defaultInitContainerRequestsMemory = "0.5Gi"
 
+	defaultBackRestContainerRequestsCPU    = "0.5"
+	defaultBackRestContainerRequestsMemory = "1Gi"
+
 	cassandraConfigMapName = "cassandra-config"
 	defaultBackRestPort    = 4567
 )
@@ -684,7 +687,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	var containers []v1.Container
 	containers = append(containers, cc.Spec.SidecarConfigs...)
 	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
-	containers = append(containers, backrestSidecarContainer(cc, status, dcRackName))
+	containers = append(containers, backrestSidecarContainer(cc))
 
 	return containers
 }
@@ -816,14 +819,19 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	return cassandraContainer
 }
 
-func backrestSidecarContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
-	dcRackName string) v1.Container {
+func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
+
+	resources := generateResourceList(defaultBackRestContainerRequestsCPU, defaultBackRestContainerRequestsMemory)
 
 	container := v1.Container{
 		Name:            "backrest-sidecar",
 		Image:           cc.Spec.BackRestSidecar.Image,
 		ImagePullPolicy: cc.Spec.BackRestSidecar.ImagePullPolicy,
 		Ports:           []v1.ContainerPort{{Name: "http", ContainerPort: defaultBackRestPort}},
+		Resources: 		 v1.ResourceRequirements{
+			Limits:   resources,
+			Requests: resources,
+		},
 	}
 
 	if cc.Spec.BackRestSidecar.Resources != nil {

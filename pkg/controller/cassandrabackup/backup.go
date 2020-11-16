@@ -2,17 +2,15 @@ package cassandrabackup
 
 import (
 	"context"
+	"emperror.dev/errors"
 	"fmt"
-	"time"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 type backupClient struct {
@@ -46,51 +44,47 @@ func backup(
 			backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,
 			backupClient.backup.Spec.StorageLocation, backupClient.backup.Spec.SnapshotTag))
 
-	for range time.NewTicker(2 * time.Second).C {
+	ticker := time.NewTicker(2 * time.Second)
+	for range ticker.C {
 		if status, err := backrestClient.BackupStatusByID(operationID); err != nil {
 			logging.Error(err, fmt.Sprintf("Error while finding submitted backup operation %v", operationID))
+			ticker.Stop()
 			break
 		} else {
 			if !backupClient.updateStatus(status, logging){
 				continue
 			}
-
-			if status.State == api.BackupFailed {
+			switch api.BackupConditionType(status.Condition.Type) {
+			case api.BackupFailed:
 				recorder.Event(backupClient.backup,
 					corev1.EventTypeWarning,
 					"BackupFailed",
-					fmt.Sprintf("Backup operation %v on node %s has failed", operationID, status.CoordinatorMember))
+					fmt.Sprintf("Backup operation %v on node %s has failed",
+						operationID, status.CoordinatorMember))
+				ticker.Stop()
 				break
-			}
-
-			if status.State == api.BackupCompleted {
+			case api.BackupCompleted:
 				recorder.Event(backupClient.backup,
 					corev1.EventTypeNormal,
 					"BackupCompleted",
 					fmt.Sprintf("Backup operation %v on node %s was completed.", operationID, status.CoordinatorMember))
+				ticker.Stop()
 				break
 			}
 		}
 	}
 }
 
-func (backupClient *backupClient) updateStatus(status *api.CassandraBackupStatus,
-	logging *logrus.Entry) bool {
+func (backupClient *backupClient) updateStatus(status api.BackRestStatus, logging *logrus.Entry) bool {
 
+	patch := client.MergeFrom(backupClient.backup.DeepCopy())
 	backupClient.backup.Status = status
 
-	jsonPatch := fmt.Sprintf(`{"status":{"coordinatorMember": "%s", "state": "%s", "progress": "%s"}}`,
-		status.CoordinatorMember, status.State, status.Progress)
-	patchToApply := client.RawPatch(types.MergePatchType, []byte(jsonPatch))
-	cassandraBackup := &api.CassandraBackup{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: backupClient.backup.Namespace,
-			Name:      backupClient.backup.Name,
-		}}
-
-	if err := backupClient.client.Patch(context.Background(), cassandraBackup, patchToApply); err != nil {
-		logging.Error(err, "Error updating CassandraBackup backup")
+	if err := backupClient.client.Patch(context.Background(), backupClient.backup, patch); err != nil {
+		logging.Error(err, errors.WrapIfWithDetails(err, "could not update status for restore",
+			"restore", backupClient.backup))
 		return false
 	}
+
 	return true
 }

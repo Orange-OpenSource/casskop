@@ -235,12 +235,13 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
 		60, 10, 10, 0, 0, 120, 20, 10, 0, 0)
 	checkDefaultInitContainerResources(t, stsDefault.Spec.Template.Spec.InitContainers)
+	resources := generateResourceList(defaultBackRestContainerRequestsCPU, defaultBackRestContainerRequestsMemory)
 	checkBackRestSidecar(t, stsDefault.Spec.Template.Spec.Containers,
 		"",
 		"",
 		v1.ResourceRequirements{
-			Requests: nil,
-			Limits:   nil,
+			Requests: resources,
+			Limits:   resources,
 		})
 }
 
