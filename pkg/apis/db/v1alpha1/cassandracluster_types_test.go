@@ -485,7 +485,7 @@ func TestSetDefaults(t *testing.T) {
 					},
 					{
 						Name: "dc2",
-						Resources: &v1.ResourceRequirements{
+						Resources: v1.ResourceRequirements {
 							Requests: v1.ResourceList {
 								"cpu":    resource.MustParse("400m"),
 								"memory": resource.MustParse("0.5Gi"),
@@ -494,7 +494,7 @@ func TestSetDefaults(t *testing.T) {
 					},
 				},
 			},
-			Resources: &v1.ResourceRequirements{
+			Resources: v1.ResourceRequirements{
 				Requests: v1.ResourceList{
 					"cpu":    resource.MustParse("500m"),
 					"memory": resource.MustParse("1Gi"),

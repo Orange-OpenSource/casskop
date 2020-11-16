@@ -754,7 +754,7 @@ type CassandraClusterSpec struct {
 	// Pod defines the policy for pods owned by cassandra operator.
 	// This field cannot be updated once the CR is created.
 	//Pod       *PodPolicy         `json:"pod,omitempty"`
-	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
+	Resources v1.ResourceRequirements  `json:"resources,omitempty"`
 
 	// HardAntiAffinity defines if the PodAntiAffinity of the
 	// statefulset has to be hard (it's soft by default)
@@ -917,7 +917,7 @@ type DC struct {
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
 	// Define the set of resource requested and limits for the DC
-	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
+	Resources v1.ResourceRequirements  `json:"resources,omitempty"`
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -965,7 +965,7 @@ type BackRestSidecar struct {
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
-	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
+	Resources v1.ResourceRequirements  `json:"resources,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
