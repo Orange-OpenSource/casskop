@@ -515,6 +515,10 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
+	fmt.Println("TEST1 = ", len(cluster.Spec.Topology.DC))
+	log.Println("TEST2 = ", len(cluster.Spec.Topology.DC))
+	fmt.Println("TEST1.2 = ", cluster.Spec.Topology.DC)
+	log.Println("TEST2.2 = ", cluster.Spec.Topology.DC)
 	assert.NotNil(cluster.getDCFromIndex(1))
 	assert.NotNil(cluster.getDCFromIndex(1).Resources)
 	assert.Equal(resource.MustParse("400m"), cluster.getDCFromIndex(1).Resources.Limits.Cpu())
