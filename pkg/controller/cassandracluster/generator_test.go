@@ -430,13 +430,16 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 }
 
 func checkDefaultInitContainerResources(t *testing.T, containers []v1.Container) {
-	resources := api.CassandraResources{
-		Limits:   api.CPUAndMem{Memory: defaultInitContainerLimitsMemory, CPU: defaultInitContainerLimitsCPU},
-		Requests: api.CPUAndMem{Memory: defaultInitContainerRequestsMemory, CPU: defaultInitContainerRequestsCPU},
-	}
+
 	resourcesRequirements := v1.ResourceRequirements{
-		Limits:   requests(resources),
-		Requests: limits(resources),
+		Limits: v1.ResourceList{
+			"cpu":    resource.MustParse(defaultInitContainerLimitsCPU),
+			"memory": resource.MustParse(defaultInitContainerLimitsMemory),
+		},
+		Requests: v1.ResourceList{
+			"cpu":    resource.MustParse(defaultInitContainerRequestsCPU),
+			"memory": resource.MustParse(defaultInitContainerRequestsMemory),
+		},
 	}
 
 	for _, container := range containers {
@@ -468,8 +471,8 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 }
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
-	cassieResources := cassandraResources(cc.Spec)
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	cassieResources := cc.Spec.Resources
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, *cassieResources, dcRackName)
 
 	assert := assert.New(t)
 
