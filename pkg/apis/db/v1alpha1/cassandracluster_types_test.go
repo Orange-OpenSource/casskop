@@ -482,9 +482,6 @@ func TestSetDefaults(t *testing.T) {
 			Topology: Topology{
 				[]DC{
 					{
-						Name: "dc1",
-					},
-					{
 						Name: "dc2",
 						Resources: &v1.ResourceRequirements{
 							Requests: v1.ResourceList {
@@ -492,6 +489,9 @@ func TestSetDefaults(t *testing.T) {
 								"memory": resource.MustParse("0.5Gi"),
 							},
 						},
+					},
+					{
+						Name: "dc1",
 					},
 				},
 			},
@@ -516,9 +516,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
 	fmt.Println("TEST1 = ", len(cluster.Spec.Topology.DC))
-	log.Println("TEST2 = ", len(cluster.Spec.Topology.DC))
 	fmt.Println("TEST1.2 = ", cluster.Spec.Topology.DC)
-	log.Println("TEST2.2 = ", cluster.Spec.Topology.DC)
 	assert.NotNil(cluster.getDCFromIndex(1))
 	assert.NotNil(cluster.getDCFromIndex(1).Resources)
 	assert.Equal(resource.MustParse("400m"), cluster.getDCFromIndex(1).Resources.Limits.Cpu())
