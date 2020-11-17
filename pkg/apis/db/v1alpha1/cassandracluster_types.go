@@ -931,7 +931,6 @@ type DC struct {
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
 
-	// Define the set of resource requested and limits for the DC
 	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 

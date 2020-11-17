@@ -1597,8 +1597,8 @@ spec:
                             type: object
                           type: array
                         resources:
-                          description: Define the set of resource requested and limits
-                            for the DC
+                          description: ResourceRequirements describes the compute
+                            resource requirements.
                           properties:
                             limits:
                               additionalProperties:
