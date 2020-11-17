@@ -18,7 +18,7 @@ If you have a Pod stuck in **pending** state, then you have at least 1 Pod in Di
 prevent you to make changes on statefulset because that mean that you will have more than 1 Cassandra down at a time.
 
 ```console
-$ k get poddisruptionbudgets
+$ kubectl get poddisruptionbudgets
 NAME             MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
 cassandra-demo   N/A             1                 0                     12m
 ```
@@ -35,7 +35,7 @@ INFO[3037] Cluster has Disruption on Pods, we wait before applying any change to
 In this example I ask a ScaleUp but it can't perform :
 
 ```console
-$ k get pods
+$ kubectl get pods
 NAME                                                              READY   STATUS    RESTARTS   AGE
 cassandra-demo-dc1-rack1-0                                        1/1     Running   0          16h
 cassandra-demo-dc1-rack1-1                                        0/1     Pending   0          12m
@@ -103,7 +103,7 @@ INFO[3354] ScaleDown is Done                             cluster=cassandra-demo 
 In this example, I ask to add dc called dc2
 
 ```
-k get pods
+kubectl get pods
 NAME                                                              READY   STATUS    RESTARTS   AGE
 cassandra-demo-dc1-rack1-0                                        1/1     Running   0          17h
 cassandra-demo-dc1-rack2-0                                        1/1     Running   0          17h

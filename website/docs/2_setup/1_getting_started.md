@@ -125,10 +125,10 @@ helm install --namespace monitoring prometheus-monitoring stable/prometheus-oper
 Then you have to create ServiceMonitor objects to monitor Cassandra nodes and CassKop. You can update this to specify 
 which namespace to monitor (Your namespace need to be listed in the `namespaceSelector` section.)
 
-`k apply -f monitoring/servicemonitor/`
+```kubectl  apply -f monitoring/servicemonitor/```
 
 
 #### Add Grafana dashboard for Cassandra
 
 You can use our dashboard that monitors both Cassandra nodes and CassKop by running:
-`k apply -f monitoring/dashboards/`
+```kubectl  apply -f monitoring/dashboards/```
