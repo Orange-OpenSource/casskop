@@ -211,17 +211,9 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.True(t, *clusterService.ObjectMeta.OwnerReferences[0].Controller)
 	assert.Equal(t, 1, len(clusterService.Spec.Ports))
 
-	dc1 := cluster.GetDCByItsName("dc1")
-	assert.Equal(t, resource.MustParse("1"), *dc1.Resources.Requests.Cpu())
-	assert.Equal(t, resource.MustParse("2Gi"), *dc1.Resources.Requests.Memory())
-	assert.Equal(t, resource.MustParse("2"), *dc1.Resources.Limits.Cpu())
-	assert.Equal(t, resource.MustParse("3Gi"),  *dc1.Resources.Limits.Memory())
-
-	dc2 := cluster.GetDCByItsName("dc2")
-	assert.Equal(t, resource.MustParse("500m"), *dc2.Resources.Requests.Cpu())
-	assert.Equal(t, resource.MustParse("1Gi"), *dc2.Resources.Requests.Memory())
-	assert.Equal(t, resource.MustParse("500m"), *dc2.Resources.Limits.Cpu())
-	assert.Equal(t, resource.MustParse("1Gi"),  *dc2.Resources.Limits.Memory())
+	statefulSets := getStatefulSets(cluster, f, t)
+	checkResourcesConfiguration(t, statefulSets[0].Spec.Template.Spec.Containers, "1", "2Gi", "2", "3Gi")
+	checkResourcesConfiguration(t, statefulSets[1].Spec.Template.Spec.Containers, "500m", "1Gi", "500m", "1Gi")
 
 	assertServiceExposesPort(t, &clusterService, "cql", 9042)
 
@@ -232,6 +224,18 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.Equal(t, 1, len(monitoringService.Spec.Ports))
 
 	assertServiceExposesPort(t, &monitoringService, "promjmx", 9500)
+}
+
+
+func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpuRequested string, memoryRequested string, cpuLimit string, memoryLimit string) {
+	for _, c := range containers {
+		if c.Name == "cassandra" {
+			assert.Equal(t, resource.MustParse(cpuRequested), *c.Resources.Requests.Cpu())
+			assert.Equal(t, resource.MustParse(memoryRequested), *c.Resources.Requests.Memory())
+			assert.Equal(t, resource.MustParse(cpuLimit), *c.Resources.Limits.Cpu())
+			assert.Equal(t, resource.MustParse(memoryLimit),  *c.Resources.Limits.Memory())
+		}
+	}
 }
 
 func cassandraClusterUpdateConfigMapTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {

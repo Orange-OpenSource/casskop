@@ -682,11 +682,12 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	dcRackName string) v1.Container {
 
 	var resources *v1.ResourceRequirements
+	dcResources := cc.GetDCByRackName(dcRackName).Resources
 	// Check if there is a resources requirements at DC level specified
-	if cc.GetDCByRackName(dcRackName).Resources == nil {
+	if dcResources == nil {
 		resources = cc.Spec.Resources
 	} else {
-		resources = cc.GetDCByRackName(dcRackName).Resources
+		resources = dcResources
 	}
 
 	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
