@@ -65,7 +65,7 @@ spec:
 |initContainerCmd|string|Command to execute in the initContainer in the targeted image|Yes|cp -vr /etc/cassandra/* /bootstrap|
 |runAsUser|int64|Define the id of the user to run in the Cassandra image|Yes|999|
 |readOnlyRootFilesystem|Make the pod as Readonly|bool|Yes|true|
-|resources|[CassandraResources](#cassandraresources)|Pod defines the policy for pods owned by cassandra operator. This field cannot be updated once the CR is created.|Yes|-|
+|resources|[Resources](#https://godoc.org/k8s.io/api/core/v1#ResourceRequirements)|Define the Requests & Limits resources spec of the "cassandra" container|Yes|-|
 |hardAntiAffinity|bool|HardAntiAffinity defines if the PodAntiAffinity of the statefulset has to be hard (it's soft by default)|Yes|false|
 |pod|[PodPolicy](#podpolicy)||No|-|
 |service|[ServicePolicy](#servicepolicy)||No|-|
@@ -98,13 +98,6 @@ spec:
 |readinessHealthCheckPeriod|int32|Defines health check period for the readiness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|10|
 |readinessFailureThreshold|int32|Defines failure threshold for the readiness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|(value set by kubernetes cluster)|
 |readinessSuccessThreshold|int32|Defines success threshold for the readiness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|(value set by kubernetes cluster)|
-
-## CassandraResources
-
-|Field|Type|Description|Required|Default|
-|-----|----|-----------|--------|--------|
-|requests|[CPUAndMem](#cpuandmem)||Yes| - |
-|limits|[CPUAndMem](#cpuandmem)||Yes| - |
 
 ## CPUAndMem
 
