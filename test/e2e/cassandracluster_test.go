@@ -3,6 +3,7 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"testing"
 	"time"
@@ -209,6 +210,18 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	assert.Equal(t, cluster.Name, clusterService.ObjectMeta.OwnerReferences[0].Name)
 	assert.True(t, *clusterService.ObjectMeta.OwnerReferences[0].Controller)
 	assert.Equal(t, 1, len(clusterService.Spec.Ports))
+
+	dc1 := cluster.GetDCByItsName("dc1")
+	assert.Equal(t, resource.MustParse("1"), *dc1.Resources.Requests.Cpu())
+	assert.Equal(t, resource.MustParse("2Gi"), *dc1.Resources.Requests.Memory())
+	assert.Equal(t, resource.MustParse("2"), *dc1.Resources.Limits.Cpu())
+	assert.Equal(t, resource.MustParse("3Gi"),  *dc1.Resources.Limits.Memory())
+
+	dc2 := cluster.GetDCByItsName("dc2")
+	assert.Equal(t, resource.MustParse("500m"), *dc2.Resources.Requests.Cpu())
+	assert.Equal(t, resource.MustParse("1Gi"), *dc2.Resources.Requests.Memory())
+	assert.Equal(t, resource.MustParse("500m"), *dc2.Resources.Limits.Cpu())
+	assert.Equal(t, resource.MustParse("1Gi"),  *dc2.Resources.Limits.Memory())
 
 	assertServiceExposesPort(t, &clusterService, "cql", 9042)
 
