@@ -99,6 +99,13 @@ spec:
   topology:
     dc:
       - name: dc1
+        resources:
+          requests:
+            cpu: '3'
+            memory: 3Gi
+          limits:
+            cpu: '3'
+            memory: 3Gi
         dataCapacity: 10Gi
         dataStorageClass: test-storage
         labels:

@@ -197,7 +197,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 		changed = true
 	}
-	if cc.Spec.Resources.Limits.Cpu().IsZero() && cc.Spec.Resources.Limits.Memory().IsZero() {
+	if cc.Spec.Resources.Limits == nil {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
 		changed = true
 	}
@@ -565,6 +565,21 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 		return nil
 	}
 	return &cc.Spec.Topology.DC[dc]
+}
+
+// Get DC by one of its rack name
+func (cc *CassandraCluster) GetDCByRackName(dcRackName string) *DC {
+	index := cc.GetDCIndexFromDCName(cc.GetDCFromDCRackName(dcRackName))
+	// Not found
+	if index == -1 {
+		return nil
+	}
+	return cc.getDCFromIndex(index)
+}
+
+// Get DC by its name
+func (cc *CassandraCluster) GetDCByItsName(dcName string) *DC {
+	return cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName))
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack

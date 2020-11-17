@@ -15,7 +15,6 @@
 package v1alpha1
 
 import (
-	"fmt"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -479,22 +478,6 @@ func TestSetDefaults(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: CassandraClusterSpec{
-			Topology: Topology{
-				[]DC{
-					{
-						Name: "dc2",
-						Resources: &v1.ResourceRequirements{
-							Requests: v1.ResourceList {
-								"cpu":    resource.MustParse("400m"),
-								"memory": resource.MustParse("0.5Gi"),
-							},
-						},
-					},
-					{
-						Name: "dc1",
-					},
-				},
-			},
 			Resources: &v1.ResourceRequirements{
 				Requests: v1.ResourceList{
 					"cpu":    resource.MustParse("500m"),
@@ -515,18 +498,8 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
 	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
-	fmt.Println("TEST1 = ", len(cluster.Spec.Topology.DC))
-	fmt.Println("TEST1.2 = ", cluster.Spec.Topology.DC)
-	assert.NotNil(cluster.getDCFromIndex(1))
-	assert.NotNil(cluster.getDCFromIndex(1).Resources)
-	assert.Equal(resource.MustParse("400m"), cluster.getDCFromIndex(1).Resources.Limits.Cpu())
-	assert.Equal(resource.MustParse("0.5Gi"), cluster.getDCFromIndex(1).Resources.Limits.Memory())
-
-	assert.NotNil(*cluster.getDCFromIndex(0))
-	fmt.Println("DC NAME = " + cluster.getDCFromIndex(0).Name)
-	assert.NotNil(*cluster.getDCFromIndex(0).Resources)
-	assert.Equal(resource.MustParse("500m"), *cluster.getDCFromIndex(0).Resources.Limits.Cpu())
-	assert.Equal(resource.MustParse("1Gi"), *cluster.getDCFromIndex(0).Resources.Limits.Memory())
+	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
+	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
 
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)

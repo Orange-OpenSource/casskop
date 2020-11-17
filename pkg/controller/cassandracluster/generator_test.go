@@ -216,6 +216,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Requests: generateResourceList("1", "1Gi"),
 			Limits:   generateResourceList("2", "3Gi"),
 		})
+	checkResourcesConfiguration(t, sts.Spec.Template.Spec.Containers, dcName, "3", "3Gi")
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -242,6 +243,18 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Requests: nil,
 			Limits:   nil,
 		})
+	checkResourcesConfiguration(t, stsDefault.Spec.Template.Spec.Containers, dcNameDefault, "1", "2Gi")
+}
+
+func checkResourcesConfiguration(t *testing.T, containers []v1.Container, dcName string, cpu string, memory string) {
+	for _, c := range containers {
+		if c.Name == "cassandra" {
+			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Requests.Cpu())
+			assert.Equal(t, resource.MustParse(memory), *c.Resources.Requests.Memory())
+			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Limits.Cpu())
+			assert.Equal(t, resource.MustParse(memory),  *c.Resources.Limits.Memory())
+		}
+	}
 }
 
 func setupForDefaultTest(cc *api.CassandraCluster) {
