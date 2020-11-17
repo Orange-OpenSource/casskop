@@ -70,6 +70,9 @@ file:
   /etc/cassandra/pre_run.sh:
     exists: false
 
+  /etc/cassandra/liveness-probe.sh:
+    exists: true
+
   /etc/cassandra/readiness-probe.sh:
     exists: true
 

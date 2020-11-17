@@ -94,7 +94,7 @@ spec:
               command:
                 - /bin/bash
                 - -c
-                - /etc/cassandra/readiness-probe.sh
+                - /etc/cassandra/liveness-probe.sh
             failureThreshold: 3
             initialDelaySeconds: 120
             periodSeconds: 10
