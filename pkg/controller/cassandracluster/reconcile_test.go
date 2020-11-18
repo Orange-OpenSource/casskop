@@ -378,8 +378,8 @@ func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) 
 	res := rcc.CheckNonAllowedChanges(cc, status)
 	assert.Equal(false, res)
 
-	assert.Equal("2", cc.Spec.Resources.Requests.Cpu().String())
-	assert.Equal("2Gi", cc.Spec.Resources.Requests.Memory().String())
+	assert.Equal(resource.MustParse("2"), *cc.Spec.Resources.Requests.Cpu())
+	assert.Equal(resource.MustParse("2Gi"), *cc.Spec.Resources.Requests.Memory())
 
 	dcRackName := "dc1-rack1"
 	assert.Equal(api.ActionUpdateResources.Name, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)

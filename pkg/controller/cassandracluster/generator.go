@@ -651,7 +651,7 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 		Name:            bootstrapContainerName,
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Env:             bootstrapContainerEnvVar(cc, status, *cc.Spec.Resources, dcRackName),
+		Env:             bootstrapContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
 		VolumeMounts:    volumeMounts,
 		Resources:       initContainerResources(),
 	}
@@ -681,10 +681,10 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 
-	var resources *v1.ResourceRequirements
+	var resources v1.ResourceRequirements
 	dcResources := cc.GetDCFromDCRackName(dcRackName).Resources
 	// Check if there is a resources requirements at DC level specified
-	if dcResources == nil {
+	if dcResources.Limits.Cpu().IsZero() && dcResources.Limits.Memory().IsZero() && dcResources.Requests.Cpu().IsZero() && dcResources.Requests.Memory().IsZero() {
 		resources = cc.Spec.Resources
 	} else {
 		resources = dcResources
@@ -789,7 +789,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			},
 		},
 		VolumeMounts: volumeMounts,
-		Resources:    *resources,
+		Resources:    resources,
 	}
 
 	if cc.Spec.LivenessFailureThreshold != nil {

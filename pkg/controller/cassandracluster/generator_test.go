@@ -485,7 +485,7 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cc.Spec.Resources
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, *cassieResources, dcRackName)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert := assert.New(t)
 

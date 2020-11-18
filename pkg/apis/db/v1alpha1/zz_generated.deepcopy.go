@@ -201,11 +201,7 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = new(v1.ResourceRequirements)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	if in.Pod != nil {
 		in, out := &in.Pod, &out.Pod
 		*out = new(PodPolicy)
@@ -558,11 +554,7 @@ func (in *DC) DeepCopyInto(out *DC) {
 		*out = new(int32)
 		**out = **in
 	}
-	if in.Resources != nil {
-		in, out := &in.Resources, &out.Resources
-		*out = new(v1.ResourceRequirements)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Resources.DeepCopyInto(&out.Resources)
 	return
 }
 
