@@ -1,9 +1,16 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
-## Unreleased
+## v1.0.1
 
 ### Added
+
+- PR [#280](https://github.com/Orange-OpenSource/casskop/pull/280) - Upgrade Icarus to 1.0.5
+- PR [#279](https://github.com/Orange-OpenSource/casskop/pull/279) - Add option to specify resources at DCs level
+- PR [#278](https://github.com/Orange-OpenSource/casskop/pull/278) - Make separate liveness/readiness probes possible
+- PR [#276](https://github.com/Orange-OpenSource/casskop/pull/276) - Upgrade Icarus and add errors to status
+- PR [#275](https://github.com/Orange-OpenSource/casskop/pull/275) - Use static name for k3d cluster
+- PR [#274](ttps://github.com/Orange-OpenSource/casskop/pull/274) - Fix website doc and add search ability
 
 ### Changed
 
