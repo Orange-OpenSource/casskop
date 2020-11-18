@@ -57,11 +57,24 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if _, err := meta.Accessor(e.ObjectNew); err != nil {
 				return false
 			}
-			new := e.ObjectNew.(*api.CassandraBackup)
-			if new.Status == nil || new.Status.State != api.BackupRunning {
+			backup := e.ObjectNew.(*api.CassandraBackup)
+			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": backup.Namespace,
+				"Request.Name": backup.Name})
+			if backup.Status.Condition == nil {
+				return false
+			}
+			backupConditionType := api.BackupConditionType(backup.Status.Condition.Type)
+
+			if backup.IsScheduled() {
 				return true
 			}
-			return false
+
+			if !backupConditionType.IsRunning() {
+				reqLogger.Debug("Backup is not running, skipping.")
+				return false
+			}
+
+			return true
 		},
 	}
 

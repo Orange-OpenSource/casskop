@@ -74,15 +74,19 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			reqLogger := logrus.WithFields(logrus.Fields{"Request.Namespace": restore.Namespace,
 				"Request.Name": restore.Name})
 			new := e.ObjectNew.(*api.CassandraRestore)
-			if new.Status.Condition == nil {
+			if len(new.Status.CoordinatorMember)<1 {
 				return false
 			}
-			if new.Status.Condition.Type.IsCompleted() {
+			if new.Status.Condition == nil {
+				return true
+			}
+			restoreConditionType := api.RestoreConditionType(new.Status.Condition.Type)
+			if restoreConditionType.IsCompleted() {
 				reqLogger.Info("Restore is completed, skipping.")
 				return false
 			}
 
-			if new.Status.Condition.Type.IsInError() {
+			if restoreConditionType.IsInError() {
 				reqLogger.Info("Restore is in error state, skipping.")
 				return false
 			}

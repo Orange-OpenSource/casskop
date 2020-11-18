@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
@@ -72,7 +73,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			// if the resource is not found, that means all of
 			// the finalizers have been removed, and the resource has been deleted,
 			// so there is nothing left to do.
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
@@ -95,7 +96,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 				"err": err}).Error("Issue when updating CassandraBackup")
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{}, nil
+		return common.Reconciled()
 	}
 
 	instanceChanged := true
@@ -107,15 +108,15 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		defer r.client.Update(context.TODO(), cassandraBackup)
 	}
 
-	if !cassandraBackup.IsScheduled() && cassandraBackup.Status != nil {
+	if !cassandraBackup.IsScheduled() && cassandraBackup.Status.Condition != nil {
 		logrus.WithFields(logrus.Fields{"backup": request.NamespacedName}).Info(backupAlreadyRun)
-		return reconcile.Result{}, nil
+		return common.Reconciled()
 	} else if cassandraBackup.IsScheduled() && r.scheduler.Contains(cassandraBackup.Name) && !instanceChanged {
 		logrus.WithFields(logrus.Fields{"backup": cassandraBackup.Name}).Info(backupAlreadyScheduled)
-		return reconcile.Result{}, nil
+		return common.Reconciled()
 	}
 
-	cassandraBackup.Status = &api.CassandraBackupStatus{}
+	cassandraBackup.Status = api.BackRestStatus{}
 
 	if exists, err := existingNotScheduledSnapshot(r.client, cassandraBackup); err != nil {
 		return reconcile.Result{}, err
@@ -127,7 +128,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			"BackupSkipped",
 			fmt.Sprintf("Datacenter %s in cluster %s was not backed up to %s under snapshot %s because such backup already exists",
 				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag))
-		return reconcile.Result{}, nil
+		return common.Reconciled()
 	}
 
 	// fetch secret and make sure it exists
@@ -140,7 +141,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 				corev1.EventTypeWarning,
 				"BackupFailedSecretNotFound",
 				fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 		return reconcile.Result{}, err
 	}
@@ -158,7 +159,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 				corev1.EventTypeWarning,
 				"BackupFailedDurationParseError",
 				fmt.Sprintf("Duration %s can't be parsed", cassandraBackup.Spec.Duration))
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 	}
 
@@ -174,7 +175,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 				"CassandraClusterNotFound",
 				fmt.Sprintf("Datacenter %s of cluster %s to backup not found", cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster))
 
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 		return reconcile.Result{}, err
 	}
@@ -206,7 +207,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			}
 
 			// The schedule is invalid and the object is new, we stop here
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 
 		if skipped, err := r.scheduler.AddOrUpdate(
@@ -214,7 +215,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 			r.recorder.Event(cassandraBackup, corev1.EventTypeWarning, "BackupScheduleError",
 				fmt.Sprintf("Wasn't able to schedule job %s: %s", cassandraBackup.Name, err.Error()))
 		} else if skipped {
-			return reconcile.Result{}, nil
+			return common.Reconciled()
 		}
 
 		// Add Finalizer
@@ -222,7 +223,7 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	}
 
 	if cassandraBackup.IsScheduled() {
-		return reconcile.Result{}, nil
+		return common.Reconciled()
 	}
 
 	return reconcile.Result{}, r.backupData(cassandraBackup, cc, reqLogger)
@@ -237,9 +238,9 @@ func (r *ReconcileCassandraBackup) backupData(cassandraBackup *api.CassandraBack
 	}
 
 	pod := pods.Items[random.Intn(len(pods.Items))]
-	cassandraBackup.Status = &api.CassandraBackupStatus{CoordinatorMember: pod.Name}
+	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 	backupClient := &backupClient{backup: cassandraBackup, client: r.client}
-	backupClient.updateStatus(&api.CassandraBackupStatus{},reqLogger )
+	backupClient.updateStatus(api.BackRestStatus{},reqLogger)
 
 	backrestClient, _ := backrest.NewClient(r.client, cc, &pod)
 

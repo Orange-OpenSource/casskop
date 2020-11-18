@@ -5,7 +5,7 @@ import (
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,13 +44,15 @@ func TestPerformRestore(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.CassandraRestoreStatus{
+	assert.Equal(&v1alpha1.BackRestStatus{
 		TimeCreated:   "2020-06-10T04:53:05.976Z",
 		TimeStarted:   "2020-06-10T05:53:05.976Z",
 		TimeCompleted: "2020-06-10T06:53:05.976Z",
-		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestorePending, LastTransitionTime: cs.Condition.LastTransitionTime},
+		Condition:     &v1alpha1.BackRestCondition{
+			Type: string(v1alpha1.RestorePending),
+			LastTransitionTime: cs.Condition.LastTransitionTime,
+		},
 		Progress:      "10%",
-		Phase:         v1alpha1.RestorationPhaseDownload,
 		ID:            cs.ID,
 	}, cs)
 
@@ -77,13 +79,15 @@ func TestGetRestorebyId(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.CassandraRestoreStatus{
+	assert.Equal(&v1alpha1.BackRestStatus{
 		TimeCreated:   "2020-06-10T04:53:05.976Z",
 		TimeStarted:   "2020-06-10T05:53:05.976Z",
 		TimeCompleted: "2020-06-10T06:53:05.976Z",
-		Condition:     &v1alpha1.RestoreCondition{Type: v1alpha1.RestoreRunning, LastTransitionTime: cs.Condition.LastTransitionTime},
+		Condition:     &v1alpha1.BackRestCondition{
+			Type: string(v1alpha1.RestoreRunning),
+			LastTransitionTime: cs.Condition.LastTransitionTime,
+		},
 		Progress:      "10%",
-		Phase:         v1alpha1.RestorationPhaseTruncate,
 		ID:            operationId,
 	}, cs)
 
@@ -103,19 +107,19 @@ func TestParseBandwidth(t *testing.T) {
 
 	value, err := dataRateFromBandwidth("250")
 	assert.Nil(err)
-	assert.Equal(value, &csapi.DataRate{Value: 250, Unit: "BPS"})
+	assert.Equal(value, &icarus.DataRate{Value: 250, Unit: "BPS"})
 
 	value, err = dataRateFromBandwidth("10k")
 	assert.Nil(err)
-	assert.Equal(value, &csapi.DataRate{Value: 10, Unit: "KBPS"})
+	assert.Equal(value, &icarus.DataRate{Value: 10, Unit: "KBPS"})
 
 	value, err = dataRateFromBandwidth("1024M")
 	assert.Nil(err)
-	assert.Equal(value, &csapi.DataRate{Value: 1024, Unit: "MBPS"})
+	assert.Equal(value, &icarus.DataRate{Value: 1024, Unit: "MBPS"})
 
 	value, err = dataRateFromBandwidth("10G")
 	assert.Nil(err)
-	assert.Equal(value, &csapi.DataRate{Value: 10, Unit: "GBPS"})
+	assert.Equal(value, &icarus.DataRate{Value: 10, Unit: "GBPS"})
 
 	value, err = dataRateFromBandwidth("250T")
 	assert.NotNil(err)
