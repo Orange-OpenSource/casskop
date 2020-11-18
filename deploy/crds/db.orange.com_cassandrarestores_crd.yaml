@@ -94,44 +94,25 @@ spec:
             - cassandraCluster
             type: object
           status:
-            description: CassandraRestoreStatus captures the current status of a Cassandra
-              restore.
             properties:
-              conditions:
-                description: RestoreCondition describes the observed state of a Restore
+              condition:
+                description: BackRestCondition describes the observed state of a Restore
                   at a certain point
                 properties:
                   failureCause:
-                    properties:
-                      localizedMessage:
-                        type: string
-                      message:
-                        type: string
-                      stackTrace:
-                        items:
-                          properties:
-                            className:
-                              type: string
-                            fileName:
-                              type: string
-                            lineNumber:
-                              type: string
-                            methodName:
-                              type: string
-                            nativeMethod:
-                              type: string
-                          type: object
-                        type: array
-                    required:
-                    - localizedMessage
-                    - message
-                    - stackTrace
-                    type: object
+                    items:
+                      properties:
+                        message:
+                          description: message explaining the error
+                          type: string
+                        source:
+                          description: hostame of a node where this error has occurred
+                          type: string
+                      type: object
+                    type: array
                   lastTransitionTime:
                     type: string
                   type:
-                    description: RestoreConditionType represents a valid condition
-                      of a Restore
                     type: string
                 required:
                 - type
@@ -149,8 +130,6 @@ spec:
               progress:
                 description: Progress is a percentage, 100% means the operation is
                   completed, either successfully or with errors
-                type: string
-              restorationPhase:
                 type: string
               timeCompleted:
                 type: string

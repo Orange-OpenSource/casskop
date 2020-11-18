@@ -2,7 +2,7 @@ package cassandrabackup
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
-	csapi "github.com/instaclustr/cassandra-sidecar-go-client/pkg/cassandra_sidecar"
+	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"
 )
@@ -26,9 +26,9 @@ const (
 type mockCassandraBackupClient struct {
 	Client
 	opts *Config
-	podClient *csapi.APIClient
+	podClient *icarus.APIClient
 
-	newClient func(*csapi.Configuration) *csapi.APIClient
+	newClient func(*icarus.Configuration) *icarus.APIClient
 	failOpts bool
 }
 
@@ -40,8 +40,8 @@ func newMockOpts() *Config {
 	}
 }
 
-func newMockHttpClient(c *csapi.Configuration) *csapi.APIClient {
-	client := csapi.NewAPIClient(c)
+func newMockHttpClient(c *icarus.Configuration) *icarus.APIClient {
+	client := icarus.NewAPIClient(c)
 	httpmock.Activate()
 	return client
 }
@@ -76,12 +76,12 @@ func NewMockCassandraBackupClientFailOps() *mockCassandraBackupClient {
 	}
 }
 
-func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation csapi.RestoreOperationRequest) (*csapi.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation icarus.RestoreOperationRequest) (*icarus.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned201
 	}
 
-	var restoreOp csapi.RestoreOperationResponse
+	var restoreOp icarus.RestoreOperationResponse
 
 	mapstructure.Decode(common.MockRestoreResponse(
 		restoreOperation.NoDeleteDownloads,
@@ -98,12 +98,12 @@ func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation csa
 	return &restoreOp, nil
 }
 
-func (m *mockCassandraBackupClient) RestoreOperationByID(operationId string) (*csapi.RestoreOperationResponse, error) {
+func (m *mockCassandraBackupClient) RestoreOperationByID(operationId string) (*icarus.RestoreOperationResponse, error) {
 	if m.failOpts {
 		return nil, ErrCassandraSidecarNotReturned200
 	}
 
-	var restoreOperation csapi.RestoreOperationResponse
+	var restoreOperation icarus.RestoreOperationResponse
 
 	mapstructure.Decode(common.MockRestoreResponse(
 		noDeleteDownloads,
