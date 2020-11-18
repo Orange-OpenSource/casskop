@@ -4,19 +4,21 @@ name: cassandra-operator
 home: https://github.com/Orange-OpenSource/casskop
 sources:
   - https://github.com/Orange-OpenSource/casskop
-version: 1.0.0
-appVersion: 1.0.0-release
+version: 1.0.1
+appVersion: 1.0.1-release
 maintainers:
   - name: allamand
     email: sebastien.allamand@orange.com
   - name: cscetbon
-    email: cscetbon.ext@orange.com
+    email: cscetbon@gmail.com
   - name: jal06
     email: jeanarmel.luce@orange.com
   - name: erdrix
     email: aguitton.ext@orange.com
   - name: fdehay
     email: franck.dehay@orange.com
+  - name: PERES-Richard
+    email: richardperes.info@gmail.com
 keywords:
 - operator
 - cassandra
