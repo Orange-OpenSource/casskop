@@ -197,7 +197,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 		changed = true
 	}
-	if cc.Spec.Resources.Limits.Cpu().IsZero() && cc.Spec.Resources.Limits.Memory().IsZero() {
+	if cc.Spec.Resources.Limits == nil {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
 		changed = true
 	}

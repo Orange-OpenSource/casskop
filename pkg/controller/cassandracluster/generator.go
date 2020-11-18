@@ -684,7 +684,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	var resources v1.ResourceRequirements
 	dcResources := cc.GetDCFromDCRackName(dcRackName).Resources
 	// Check if there is a resources requirements at DC level specified
-	if dcResources.Limits.Cpu().IsZero() && dcResources.Limits.Memory().IsZero() && dcResources.Requests.Cpu().IsZero() && dcResources.Requests.Memory().IsZero() {
+	if dcResources.Limits == nil && dcResources.Requests == nil {
 		resources = cc.Spec.Resources
 	} else {
 		resources = dcResources
