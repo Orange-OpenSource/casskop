@@ -267,8 +267,7 @@ spec:
                 format: int32
                 type: integer
               resources:
-                description: Pod defines the policy for pods owned by cassandra operator.
-                  This field cannot be updated once the CR is created. Pod       *PodPolicy         `json:"pod,omitempty"`
+                description: ResourceRequirements describes the compute resource requirements.
                 properties:
                   limits:
                     additionalProperties:
