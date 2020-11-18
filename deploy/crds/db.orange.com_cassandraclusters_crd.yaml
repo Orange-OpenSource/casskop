@@ -48,7 +48,7 @@ spec:
                   to load along with each C* pod
                 properties:
                   image:
-                    default: gcr.io/cassandra-operator/instaclustr-icarus:1.0.3
+                    default: gcr.io/cassandra-operator/instaclustr-icarus:1.0.5
                     description: Image of backup/restore sidecar
                     type: string
                   imagePullPolicy:

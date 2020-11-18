@@ -963,7 +963,7 @@ type CPUAndMem struct {
 // BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
 	// Image of backup/restore sidecar
-	// +kubebuilder:default:="gcr.io/cassandra-operator/instaclustr-icarus:1.0.3"
+	// +kubebuilder:default:="gcr.io/cassandra-operator/instaclustr-icarus:1.0.5"
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy define the pull policy for backrest sidecar docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
