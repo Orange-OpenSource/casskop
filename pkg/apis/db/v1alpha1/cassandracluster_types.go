@@ -297,13 +297,13 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 }
 
 //GetDCFromDCRackName send dc name from dcRackName (dc-rack)
-func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) string {
-	dc, _ := cc.GetDCAndRackFromDCRackName(dcRackName)
+func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
+	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	return dc
 }
 
 //GetDCAndRackFromDCRackName send dc and rack from dcRackName (dc-rack)
-func (cc *CassandraCluster) GetDCAndRackFromDCRackName(dcRackName string) (string, string) {
+func (cc *CassandraCluster) GetDCNameAndRackNameFromDCRackName(dcRackName string) (string, string) {
 	dc := strings.Split(dcRackName, "-")
 	return dc[0], dc[1]
 }
@@ -568,18 +568,9 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 }
 
 // Get DC by one of its rack name
-func (cc *CassandraCluster) GetDCByRackName(dcRackName string) *DC {
-	index := cc.GetDCIndexFromDCName(cc.GetDCFromDCRackName(dcRackName))
-	// Not found
-	if index == -1 {
-		return nil
-	}
+func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
+	index := cc.GetDCIndexFromDCName(cc.GetDCNameFromDCRackName(dcRackName))
 	return cc.getDCFromIndex(index)
-}
-
-// Get DC by its name
-func (cc *CassandraCluster) GetDCByItsName(dcName string) *DC {
-	return cc.getDCFromIndex(cc.GetDCIndexFromDCName(dcName))
 }
 
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack

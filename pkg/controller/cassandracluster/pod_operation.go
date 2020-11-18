@@ -574,7 +574,7 @@ func (rcc *ReconcileCassandraCluster) podsSlice(cc *api.CassandraCluster, status
 		checkOnly = true
 		return podsSlice, checkOnly
 	}
-	dcName, rackName := cc.GetDCAndRackFromDCRackName(dcRackName)
+	dcName, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	podsSlice = rcc.initOperation(cc, status, dcName, rackName, operationName)
 	return podsSlice, checkOnly
 }

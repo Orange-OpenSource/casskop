@@ -682,7 +682,7 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 	dcRackName string) v1.Container {
 
 	var resources *v1.ResourceRequirements
-	dcResources := cc.GetDCByRackName(dcRackName).Resources
+	dcResources := cc.GetDCFromDCRackName(dcRackName).Resources
 	// Check if there is a resources requirements at DC level specified
 	if dcResources == nil {
 		resources = cc.Spec.Resources

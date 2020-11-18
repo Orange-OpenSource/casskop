@@ -359,9 +359,9 @@ func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
 					"Can't Delete Statefulset: %v", err)
 			}
 			names := []string{
-				cc.Name + "-" + cc.GetDCFromDCRackName(dcRackNameToDelete),                   //name-dc
-				cc.Name + "-" + dcRackNameToDelete,                                           //name-dc-rack
-				cc.Name + "-" + cc.GetDCFromDCRackName(dcRackNameToDelete) + "-exporter-jmx", //name-dc-exporter-jmx
+				cc.Name + "-" + cc.GetDCNameFromDCRackName(dcRackNameToDelete),                   //name-dc
+				cc.Name + "-" + dcRackNameToDelete,                                               //name-dc-rack
+				cc.Name + "-" + cc.GetDCNameFromDCRackName(dcRackNameToDelete) + "-exporter-jmx", //name-dc-exporter-jmx
 			}
 			for i := range names {
 				err = rcc.DeleteService(cc.Namespace, names[i])
