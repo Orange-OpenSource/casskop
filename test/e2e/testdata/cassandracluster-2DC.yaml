@@ -23,6 +23,13 @@ spec:
       - name: dc1
         rack:
           - name: rack1
+        resources:
+          requests:
+            cpu: '1'
+            memory: 2Gi
+          limits:
+            cpu: '2'
+            memory: 3Gi
       - name: dc2
         numTokens: 32
         nodesPerRacks: 1

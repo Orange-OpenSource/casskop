@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"net/http"
 	"reflect"
 	"testing"
@@ -369,14 +370,16 @@ func TestCheckNonAllowedChangesResourcesIsAllowedButNeedAttention(t *testing.T) 
 
 	//Allow Changes but need sequential rolling pdate
 	//Global ScaleDown to 0 must be ignored
-	cc.Spec.Resources.Requests.CPU = "2"      //instead of '1'
-	cc.Spec.Resources.Requests.Memory = "2Gi" //instead of 2Gi
+	cc.Spec.Resources.Requests = v1.ResourceList{
+		"cpu":    resource.MustParse("2"), //instead of '1'
+		"memory": resource.MustParse("2Gi"), //instead of 2Gi
+	}
 
 	res := rcc.CheckNonAllowedChanges(cc, status)
 	assert.Equal(false, res)
 
-	assert.Equal("2", cc.Spec.Resources.Requests.CPU)
-	assert.Equal("2Gi", cc.Spec.Resources.Requests.Memory)
+	assert.Equal(resource.MustParse("2"), *cc.Spec.Resources.Requests.Cpu())
+	assert.Equal(resource.MustParse("2Gi"), *cc.Spec.Resources.Requests.Memory())
 
 	dcRackName := "dc1-rack1"
 	assert.Equal(api.ActionUpdateResources.Name, status.CassandraRackStatus[dcRackName].CassandraLastAction.Name)

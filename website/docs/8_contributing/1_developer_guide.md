@@ -353,9 +353,9 @@ Successfully tagged orangeopensource/multi-casskop:0.5.6-my-pr
 ```
 k3d cluster create multi-casskop-qa
 cd $(git rev-parse --show-toplevel)
-k apply -f deploy/crds/
-k create namespace cluster1
-k create namespace cluster2
+kubectl  apply -f deploy/crds/
+kubectl  create namespace cluster1
+kubectl  create namespace cluster2
 helm install casskop -n cluster1 orange-incubator/cassandra-operator --set debug.enabled=true
 helm install casskop -n cluster2 orange-incubator/cassandra-operator --set debug.enabled=true
 kubemcsa export --context=k3d-multi-casskop-qa cassandra-operator --as k8s-cluster2 -n cluster1 | k apply -n cluster1 -f -
@@ -363,7 +363,7 @@ kubemcsa export --context=k3d-multi-casskop-qa cassandra-operator --as k8s-clust
 - Update generated secret to use `server: https://kubernetes.default.svc/` in its config (We won't need that method 
 anymore and will be able to create 2 different clusters when https://github.com/rancher/k3d/issues/101 is solved)
 ```
-k get secrets -n cluster1 k8s-cluster2 -o json|jq -r '.data.config'|base64 -d|pbcopy
+kubectl  get secrets -n cluster1 k8s-cluster2 -o json|jq -r '.data.config'|base64 -d|pbcopy
 # set server to https://kubernetes.default.svc in the output, then copy it in the clipboard and run
 pbpaste|base64 -w10000|pbcopy
 # You now have to edit the secret and replace config's value by what you have in your clipboard

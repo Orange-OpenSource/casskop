@@ -258,7 +258,7 @@ When all racks are in status done, then the `CassandraCluster.status.lastCluster
 We can see that internally Cassandra also knows the desired topology :
 
 ```bash
-k exec -ti cassandra-demo-dc1-rack1-0 nodetool status
+kubectl exec -ti cassandra-demo-dc1-rack1-0 nodetool status
 Datacenter: dc1
 ===============
 Status=Up/Down
@@ -709,7 +709,7 @@ status:
 Here is the final topology seen from nodetool :
 
 ```bash
-$ k exec -ti cassandra-demo-dc1-rack1-0 nodetool status
+$ kubectl  exec -ti cassandra-demo-dc1-rack1-0 nodetool status
 Datacenter: dc1
 ===============
 Status=Up/Down
@@ -732,7 +732,7 @@ UN  172.18.88.9    148.34 KiB  32           31.7%             fecdfb5d-3ad4-4204
 Note that nodetool prints IP of nodes while kubernetes works with names :
 
 ```bash
-$ k get pods -o wide -l app=cassandracluster
+$ kubectl get pods -o wide -l app=cassandracluster
 NAME                         READY     STATUS    RESTARTS   AGE       IP              NODE      NOMINATED NODE
 cassandra-demo-dc1-rack1-0   1/1       Running   0          14m       172.18.112.5    node006   <none>
 cassandra-demo-dc1-rack1-1   1/1       Running   0          15m       172.18.120.14   node003   <none>

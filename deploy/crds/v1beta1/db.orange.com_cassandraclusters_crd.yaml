@@ -266,8 +266,6 @@ spec:
                 This field cannot be updated once the CR is created. Pod       *PodPolicy         `json:"pod,omitempty"`
               properties:
                 limits:
-                  description: CPUAndMem defines how many cpu and ram the container
-                    will request/limit
                   properties:
                     cpu:
                       pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
@@ -280,8 +278,6 @@ spec:
                   - memory
                   type: object
                 requests:
-                  description: CPUAndMem defines how many cpu and ram the container
-                    will request/limit
                   properties:
                     cpu:
                       pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$

@@ -168,6 +168,7 @@ generate:
 	operator-sdk version
 	operator-sdk generate k8s
 	operator-sdk generate crds
+	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 
 # Build casskop executable file in local go env
 .PHONY: build

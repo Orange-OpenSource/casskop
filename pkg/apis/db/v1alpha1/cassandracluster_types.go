@@ -197,7 +197,7 @@ func (cc *CassandraCluster) SetDefaults() bool {
 		ccs.MaxPodUnavailable = defaultMaxPodUnavailable
 		changed = true
 	}
-	if cc.Spec.Resources.Limits == (CPUAndMem{}) {
+	if cc.Spec.Resources.Limits == nil {
 		cc.Spec.Resources.Limits = cc.Spec.Resources.Requests
 		changed = true
 	}
@@ -297,13 +297,13 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 }
 
 //GetDCFromDCRackName send dc name from dcRackName (dc-rack)
-func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) string {
-	dc, _ := cc.GetDCAndRackFromDCRackName(dcRackName)
+func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
+	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	return dc
 }
 
 //GetDCAndRackFromDCRackName send dc and rack from dcRackName (dc-rack)
-func (cc *CassandraCluster) GetDCAndRackFromDCRackName(dcRackName string) (string, string) {
+func (cc *CassandraCluster) GetDCNameAndRackNameFromDCRackName(dcRackName string) (string, string) {
 	dc := strings.Split(dcRackName, "-")
 	return dc[0], dc[1]
 }
@@ -567,6 +567,12 @@ func (cc *CassandraCluster) getDCFromIndex(dc int) *DC {
 	return &cc.Spec.Topology.DC[dc]
 }
 
+// Get DC by one of its rack name
+func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
+	index := cc.GetDCIndexFromDCName(cc.GetDCNameFromDCRackName(dcRackName))
+	return cc.getDCFromIndex(index)
+}
+
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
@@ -751,10 +757,7 @@ type CassandraClusterSpec struct {
 	// Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
 
-	// Pod defines the policy for pods owned by cassandra operator.
-	// This field cannot be updated once the CR is created.
-	//Pod       *PodPolicy         `json:"pod,omitempty"`
-	Resources CassandraResources `json:"resources,omitempty"`
+	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 
 	// HardAntiAffinity defines if the PodAntiAffinity of the
 	// statefulset has to be hard (it's soft by default)
@@ -915,6 +918,8 @@ type DC struct {
 
 	//Define StorageClass for Persistent Volume Claims in the local storage.
 	DataStorageClass string `json:"dataStorageClass,omitempty"`
+
+	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // Rack allow to configure Cassandra Rack according to kubernetes nodeselector labels
@@ -944,20 +949,6 @@ type PodPolicy struct {
 type ServicePolicy struct {
 	// Annotations specifies the annotations to attach to headless service the CassKop operator creates
 	Annotations map[string]string `json:"annotations,omitempty"`
-}
-
-// CassandraResources sets the limits and requests for a container
-type CassandraResources struct {
-	Requests CPUAndMem `json:"requests,omitempty"`
-	Limits   CPUAndMem `json:"limits,omitempty"`
-}
-
-// CPUAndMem defines how many cpu and ram the container will request/limit
-type CPUAndMem struct {
-	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-	CPU string `json:"cpu"`
-	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-	Memory string `json:"memory"`
 }
 
 // BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
