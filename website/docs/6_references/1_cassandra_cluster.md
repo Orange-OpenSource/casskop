@@ -99,13 +99,6 @@ spec:
 |readinessFailureThreshold|int32|Defines failure threshold for the readiness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|(value set by kubernetes cluster)|
 |readinessSuccessThreshold|int32|Defines success threshold for the readiness probe of the main. [Configure liveness Readiness startup probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)|Yes|(value set by kubernetes cluster)|
 
-## CPUAndMem
-
-|Field|Type|Description|Required|Default|
-|-----|----|-----------|--------|--------|
-|cpu|string||Yes| - |
-|memory|string||Yes| - |
-
 ## PodPolicy
 
 |Field|Type|Description|Required|Default|

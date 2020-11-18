@@ -954,14 +954,6 @@ type ServicePolicy struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-// CPUAndMem defines how many cpu and ram the container will request/limit
-type CPUAndMem struct {
-	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-	CPU string `json:"cpu"`
-	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
-	Memory string `json:"memory"`
-}
-
 // BackRestSidecar defines details about cassandra-sidecar to load along with each C* pod
 type BackRestSidecar struct {
 	// Image of backup/restore sidecar
