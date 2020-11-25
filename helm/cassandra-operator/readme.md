@@ -39,14 +39,6 @@ $ helm install --name casskop incubator/cassandra-operator -f values.yaml
 
 ### Installing the Chart
 
-> Helm 3 users
->
-> You need to manually install the crds beforehand
->
-> ```console
-> kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-> ```
-
 You can make a dry run of the chart before deploying :
 
 ```console 
@@ -129,7 +121,7 @@ $ helm delete --purge casskop
 
 ### Install of the CRD
 
-By default, the chart will install via a helm hook the Casskop CRD, but this installation is global for the whole
+By default, the chart will install the Casskop CRD, but this installation is global for the whole
 cluster, and you may deploy a chart with an existing CRD already deployed.
 
 In that case you can get an error like :
@@ -138,10 +130,4 @@ In that case you can get an error like :
 ```
 $ helm install --name casskop ./helm/cassandra-operator
 Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
-```
-
-In this case there si a parameter to say to not uses the hook to install the CRD :
-
-```
-$ helm install --name casskop ./helm/cassandra-operator --no-hooks
 ```
