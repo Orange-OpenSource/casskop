@@ -77,7 +77,6 @@ Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo
 
 ```bash
 # You have to create the namespace before executing following command
-kubectl apply -f https://github.com/Orange-OpenSource/casskop/blob/master/multi-casskop/deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
 helm install  multi-casskop --namespace=cassandra orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
