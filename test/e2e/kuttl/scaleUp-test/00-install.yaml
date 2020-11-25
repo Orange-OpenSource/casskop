@@ -4,6 +4,7 @@ metadata:
   name: cassandra-e2e
   labels:
     cluster: k8s.pic
+  namespace: kuttl-test
 spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
