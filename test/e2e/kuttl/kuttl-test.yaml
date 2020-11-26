@@ -3,7 +3,7 @@ kind: TestSuite
 #crdDir: ../../../deploy/crds/
 testDirs:
   - .
-timeout: 30
+timeout: 300
 commands:
   - command: helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
     ignoreFailure: true

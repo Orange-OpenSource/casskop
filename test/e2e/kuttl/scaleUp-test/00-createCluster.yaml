@@ -2,8 +2,6 @@ apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster
 metadata:
   name: cassandra-e2e
-  labels:
-    cluster: k8s.pic
   namespace: kuttl-test
 spec:
   nodesPerRacks: 1
