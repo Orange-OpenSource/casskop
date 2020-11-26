@@ -13,7 +13,3 @@ commands:
     ignoreFailure: true
   - command: kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandrarestores_crd.yaml
     ignoreFailure: true
-  - command: kubectl create namespace kuttl-test
-    ignoreFailure: true
-  - command: helm install casskop --namespace=kuttl-test orange-incubator/cassandra-operator
-    ignoreFailure: true

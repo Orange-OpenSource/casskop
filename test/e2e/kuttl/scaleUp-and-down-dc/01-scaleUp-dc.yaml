@@ -2,7 +2,6 @@ apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster
 metadata:
   name: cassandra-e2e
-  namespace: kuttl-test
 spec:
   nodesPerRacks: 1
   topology:
