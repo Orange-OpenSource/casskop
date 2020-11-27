@@ -98,7 +98,7 @@ orbs:
                 fi
                 if [ parameters.test_type = "kuttl" ]
                 then
-                  make docker-kuttl-test << parameters.test_name >> || {
+                  make docker-kuttl-test-fix-arg << parameters.test_name >> || {
                     kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
                     echo "Show Operator logs:"
                     cat operator.log
