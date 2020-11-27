@@ -410,8 +410,8 @@ ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
 endif
 
 docker-e2e-test-fix-arg:
-	E2E_OPERATOR_TESTS := ExecuteCleanup RollingRestart ClusterScaleDown ClusterScaleUp ClusterScaleDownSimple
-	E2E_KUTTL_TESTS := ScaleUpAndDownDC
+	E2E_OPERATOR_TESTS = ExecuteCleanup RollingRestart ClusterScaleDown ClusterScaleUp ClusterScaleDownSimple
+	E2E_KUTTL_TESTS = ScaleUpAndDownDC
 
 	ifeq ($(E2E_ARGS),)
 		@echo "args are: for Operator Kuttl: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple & for Kuttl : ScaleUpAndDownDC" && exit 1
