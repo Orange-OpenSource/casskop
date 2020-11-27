@@ -482,7 +482,7 @@ workflows:
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: e2e-test-kuttl ScaleUpAndDownDC
+          name: kuttl-test ScaleUpAndDownDC
           test_name: ScaleUpAndDownDC # Has be be the same as the TestCase (folder) in Kuttl directory
           test_type: kuttl
           requires:
