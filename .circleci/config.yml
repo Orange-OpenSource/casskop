@@ -24,6 +24,10 @@ orbs:
             description: name of the test in e2e code
             type: string
             default: e2e code name
+          test_type:
+            description: type of test (e2e or kuttl)
+            type: string
+            default: e2e
           operatorDir:
             type: string
             description: relative path where the build must be run
@@ -83,12 +87,24 @@ orbs:
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&
-                make docker-e2e-test-fix-arg << parameters.test_name >> || {
-                kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
-                echo "Show Operator logs:"
-                cat operator.log
-                false;
-                }
+                if [ parameters.test_type = "e2e" ]
+                then
+                  make docker-e2e-test-fix-arg << parameters.test_name >> || {
+                    kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
+                    echo "Show Operator logs:"
+                    cat operator.log
+                    false;
+                  }
+                fi
+                if [ parameters.test_type = "kuttl" ]
+                then
+                  make docker-kuttl-test << parameters.test_name >> || {
+                    kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
+                    echo "Show Operator logs:"
+                    cat operator.log
+                    false;
+                  }
+                fi
   operator:
     # Parameters anchor
     .params_operator: &params_operator
@@ -468,6 +484,7 @@ workflows:
       - k3d/e2e-orb:
           name: e2e-test-kuttl ScaleUpAndDownDC
           test_name: ScaleUpAndDownDC # Has be be the same as the TestCase (folder) in Kuttl directory
+          test_type: kuttl
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter

@@ -123,10 +123,6 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-# Tests names
-E2E_OPERATOR_TESTS := ExecuteCleanup RollingRestart ClusterScaleDown ClusterScaleUp ClusterScaleDownSimple
-E2E_KUTTL_TESTS := ScaleUpAndDownDC
-
 OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
 # workdir
 WORKDIR := /go/casskop
@@ -407,22 +403,27 @@ endif
 docker-e2e-test-fix:
 	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --operator-namespace cassandra-e2e'
 
-#execute Test filter based on given Regex
+#execute Test filters based on given Regex
 ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(E2E_ARGS):;@:)
 endif
+ifeq (docker-kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
+  KUTTL_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(KUTTL_ARGS):;@:)
+endif
 
 docker-e2e-test-fix-arg:
-	ifeq ($(E2E_ARGS),)
-		@echo "args are: for Operator=$(E2E_OPERATOR_TESTS) & for Kuttl= $(E2E_KUTTL_TESTS)" && exit 1
-	endif
-	if ${E2E_ARGS} exists in $(E2E_OPERATOR_TESTS) # If its an operator sdk e2e test
-		docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-	endif
-	if ${E2E_ARGS} exists in $(E2E_KUTTL_TESTS) # If its a Kuttl tests
-		docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'kubectl kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(E2E_ARGS)' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-	endif
+ifeq ($(E2E_ARGS),)
+	@echo "args are: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
+endif
+	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+
+docker-kuttl-test-fix-arg:
+ifeq ($(KUTTL_ARGS),)
+	@echo "args are: ScaleUpAndDownDC" && exit 1
+endif
+	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'kubectl kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(KUTTL_ARGS)' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
