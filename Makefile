@@ -123,6 +123,10 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
+# Tests names
+E2E_OPERATOR_TESTS := ExecuteCleanup RollingRestart ClusterScaleDown ClusterScaleUp ClusterScaleDownSimple
+E2E_KUTTL_TESTS := ScaleUpAndDownDC
+
 OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
 # workdir
 WORKDIR := /go/casskop
@@ -410,18 +414,13 @@ ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
 endif
 
 docker-e2e-test-fix-arg:
-	E2E_OPERATOR_TESTS = ExecuteCleanup RollingRestart ClusterScaleDown ClusterScaleUp ClusterScaleDownSimple
-	E2E_KUTTL_TESTS = ScaleUpAndDownDC
-
 	ifeq ($(E2E_ARGS),)
-		@echo "args are: for Operator Kuttl: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple & for Kuttl : ScaleUpAndDownDC" && exit 1
+		@echo "args are: for Operator=$(E2E_OPERATOR_TESTS) & for Kuttl= $(E2E_KUTTL_TESTS)" && exit 1
 	endif
-	ifeq (${E2E_ARGS} exists in $(E2E_OPERATOR_TESTS))
-	# If its an operator sdk e2e test
+	if ${E2E_ARGS} exists in $(E2E_OPERATOR_TESTS) # If its an operator sdk e2e test
 		docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 	endif
-	# If its a Kuttl tests
-	ifeq (${E2E_ARGS} exists in $(E2E_KUTTL_TESTS))
+	if ${E2E_ARGS} exists in $(E2E_KUTTL_TESTS) # If its a Kuttl tests
 		docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'kubectl kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(E2E_ARGS)' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 	endif
 
