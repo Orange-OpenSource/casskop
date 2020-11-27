@@ -465,6 +465,13 @@ workflows:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
+      - k3d/e2e-orb:
+          name: e2e-test-kuttl ScaleUpAndDownDC
+          test_name: ScaleUpAndDownDC # Has be be the same as the TestCase (folder) in Kuttl directory
+          requires:
+            - build-casskop
+          <<: *ignore_fork_pr_filter
+
       - operator/publish-helm:
           name: publish-helm-orange-incubator-casskop
           requires:
