@@ -83,6 +83,7 @@ orbs:
               command: |
                 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
                 echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >> /home/circleci/.bash_profile && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+                source /home/circleci/.bash_profile
                 brew tap kudobuilder/tap
                 brew install kuttl-cli
           - attach_workspace:  # Attach artifact from workdir
