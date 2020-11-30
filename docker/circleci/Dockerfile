@@ -77,8 +77,8 @@ RUN (
     KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*$/arm/')" &&
     "$KREW" install krew
     )
-    && echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"'  >> /etc/profile.d/user-local-path.sh
-    && kubectl krew install kuttl+
+    && echo 'PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"'  >> /etc/profile.d/user-local-path.sh
+    && kubectl krew install kuttl
 
 # Install helm client
 RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-amd64.tar.gz -o helm.tar.gz \ 
