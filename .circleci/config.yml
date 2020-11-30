@@ -87,6 +87,7 @@ orbs:
               command: |
                 kubectl create namespace cassandra-e2e
                 ./tools/circleci-get-logs.sh&
+                echo "Start" . parameters.test_type . " test"
                 if [ parameters.test_type = "e2e" ]
                 then
                   make docker-e2e-test-fix-arg << parameters.test_name >> || {
