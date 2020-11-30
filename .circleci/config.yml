@@ -78,19 +78,6 @@ orbs:
                 sudo chmod o+w /usr/local/bin/
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
-          - run:
-              name: Setup kuttl
-              command: |
-                (
-                set -x; cd "$(mktemp -d)" &&
-                curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
-                tar zxvf krew.tar.gz &&
-                KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*$/arm/')" &&
-                "$KREW" install krew
-                )
-                echo "export PATH=\"\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH\""  >> /home/circleci/.bash_profile
-                source /home/circleci/.bash_profile
-                kubectl krew install kuttl
           - attach_workspace: # Attach artifact from workdir
               at: /home/circleci
           # Acceptance test
