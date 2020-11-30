@@ -88,7 +88,7 @@ orbs:
                 KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*$/arm/')" &&
                 "$KREW" install krew
                 )
-                echo "export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"  >> /home/circleci/.bash_profile
+                echo "export PATH=\"\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH\""  >> /home/circleci/.bash_profile
                 source /home/circleci/.bash_profile
                 kubectl krew install kuttl
           - attach_workspace: # Attach artifact from workdir
