@@ -408,7 +408,7 @@ ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(E2E_ARGS):;@:)
 endif
-ifeq (docker-kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
+ifeq (kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   KUTTL_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(KUTTL_ARGS):;@:)
 endif
