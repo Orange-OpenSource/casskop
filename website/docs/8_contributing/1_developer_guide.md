@@ -293,6 +293,23 @@ make e2e-test-fix-arg ClusterScaleDown
 **Tip**: When tests fail, there may be resources that need to be cleaned up. Run `tools/e2e_test_cleanup.sh` to delete resources left over from tests.
 
 
+### Run kuttl tests
+
+This requires [kuttl cli](https://kuttl.dev/docs/cli.html#setup-the-kuttl-kubectl-plugin) to be installed on your machine
+
+You first need to have a Kubernetes cluster set up with kubectl.
+
+Then to run all tests you can simply type :
+```
+kubectl kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl/
+```
+
+This will run all testcases in the `/test/e2e/kuttl/` directory in parallel on different generated namespaces (with Casskop automatically installed on each).
+
+>If you installed only the binary of kuttl, you can omit the `kubectl` at the beginning
+
+**Tip**: You can specify a single test case to run by adding `--test TestCase` where `TestCase` is the name of one of the directories in `/test/e2e/kuttl/*here*` (like `ScaleUpAndDownDC` for example)
+
 ### Debug CassKop in remote in a Kubernetes cluster
 
 CassKop makes some specific calls to the Jolokia API of the CassandraNodes it deploys inside the kubernetes
