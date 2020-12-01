@@ -70,15 +70,8 @@ RUN curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s 
     && chmod +x /usr/local/bin/kubectl
 
 # Install kuttl cli
-RUN (
-    set -x; cd "$(mktemp -d)" &&
-    curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" &&
-    tar zxvf krew.tar.gz &&
-    KREW=./krew-"$(uname | tr '[:upper:]' '[:lower:]')_$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*$/arm/')" &&
-    "$KREW" install krew
-    )
-    && echo 'PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"'  >> /etc/profile.d/user-local-path.sh
-    && kubectl krew install kuttl
+RUN wget -c -O kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.7.2/kubectl-kuttl_0.7.2_darwin_x86_64
+    && chmod u+x kuttl
 
 # Install helm client
 RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-amd64.tar.gz -o helm.tar.gz \ 
