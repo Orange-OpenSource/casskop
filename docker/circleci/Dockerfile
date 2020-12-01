@@ -70,8 +70,8 @@ RUN curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s 
     && chmod +x /usr/local/bin/kubectl
 
 # Install kuttl cli
-RUN wget -c -O kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.7.2/kubectl-kuttl_0.7.2_darwin_x86_64
-    && chmod u+x kuttl
+RUN curl -L kuttl https://github.com/kudobuilder/kuttl/releases/download/v0.7.2/kubectl-kuttl_0.7.2_darwin_x86_64 -o /usr/local/bin/kuttl
+    && chmod u+x -o /usr/local/bin/kuttl
 
 # Install helm client
 RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-amd64.tar.gz -o helm.tar.gz \ 
