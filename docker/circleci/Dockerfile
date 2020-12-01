@@ -69,10 +69,6 @@ RUN go get -u golang.org/x/lint/golint
 RUN curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl  \
     && chmod +x /usr/local/bin/kubectl
 
-# Install kuttl cli
-RUN curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.7.2/kubectl-kuttl_0.7.2_linux_x86_64 -o /usr/local/bin/kuttl
-    && chmod u+x -o /usr/local/bin/kuttl
-
 # Install helm client
 RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-amd64.tar.gz -o helm.tar.gz \ 
     && tar zxf helm.tar.gz \
