@@ -48,8 +48,7 @@ Then the chart itself depending on your installed version of Helm:
 <TabItem value="helm3">
 
 ```bash
-# You have to create the namespace before executing following command
-helm install casskop --namespace=cassandra orange-incubator/cassandra-operator
+helm install casskop orange-incubator/cassandra-operator
 ```
 
 </TabItem>
@@ -63,7 +62,7 @@ kubectl create -f tiller-clusterrolebinding.yaml
 helm init --service-account tiller --upgrade
 
 # Deploy operator
-helm install --name=casskop --namespace=cassandra orange-incubator/cassandra-operator
+helm install --name=casskop orange-incubator/cassandra-operator
 ```
 
 </TabItem>
