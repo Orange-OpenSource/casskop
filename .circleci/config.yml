@@ -79,6 +79,9 @@ orbs:
                 wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
                 chmod +x /usr/local/bin/kubectl
           - run:
+              name: Setup helm
+              command: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+          - run:
                 name: Setup kuttl
                 command: |
                   set -x
