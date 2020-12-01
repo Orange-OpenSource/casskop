@@ -76,8 +76,7 @@ Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo
 <TabItem value="helm3">
 
 ```bash
-# You have to create the namespace before executing following command
-helm install  multi-casskop --namespace=cassandra orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install  multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 
 </TabItem>
@@ -91,7 +90,7 @@ kubectl create -f tiller-clusterrolebinding.yaml
 helm init --service-account tiller --upgrade
 
 # Deploy operator
-helm install --name=multi-casskop --namespace=cassandra orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+helm install --name=multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
 </TabItem>
 </Tabs>
