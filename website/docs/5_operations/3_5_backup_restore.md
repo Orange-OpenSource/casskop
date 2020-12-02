@@ -3,6 +3,7 @@ id: 3_5_backup_restore
 title: Backup and restore
 sidebar_label: Backup and restore
 ---
+**Tip**: For a full working example step by step, please check also this [well written article](https://cscetbon.medium.com/casskop-1-0-1-backup-and-restore-ba92f01c00df). This also explain more deeply how Casskop Backup & Restore works in background
 
 In order to provide Backup/Restore abilities we use InstaCluster's [cassandra-sidecar project](https://github.com/instaclustr/cassandra-sidecar) and add it to each Cassandra node to spawn. We want to thant Instaclustr for the modifications they made to make it work with CassKop!
 
@@ -19,7 +20,7 @@ metadata:
   labels:
     app: cassandra
 spec:
-  cassandracluster: test-cluster
+  cassandraCluster: test-cluster
   datacenter: dc1
   storageLocation: s3://cassie
   snapshotTag: SnapshotTag2
@@ -70,9 +71,9 @@ metadata:
   labels:
     app: cassandra
 spec:
-  backup:
+  cassandraBackup:
     name: nightly-cassandra-backup
-  cluster: test-cluster
+  cassandraCluster: test-cluster
   entities: k1.t1
 ```
 
