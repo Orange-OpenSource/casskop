@@ -184,7 +184,7 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	services, err := listServices(namespace, metav1.ListOptions{
 		LabelSelector: labels.FormatLabels(map[string]string{
 			"app":              "cassandracluster",
-			"cassandracluster": cluster.Name,
+			"cassandraCluster": cluster.Name,
 		}),
 	}, f)
 	if err != nil {

@@ -40,7 +40,7 @@ func AddOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName string) map[string]string {
 	m := map[string]string{
 		"app":                                  "cassandracluster",
-		"cassandracluster":                     cc.GetName(),
+		"cassandraCluster":                     cc.GetName(),
 		"dc-rack":                              cc.GetDCRackName(dcName, rackName),
 		"cassandraclusters.db.orange.com.dc":   dcName,
 		"cassandraclusters.db.orange.com.rack": rackName,
@@ -51,7 +51,7 @@ func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName 
 func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]string {
 	m := map[string]string{
 		"app":                                "cassandracluster",
-		"cassandracluster":                   cc.GetName(),
+		"cassandraCluster":                   cc.GetName(),
 		"cassandraclusters.db.orange.com.dc": dcName,
 	}
 	return MergeLabels(cc.GetLabels(), m)
@@ -60,7 +60,7 @@ func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]st
 func LabelsForCassandra(cc *api.CassandraCluster) map[string]string {
 	m := map[string]string{
 		"app":              "cassandracluster",
-		"cassandracluster": cc.GetName(),
+		"cassandraCluster": cc.GetName(),
 	}
 	return MergeLabels(cc.GetLabels(), m)
 }

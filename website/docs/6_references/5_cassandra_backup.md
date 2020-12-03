@@ -33,7 +33,7 @@ spec:
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
 |bandwidth|string|Specify the bandwidth to not exceed when uploading files to the cloud. Format supported is \d+[KMG] case insensitive. You can use values like 10M (meaning 10MB), 1024, 1024K, 2G, etc...|no|-|
-|cassandracluster|string|Name of the CassandraCluster to backup|Yes|-|
+|cassandraCluster|string|Name of the CassandraCluster to backup|Yes|-|
 |concurrentConnections|int32|Maximum number of threads used to download files from the cloud. Defaults to 10|No|-|
 |datacenter|string|Cassandra DC name to back up, used to find the cassandra nodes in the CassandraCluster|Yes|-|
 |duration|string|Specify a duration the backup should try to last. See https://golang.org/pkg/time/#ParseDuration for an exhaustive list of the supported units. You can use values like .25h, 15m, 900s all meaning 15 minutes|No|-|
