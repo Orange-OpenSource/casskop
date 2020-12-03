@@ -71,8 +71,7 @@ spec:
 |service|[ServicePolicy](#servicepolicy)||No|-|
 |deletePVC|bool|Defines if the PVC must be deleted when the cluster is deleted|Yes|false|
 |debug|bool|Is used to surcharge Cassandra pod command to not directly start cassandra but starts an infinite wait to allow user to connect a bash into the pod to make some diagnoses.|Yes|false|
-|shareProcessNamespace|bool|When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod.
-                            	// https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/|Yes|false|
+|shareProcessNamespace|bool|When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod. [Check documentation for more informations](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)|Yes|false|
 |autoPilot|bool|Defines if the Operator can fly alone or if we need human action to trigger actions on specific Cassandra nodes. [Check documentation for more informations](/casskop/docs/5_operations/2_pods_operations)|Yes|false|
 |noCheckStsAreEqual|bool||Yes|false|
 |gcStdout|bool|Set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default|Yes|true|
