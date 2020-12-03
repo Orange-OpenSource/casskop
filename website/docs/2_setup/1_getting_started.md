@@ -12,7 +12,7 @@ CassKop uses the standard Cassandra image (tested up to Version 3.11), and can r
 As a pre-requisite it needs :
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) version v1.13.3+.
-- [Helm](https://helm.sh/) version v2.12.2+.
+- [Helm](https://helm.sh/) version v3.
 - Access to a Kubernetes v1.13.3+ cluster.
 - Cassandra needs fast local storage (we have tested with local storage provisioner, GKE ssd storage, and Rancher local-path-provisioner). Fast remote storage should work but is not tested yet.
 
@@ -26,9 +26,9 @@ First, we need to create a `namespace` in order to host our operator & cluster (
 kubectl create namespace cassandra
 ```
 
-### Installing CassKop with Helm
+### Installing CassKop with Helm 3
 
-You can (should) deploy CassKop using this [Helm chart](https://github.com/Orange-Opensource/casskop/tree/master/helm):
+You can (should) deploy CassKop using this [Helm 3 chart](https://github.com/Orange-Opensource/casskop/tree/master/helm):
 
 First we add the repo:
 
@@ -36,37 +36,11 @@ First we add the repo:
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
 ```
 
-Then the chart itself depending on your installed version of Helm:
-
-<Tabs
-  defaultValue="helm3"
-  values={[
-    { label: 'helm 3', value: 'helm3', },
-    { label: 'helm previous', value: 'helm', },
-  ]
-}>
-<TabItem value="helm3">
+Then install the chartusing Helm 3:
 
 ```bash
 helm install casskop orange-incubator/cassandra-operator
 ```
-
-</TabItem>
-<TabItem value="helm">
-
-```bash
-# Install helm
-helm init --history-max 200
-kubectl create serviceaccount tiller --namespace kube-system
-kubectl create -f tiller-clusterrolebinding.yaml
-helm init --service-account tiller --upgrade
-
-# Deploy operator
-helm install --name=casskop orange-incubator/cassandra-operator
-```
-
-</TabItem>
-</Tabs>
 
 You can find more information in the [Customizable install with helm](/casskop/docs/3_configuration_deployment/1_customizable_install_with_helm).
 

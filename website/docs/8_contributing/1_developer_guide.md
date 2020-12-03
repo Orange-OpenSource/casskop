@@ -44,7 +44,7 @@ Casskop has been validated with :
 - [go](https://golang.org) version v1.13+.
 - [docker](https://www.docker.com) version 18.09+.
 - [kubectl](https://kubernetes.io/fr/docs/tasks/tools/install-kubectl/) version v1.13.3+.
-- [Helm](https://helm.sh/) version v2.12.2.
+- [Helm](https://helm.sh/) version v.3.
 - Fork from [Operator sdk](https://github.com/operator-framework/operator-sdk) version v0.18.0 : [Operator sdk - forked](https://github.com/erdrix/operator-sdk/tree/v0.18.0-forked-pr317)
 
 
