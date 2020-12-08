@@ -12,11 +12,6 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  topology:
-    dc:
-      - name: dc1
-        rack:
-          - name: rack1
 status:
   cassandraRackStatus:
     dc1-rack1:
