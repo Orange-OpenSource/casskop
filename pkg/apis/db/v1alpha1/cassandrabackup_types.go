@@ -21,7 +21,7 @@ func (backupSpec CassandraBackupSpec) ValidateScheduleFormat() error {
 
 type CassandraBackupSpec struct {
 	// Name of the CassandraCluster to backup
-	CassandraCluster 	  string `json:"cassandracluster"`
+	CassandraCluster 	  string `json:"cassandraCluster"`
 	// Cassandra DC name to back up, used to find the cassandra nodes in the CassandraCluster
 	Datacenter 		 	  string `json:"datacenter"`
 	// URI for the backup target location e.g. s3 bucket, filepath
