@@ -7,6 +7,5 @@ spec:
   topology:
     dc:
       - name: dc1
-        nodesPerRacks: 1
         rack:
           - name: rack1

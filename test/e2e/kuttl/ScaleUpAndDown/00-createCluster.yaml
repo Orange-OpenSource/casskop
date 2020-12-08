@@ -16,7 +16,6 @@ spec:
   deletePVC: false
   autoPilot: true
   autoUpdateSeedList: false
-  bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.7
   resources:
     requests: &requests
       cpu: 100m
