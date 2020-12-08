@@ -166,7 +166,7 @@ func TestGenerateCassandraService(t *testing.T) {
 
 	assert.Equal(map[string]string{
 		"app":              "cassandracluster",
-		"cassandraCluster": "cassandra-demo",
+		"cassandracluster": "cassandra-demo",
 		"cluster":          "k8s.pic"},
 		svc.Labels)
 	assert.Equal(map[string]string{"external-dns.alpha.kubernetes.io/hostname": "my.custom.domain.com."},
