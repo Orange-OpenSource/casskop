@@ -490,8 +490,8 @@ workflows:
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: kuttl-test ScaleUpAndDownDC
-          test_name: ScaleUpAndDownDC # Has be be the same as the TestCase (folder) in Kuttl directory
+          name: kuttl-test ScaleUpAndDown
+          test_name: ScaleUpAndDown # Has be be the same as the TestCase (folder) in Kuttl directory
           test_type: kuttl
           requires:
             - build-casskop

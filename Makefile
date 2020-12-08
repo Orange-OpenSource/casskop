@@ -421,7 +421,7 @@ endif
 
 kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
-	@echo "args are: ScaleUpAndDownDC" && exit 1
+	@echo "args are: ScaleUpAndDown" && exit 1
 endif
 	kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(KUTTL_ARGS) || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
 

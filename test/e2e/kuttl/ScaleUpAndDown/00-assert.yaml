@@ -20,5 +20,3 @@ status:
   lastClusterAction: Initializing
   lastClusterActionStatus: Done
   phase: Running
-#  seedlist:
-#  - cassandra-e2e-dc1-rack1-0.cassandra-e2e.kuttl-test

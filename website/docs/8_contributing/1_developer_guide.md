@@ -308,7 +308,7 @@ This will run all testcases in the `/test/e2e/kuttl/` directory in parallel on d
 
 >If you installed only the binary of kuttl, you can omit the `kubectl` at the beginning
 
-**Tip**: You can specify a single test case to run by adding `--test TestCase` where `TestCase` is the name of one of the directories in `/test/e2e/kuttl/*here*` (like `ScaleUpAndDownDC` for example)
+**Tip**: You can specify a single test case to run by adding `--test TestCase` where `TestCase` is the name of one of the directories in `/test/e2e/kuttl/*here*` (like `ScaleUpAndDown` for example)
 
 ### Debug CassKop in remote in a Kubernetes cluster
 
