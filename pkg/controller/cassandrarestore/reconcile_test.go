@@ -49,7 +49,7 @@ metadata:
   annotations:
     a1: v1
 spec:
-  cassandraCluster: test-cluster-dc1
+  cassandracluster: test-cluster-dc1
   cluster: test-cluster
   datacenter: dc1
   storageLocation: s3://cassie

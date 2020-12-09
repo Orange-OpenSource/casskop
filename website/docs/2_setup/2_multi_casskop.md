@@ -66,10 +66,36 @@ Proceed with Multi-CassKop installation only when [Pre-requisites](#pre-requisit
 
 Deployment with Helm. Multi-CassKop and CassKop shared the same github/helm repo and semantic version.
 
+<Tabs
+  defaultValue="helm3"
+  values={[
+    { label: 'helm 3', value: 'helm3', },
+    { label: 'helm previous', value: 'helm', },
+  ]
+}>
+<TabItem value="helm3">
 
 ```bash
-helm install  multi-casskop orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+# You have to create the namespace before executing following command
+kubectl apply -f https://github.com/Orange-OpenSource/casskop/blob/master/multi-casskop/deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
+helm install  multi-casskop --namespace=cassandra orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
 ```
+
+</TabItem>
+<TabItem value="helm">
+
+```bash
+# Install helm 
+helm init --history-max 200
+kubectl create serviceaccount tiller --namespace kube-system
+kubectl create -f tiller-clusterrolebinding.yaml
+helm init --service-account tiller --upgrade
+
+# Deploy operator
+helm install --name=multi-casskop --namespace=cassandra orange-incubator/multi-casskop --set k8s.local=k8s-cluster1 --set k8s.remote={k8s-cluster2}
+```
+</TabItem>
+</Tabs>
 
 When starting Multi-CassKop, we need to give some parameters:
 - k8s.local is the name of the k8s-cluster we want to refere to when talking to this cluster.

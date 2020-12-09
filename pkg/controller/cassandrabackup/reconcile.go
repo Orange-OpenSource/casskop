@@ -27,7 +27,6 @@ const (
 	backupAlreadyScheduled = "Reconcilliation stopped as backup already scheduled and there are no new changes"
 	undoScheduleChange = "Resetting the schedule to what it was previously. Everything else will be updated"
 	retryFailedUndoSchedule = "Issue when resetting schedule, we'll give it another try"
-	secretError = "Your secret is not valid"
     )
 
 // ReconcileCassandraBackup reconciles a CassandraBackup object
@@ -149,8 +148,6 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 
 	// Based on storage location, be sure that respective secret entry is there so we error out asap
 	if err := validateBackupSecret(secret, cassandraBackup, reqLogger); err != nil {
-		logrus.WithFields(logrus.Fields{"backup": request.NamespacedName,
-			"err": err}).Error(secretError)
 		return reconcile.Result{}, err
 	}
 

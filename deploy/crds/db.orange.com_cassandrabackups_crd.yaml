@@ -35,7 +35,7 @@ spec:
                   to the cloud. Format supported is \d+[KMG] case insensitive. You
                   can use values like 10M (meaning 10MB), 1024, 1024K, 2G, etc...
                 type: string
-              cassandraCluster:
+              cassandracluster:
                 description: Name of the CassandraCluster to backup
                 type: string
               concurrentConnections:
@@ -79,7 +79,7 @@ spec:
                 description: URI for the backup target location e.g. s3 bucket, filepath
                 type: string
             required:
-            - cassandraCluster
+            - cassandracluster
             - datacenter
             - snapshotTag
             - storageLocation

@@ -3,14 +3,13 @@ id: 3_5_backup_restore
 title: Backup and restore
 sidebar_label: Backup and restore
 ---
-**Tip**: For a full working example step by step, please check also this [well written article](https://cscetbon.medium.com/casskop-1-0-1-backup-and-restore-ba92f01c00df). This also explain more deeply how Casskop Backup & Restore works in background
 
 In order to provide Backup/Restore abilities we use InstaCluster's [cassandra-sidecar project](https://github.com/instaclustr/cassandra-sidecar) and add it to each Cassandra node to spawn. We want to thant Instaclustr for the modifications they made to make it work with CassKop!
 
 ## Backup
 
 It is possible to backup keyspaces or tables from a cluster managed by Casskop. To start or schedule a backup, you 
-create an object of type [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup):
+create an object of type CassandraBackup:
 
 ```yaml
 apiVersion: db.orange.com/v1alpha1
@@ -20,7 +19,7 @@ metadata:
   labels:
     app: cassandra
 spec:
-  cassandraCluster: test-cluster
+  cassandracluster: test-cluster
   datacenter: dc1
   storageLocation: s3://cassie
   snapshotTag: SnapshotTag2
@@ -60,8 +59,8 @@ When this object gets updated, and the change is located in the spec section, Ca
 
 ## Restore
 
-Following the same logic, a [CassandraRestore](/casskop/docs/6_references/6_cassandra_restore) object must be created to trigger a restore, and it must refer to an
-existing [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup) object in K8S:
+Following the same logic, a CassandraRestore object must be created to trigger a restore, and it must refer to an
+existing CassandraBackup object in K8S:
 
 ```yaml
 apiVersion: db.orange.com/v1alpha1
@@ -71,9 +70,9 @@ metadata:
   labels:
     app: cassandra
 spec:
-  cassandraBackup: nightly-cassandra-backup
-  cassandraCluster: test-cluster
-  restorationStrategyType: HARDLINKS
+  backup:
+    name: nightly-cassandra-backup
+  cluster: test-cluster
   entities: k1.t1
 ```
 

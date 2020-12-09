@@ -75,7 +75,7 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackupSpec(ref common.ReferenceCallbac
 				Description: "CassandraBackupSpec defines the desired state of CassandraBackup",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"cassandraCluster": {
+					"cassandracluster": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -139,7 +139,7 @@ func schema_pkg_apis_db_v1alpha1_CassandraBackupSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"cassandraCluster", "datacenter", "storageLocation", "snapshotTag"},
+				Required: []string{"cassandracluster", "datacenter", "storageLocation", "snapshotTag"},
 			},
 		},
 	}
