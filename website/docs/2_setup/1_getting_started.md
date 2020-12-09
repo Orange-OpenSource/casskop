@@ -36,7 +36,7 @@ First we add the repo:
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
 ```
 
-Then install the chartusing Helm 3:
+Then install the chart using Helm 3:
 
 ```bash
 helm install casskop orange-incubator/cassandra-operator
