@@ -4,6 +4,3 @@ kind: TestSuite
 testDirs:
   - .
 timeout: 300
-commands:
-  - command: helm install casskop ./helm/cassandra-operator
-    ignoreFailure: false
