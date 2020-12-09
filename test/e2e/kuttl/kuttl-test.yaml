@@ -1,0 +1,15 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+#crdDir: ../../../deploy/crds/
+testDirs:
+  - .
+timeout: 300
+commands:
+  - command: helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
+    ignoreFailure: true
+  - command: kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+    ignoreFailure: true
+  - command: kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandrabackups_crd.yaml
+    ignoreFailure: true
+  - command: kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/deploy/crds/db.orange.com_cassandrarestores_crd.yaml
+    ignoreFailure: true
