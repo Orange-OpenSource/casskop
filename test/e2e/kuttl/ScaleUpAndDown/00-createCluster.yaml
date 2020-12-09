@@ -1,0 +1,28 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: helm install casskop orange-incubator/cassandra-operator
+    namespaced: true
+---
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:latest
+  dataCapacity: "1Gi"
+  hardAntiAffinity: false
+  deletePVC: false
+  autoPilot: true
+  autoUpdateSeedList: false
+  resources:
+    requests: &requests
+      cpu: 100m
+      memory: 512Mi
+    limits: *requests
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
