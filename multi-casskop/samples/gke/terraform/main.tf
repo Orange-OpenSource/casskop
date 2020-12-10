@@ -68,7 +68,7 @@ variable "managed_zone" {
 variable "casskop_image_tag" {
   description = ""
   type        = string
-  default     = "v1.0.1-release"
+  default     = "v1.0.2-release"
 }
 
 // Provider definition
