@@ -10,7 +10,7 @@ metadata:
   generation: 1
   labels:
     app: cassandracluster
-    cassandracluster: cassandra-demo
+    cassandraCluster: cassandra-demo
     cassandraclusters.db.orange.com.dc: dc1
     cassandraclusters.db.orange.com.rack: rack1
     cluster: casskop
@@ -33,7 +33,7 @@ spec:
   selector:
     matchLabels:
       app: cassandracluster
-      cassandracluster: cassandra-demo
+      cassandraCluster: cassandra-demo
       cassandraclusters.db.orange.com.dc: dc1
       cassandraclusters.db.orange.com.rack: rack1
       cluster: casskop
@@ -44,7 +44,7 @@ spec:
       creationTimestamp: null
       labels:
         app: cassandracluster
-        cassandracluster: cassandra-demo
+        cassandraCluster: cassandra-demo
         cassandraclusters.db.orange.com.dc: dc1
         cassandraclusters.db.orange.com.rack: rack1
         cluster: casskop
@@ -76,7 +76,7 @@ spec:
             - labelSelector:
                 matchLabels:
                   app: cassandracluster
-                  cassandracluster: cassandra-demo
+                  cassandraCluster: cassandra-demo
                   cluster: casskop
               topologyKey: kubernetes.io/hostname
       containers:
@@ -274,7 +274,7 @@ spec:
         creationTimestamp: null
         labels:
           app: cassandracluster
-          cassandracluster: cassandra-demo
+          cassandraCluster: cassandra-demo
           cassandraclusters.db.orange.com.dc: dc1
           cassandraclusters.db.orange.com.rack: rack1
           cluster: casskop
