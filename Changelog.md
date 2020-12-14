@@ -10,9 +10,13 @@
 
 ### Changed
 
+- CassandraBackup CRD (fixed cassandraCluster typo)
+
 ### Deprecated
 
 ### Removed
+
+- v1beta1 CRDs
 
 ### Bug Fixed
 
