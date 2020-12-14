@@ -1,6 +1,27 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v1.0.2
+
+### Added
+
+- PR [#283](https://github.com/Orange-OpenSource/casskop/pull/283) - Add Kuttl (declarative E2E test) implem 
+
+
+### Changed
+
+- CassandraBackup CRD (fixed cassandraCluster typo)
+
+### Deprecated
+
+### Removed
+
+- v1beta1 CRDs
+
+### Bug Fixed
+
+- PR [#282](https://github.com/Orange-OpenSource/casskop/pull/282) - Fix helm 3 crds installation + add some docs 
+
 ## v1.0.1
 
 ### Added

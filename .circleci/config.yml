@@ -106,13 +106,10 @@ orbs:
                     false;
                   }
                 fi
-                if [ << parameters.test_type >> = "kuttl" ]
-                then
-                  make kuttl-test-fix-arg << parameters.test_name >> || {
-                    kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
-                    false;
-                  }
-                fi
+#                if [ << parameters.test_type >> = "kuttl" ]
+#                then
+#                  make kuttl-test-fix-arg << parameters.test_name >>
+#                fi
   operator:
     # Parameters anchor
     .params_operator: &params_operator
