@@ -54,6 +54,8 @@ module.exports = {
                 "6_references/2_topology",
                 "6_references/3_cassandra_cluster_status",
                 "6_references/4_multicasskop",
+                "6_references/5_cassandra_backup",
+                "6_references/6_cassandra_restore",
             ],
             "Troubleshooting" : [
                 "7_troubleshooting/1_operations_issues",

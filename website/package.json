@@ -11,16 +11,16 @@
     "serve": "docusaurus serve"
   },
   "dependencies": {
-    "@docusaurus/core": "2.0.0-alpha.64",
-    "@docusaurus/preset-classic": "2.0.0-alpha.64",
-    "@mdx-js/react": "^1.5.8",
-    "core-js": "^3",
+    "@docusaurus/core": "2.0.0-alpha.70dece09e",
+    "@docusaurus/preset-classic": "2.0.0-alpha.70dece09e",
+    "@mdx-js/react": "^1.6.22",
     "clsx": "^1.1.1",
-    "react": "^16.8.4",
-    "react-dom": "^16.8.4",
-    "node-forge":"^0.10.0",
-    "node-fetch":"^2.6.1",
-    "serialize-javascript":"^3.1.0"
+    "core-js": "^3.8.1",
+    "node-fetch": "^2.6.1",
+    "node-forge": "^0.10.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "serialize-javascript": "^5.0.1"
   },
   "browserslist": {
     "production": [
