@@ -106,7 +106,7 @@ metadata:
 rules:
   - apiGroups: ['policy']
     resources: ['podsecuritypolicies']
-    verbs:     ['use']
+    verbs:     ['list','watch']
   - apiGroups: [""]
     resources: ["pods", "configmaps", "secrets" ]
     verbs: ["get", "list", "watch"]
