@@ -106,10 +106,10 @@ orbs:
                     false;
                   }
                 fi
-#                if [ << parameters.test_type >> = "kuttl" ]
-#                then
-#                  make kuttl-test-fix-arg << parameters.test_name >>
-#                fi
+                if [ << parameters.test_type >> = "kuttl" ]
+                then
+                  make kuttl-test-fix-arg << parameters.test_name >>
+                fi
   operator:
     # Parameters anchor
     .params_operator: &params_operator
