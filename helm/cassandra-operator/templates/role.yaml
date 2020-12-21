@@ -104,9 +104,6 @@ metadata:
     release: {{ .Release.Name }}
   name: {{ template "cassandra-operator.name" . }}-cluster-node
 rules:
-  - apiGroups: ['policy']
-    resources: ['podsecuritypolicies']
-    verbs:     ['list','watch']
   - apiGroups: [""]
     resources: ["pods", "configmaps", "secrets" ]
     verbs: ["get", "list", "watch"]
