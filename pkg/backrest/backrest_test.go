@@ -24,7 +24,6 @@ func TestPerformRestore(t *testing.T) {
 		Spec:       v1alpha1.CassandraRestoreSpec{
 			ConcurrentConnection:    &concurrentConnection,
 			NoDeleteTruncates:       true,
-			RestorationStrategyType: "HARDLINKS",
 			CassandraCluster:        "cassandra-bgl",
 			CassandraBackup:         "gcp_backup",
 		},
