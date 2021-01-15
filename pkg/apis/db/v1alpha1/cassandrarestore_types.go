@@ -69,9 +69,6 @@ type CassandraRestoreSpec struct {
 	// want to restore a table for which its CQL schema has not changed but it has changed for other table / keyspace
 	// but a schema for that node has changed by doing that. Defaults to False
 	ExactSchemaVersion 		bool `json:"exactSchemaVersion,omitempty""`
-	// Strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
-	// +kubebuilder:validation:Enum={"HARDLINKS","IMPORT"}
-	RestorationStrategyType string `json:"restorationStrategyType,omitempty"`
 	// Database entities to restore, it might be either only keyspaces or only tables prefixed by their respective
 	// keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific
 	// tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will restore all keyspaces

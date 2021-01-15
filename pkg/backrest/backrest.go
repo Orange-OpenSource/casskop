@@ -47,7 +47,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		K8sSecretName: restore.Spec.Secret,
 		CassandraDirectory: restore.Spec.CassandraDirectory,
 		SchemaVersion: restore.Spec.SchemaVersion,
-		RestorationStrategyType: restore.Spec.RestorationStrategyType,
+		RestorationStrategyType: "HARDLINKS",
 		ResolveHostIdFromTopology: true,
 	}
 
