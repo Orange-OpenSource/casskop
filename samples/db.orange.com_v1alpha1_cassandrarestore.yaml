@@ -26,9 +26,6 @@ spec:
   #	There might be cases when we want to restore a table for which its CQL schema has not changed
   #	but it has changed for other table / keyspace but a schema for that node has changed by doing that.
 #   exactSchemaVersion:
-  # strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation
-  # Enum={"HARDLINKS","IMPORT"}
-  restorationStrategyType: HARDLINKS
   # name of Kubernetes secret from which credentials used for the communication to cloud storage providers are read,
   #	if not specified, secret name to be read will be automatically derived in form 'cassandra-backup-restore-secret-cluster-{name-of-cluster}'.
   #	These secrets are used only in case protocol in storageLocation is gcp, azure or s3.

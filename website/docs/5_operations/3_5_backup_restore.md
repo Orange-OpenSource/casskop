@@ -73,7 +73,6 @@ metadata:
 spec:
   cassandraBackup: nightly-cassandra-backup
   cassandraCluster: test-cluster
-  restorationStrategyType: HARDLINKS
   entities: k1.t1
 ```
 
