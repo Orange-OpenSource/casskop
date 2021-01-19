@@ -105,6 +105,9 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 	if lac, _ := cassandraBackup.ComputeLastAppliedAnnotation(); lac == cassandraBackup.Annotations[annotationLastApplied] {
 		instanceChanged = false
 	} else {
+		if cassandraBackup.Annotations == nil {
+			cassandraBackup.Annotations = make(map[string] string )
+		}
 		cassandraBackup.Annotations[annotationLastApplied] = lac
 		defer r.client.Update(context.TODO(), cassandraBackup)
 	}
