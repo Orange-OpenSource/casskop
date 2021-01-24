@@ -104,7 +104,7 @@ func getRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 					k8sSecretName,
 					storageLocation,
 					"HARDLINKS",
-					"DOWNLOAD",
+					"INIT",
 					schemaVersion))
 		})
 
