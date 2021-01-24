@@ -8,7 +8,6 @@ func MockRestoreResponse(
 	operationId,
 	k8sSecretName,
 	storageLocation,
-	restorationStrategyType,
 	restorationPhase,
 	schemaVersion string) map[string]interface{} {
 
@@ -25,7 +24,7 @@ func MockRestoreResponse(
 		"cassandraDirectory":      "/var/lib/cassandra",
 		"snapshotTag":             snapshotTag,
 		"entities":                "",
-		"restorationStrategyType": restorationStrategyType,
+		"restorationStrategyType": "HARDLINKS",
 		"restorationPhase":        restorationPhase,
 		"noDeleteDownloads":       noDeleteDownloads,
 		"schemaVersion":           schemaVersion,
