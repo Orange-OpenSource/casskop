@@ -14,7 +14,6 @@ metadata:
 spec:
   cassandraCluster: cluster-demo
   cassandraBackup: backup-demo
-  restorationStrategyType: HARDLINKS
   entities: k1.standard1
 ```
 
@@ -37,7 +36,6 @@ spec:
 |entities|string|Database entities to restore, it might be either only keyspaces or only tables prefixed by their respective keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will restore all keyspaces|No|-|
 |exactSchemaVersion|boolean|When set a running node's schema version must match the snapshot's schema version. There might be cases when we want to restore a table for which its CQL schema has not changed but it has changed for other table / keyspace but a schema for that node has changed by doing that. Defaults to False|No|false|
 |noDeleteTruncates|boolean|When set do not delete truncated SSTables after they've been restored during CLEANUP phase. Defaults to false|No|false|
-|restorationStrategyType|string|Strategy telling how we should go about restoration, please refer to details in backup and sidecar documentation. Enum values are : HARDLINKS or IMPORT|No|-|
 |schemaVersion|string|Version of the schema to restore from. Upon backup, a schema version is automatically appended to a snapshot name and its manifest is uploaded under that name. In case we have two snapshots having same name, we might distinguish between the two of them by using the schema version. If schema version is not specified, we expect a unique backup taken with respective snapshot name. This schema version has to match the version of a Cassandra node we are doing restore for (hence, by proxy, when global request mode is used, all nodes have to be on exact same schema version). Defaults to False|No|-|
 |secret|string|Name of Secret to use when accessing cloud storage providers|No|-|
 

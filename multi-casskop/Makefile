@@ -161,8 +161,11 @@ BUILD_CMD = operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args \
 
 docker-generate-k8s:
 	echo "Generate zzz-deepcopy objects"
+	cd ../ && make docker-generate-k8s
+	cp -v ../deploy/crds/* helm/*/crds/
 	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_CMD)'
 	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_K8S)'
+	cp -v deploy/crds/* helm/*/crds/
 
 docker-build-operator:
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
