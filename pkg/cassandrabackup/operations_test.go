@@ -43,7 +43,7 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 	client := newBuildedMockClient()
 	defer httpmock.DeactivateAndReset()
 
-	sourceDir         := "/var/lib/cassandra/data/downloadedsstables"
+	sourceDir         := "/var/lib/cassandra/downloadedsstables"
 
 	restoreOperationRequest := icarus.RestoreOperationRequest {
 		Type_: "restore",

@@ -41,7 +41,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		GlobalRequest: true,
 		Import_: &icarus.AllOfRestoreOperationRequestImport_{
 			Type_: "import",
-			SourceDir: "/var/lib/cassandra/data/downloadedsstables",
+			SourceDir: "/var/lib/cassandra/downloadedsstables",
 		},
 		Entities: restore.Spec.Entities,
 		K8sSecretName: restore.Spec.Secret,
