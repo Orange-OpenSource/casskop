@@ -15,6 +15,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var (
+	regexSpaceOrComma = regexp.MustCompile("[\\s,]+")
+)
+
+
 type Client struct {
 	client            cassandrabackup.Client
 	CoordinatorMember string
@@ -27,6 +32,23 @@ func NewClient(client client.Client, cc *api.CassandraCluster, pod *corev1.Pod) 
 	}
 
 	return &Client{client: csClient, CoordinatorMember: pod.Name}, nil
+}
+
+func filterEmptyStrings(input []string) []string {
+	output := input[:0]
+
+	for _, x := range input {
+		if len(x) > 0 {
+			output = append(output, x)
+		}
+	}
+
+	return output
+}
+
+func formatEntities(entities string) string{
+
+	return strings.Join(filterEmptyStrings(regexSpaceOrComma.Split(strings.TrimSpace(entities), -1)), ",")
 }
 
 func (c *Client) PerformRestore(restore *api.CassandraRestore,
@@ -60,6 +82,13 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 		restoreOperationRequest.Entities = backup.Spec.Entities
 	}
 
+	restoreOperationRequest.Entities = formatEntities(restoreOperationRequest.Entities)
+
+	if len(restore.Spec.Entities) > 0 {
+		restoreOperationRequest.Entities = restoreOperationRequest.Entities
+	}
+
+
 	if len(restore.Spec.Secret) == 0 {
 		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
 	}
@@ -86,7 +115,7 @@ func (c *Client) PerformBackup(backup *api.CassandraBackup) (string, error) {
 		Duration:              backup.Spec.Duration,
 		Bandwidth:             bandwidthDataRate,
 		ConcurrentConnections: backup.Spec.ConcurrentConnections,
-		Entities:              backup.Spec.Entities,
+		Entities:              formatEntities(backup.Spec.Entities),
 		K8sSecretName:         backup.Spec.Secret,
 		Dc:                    backup.Spec.Datacenter,
 		GlobalRequest:         true,
