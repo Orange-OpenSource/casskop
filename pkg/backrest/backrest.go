@@ -47,7 +47,6 @@ func filterEmptyStrings(input []string) []string {
 }
 
 func formatEntities(entities string) string{
-
 	return strings.Join(filterEmptyStrings(regexSpaceOrComma.Split(strings.TrimSpace(entities), -1)), ",")
 }
 
@@ -83,11 +82,6 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	}
 
 	restoreOperationRequest.Entities = formatEntities(restoreOperationRequest.Entities)
-
-	if len(restore.Spec.Entities) > 0 {
-		restoreOperationRequest.Entities = restoreOperationRequest.Entities
-	}
-
 
 	if len(restore.Spec.Secret) == 0 {
 		restoreOperationRequest.K8sSecretName = backup.Spec.Secret
