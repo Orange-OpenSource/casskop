@@ -101,10 +101,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreRequired",
-			fmt.Sprintf("Restore task required from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation on pod %s",
-				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
-				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
-				cassandraRestore.Status.CoordinatorMember))
+			r.restoreEventMessage(cassandraBackup, ""))
 		return common.Reconciled()
 	}
 
@@ -119,9 +116,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					cassandraRestore,
 					v1.EventTypeWarning,
 					"PerformRestoreOperationFailed",
-					fmt.Sprintf("Restore task from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s failed to run, will retry. Restore operation on pod %s", cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
-						cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
-						cassandraRestore.Status.CoordinatorMember))
+					r.restoreEventMessage(cassandraBackup, " failed to run, will retry"))
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
@@ -132,10 +127,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreInitiated",
-			fmt.Sprintf("Restore task initiated from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s. Restore operation %v on pod %s.",
-				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
-				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
-				cassandraRestore.Status.ID, cassandraRestore.Status.CoordinatorMember))
+			r.restoreEventMessage(cassandraBackup, ""))
 
 		return common.Reconciled()
 	}
@@ -153,9 +145,11 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					RequeueAfter: time.Duration(20) * time.Second,
 				}, nil
 			case errorfactory.CassandraBackupOperationFailure:
-				return controllerruntime.Result{
-					RequeueAfter: time.Duration(20) * time.Second,
-				}, nil
+				r.recorder.Event(cassandraRestore,
+					v1.EventTypeNormal,
+					"RestoreFailed",
+					r.restoreEventMessage(cassandraBackup, err.Error()))
+				return common.Reconciled()
 			default:
 				return common.RequeueWithError(reqLogger, err.Error(), err)
 			}
@@ -163,12 +157,17 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreCompleted",
-			fmt.Sprintf("Restore task from cassandraBackup of datacenter %s of cluster %s to %s under snapshot %s is completed. Restore operation %v on pod %s.",
-				cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster,
-				cassandraBackup.Spec.StorageLocation, cassandraBackup.Spec.SnapshotTag,
-				cassandraRestore.Status.ID, cassandraRestore.Status.CoordinatorMember))
+			r.restoreEventMessage(cassandraBackup, ""))
 	}
 	return common.Reconciled()
+}
+
+func (r ReconcileCassandraRestore) restoreEventMessage(cassandraBackup *v1alpha1.CassandraBackup,
+	message string) string {
+	return fmt.Sprintf("Restore of backup %s of datacenter %s of cluster %s to %s " +
+		"under snapshot %s. %s", cassandraBackup.Name,
+		cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation,
+		cassandraBackup.Spec.SnapshotTag, message)
 }
 
 // requiredRestore select restore coordinator on a specific member of a Cluster
@@ -251,7 +250,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation", "OperationId",
 			restoreId)
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
-		"cassandra backup sidecar communication error")
+		"Icarus sidecar communication error")
 	}
 
 	status, err := sr.RestoreStatusByID(restoreId)
@@ -261,7 +260,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 		reqLogger.Info("cassandra backup sidecar communication error checking running Operation",
 			"OperationId", restoreId)
 		return errorfactory.New(errorfactory.CassandraBackupSidecarNotReady{}, err,
-		"cassandra backup sidecar communication error")
+		"Icarus sidecar communication error")
 	}
 
 	if err := UpdateRestoreStatus(r.client, restore, *status, reqLogger); err != nil {
@@ -272,10 +271,13 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 	restoreConditionType := v1alpha1.RestoreConditionType(restore.Status.Condition.Type)
 
 	// Restore operation failed or canceled,
-	// TODO : reschedule it by marking restore Condition.State = RestoreRequired ?
 	if restoreConditionType.IsInError() {
-		return errorfactory.New(errorfactory.CassandraBackupOperationFailure{}, err,
-		"cassandra backup sidecar Operation failed", fmt.Sprintf("restore operation id : %s", restoreId))
+		errorMessage := ""
+		if len(restore.Status.Condition.FailureCause) > 0 {
+			errorMessage = restore.Status.Condition.FailureCause[0].Message
+		}
+		return errorfactory.New(errorfactory.CassandraBackupOperationFailure{}, errors.New(errorMessage),
+		"Restore operation failed")
 	}
 
 	// Restore operation completed successfully
