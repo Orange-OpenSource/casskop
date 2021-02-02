@@ -267,9 +267,9 @@ define debug_telepresence
 	sudo mkdir -p /var/run/secrets/kubernetes.io ; \
 	sudo ln -s /tmp/known/var/run/secrets/kubernetes.io/serviceaccount /var/run/secrets/kubernetes.io/ || true ; \
 	tdep=$(shell kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}') ; \
-  echo kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}' ; \
+  	echo kubectl get deployment -l app=cassandra-operator -o jsonpath='{.items[0].metadata.name}' ; \
 	echo telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2 ; \
-  telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
+  	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file cassandra-operator.env $1 $2
 endef
 
 debug-telepresence:

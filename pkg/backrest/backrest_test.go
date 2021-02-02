@@ -35,7 +35,7 @@ func TestPerformRestore(t *testing.T) {
 			StorageLocation:  "gcp://backup-casskop-aguitton/cassandra-bgl/dc1/cassandra-bgl-dc1-rack1-0",
 			SnapshotTag:      "SnapshotTag1",
 			Secret:           "cloud-backup-secrets",
-			Entities:         "ks1,ks2",
+			Entities:         "ks1 ks2",
 		},
 	}
 
@@ -127,4 +127,16 @@ func TestParseBandwidth(t *testing.T) {
 	value, err = dataRateFromBandwidth("0.25M")
 	assert.NotNil(err)
 	assert.Nil(value)
+}
+
+func TestFormatEntities(t *testing.T) {
+	assert := assert.New(t)
+	expected := "k1,k2"
+
+	assert.Equal(expected, formatEntities("k1 k2"))
+	assert.Equal(expected, formatEntities(" k1 k2 "))
+	assert.Equal(expected, formatEntities(" k1 , k2 "))
+	assert.Equal(expected, formatEntities(" k1,k2 "))
+	assert.Equal(expected, formatEntities(" k1,   k2 "))
+	assert.Equal(expected, formatEntities(" k1,,   k2, "))
 }

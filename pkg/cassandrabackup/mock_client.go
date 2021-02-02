@@ -91,7 +91,6 @@ func (m *mockCassandraBackupClient) PerformRestoreOperation(restoreOperation ica
 		operationID,
 		restoreOperation.K8sSecretName,
 		restoreOperation.StorageLocation,
-		restoreOperation.RestorationStrategyType,
 		restoreOperation.RestorationPhase,
 		restoreOperation.SchemaVersion), &restoreOp)
 
@@ -113,7 +112,6 @@ func (m *mockCassandraBackupClient) RestoreOperationByID(operationId string) (*i
 		operationId,
 		k8sSecretName,
 		storageLocation,
-		"HARDLINKS",
 		"TRUNCATE",
 		schemaVersion), &restoreOperation)
 	return &restoreOperation, nil

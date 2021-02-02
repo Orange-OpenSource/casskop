@@ -76,6 +76,26 @@ spec:
   entities: k1.t1
 ```
 
+### Rename
+It's possible to restore the content of tables into other existing tables. Here is an example
+
+```yaml
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraRestore
+metadata:
+  name: nightly-cassandra-backup
+  labels:
+    app: cassandra
+spec:
+  cassandraBackup: nightly-cassandra-backup
+  cassandraCluster: test-cluster
+  restorationStrategyType: HARDLINKS
+  entities: k1.t1
+  rename:
+    k1.t1: k1.t2
+```
+
+With the object above, table k1.t1 will be restored under k1.t2 using the backup nightly-cassandra-backup
 ### Entities
 
 In the restore phase, you can specify a subset of the entities specified in the backup. For instance, you can backup 2
