@@ -499,6 +499,13 @@ func (in *CassandraRestoreSpec) DeepCopyInto(out *CassandraRestoreSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.Rename != nil {
+		in, out := &in.Rename, &out.Rename
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

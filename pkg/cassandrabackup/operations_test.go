@@ -76,8 +76,7 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 					operationID,
 					restoreOperationRequest.K8sSecretName,
 					restoreOperationRequest.StorageLocation,
-					"HARDLINKS",
-					"DOWNLOAD",
+					"INIT",
 					restoreOperationRequest.SchemaVersion))
 		})
 
@@ -103,8 +102,7 @@ func getRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 					operationID,
 					k8sSecretName,
 					storageLocation,
-					"HARDLINKS",
-					"DOWNLOAD",
+					"INIT",
 					schemaVersion))
 		})
 

@@ -34,7 +34,6 @@ func TestComputeStatusFromRestoreOperation(t *testing.T) {
 		operationID,
 		k8sSecretName,
 		storageLocation,
-		"HARDLINKS",
 		"TRUNCATE",
 		schemaVersion), &restoreOperation)
 
