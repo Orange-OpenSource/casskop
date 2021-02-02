@@ -193,7 +193,7 @@ docker-generate-crds:
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
 	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	cp deploy/crds/* */helm/*/crds/
+	cp -v deploy/crds/* helm/*/crds/ && cp -v deploy/crds/* */helm/*/crds/
 
 docker-build-operator:
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
