@@ -36,7 +36,7 @@ const (
 
 	defaultCassandraImage     = "cassandra:3.11"
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.7"
-	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.0.7"
+	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.0.8"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable  = 1
