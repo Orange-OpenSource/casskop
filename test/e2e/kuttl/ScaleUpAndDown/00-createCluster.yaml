@@ -21,6 +21,8 @@ spec:
       cpu: 100m
       memory: 512Mi
     limits: *requests
+  backRestSidecar:
+    image: gcr.io/cassandra-operator/instaclustr-icarus:1.0.7
   topology:
     dc:
       - name: dc1
