@@ -1,7 +1,7 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - command: helm install casskop ../../../../helm/cassandra-operator
+  - command: helm install casskop ../../../../helm/cassandra-operator --set image.tag=$CIRCLE_BRANCH
     namespaced: true
 ---
 apiVersion: db.orange.com/v1alpha1
@@ -21,8 +21,6 @@ spec:
       cpu: 100m
       memory: 512Mi
     limits: *requests
-  backRestSidecar:
-    image: gcr.io/cassandra-operator/instaclustr-icarus:1.0.7
   topology:
     dc:
       - name: dc1
