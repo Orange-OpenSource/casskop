@@ -50,7 +50,6 @@ setup_helm_client() {
 
     PATH="$(pwd)/tmp/linux-amd64/:$PATH"
 
-    helm init --client-only
     helm repo add incubator-orange "$INCUBATOR_REPO_URL"
 }
 
