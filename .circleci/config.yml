@@ -278,9 +278,6 @@ orbs:
               paths:
                 - sonar-scanner-3.3.0.1492-linux
                 - /home/circleci/<< parameters.operatorDir >>/.sonar
-          - run: # Check jdk version
-              name: Check / install jdk
-              command: lsb_release -a
 #          - run: # Run sonar scan
 #              name: Sonarcloud Scan
 #              command: |
