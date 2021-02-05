@@ -14,7 +14,7 @@ orbs:
     executors:
       vm:
         machine:
-          image: ubuntu-1604:201903-01
+          image: ubuntu-2004:202010-01
         resource_class: large
     jobs:
       e2e-orb:
