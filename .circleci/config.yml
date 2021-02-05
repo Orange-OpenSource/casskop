@@ -497,7 +497,7 @@ workflows:
       - operator/publish-helm:
           name: publish-helm-orange-incubator-casskop
           requires:
-            - kuttl-test ScaleUpAndDown
+            - report-casskop
           <<: *only_on_release_tag
 
       - deploy-website:
