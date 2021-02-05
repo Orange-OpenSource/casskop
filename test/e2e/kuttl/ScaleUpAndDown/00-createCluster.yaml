@@ -1,8 +1,10 @@
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
 commands:
-  - command: helm install casskop ../../../../helm/cassandra-operator
-    namespaced: true
+  - script: |
+      BASEDIR=../../../..
+      VERSION=$(awk -F\" '/Version =/ {print $2}' $BASEDIR/version/version.go)-$CIRCLE_BRANCH
+      helm install casskop $BASEDIR/helm/cassandra-operator --set image.tag=$VERSION --namespace $NAMESPACE
 ---
 apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster

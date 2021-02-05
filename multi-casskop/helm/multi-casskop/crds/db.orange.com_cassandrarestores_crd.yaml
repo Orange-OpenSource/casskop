@@ -67,6 +67,10 @@ spec:
                 description: When set do not delete truncated SSTables after they've
                   been restored during CLEANUP phase. Defaults to false
                 type: boolean
+              rename:
+                additionalProperties:
+                  type: string
+                type: object
               schemaVersion:
                 description: Version of the schema to restore from. Upon backup, a
                   schema version is automatically appended to a snapshot name and

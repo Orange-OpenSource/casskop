@@ -34,7 +34,6 @@ spec:
   noDeleteTruncates: false
 #   schemaVersion:
 #   exactSchemaVersion:
-  restorationStrategyType: HARDLINKS
   entities: "k1,k2.t1"
 `
 

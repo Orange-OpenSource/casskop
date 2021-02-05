@@ -36,6 +36,10 @@ First we add the repo:
 helm repo add orange-incubator https://orange-kubernetes-charts-incubator.storage.googleapis.com/
 ```
 
+:::tips
+If you already downloaded the helm chart previously, make sure you are using the latest version of the chart by executing a `helm repo update` before continuing.
+:::
+
 Then install the chart using Helm 3:
 
 ```bash
