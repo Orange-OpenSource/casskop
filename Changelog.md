@@ -1,6 +1,31 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v1.1.0
+
+### Added
+
+- PR [#285](https://github.com/Orange-OpenSource/casskop/pull/285) - Bump ini from 1.3.5 to 1.3.8 in /website
+- PR [#286](https://github.com/Orange-OpenSource/casskop/pull/286) - Add the 2 new pages (Cassandra Backup & Restore) to the sidebar + bump version
+- PR [#287](https://github.com/Orange-OpenSource/casskop/pull/287) - Restrict psp role in helm chart to get and list
+- PR [#289](https://github.com/Orange-OpenSource/casskop/pull/289) - Do not use data folder to store downloaded sstables
+- PR [#290](https://github.com/Orange-OpenSource/casskop/pull/290) - Enforce HARDLINKS restore strategy as it is faster
+- PR [#291](https://github.com/Orange-OpenSource/casskop/pull/291) - Add check if cassandraBackup.Annotations map is nil before assignement
+- PR [#293](https://github.com/Orange-OpenSource/casskop/pull/293) - Add option to Rename a table when restoring it
+- PR [#294](https://github.com/Orange-OpenSource/casskop/pull/294) - Generate CRDs to deploy dir AND both helms CRDs dirs
+- PR [#295](https://github.com/Orange-OpenSource/casskop/pull/295) - Upgrade Icarus to 1.0.8 (Fix error catching)
+
+### Changed
+
+- CassandraRestore CRD (restorationStrategyType removed, add rename option)
+
+### Deprecated
+
+### Removed
+
+- v1beta1 CRDs
+
+
 ## v1.0.2
 
 ### Added
