@@ -160,7 +160,6 @@ alertmanager:
   storageSpec:
     volumeClaimTemplate:
       spec:
-#        storageClassName: local-storage
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
@@ -426,7 +425,6 @@ prometheus:
   storageSpec:
     volumeClaimTemplate:
       spec:
-#        storageClassName: local-storage
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:

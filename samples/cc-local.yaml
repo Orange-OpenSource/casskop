@@ -11,7 +11,7 @@ spec:
   rollingPartition: 0
   imagePullPolicy: "IfNotPresent"
   dataCapacity: "1Gi"
-  dataStorageClass: "local-storage"
+  dataStorageClass: local-path
   hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
