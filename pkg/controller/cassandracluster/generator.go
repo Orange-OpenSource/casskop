@@ -752,6 +752,15 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		},
 
 		Lifecycle: &v1.Lifecycle{
+		    PostStart: &v1.Handler{
+				Exec: &v1.ExecAction{
+					Command: []string{
+						"/bin/bash",
+						"-c",
+						"/etc/cassandra/cassandra_post_start.sh",
+					},
+				},
+			},
 			PreStop: &v1.Handler{
 				Exec: &v1.ExecAction{
 					Command: []string{

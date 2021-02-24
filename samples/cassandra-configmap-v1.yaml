@@ -18,3 +18,9 @@ data:
   post_run.sh: |-
     echo "Check Configured seeds by bootstrap"
     grep "seeds:" /etc/cassandra/cassandra.yaml
+    
+  cassandra_post_start.sh: |-
+      echo "----------------"
+      echo "Executing Cassandra script cassandra_post_start.sh"
+      echo "----------------"
+      
