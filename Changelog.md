@@ -1,6 +1,12 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v1.1.3
+
+- PR [#302](https://github.com/Orange-OpenSource/casskop/pull/302) - Fix Bootstrap issue
+- PR [#303](https://github.com/Orange-OpenSource/casskop/pull/303) - Upgrade Icarus to 1.0.9
+
+
 ## v1.1.2
 
 - PR [#298](https://github.com/Orange-OpenSource/casskop/pull/297) - Fix Helm publishing
