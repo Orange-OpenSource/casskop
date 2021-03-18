@@ -3,12 +3,7 @@ kind: TestStep
 commands:
   - script: |
       BASEDIR=../../../..
-      if [ $CIRCLE_TAG ]
-        then
-          VERSION="$(awk -F\" '/Version =/ {print $2}' $BASEDIR/version/version.go)-release"
-        else
-          VERSION="$(awk -F\" '/Version =/ {print $2}' $BASEDIR/version/version.go)-$CIRCLE_BRANCH"
-      fi
+     VERSION=${CIRCLE_TAG:-CIRCLE_BRANCH}
       helm install casskop $BASEDIR/helm/cassandra-operator --set image.tag=$VERSION --namespace $NAMESPACE
 ---
 apiVersion: db.orange.com/v1alpha1
