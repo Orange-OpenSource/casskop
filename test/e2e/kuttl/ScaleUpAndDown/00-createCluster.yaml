@@ -3,7 +3,7 @@ kind: TestStep
 commands:
   - script: |
       BASEDIR=../../../..
-     VERSION=${CIRCLE_TAG:-CIRCLE_BRANCH}
+      VERSION="${CIRCLE_TAG:-CIRCLE_BRANCH}"
       helm install casskop $BASEDIR/helm/cassandra-operator --set image.tag=$VERSION --namespace $NAMESPACE
 ---
 apiVersion: db.orange.com/v1alpha1
