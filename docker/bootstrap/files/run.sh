@@ -16,6 +16,32 @@
 
 set -e
 
+HOSTNAME=$(hostname -f)
+
+# we are doing StatefulSet or just setting our seeds
+if [ -n "$CASSANDRA_SEEDS" ]; then
+    echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
+    # Try to connect to each seed and if no one is found then it's the first node
+    echo $IFS
+    IFS=',' read -a array <<<$CASSANDRA_SEEDS
+    firstNode=true
+    for cassandra in ${array[@]}
+    do
+        echo "Try to connect to $cassandra"
+        if nc -z -w5 $cassandra 8778
+        then
+            echo "Connected!"
+            firstNode=false
+            break
+        fi
+    done
+
+    [ "$firstNode" = true ] && CASSANDRA_SEEDS=$HOSTNAME
+
+fi
+
+echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
+
 CASSANDRA_CFG=$CASSANDRA_CONF/cassandra.yaml
 
 # The following vars relate to there counter parts in $CASSANDRA_CFG for instance rpc_address
