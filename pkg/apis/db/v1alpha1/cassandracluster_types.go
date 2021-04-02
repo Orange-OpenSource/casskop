@@ -363,7 +363,7 @@ func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterSt
 func (cc *CassandraCluster) InitSeedList() []string {
 
 	var dcName, rackName string
-	var nbRack int = 0
+	var nbRack = 0
 	var indice int32
 	var seedList []string
 
@@ -389,7 +389,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 				}
 			} else {
-
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -397,13 +396,9 @@ func (cc *CassandraCluster) InitSeedList() []string {
 					nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 
 					switch racksize {
-					case 1:
-						for indice = 0; indice < nodesPerRacks && indice < 3 && nbSeedInDC < 3; indice++ {
-							cc.addNewSeed(&seedList, dcName, rackName, indice)
-							nbSeedInDC++
-						}
-					case 2:
-						for indice = 0; indice < nodesPerRacks && indice < 2 && nbSeedInDC < 3; indice++ {
+					case 1, 2:
+						for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
+							nbSeedInDC < 3; indice++ {
 							cc.addNewSeed(&seedList, dcName, rackName, indice)
 							nbSeedInDC++
 						}
@@ -413,7 +408,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 							nbSeedInDC++
 						}
 					}
-
 				}
 			}
 		}
