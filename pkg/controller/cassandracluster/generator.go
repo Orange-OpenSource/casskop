@@ -564,6 +564,11 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		}
 	}
 
+	serverType := cc.Spec.ServerType
+	if serverType == "" {
+		serverType = "cassandra"
+	}
+
 	defaultConfig := NodeConfig{
 		"cassandra-yaml": {
 			"num_tokens": numTokensPerRacks,
@@ -642,7 +647,7 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 		{
 			Name:  "PRODUCT_NAME",
-			Value: cc.Spec.ServerType,
+			Value: serverType,
 		},
 		{
 			Name:  "PRODUCT_VERSION",
@@ -675,9 +680,14 @@ func parseConfig(config NodeConfig) *gabs.Container {
 	return parsedConfig
 }
 
-func bootstrapContainerEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
+func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterStatus) []v1.EnvVar {
 
 	bootstrapEnvVars := []v1.EnvVar{
+		// TODO CASSANDRA_SEEDS shouldn't be needed anymore, is it ?
+		{
+			Name:  "CASSANDRA_SEEDS",
+			Value: cc.SeedList(&status.SeedList),
+		},
 		{
 			Name: "CASSANDRA_DC",
 			ValueFrom: &v1.EnvVarSource{
@@ -775,7 +785,7 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 		Name:            bootstrapContainerName,
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Env:             bootstrapContainerEnvVar(cc),
+		Env:             bootstrapContainerEnvVar(cc, status),
 		VolumeMounts:    volumeMounts,
 		Resources:       initContainerResources(),
 	}

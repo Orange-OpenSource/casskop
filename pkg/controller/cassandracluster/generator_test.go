@@ -190,18 +190,12 @@ func TestInitContainerConfiguration(t *testing.T) {
 	})
 	cassieResources := cc.Spec.Resources
 	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert := assert.New(t)
 
-	assert.Equal(len(bootstrapEnvVar), 1)
-	assert.Equal(len(initEnvVar), 7)
-
-	envVar := map[string]string{}
-
-	for name, value := range envVar {
-		assert.Equal(value, envVar[name])
-	}
+	assert.Equal(5, len(bootstrapEnvVar))
+	assert.Equal(9, len(initEnvVar))
 
 	configFileData := NodeConfig{
 		"cassandra-yaml": {
@@ -215,7 +209,38 @@ func TestInitContainerConfiguration(t *testing.T) {
 			"seeds":"",
 		},
 		"datacenter-info": {
-			"name":"dc1",
+			"name": map[string]interface{}{
+				"dataCapacity": "10Gi",
+				"dataStorageClass": "test-storage",
+				"labels": map[string]string{
+					"location.dfy.orange.com/site": "mts",
+				},
+				"name": "dc1",
+				"rack": []map[string]interface{}{
+					{
+						"labels": map[string]string{
+							"location.dfy.orange.com/street": "street1",
+						},
+						"name": "rack1",
+					},
+					{
+						"labels": map[string]string{
+							"location.dfy.orange.com/street": "street2",
+						},
+						"name": "rack2",
+					},
+				},
+				"resources": map[string]interface{}{
+					"limits": map[string]string{
+						"cpu": "3",
+						"memory": "3Gi",
+					},
+					"requests": map[string]string{
+						"cpu": "3",
+						"memory": "3Gi",
+					},
+				},
+			},
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms":30000,
@@ -234,11 +259,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 		"PRODUCT_VERSION": "3.11.7",
 	}
 
-	for _, env := range initEnvVar {
-		if value, ok := vars[env.Name]; ok {
-			assert.Equal(value, env.Value)
-		}
-	}
+	checkInitContainerVarEnv(t, initEnvVar, vars)
 
 	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"cassandra-yaml": {
@@ -253,44 +274,14 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
-	assert.Equal(len(initEnvVar), 7)
+	assert.Equal(9, len(initEnvVar))
 
-	configFileData = NodeConfig{
-		"cassandra-yaml": {
-			"counter_write_request_timeout_in_ms":5000,
-			"num_tokens":256,
-			"read_request_timeout_in_ms":10000,
-			"write_request_timeout_in_ms":5000,
-		},
-		"cluster-info": {
-			"name":"cassandra-demo",
-			"seeds":"",
-		},
-		"datacenter-info": {
-			"name":"dc1",
-		},
-		"jvm-options": {
-			"cassandra_ring_delay_ms":10000,
-			"initial_heap_size":"800M",
-			"jmx-connection-type":"remote-no-auth",
-			"max_heap_size": "4G",
-		},
-		"logback-xml": {
-			"debuglog-enabled":false,
-		},
-	}
+	configFileData["cassandra-yaml"]["read_request_timeout_in_ms"] = 10000
+	configFileData["jvm-options"]["cassandra_ring_delay_ms"] = 10000
 
-	vars = map[string]interface{}{
-		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
-		"PRODUCT_NAME": "cassandra",
-		"PRODUCT_VERSION": "3.11.7",
-	}
+	vars["CONFIG_FILE_DATA"] = parseConfig(configFileData).String()
 
-	for _, env := range initEnvVar {
-		if value, ok := vars[env.Name]; ok {
-			assert.Equal(value, env.Value)
-		}
-	}
+	checkInitContainerVarEnv(t, initEnvVar, vars)
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
@@ -528,7 +519,7 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 }
 
 func checkVolumeMount(t *testing.T, containers []v1.Container) {
-	assert.Equal(t, len(containers), 4)
+	assert.Equal(t, 4, len(containers))
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
@@ -538,7 +529,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		case "cassandra-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "backrest-sidecar":
-			assert.Equal(t, len(container.VolumeMounts), 4)
+			assert.Equal(t, 5, len(container.VolumeMounts))
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -607,13 +598,13 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cc.Spec.Resources
 	initContainerEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc)
+	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert := assert.New(t)
 
-	assert.Equal(1, len(bootstrapContainerEnvVar))
-	assert.Equal(3, len(containers))
-	assert.Equal(7, len(initContainerEnvVar))
+	assert.Equal(5, len(bootstrapContainerEnvVar))
+	assert.Equal(4, len(containers))
+	assert.Equal(9, len(initContainerEnvVar))
 
 	envVar := map[string]string{}
 
@@ -649,6 +640,9 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
 		"PRODUCT_NAME":     "cassandra",
 		"PRODUCT_VERSION":  "",
+		"CASSANDRA_SEEDS": "",
+		"CASSANDRA_DC": "",
+		"CASSANDRA_RACK": "",
 	}
 
 	for _, container := range containers {
@@ -670,11 +664,16 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 			}
 			assert.Contains(container.Env, podIP)
 
-			for _, env := range initContainerEnvVar {
-				if value, ok := vars[env.Name]; ok {
-					assert.Equal(value, env.Value)
-				}
-			}
+			checkInitContainerVarEnv(t, initContainerEnvVar, vars)
+		}
+	}
+}
+
+func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, vars map[string]interface{}) {
+	assert := assert.New(t)
+	for _, env := range initContainerEnvVar {
+		if value, ok := vars[env.Name]; ok {
+			assert.Equal(value, env.Value)
 		}
 	}
 }

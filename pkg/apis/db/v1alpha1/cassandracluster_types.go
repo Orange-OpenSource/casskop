@@ -470,7 +470,7 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 //InitCassandraRackList initiate the Status structure for CassandraRack
 func (cc *CassandraCluster) InitCassandraRackList() int {
 	var dcName, rackName string
-	var nbRack int = 0
+	var nbRack = 0
 
 	cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
 	dcsize := cc.GetDCSize()
@@ -491,7 +491,6 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 				cc.initCassandraRack(dcName, rackName)
 				cc.initTopology(dcName, rackName)
 			} else {
-
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					nbRack++
