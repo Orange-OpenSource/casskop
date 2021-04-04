@@ -43,6 +43,15 @@ fi
 echo "CASSANDRA_SEEDS=$CASSANDRA_SEEDS"
 
 CASSANDRA_CFG=$CASSANDRA_CONF/cassandra.yaml
+CASSANDRA_SEEDS="${CASSANDRA_SEEDS:false}"
+
+# set the seed to itself. This is only for the first pod, otherwise it will be able to get seeds from the seed provider
+if [[ $CASSANDRA_SEEDS == 'false' ]]
+then
+ sed -ri 's/- seeds:.*/- seeds: "'"$POD_IP"'"/' $CASSANDRA_CFG
+else # if we have seeds set them.  Probably StatefulSet
+ sed -ri 's/- seeds:.*/- seeds: "'"$CASSANDRA_SEEDS"'"/' $CASSANDRA_CFG
+fi
 
 # The following vars relate to there counter parts in $CASSANDRA_CFG for instance rpc_address
 CASSANDRA_SEED_PROVIDER="${CASSANDRA_SEED_PROVIDER:-org.apache.cassandra.locator.SimpleSeedProvider}"
