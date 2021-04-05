@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Jeffail/gabs"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -197,7 +198,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert.Equal(5, len(bootstrapEnvVar))
 	assert.Equal(9, len(initEnvVar))
 
-	configFileData := NodeConfig{
+	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
 			"num_tokens":256,
@@ -209,33 +210,33 @@ func TestInitContainerConfiguration(t *testing.T) {
 			"seeds":"",
 		},
 		"datacenter-info": {
-			"name": map[string]interface{}{
+			"name": {
 				"dataCapacity": "10Gi",
 				"dataStorageClass": "test-storage",
-				"labels": map[string]string{
+				"labels": {
 					"location.dfy.orange.com/site": "mts",
 				},
 				"name": "dc1",
-				"rack": []map[string]interface{}{
+				"rack": [
 					{
-						"labels": map[string]string{
+						"labels": {
 							"location.dfy.orange.com/street": "street1",
 						},
 						"name": "rack1",
 					},
 					{
-						"labels": map[string]string{
+						"labels": {
 							"location.dfy.orange.com/street": "street2",
 						},
 						"name": "rack2",
 					},
-				},
-				"resources": map[string]interface{}{
-					"limits": map[string]string{
+				],
+				"resources": {
+					"limits": {
 						"cpu": "3",
 						"memory": "3Gi",
 					},
-					"requests": map[string]string{
+					"requests": {
 						"cpu": "3",
 						"memory": "3Gi",
 					},
@@ -251,10 +252,10 @@ func TestInitContainerConfiguration(t *testing.T) {
 		"logback-xml": {
 			"debuglog-enabled":false,
 		},
-	}
+	}`))
 
 	vars := map[string]interface{}{
-		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
+		"CONFIG_FILE_DATA": configFileData.String(),
 		"PRODUCT_NAME": "cassandra",
 		"PRODUCT_VERSION": "3.11.7",
 	}
@@ -276,10 +277,10 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	assert.Equal(9, len(initEnvVar))
 
-	configFileData["cassandra-yaml"]["read_request_timeout_in_ms"] = 10000
-	configFileData["jvm-options"]["cassandra_ring_delay_ms"] = 10000
+	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
+	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
 
-	vars["CONFIG_FILE_DATA"] = parseConfig(configFileData).String()
+	vars["CONFIG_FILE_DATA"] = configFileData.String()
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
 }
@@ -606,7 +607,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	assert.Equal(4, len(containers))
 	assert.Equal(9, len(initContainerEnvVar))
 
-	configFileData := map[string]map[string]interface{}{
+	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
 			"num_tokens":256, "read_request_timeout_in_ms":5000,
@@ -617,28 +618,28 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 			"seeds": "",
 		},
 		"datacenter-info": {
-			"name": map[string]interface{}{
+			"name": {
 				"dataCapacity": "10Gi",
 				"dataStorageClass": "test-storage",
 				"labels": map[string]string{
 					"location.dfy.orange.com/site": "mts",
 				},
 				"name": "dc1",
-				"rack": []map[string]interface{}{
+				"rack": [
 					{
-						"labels": map[string]string{
+						"labels": {
 							"location.dfy.orange.com/street": "street1",
 						},
 						"name": "rack1",
 					},
 					{
-						"labels": map[string]string{
+						"labels": {
 							"location.dfy.orange.com/street": "street2",
 						},
 						"name": "rack2",
 					},
-				},
-				"resources": map[string]map[string]interface{}{
+				],
+				"resources": {
 					"limits": {
 					"cpu": "3",
 					"memory": "3Gi",
@@ -659,10 +660,10 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		"logback-xml": {
 			"debuglog-enabled": false,
 		},
-	}
+	}`))
 
 	vars := map[string]interface{}{
-		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
+		"CONFIG_FILE_DATA": configFileData.String(),
 		"PRODUCT_NAME":     "cassandra",
 		"PRODUCT_VERSION":  "3.11.7",
 		"CASSANDRA_SEEDS": "",
