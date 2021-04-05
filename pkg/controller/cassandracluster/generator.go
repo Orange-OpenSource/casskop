@@ -388,7 +388,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		}
 	}
 
-	// Merge cassandra main container environment variables into sidecars.
+	// Merge bootstrap container environment variables into sidecars.
 
 	var sidecarEnv []v1.EnvVar
 

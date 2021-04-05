@@ -321,7 +321,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
 	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
-		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
+		"gcr.io/cassandra-operator/instaclustr-icarus:1.0.9",
 		v1.PullAlways,
 		v1.ResourceRequirements{
 			Requests: generateResourceList("1", "1Gi"),
@@ -606,12 +606,6 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	assert.Equal(4, len(containers))
 	assert.Equal(9, len(initContainerEnvVar))
 
-	envVar := map[string]string{}
-
-	for name, value := range envVar {
-		assert.Equal(value, envVar[name])
-	}
-
 	configFileData := map[string]map[string]interface{}{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
@@ -623,7 +617,38 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 			"seeds": "",
 		},
 		"datacenter-info": {
-			"name": "dc1",
+			"name": map[string]interface{}{
+				"dataCapacity": "10Gi",
+				"dataStorageClass": "test-storage",
+				"labels": map[string]string{
+					"location.dfy.orange.com/site": "mts",
+				},
+				"name": "dc1",
+				"rack": []map[string]interface{}{
+					{
+						"labels": map[string]string{
+							"location.dfy.orange.com/street": "street1",
+						},
+						"name": "rack1",
+					},
+					{
+						"labels": map[string]string{
+							"location.dfy.orange.com/street": "street2",
+						},
+						"name": "rack2",
+					},
+				},
+				"resources": map[string]map[string]interface{}{
+					"limits": {
+					"cpu": "3",
+					"memory": "3Gi",
+					},
+					"requests": {
+					"cpu": "3",
+					"memory": "3Gi",
+					},
+				},
+			},
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms":30000,
@@ -639,17 +664,21 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	vars := map[string]interface{}{
 		"CONFIG_FILE_DATA": parseConfig(configFileData).String(),
 		"PRODUCT_NAME":     "cassandra",
-		"PRODUCT_VERSION":  "",
+		"PRODUCT_VERSION":  "3.11.7",
 		"CASSANDRA_SEEDS": "",
 		"CASSANDRA_DC": "",
 		"CASSANDRA_RACK": "",
+		"CASSANDRA_LOG_DIR": "/var/log/cassandra",
 	}
 
 	for _, container := range containers {
 		if container.Name != cassandraContainerName {
 			for _, env := range container.Env {
-				assert.Contains(envVar, env.Name)
-				assert.Equal(envVar[env.Name], env.Value)
+				if env.Name == "POD_IP" {
+					continue
+				}
+				assert.Contains(vars, env.Name)
+				assert.Equal(vars[env.Name], env.Value)
 			}
 		} else {
 			// Check cassandra container env vars
@@ -673,7 +702,7 @@ func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, var
 	assert := assert.New(t)
 	for _, env := range initContainerEnvVar {
 		if value, ok := vars[env.Name]; ok {
-			assert.Equal(value, env.Value)
+			assert.Equal(env.Value, value)
 		}
 	}
 }
