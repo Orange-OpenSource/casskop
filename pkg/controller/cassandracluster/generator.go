@@ -630,7 +630,7 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 		{
 			Name:  "CASSANDRA_MAX_HEAP",
-			Value: defineJvmMemory(resources).maxHeapSize,
+			Value: parsedConfig.Path(fmt.Sprintf("%s.max_heap_size", jvmOption)).String(),
 		},
 		{
 			Name:  "CASSANDRA_GC_STDOUT",

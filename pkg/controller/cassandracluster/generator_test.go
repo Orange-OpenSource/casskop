@@ -186,7 +186,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"jvm-options": {
 			"initial_heap_size": "800M",
-			"max_heap_size": "4G",
+			"max_heap_size": "1600M",
 		},
 	})
 	cassieResources := cc.Spec.Resources
@@ -201,57 +201,56 @@ func TestInitContainerConfiguration(t *testing.T) {
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
-			"num_tokens":256,
-			"read_request_timeout_in_ms":5000,
-			"write_request_timeout_in_ms":5000,
+			"num_tokens":256, "read_request_timeout_in_ms":5000,
+			"write_request_timeout_in_ms":5000
 		},
 		"cluster-info": {
-			"name":"cassandra-demo",
-			"seeds":"",
+			"name":  "cassandra-demo",
+			"seeds": ""
 		},
 		"datacenter-info": {
 			"name": {
 				"dataCapacity": "10Gi",
 				"dataStorageClass": "test-storage",
 				"labels": {
-					"location.dfy.orange.com/site": "mts",
+					"location.dfy.orange.com/site": "mts"
 				},
 				"name": "dc1",
 				"rack": [
 					{
 						"labels": {
-							"location.dfy.orange.com/street": "street1",
+							"location.dfy.orange.com/street": "street1"
 						},
-						"name": "rack1",
+						"name": "rack1"
 					},
 					{
 						"labels": {
-							"location.dfy.orange.com/street": "street2",
+							"location.dfy.orange.com/street": "street2"
 						},
-						"name": "rack2",
-					},
+						"name": "rack2"
+					}
 				],
 				"resources": {
 					"limits": {
 						"cpu": "3",
-						"memory": "3Gi",
+						"memory": "3Gi"
 					},
 					"requests": {
 						"cpu": "3",
-						"memory": "3Gi",
-					},
-				},
-			},
+						"memory": "3Gi"
+					}
+				}
+			}
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms":30000,
 			"initial_heap_size":"800M",
 			"jmx-connection-type":"remote-no-auth",
-			"max_heap_size": "4G",
+			"max_heap_size":"1600M"
 		},
 		"logback-xml": {
-			"debuglog-enabled":false,
-		},
+			"debuglog-enabled": false
+		}
 	}`))
 
 	vars := map[string]interface{}{
@@ -279,6 +278,8 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
+	configFileData.SetP("800M", "jvm-options.initial_heap_size")
+	configFileData.SetP("4G", "jvm-options.max_heap_size")
 
 	vars["CONFIG_FILE_DATA"] = configFileData.String()
 
@@ -611,55 +612,55 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
 			"num_tokens":256, "read_request_timeout_in_ms":5000,
-			"write_request_timeout_in_ms":5000,
+			"write_request_timeout_in_ms":5000
 		},
 		"cluster-info": {
 			"name":  "cassandra-demo",
-			"seeds": "",
+			"seeds": ""
 		},
 		"datacenter-info": {
 			"name": {
 				"dataCapacity": "10Gi",
 				"dataStorageClass": "test-storage",
-				"labels": map[string]string{
-					"location.dfy.orange.com/site": "mts",
+				"labels": {
+					"location.dfy.orange.com/site": "mts"
 				},
 				"name": "dc1",
 				"rack": [
 					{
 						"labels": {
-							"location.dfy.orange.com/street": "street1",
+							"location.dfy.orange.com/street": "street1"
 						},
-						"name": "rack1",
+						"name": "rack1"
 					},
 					{
 						"labels": {
-							"location.dfy.orange.com/street": "street2",
+							"location.dfy.orange.com/street": "street2"
 						},
-						"name": "rack2",
-					},
+						"name": "rack2"
+					}
 				],
 				"resources": {
 					"limits": {
-					"cpu": "3",
-					"memory": "3Gi",
+						"cpu": "3",
+						"memory": "3Gi"
 					},
 					"requests": {
-					"cpu": "3",
-					"memory": "3Gi",
-					},
-				},
-			},
+						"cpu": "3",
+						"memory": "3Gi"
+					}
+				}
+			}
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms":30000,
 			"initial_heap_size":"128M",
 			"jmx-connection-type":"remote-no-auth",
-			"max_heap_size":"512M",
+			"max_heap_size":"512M"
 		},
 		"logback-xml": {
-			"debuglog-enabled": false,
-		},
+			"debuglog-enabled": false
+		}
 	}`))
 
 	vars := map[string]interface{}{
@@ -703,7 +704,7 @@ func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, var
 	assert := assert.New(t)
 	for _, env := range initContainerEnvVar {
 		if value, ok := vars[env.Name]; ok {
-			assert.Equal(env.Value, value)
+			assert.Equal(value, env.Value)
 		}
 	}
 }
