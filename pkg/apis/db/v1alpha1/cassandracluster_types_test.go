@@ -16,13 +16,14 @@ package v1alpha1
 
 import (
 	"io/ioutil"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
@@ -502,6 +503,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
 
 	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
+	assert.Equal(DefaultFSGroup, *cluster.Spec.FSGroup)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)

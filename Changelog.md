@@ -1,6 +1,10 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v1.1.4
+
+- PR [#314](https://github.com/Orange-OpenSource/casskop/pull/314) - Added `fsGroup` to `CassandraCluster.Spec`
+
 ## v1.1.3
 
 - PR [#302](https://github.com/Orange-OpenSource/casskop/pull/302) - Fix Bootstrap issue
