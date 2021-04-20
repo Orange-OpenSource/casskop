@@ -20,6 +20,10 @@ spec:
         app: {{ template "multi-casskop.name" . }}
         operator: {{ template "multi-casskop.name" . }}
         release: {{ .Release.Name }}
+    {{- if .Values.podAnnotations }}
+      annotations:
+  {{ toYaml .Values.podAnnotations | indent 8}}
+    {{- end }}
     spec:
 {{- if .Values.image.imagePullSecrets.enabled }}
       imagePullSecrets:
