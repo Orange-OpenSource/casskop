@@ -87,6 +87,10 @@ spec:
               cassandraImage:
                 description: Image + version to use for Cassandra
                 type: string
+              config:
+                description: Config for the Cassandra nodes
+                format: byte
+                type: string
               configMapName:
                 description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml)
                   If this is empty, operator will uses default cassandra.yaml from
@@ -304,6 +308,18 @@ spec:
                 format: int64
                 minimum: 1
                 type: integer
+              serverType:
+                default: cassandra
+                description: 'Server type: "cassandra" or "dse" for config builder,
+                  default to cassandra ServerType string `json:"serverType,omitempty"`'
+                enum:
+                - cassandra
+                - dse
+                type: string
+              serverVersion:
+                description: Version string for config builder https://github.com/datastax/cass-config-definitions,
+                  used to generate Cassandra server configuration
+                type: string
               service:
                 description: ServicePolicy defines the policy for headless service
                   owned by CassKop operator.
@@ -1629,7 +1645,10 @@ spec:
                 description: Very special Flag to hack CassKop reconcile loop - use
                   with really good Care
                 type: boolean
+            required:
+            - serverType
             type: object
+            x-kubernetes-preserve-unknown-fields: true
           status:
             description: CassandraClusterStatus defines Global state of CassandraCluster
             properties:
