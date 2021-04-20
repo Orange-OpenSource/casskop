@@ -165,7 +165,7 @@ func cassandraClusterRollingRestartDCTest(t *testing.T, f *framework.Framework, 
 	assert.Equal(t, false, cc.Spec.Topology.DC[0].Rack[0].RollingRestart)
 }
 
-func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) {
+func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *framework.Context) {
 	namespace, err := ctx.GetWatchNamespace()
 	clusterName := "cassandra-e2e"
 	kind := "CassandraCluster"
@@ -173,7 +173,8 @@ func cassandraClusterServiceTest(t *testing.T, f *framework.Framework, ctx *fram
 	logrus.Debugf("Creating cluster")
 	cluster := mye2eutil.HelperInitCluster(t, f, ctx, "cassandracluster-2DC.yaml", namespace)
 
-	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
+	if err := f.Client.Create(goctx.TODO(), cluster, &framework.CleanupOptions{}); err != nil &&
+		!apierrors.IsAlreadyExists(err) {
 		t.Fatalf("Error Creating CassandraCluster: %v", err)
 	}
 

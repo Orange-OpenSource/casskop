@@ -15,7 +15,6 @@ metadata:
     cluster: k8s.pic
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:latest
   imageJolokiaSecret:
     name: jolokia-auth
   dataCapacity: "1Gi"
