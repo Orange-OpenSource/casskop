@@ -58,6 +58,8 @@ const (
 
 	//DefaultUserID is the default ID to use in cassandra image (RunAsUser)
 	DefaultUserID int64 = 999
+	//DefaultFSGroup is the default GID owning volumes in the Cassandra image
+	DefaultFSGroup int64 = 1
 )
 
 // ClusterStateInfo describe a cluster state
@@ -142,6 +144,9 @@ func (cc *CassandraCluster) CheckDefaults() {
 
 	if ccs.RunAsUser == nil {
 		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
+	}
+	if ccs.FSGroup == nil {
+		ccs.FSGroup = func(i int64) *int64 { return &i }(DefaultFSGroup)
 	}
 	if ccs.ReadOnlyRootFilesystem == nil {
 		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
@@ -754,6 +759,10 @@ type CassandraClusterSpec struct {
 	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1
 	RunAsUser *int64 `json:"runAsUser,omitempty"`
+
+	// FSGroup defines the GID owning volumes in the Cassandra image
+	// +kubebuilder:validation:Minimum=1
+	FSGroup *int64 `json:"fsGroup,omitempty"`
 
 	// Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`

@@ -304,6 +304,11 @@ spec:
                 format: int64
                 minimum: 1
                 type: integer
+              fsGroup:
+                description: FSGroup defines the GID owning volumes in the Cassandra image
+                format: int64
+                minimum: 1
+                type: integer
               service:
                 description: ServicePolicy defines the policy for headless service
                   owned by CassKop operator.

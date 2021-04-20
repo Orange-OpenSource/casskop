@@ -64,6 +64,7 @@ spec:
 |initContainerImage|string|Image used in the initContainer (use the form : base:version)|Yes|cassandra:latest|
 |initContainerCmd|string|Command to execute in the initContainer in the targeted image|Yes|cp -vr /etc/cassandra/* /bootstrap|
 |runAsUser|int64|Define the id of the user to run in the Cassandra image|Yes|999|
+|fsGroup|int64|FSGroup defines the GID owning volumes in the Cassandra image|No|1|
 |readOnlyRootFilesystem|Make the pod as Readonly|bool|Yes|true|
 |resources|[Resources](#https://godoc.org/k8s.io/api/core/v1#ResourceRequirements)|Define the Requests & Limits resources spec of the "cassandra" container|Yes|-|
 |hardAntiAffinity|bool|HardAntiAffinity defines if the PodAntiAffinity of the statefulset has to be hard (it's soft by default)|Yes|false|
