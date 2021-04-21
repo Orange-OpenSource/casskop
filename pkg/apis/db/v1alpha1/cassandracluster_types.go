@@ -822,8 +822,7 @@ type CassandraClusterSpec struct {
 	// Server type: "cassandra" or "dse" for config builder, default to cassandra
 	// +kubebuilder:validation:Enum=cassandra;dse
 	// +kubebuilder:default:=cassandra
-	//ServerType string `json:"serverType,omitempty"`
-	ServerType string `json:"serverType"`
+	ServerType string `json:"serverType,omitempty"`
 
 	// Config for the Cassandra nodes
 	Config json.RawMessage `json:"config,omitempty"`

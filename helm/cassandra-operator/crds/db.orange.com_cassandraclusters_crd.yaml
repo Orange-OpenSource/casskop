@@ -311,7 +311,7 @@ spec:
               serverType:
                 default: cassandra
                 description: 'Server type: "cassandra" or "dse" for config builder,
-                  default to cassandra ServerType string `json:"serverType,omitempty"`'
+                  default to cassandra'
                 enum:
                 - cassandra
                 - dse
@@ -1645,8 +1645,6 @@ spec:
                 description: Very special Flag to hack CassKop reconcile loop - use
                   with really good Care
                 type: boolean
-            required:
-            - serverType
             type: object
             x-kubernetes-preserve-unknown-fields: true
           status:
