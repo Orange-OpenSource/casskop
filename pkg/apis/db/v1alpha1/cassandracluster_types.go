@@ -908,6 +908,11 @@ type DC struct {
 	Name string `json:"name,omitempty"`
 	//Labels used to target Kubernetes nodes
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
+
 	//List of Racks defined in the Cassandra DC
 	Rack RackSlice `json:"rack,omitempty"`
 
@@ -934,14 +939,20 @@ type Rack struct {
 	//Name of the Rack
 	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
+
+	//Labels used to target Kubernetes nodes
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
+
 	// Flag to tell the operator to trigger a rolling restart of the Rack
 	RollingRestart bool `json:"rollingRestart,omitempty"`
 
 	//The Partition to control the Statefulset Upgrade
 	RollingPartition int32 `json:"rollingPartition,omitempty"`
 
-	//Labels used to target Kubernetes nodes
-	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // PodPolicy defines the policy for pods owned by CassKop operator.
