@@ -552,9 +552,9 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	seedList := cc.SeedList(&status.SeedList)
 	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
 
+	image := strings.Split(cc.Spec.CassandraImage, ":")
 	serverVersion := cc.Spec.ServerVersion
 	if serverVersion == "" {
-		image := strings.Split(cc.Spec.CassandraImage, ":")
 		if len(image) == 2 {
 			version := strings.Split(image[1], "-")
 			serverVersion = version[0]
@@ -566,7 +566,11 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 
 	serverType := cc.Spec.ServerType
 	if serverType == "" {
-		serverType = "cassandra"
+		if strings.Contains(image[0], "dse") {
+			serverType = "dse"
+		} else {
+			serverType = "cassandra"
+		}
 	}
 
 	defaultConfig := NodeConfig{
