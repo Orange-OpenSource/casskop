@@ -90,7 +90,8 @@ spec:
               config:
                 description: Config for the Cassandra nodes
                 format: byte
-                type: string
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               configMapName:
                 description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml)
                   If this is empty, operator will uses default cassandra.yaml from

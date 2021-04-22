@@ -825,6 +825,7 @@ type CassandraClusterSpec struct {
 	ServerType string `json:"serverType,omitempty"`
 
 	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Config json.RawMessage `json:"config,omitempty"`
 
 	// Name of the secret to uses to authenticate on Docker registries

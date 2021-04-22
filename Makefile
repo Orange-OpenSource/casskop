@@ -192,7 +192,8 @@ docker-generate-crds:
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	echo Update CRD - Remove protocol and set config type to object  CRD
+	@sed -i -e '/\- protocol/d' -e '/^ *config:/,/^ *configMapName/s/type: string/type: object/' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
 
