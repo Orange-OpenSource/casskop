@@ -567,6 +567,18 @@ func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
 	return cc.getDCFromIndex(index)
 }
 
+// Get Rack by its rack name
+func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
+	_, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
+	dc := cc.GetDCFromDCRackName(dcRackName)
+	for _, rack := range dc.Rack {
+		if rack.Name == rackName {
+			return &rack
+		}
+	}
+	return nil
+}
+
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
