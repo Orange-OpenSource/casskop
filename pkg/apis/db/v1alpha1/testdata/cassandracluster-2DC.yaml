@@ -14,7 +14,9 @@ spec:
   dataStorageClass: "local-storage"
   hardAntiAffinity: false
   deletePVC: true
-  gcStdout: false
+  config:
+    jvm-options:
+      log_gc: "true"
   autoPilot: true
   resources:
     requests:
@@ -26,7 +28,9 @@ spec:
   topology:
     dc:
     - name: online
-      numTokens: 200
+      config:
+        cassandra-yaml:
+          num_tokens: 200
       labels:
         location.dfy.orange.com/site : mts
       rack:
@@ -37,7 +41,9 @@ spec:
         labels:
           location.dfy.orange.com/street : street2
     - name: stats
-      numTokens: 32
+      config:
+        cassandra-yaml:
+          num_tokens: 32
       nodesPerRacks: 2
       labels:
         location.dfy.orange.com/site : mts

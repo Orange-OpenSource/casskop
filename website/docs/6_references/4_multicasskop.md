@@ -36,7 +36,6 @@ spec:
       hardAntiAffinity: false
       deletePVC: true
       autoPilot: false
-      gcStdout: false
       autoUpdateSeedList: false
       debug: false
       maxPodUnavailable: 1
@@ -60,7 +59,9 @@ spec:
           dc:
             - name: dc1
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:
@@ -75,7 +76,9 @@ spec:
           dc:
             - name: dc3
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:
@@ -84,7 +87,9 @@ spec:
                     failure-domain.beta.kubernetes.io/zone: europe-west1-d
             - name: dc4
               nodesPerRacks: 2
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:

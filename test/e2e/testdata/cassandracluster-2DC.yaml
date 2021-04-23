@@ -12,7 +12,9 @@ spec:
   hardAntiAffinity: false
   deletePVC: false
   autoPilot: true
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   resources:         
     requests: &requests

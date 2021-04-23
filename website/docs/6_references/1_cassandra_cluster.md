@@ -23,7 +23,9 @@ spec:
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   maxPodUnavailable: 1
   runAsUser: 999
@@ -74,7 +76,6 @@ spec:
 |shareProcessNamespace|bool|When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod. [Check documentation for more informations](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)|Yes|false|
 |autoPilot|bool|Defines if the Operator can fly alone or if we need human action to trigger actions on specific Cassandra nodes. [Check documentation for more informations](/casskop/docs/5_operations/2_pods_operations)|Yes|false|
 |noCheckStsAreEqual|bool||Yes|false|
-|gcStdout|bool|Set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default|Yes|true|
 |autoUpdateSeedList|bool| Defines if the Operator automatically update the SeedList according to new cluster CRD topology|Yes|false|
 |maxPodUnavailable|int32|Number of MaxPodUnavailable used in the [PodDisruptionBudget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)|Yes|1|
 |restartCountBeforePodDeletion|int32|defines the number of restart allowed for a cassandra container allowed before deleting the pod  to force its restart from scratch. if set to 0 or omit, no action will be performed based on restart count. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/9_advanced_configuration#ip-cross-situation-detection)|Yes|0|

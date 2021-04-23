@@ -642,10 +642,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 			Value: parsedConfig.Path(fmt.Sprintf("%s.max_heap_size", jvmOption)).String(),
 		},
 		{
-			Name:  "CASSANDRA_GC_STDOUT",
-			Value: strconv.FormatBool(cc.Spec.GCStdout),
-		},
-		{
 			Name: "RACK_NAME",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{

@@ -754,9 +754,6 @@ type CassandraClusterSpec struct {
 	AutoPilot          bool `json:"autoPilot,omitempty"`
 	NoCheckStsAreEqual bool `json:"noCheckStsAreEqual,omitempty"`
 
-	//GCStdout set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default
-	GCStdout bool `json:"gcStdout,omitempty" default:"true"`
-
 	//AutoUpdateSeedList defines if the Operator automatically update the SeedList according to new cluster CRD topology
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`

@@ -17,7 +17,9 @@ spec:
   hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   resources:
     requests: &requests
@@ -30,7 +32,9 @@ spec:
         rack:
           - name: rack1
       - name: dc2
-        numTokens: 32
+        config:
+          cassandra-yaml:
+            num_tokens: 32
         nodesPerRacks: 1
         rack:
           - name: rack1

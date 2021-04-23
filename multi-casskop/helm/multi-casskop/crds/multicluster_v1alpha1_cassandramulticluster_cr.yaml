@@ -30,7 +30,9 @@ spec:
           dc:
             - name: dc1
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               rack:
                 - name: rack1
                 - name: rack2
@@ -43,7 +45,9 @@ spec:
           dc:
             - name: dc2
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               rack:
                 - name: rack3
                 - name: rack4

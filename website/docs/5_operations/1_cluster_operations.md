@@ -21,7 +21,6 @@ Some Updates in the `CassandraCluster` CRD object will trigger a rolling update 
 - `spec.baseImage`
 - `spec.version`
 - `spec.configMap`
-- `spec.gcStdout`
 - `spec.runAsUser`
 
 Some Updates in the `CassandraCluster` CRD object will not trigger change on the cluster but only in future behavior of
@@ -69,7 +68,9 @@ spec:
   hardAntiAffinity: false
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: true
   resources:
     requests:
@@ -188,7 +189,9 @@ spec:
               failure-domain.beta.kubernetes.io/zone: europe-west1-c
       - name: dc2
         nodesPerRacks: 3
-        numTokens: 32
+        config:
+          cassandra-yaml:
+            num_tokens: 32
         labels:
           failure-domain.beta.kubernetes.io/region: europe-west1
         rack:
@@ -203,7 +206,8 @@ nodes on each Racks on different groups of Kubernetes servers.
 
 :::note
 We can see here that we can give specific configuration for the number of pods in the dc2 (`nodesPerRacks: 3`)
-We also allow to configure Cassandra pods with different num_tokens confioguration for each dc : `numTokens`.
+We also allow to configure Cassandra pods with different num_tokens confioguration for each dc using the appropriate
+parameter in the config.
 :::
 
 CassKop will create a statefulset for each Rack, and start creating the

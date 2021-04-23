@@ -190,13 +190,6 @@ The default value used for `-Xmx` depends on whether there is a memory request c
 > CassKop will automatically compute the env var CASSANDRA_MAX_HEAP which is used to define `-Xms` and `-Xmx` in the
 > `/run.sh` docker image script, from 1/4 of container Memory Limit.
 
-### GarbageCollector output
-
-We have a specific parameter in the CRD `spec.gcStdout: true/false` which specify if we want to send the JVM garbage collector logs
-in the stdout of the container or inside a specific file in the container.
-
-Default value is true, so it sends GC logs in stdout along with cassandra's logs.
-
 ## Authentication and authorizations
 
 CassKop uses Jolokia from the cassandra-image to communicate. We can add

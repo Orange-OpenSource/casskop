@@ -163,7 +163,9 @@ pods deployed in the Rack. If this is not the case, then you will need to proces
         failure-domain.beta.kubernetes.io/region: europe-west1
       name: dc2
       nodesPerRacks: 1
-      numTokens: 256
+      config:
+        cassandra-yaml:
+          num_tokens: 256
       rack:
       - labels:
           failure-domain.beta.kubernetes.io/zone: europe-west1-d
