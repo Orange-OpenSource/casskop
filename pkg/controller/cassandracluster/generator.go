@@ -550,7 +550,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
 	//in statefulset.go we surcharge this value with conditions
 	seedList := cc.SeedList(&status.SeedList)
-	numTokensPerRacks := cc.NumTokensPerRacks(dcRackName)
 
 	image := strings.Split(cc.Spec.CassandraImage, ":")
 	serverVersion := cc.Spec.ServerVersion
@@ -575,7 +574,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 
 	defaultConfig := NodeConfig{
 		"cassandra-yaml": {
-			"num_tokens": numTokensPerRacks,
 			"read_request_timeout_in_ms": 5000,
 			"write_request_timeout_in_ms": 5000,
 			"counter_write_request_timeout_in_ms": 5000,

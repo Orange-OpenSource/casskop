@@ -40,7 +40,6 @@ const (
 	defaultServiceAccountName = "cassandra-cluster-node"
 	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable  = 1
-	defaultNumTokens          = 256
 	defaultImagePullPolicy    = v1.PullAlways
 
 	DefaultCassandraDC   = "dc1"
@@ -256,17 +255,6 @@ func (cc *CassandraCluster) getDCNodesPerRacksFromIndex(dc int) int32 {
 		return cc.Spec.NodesPerRacks
 	}
 	return *storeDC.NodesPerRacks
-}
-
-func (cc *CassandraCluster) getDCNumTokensPerRacksFromIndex(dc int) int32 {
-	if dc >= cc.GetDCSize() {
-		return defaultNumTokens
-	}
-	storeDC := cc.Spec.Topology.DC[dc]
-	if storeDC.NumTokens == nil {
-		return defaultNumTokens
-	}
-	return *storeDC.NumTokens
 }
 
 //GetRackSize return the numbers of the Rack in the DC at indice dc
@@ -630,29 +618,6 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) 
 	return cc.Spec.NodesPerRacks
 }
 
-// GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
-func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return defaultNumTokens
-	}
-	for dc := 0; dc < dcsize; dc++ {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return defaultNumTokens
-		}
-		for rack := 0; rack < racksize; rack++ {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.getDCNumTokensPerRacksFromIndex(dc)
-			}
-		}
-	}
-	return defaultNumTokens
-}
-
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
 func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()
@@ -932,9 +897,6 @@ type DC struct {
 	// Default: 1.
 	// Optional, if not filled, used value define in CassandraClusterSpec
 	NodesPerRacks *int32 `json:"nodesPerRacks,omitempty"`
-
-	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
-	NumTokens *int32 `json:"numTokens,omitempty"`
 
 	// Define the Capacity for Persistent Volume Claims in the local storage
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$

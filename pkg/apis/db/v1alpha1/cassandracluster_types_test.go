@@ -90,35 +90,6 @@ func TestGetNodesPerRacks_2DC(t *testing.T) {
 
 }
 
-func TestGetNumTokensPerRacks_NoTopo(t *testing.T) {
-	assert := assert.New(t)
-
-	cc := helperInitCluster(t, "cassandracluster-NoTopo.yaml")
-
-	nodesPerRack := cc.NumTokensPerRacks("dc-rack1")
-
-	assert.Equal(int32(256), nodesPerRack)
-
-}
-func TestGetNumTokensPerRacks_2DC(t *testing.T) {
-	assert := assert.New(t)
-
-	cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-
-	numTokens := cc.NumTokensPerRacks("online-rack1")
-	assert.Equal(int32(200), numTokens)
-
-	numTokens = cc.NumTokensPerRacks("online-rack2")
-	assert.Equal(int32(200), numTokens)
-
-	numTokens = cc.NumTokensPerRacks("stats-rack1")
-	assert.Equal(int32(32), numTokens)
-
-	numTokens = cc.NumTokensPerRacks("toto-toto")
-	assert.Equal(int32(256), numTokens)
-
-}
-
 func TestGetDCSize(t *testing.T) {
 	assert := assert.New(t)
 
@@ -459,7 +430,7 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	lastAppliedConfiguration, _ := cc.ComputeLastAppliedConfiguration()
-	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:latest","resources":{"limits":{"cpu":"1","memory":"2Gi"},"requests":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"dataCapacity":"3Gi","dataStorageClass":"local-storage","serverVersion":"3.11.7","serverType":"","imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"numTokens":200,"resources":{}},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"numTokens":32,"resources":{}}]}},"status":{}}`
+	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:latest","resources":{"limits":{"cpu":"1","memory":"2Gi"},"requests":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"dataCapacity":"3Gi","dataStorageClass":"local-storage","serverVersion":"3.11.7","serverType":"","imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"resources":{}},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"resources":{}}]}},"status":{}}`
 
 	//add info in status
 	assert.Equal(result, string(lastAppliedConfiguration))

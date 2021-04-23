@@ -32,7 +32,9 @@ spec:
             cpu: '2'
             memory: 3Gi
       - name: dc2
-        numTokens: 32
+        config:
+          cassandra-yaml:
+            num_tokens: 32
         nodesPerRacks: 1
         rack:
           - name: rack1

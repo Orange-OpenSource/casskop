@@ -262,10 +262,10 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 	idx := "-1"
 	var includedFiltersFound, excludedFiltersFound map[string]bool
 	for _, cl := range changelog {
-		// Only scan changes on Name/NumTokens
+		// Only scan changes on Name
 		if cl.Type == changeType &&
 			// DC Changes
-			(cl.Path[2] == "Name" || cl.Path[2] == "NumTokens" ||
+			(cl.Path[2] == "Name" ||
 				// Rack changes
 				(len(cl.Path) > 4 && cl.Path[4] == "Name")) {
 			if noPaths {
