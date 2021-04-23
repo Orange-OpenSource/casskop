@@ -6,7 +6,7 @@ metadata:
     cluster: k8s.pic 
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:latest
+  cassandraImage: cassandra:3.11.6
   serverVersion: 3.11.7
   dataCapacity: "1Gi"
   hardAntiAffinity: false

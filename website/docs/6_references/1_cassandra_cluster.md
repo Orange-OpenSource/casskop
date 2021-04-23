@@ -60,10 +60,10 @@ spec:
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
 |nodesPerRacks|int32|Number of nodes to deploy for a Cassandra deployment in each Racks. If NodesPerRacks = 2 and there is 3 racks, the cluster will have 6 Cassandra Nodes|Yes|1|
-|cassandraImage|string|Image + version to use for Cassandra|Yes|cassandra:latest|
+|cassandraImage|string|Image + version to use for Cassandra|Yes|cassandra:3.11.6|
 |imagepullpolicy|[PullPolicy](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|Define the pull policy for C* docker image|Yes|[PullAlways](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|
 |bootstrapImage|string|Image used for bootstrapping cluster (use the form : base:version)|Yes|orangeopensource/cassandra-bootstrap:0.1.4|
-|initContainerImage|string|Image used in the initContainer (use the form : base:version)|Yes|cassandra:latest|
+|initContainerImage|string|Image used in the initContainer (use the form : base:version)|Yes|cassandra:3.11.6|
 |initContainerCmd|string|Command to execute in the initContainer in the targeted image|Yes|cp -vr /etc/cassandra/* /bootstrap|
 |runAsUser|int64|Define the id of the user to run in the Cassandra image|Yes|999|
 |readOnlyRootFilesystem|Make the pod as Readonly|bool|Yes|true|

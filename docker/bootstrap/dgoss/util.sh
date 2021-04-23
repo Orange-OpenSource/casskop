@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CASSANDRA_IMAGE=cassandra:latest
+CASSANDRA_IMAGE=cassandra:3.11.6
 
 CASSANDRA_UID=1000
 

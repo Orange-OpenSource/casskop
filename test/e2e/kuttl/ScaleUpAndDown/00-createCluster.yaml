@@ -12,7 +12,7 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:latest
+  cassandraImage: cassandra:3.11.6
   dataCapacity: "1Gi"
   hardAntiAffinity: false
   deletePVC: false
