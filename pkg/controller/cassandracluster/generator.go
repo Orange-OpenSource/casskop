@@ -597,22 +597,29 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		"jmx-connection-type": "remote-no-auth",
 	}
 
+	dcName, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
+
 	config := NodeConfig{
 		"cluster-info": {
 			"name":  cc.GetName(),
 			"seeds": seedList,
 		},
 		"datacenter-info": {
-			"name": cc.GetDCFromDCRackName(dcRackName),
+			"name": dcName,
+		},
+		"cassandra-rackdc.properties": {
+			"dc": dcName,
+			"rack": rackName,
 		},
 	}
 
 	parsedConfig := parseConfig(config)
+	dc := cc.GetDCFromDCRackName(dcRackName)
+	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	if cc.Spec.Config != nil {
-		parsedCassandraClusterConfig, _ := gabs.ParseJSON(cc.Spec.Config)
-		parsedConfig.Merge(parsedCassandraClusterConfig)
-	}
+	mergeConfig(cc.Spec.Config, parsedConfig)
+	mergeConfig(dc.Config, parsedConfig)
+	mergeConfig(rack.Config, parsedConfig)
 
 	for key, value := range defaultConfig {
 		for subkey, subvalue := range value {
@@ -675,6 +682,14 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 				},
 			},
 		},
+	}
+}
+
+func mergeConfig(config json.RawMessage, parsedConfig *gabs.Container) {
+	if config != nil {
+		parsedCassandraClusterConfig, _ := gabs.ParseJSON(config)
+		parsedConfig.MergeFn(parsedCassandraClusterConfig,
+			func(dest, source interface{}) interface{} { return source })
 	}
 }
 

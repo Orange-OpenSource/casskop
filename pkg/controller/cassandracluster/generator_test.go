@@ -199,54 +199,28 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert.Equal(9, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-rackdc.properties": {
+			"dc": "dc1",
+			"rack": "rack1"
+		},
 		"cassandra-yaml": {
-			"counter_write_request_timeout_in_ms":5000,
-			"num_tokens":256, "read_request_timeout_in_ms":5000,
-			"write_request_timeout_in_ms":5000
+			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens": 256,
+			"read_request_timeout_in_ms": 5000,
+			"write_request_timeout_in_ms": 5000
 		},
 		"cluster-info": {
-			"name":  "cassandra-demo",
+			"name": "cassandra-demo",
 			"seeds": ""
 		},
 		"datacenter-info": {
-			"name": {
-				"dataCapacity": "10Gi",
-				"dataStorageClass": "test-storage",
-				"labels": {
-					"location.dfy.orange.com/site": "mts"
-				},
-				"name": "dc1",
-				"rack": [
-					{
-						"labels": {
-							"location.dfy.orange.com/street": "street1"
-						},
-						"name": "rack1"
-					},
-					{
-						"labels": {
-							"location.dfy.orange.com/street": "street2"
-						},
-						"name": "rack2"
-					}
-				],
-				"resources": {
-					"limits": {
-						"cpu": "3",
-						"memory": "3Gi"
-					},
-					"requests": {
-						"cpu": "3",
-						"memory": "3Gi"
-					}
-				}
-			}
+			"name": "dc1"
 		},
 		"jvm-options": {
-			"cassandra_ring_delay_ms":30000,
-			"initial_heap_size":"800M",
-			"jmx-connection-type":"remote-no-auth",
-			"max_heap_size":"1600M"
+			"cassandra_ring_delay_ms": 30000,
+			"initial_heap_size": "800M",
+			"jmx-connection-type": "remote-no-auth",
+			"max_heap_size": "1600M"
 		},
 		"logback-xml": {
 			"debuglog-enabled": false
@@ -272,14 +246,29 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 	})
 
+	cc.Spec.Topology.DC[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"resize_tlb": "true",
+			"initial_heap_size": "1024M",
+		},
+	})
+
+	cc.Spec.Topology.DC[0].Rack[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"print_tenuring_distribution": "true",
+		},
+	})
+
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert.Equal(9, len(initEnvVar))
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
-	configFileData.SetP("800M", "jvm-options.initial_heap_size")
+	configFileData.SetP("1024M", "jvm-options.initial_heap_size")
 	configFileData.SetP("4G", "jvm-options.max_heap_size")
+	configFileData.SetP("true", "jvm-options.resize_tlb")
+	configFileData.SetP("true", "jvm-options.print_tenuring_distribution")
 
 	vars["CONFIG_FILE_DATA"] = configFileData.String()
 
