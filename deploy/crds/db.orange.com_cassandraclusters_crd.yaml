@@ -1108,10 +1108,6 @@ spec:
                             description: 'Number of nodes to deploy for a Cassandra deployment in each Racks. Default: 1. Optional, if not filled, used value define in CassandraClusterSpec'
                             format: int32
                             type: integer
-                          numTokens:
-                            description: 'NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD'
-                            format: int32
-                            type: integer
                           rack:
                             description: List of Racks defined in the Cassandra DC
                             items:
