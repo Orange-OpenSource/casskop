@@ -196,7 +196,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert := assert.New(t)
 
 	assert.Equal(5, len(bootstrapEnvVar))
-	assert.Equal(9, len(initEnvVar))
+	assert.Equal(8, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-rackdc.properties": {
@@ -205,7 +205,6 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms": 5000,
-			"num_tokens": 256,
 			"read_request_timeout_in_ms": 5000,
 			"write_request_timeout_in_ms": 5000
 		},
@@ -261,7 +260,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
-	assert.Equal(9, len(initEnvVar))
+	assert.Equal(8, len(initEnvVar))
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
@@ -595,12 +594,16 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	assert.Equal(5, len(bootstrapContainerEnvVar))
 	assert.Equal(4, len(containers))
-	assert.Equal(9, len(initContainerEnvVar))
+	assert.Equal(8, len(initContainerEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-rackdc.properties": {
+			"dc": "dc1",
+			"rack": "rack1"
+		},
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
-			"num_tokens":256, "read_request_timeout_in_ms":5000,
+			"read_request_timeout_in_ms":5000,
 			"write_request_timeout_in_ms":5000
 		},
 		"cluster-info": {
@@ -608,38 +611,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 			"seeds": ""
 		},
 		"datacenter-info": {
-			"name": {
-				"dataCapacity": "10Gi",
-				"dataStorageClass": "test-storage",
-				"labels": {
-					"location.dfy.orange.com/site": "mts"
-				},
-				"name": "dc1",
-				"rack": [
-					{
-						"labels": {
-							"location.dfy.orange.com/street": "street1"
-						},
-						"name": "rack1"
-					},
-					{
-						"labels": {
-							"location.dfy.orange.com/street": "street2"
-						},
-						"name": "rack2"
-					}
-				],
-				"resources": {
-					"limits": {
-						"cpu": "3",
-						"memory": "3Gi"
-					},
-					"requests": {
-						"cpu": "3",
-						"memory": "3Gi"
-					}
-				}
-			}
+			"name": "dc1"
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms":30000,
