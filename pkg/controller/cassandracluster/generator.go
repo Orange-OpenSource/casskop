@@ -595,7 +595,7 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		"jmx-connection-type": "remote-no-auth",
 	}
 
-	dcName, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
+	dcName := cc.GetDCNameFromDCRackName(dcRackName)
 
 	config := NodeConfig{
 		"cluster-info": {
@@ -604,10 +604,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 		"datacenter-info": {
 			"name": dcName,
-		},
-		"cassandra-rackdc.properties": {
-			"dc": dcName,
-			"rack": rackName,
 		},
 	}
 

@@ -199,10 +199,6 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert.Equal(8, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
-		"cassandra-rackdc.properties": {
-			"dc": "dc1",
-			"rack": "rack1"
-		},
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms": 5000,
 			"read_request_timeout_in_ms": 5000,
@@ -597,10 +593,6 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	assert.Equal(8, len(initContainerEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
-		"cassandra-rackdc.properties": {
-			"dc": "dc1",
-			"rack": "rack1"
-		},
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
 			"read_request_timeout_in_ms":5000,
