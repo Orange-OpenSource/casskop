@@ -8,7 +8,7 @@ cp -rLv /${BOOTSTRAP_CONF}/* /etc/cassandra/
 # (overwriting the above)
 if [[ -d ${CONFIGMAP} && ! -z `ls -A ${CONFIGMAP}` ]] ; then
     echo "We have a ConfigMap, we surcharge default configuration files"
-    cp -Lv ${CONFIGMAP}/*_run.sh /etc/cassandra/
+    cp -Lv ${CONFIGMAP}/{pre,post}_run.sh /etc/cassandra/
 fi
 
 # Copies any extra libraries from this bootstrapper image to the extra-lib empty-dir
