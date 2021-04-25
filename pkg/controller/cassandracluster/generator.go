@@ -605,9 +605,10 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	logrus.Warnf("cc.Spec.Config: %s", cc.Spec.Config)
-	logrus.Warnf("dc.Config: %s", dc.Config)
-	logrus.Warnf("rack.Config: %s", rack.Config)
+	logrus.Warnf("cc.Spec: %+v", cc.Spec)
+	logrus.Warnf("cc.Spec.Config: %+v", cc.Spec.Config)
+	logrus.Warnf("dc.Config: %+v", dc.Config)
+	logrus.Warnf("rack.Config: %+v", rack.Config)
 
 	mergeConfig(cc.Spec.Config, parsedConfig)
 	mergeConfig(dc.Config, parsedConfig)
