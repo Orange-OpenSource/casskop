@@ -15,8 +15,6 @@ spec:
   config:
     jvm-options:
       log_gc: "true"
-    cassandra-yaml:
-      num_tokens: 128
   autoUpdateSeedList: false
   resources:         
     requests: &requests
@@ -26,9 +24,6 @@ spec:
   topology:
     dc:
       - name: dc1
-        config:
-          cassandra-yaml:
-            num_tokens: 256
         rack:
           - name: rack1
         resources:
