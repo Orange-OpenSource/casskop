@@ -47,7 +47,8 @@ type JvmMemory struct {
 const (
 	cassandraContainerName = "cassandra"
 	bootstrapContainerName = "bootstrap"
-	cassandraMaxHeap       = "CASSANDRA_MAX_HEAP"
+	cassConfigBuilderName = "init-config"
+	cassConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
 	defaultJvmMaxHeap      = "2048M"
 	defaultJvmInitHeap      = "512M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
@@ -394,9 +395,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 	// Collect all env vars from bootstrap container except the heap size
 	for _, env := range bootstrapContainer.Env {
-		if env.Name != cassandraMaxHeap {
-			sidecarEnv = append(sidecarEnv, env)
-		}
+		sidecarEnv = append(sidecarEnv, env)
 	}
 
 	// Add all those env vars to each sidecar
@@ -634,10 +633,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 			Value: "/bootstrap",
 		},
 		{
-			Name:  "CASSANDRA_MAX_HEAP",
-			Value: parsedConfig.Path(fmt.Sprintf("%s.max_heap_size", jvmOption)).String(),
-		},
-		{
 			Name: "RACK_NAME",
 			ValueFrom: &v1.EnvVarSource{
 				FieldRef: &v1.ObjectFieldSelector{
@@ -775,8 +770,8 @@ func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraCl
 	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 
 	return v1.Container{
-		Name:            "init-config",
-		Image:           "datastax/cass-config-builder:1.0.3",
+		Name:            cassConfigBuilderName,
+		Image:           cassConfigBuilderImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             initContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
 		VolumeMounts:    volumeMounts,

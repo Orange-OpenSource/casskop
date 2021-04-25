@@ -196,7 +196,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert := assert.New(t)
 
 	assert.Equal(5, len(bootstrapEnvVar))
-	assert.Equal(8, len(initEnvVar))
+	assert.Equal(7, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
@@ -256,7 +256,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
-	assert.Equal(8, len(initEnvVar))
+	assert.Equal(7, len(initEnvVar))
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
@@ -587,7 +587,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	assert.Equal(5, len(bootstrapContainerEnvVar))
 	assert.Equal(4, len(containers))
-	assert.Equal(8, len(initContainerEnvVar))
+	assert.Equal(7, len(initContainerEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
