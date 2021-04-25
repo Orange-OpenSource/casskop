@@ -8,22 +8,27 @@ CASSANDRA_RACK=rack1
 
 CONFIG_FILE_DATA=$(cat <<-EOF
     {
+      "cassandra-yaml": {
+        "max_hints_delivery_threads": 8,
+        "authenticator": "PasswordAuthenticator",
+        "authorizer": "CassandraAuthorizer"
+      },
       "cluster-info": {
-        "name":"cassandra-e2e",
-        "seeds":"$CASSANDRA_SEEDS"
+        "name": "cassandra-e2e",
+        "seeds": "$CASSANDRA_SEEDS"
       },
       "datacenter-info": {
-        "name":"$CASSANDRA_DC"
+        "name": "$CASSANDRA_DC"
       },
       "jvm-options": {
-        "cassandra_ring_delay_ms":30000,
-        "initial_heap_size":"64M",
-        "jmx-connection-type":"remote-no-auth",
-        "max_heap_size":"256M",
-        "print_flss_statistics": "true"
+        "cassandra_ring_delay_ms": 30000,
+        "initial_heap_size": "64M",
+        "jmx-connection-type": "remote-no-auth",
+        "max_heap_size": "256M",
+        "print_flss_statistics": true
       },
       "logback-xml": {
-        "debuglog-enabled":false
+        "debuglog-enabled": false
       }
     }
 EOF
