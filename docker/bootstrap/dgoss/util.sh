@@ -19,7 +19,8 @@ CONFIG_FILE_DATA=$(cat <<-EOF
         "cassandra_ring_delay_ms":30000,
         "initial_heap_size":"64M",
         "jmx-connection-type":"remote-no-auth",
-        "max_heap_size":"256M"
+        "max_heap_size":"256M",
+        "print_flss_statistics": "true"
       },
       "logback-xml": {
         "debuglog-enabled":false

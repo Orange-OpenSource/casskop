@@ -58,7 +58,6 @@ file:
   /etc/cassandra/cassandra-env.sh:
     exists: true
     contains:
-      - "LOCAL_JMX=no"
       - "/extra-lib/jolokia-agent.jar"
       - "-javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
 
