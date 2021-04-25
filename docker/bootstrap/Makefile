@@ -18,7 +18,7 @@ ifeq ($(CI_REGISTRY_IMAGE),)
 else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
-5_sidecars.md
+
 VERSION:=0.1.9
 TAG?=${VERSION}
 ifeq ($(CIRCLE_BRANCH),master)

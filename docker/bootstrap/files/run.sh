@@ -62,6 +62,9 @@ CASSANDRA_EXPORTER_AGENT="${CASSANDRA_EXPORTER_AGENT:-true}"
 # Activate basic authentication. Expects JMX_USER and JMX_PASSWORD to be set
 CASSANDRA_AUTH_JOLOKIA="${CASSANDRA_AUTH_JOLOKIA:-false}"
 
+# Used during tests only
+CASSANDRA_ENABLE_JOLOKIA="${CASSANDRA_ENABLE_JOLOKIA:-true}"
+
 echo Starting Cassandra on ${CASSANDRA_LISTEN_ADDRESS}
 echo Configuration used :
 set|grep CASSANDRA
@@ -73,18 +76,22 @@ fi
 
 sed -ri 's/- class_name: .*/- class_name: '"$CASSANDRA_SEED_PROVIDER"'/' $CASSANDRA_CFG
 
-JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
-
-if [[ $JOLOKIA_USER == 'true' ]]
+if [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]]
 then
-    JAVA_AGENT="${JAVA_AGENT},authMode=basic,user=$JOLOKIA_USER,password=$JOLOKIA_PASSWORD"
-fi
+  JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
 
-cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
+  if [[ $JOLOKIA_USER == 'true' ]]
+  then
+      JAVA_AGENT="${JAVA_AGENT},authMode=basic,user=$JOLOKIA_USER,password=$JOLOKIA_PASSWORD"
+  fi
 
-# Enable Jolokia
-JVM_OPTS="\$JVM_OPTS $JAVA_AGENT"
+  cat  <<EOF >>$CASSANDRA_CONF/cassandra-env.sh
+
+  # Enable Jolokia
+  JVM_OPTS="\$JVM_OPTS $JAVA_AGENT"
 EOF
+
+fi
 
 if [[ $CASSANDRA_EXPORTER_AGENT == 'true' ]]
 then
