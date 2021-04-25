@@ -129,7 +129,7 @@ func cassandraClusterScaleDownDC2Test(t *testing.T, f *framework.Framework, ctx 
 
 	grepNumTokens := "grep num_tokens: /etc/cassandra/cassandra.yaml"
 	res, _, _ := mye2eutil.ExecPodFromName(t, f, namespace, "cassandra-e2e-dc1-rack1-0", grepNumTokens)
-	assert.Equal(t, "num_tokens: 256", res)
+	assert.Nil(t, res)
 	res, _, _ = mye2eutil.ExecPodFromName(t, f, namespace, "cassandra-e2e-dc2-rack1-0", grepNumTokens)
 	assert.Equal(t, "num_tokens: 32", res)
 

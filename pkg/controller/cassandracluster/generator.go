@@ -582,16 +582,11 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 	}
 
-	jvmOption := "jvm-options"
-	if strings.HasPrefix(cc.Spec.ServerVersion, "4") {
-		jvmOption = "jvm-server-options"
-	}
-
-	defaultConfig[jvmOption] = map[string] interface{} {
-		"initial_heap_size": defineJvmMemory(resources).newHeapSize,
-		"max_heap_size": defineJvmMemory(resources).maxHeapSize,
+	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
+		"initial_heap_size":       defineJvmMemory(resources).newHeapSize,
+		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
 		"cassandra_ring_delay_ms": 30000,
-		"jmx-connection-type": "remote-no-auth",
+		"jmx-connection-type":     "remote-no-auth",
 	}
 
 	dcName := cc.GetDCNameFromDCRackName(dcRackName)
@@ -610,9 +605,15 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
+	logrus.Warnf("[%s]: cc.Spec.Config", cc.Spec.Config)
+	logrus.Warnf("[%s]: dc.Config", dc.Config)
+	logrus.Warnf("[%s]: rack.Config", rack.Config)
+
 	mergeConfig(cc.Spec.Config, parsedConfig)
 	mergeConfig(dc.Config, parsedConfig)
 	mergeConfig(rack.Config, parsedConfig)
+
+	logrus.Warnf("[%s]: merged configuration", parsedConfig.String())
 
 	for key, value := range defaultConfig {
 		for subkey, subvalue := range value {
@@ -668,6 +669,14 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 			},
 		},
 	}
+}
+
+func jvmOptionName(cc *api.CassandraCluster) (jvmOption string)  {
+	jvmOption = "jvm-options"
+	if strings.HasPrefix(cc.Spec.ServerVersion, "4") {
+		jvmOption = "jvm-server-options"
+	}
+	return
 }
 
 func mergeConfig(config json.RawMessage, parsedConfig *gabs.Container) {

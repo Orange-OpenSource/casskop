@@ -201,6 +201,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens":32,
 			"read_request_timeout_in_ms": 5000,
 			"write_request_timeout_in_ms": 5000
 		},
@@ -259,6 +260,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	assert.Equal(7, len(initEnvVar))
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
+	configFileData.DeleteP("cassandra-yaml.num_tokens")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
 	configFileData.SetP("1024M", "jvm-options.initial_heap_size")
 	configFileData.SetP("4G", "jvm-options.max_heap_size")
@@ -268,6 +270,54 @@ func TestInitContainerConfiguration(t *testing.T) {
 	vars["CONFIG_FILE_DATA"] = configFileData.String()
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
+}
+
+func TestInitContainerConfigFileData(t *testing.T) {
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.Spec.ServerVersion = "3.11.7"
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"initial_heap_size": "800M",
+			"max_heap_size": "1600M",
+		},
+	})
+	cassieResources := cc.Spec.Resources
+	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	assert := assert.New(t)
+
+	assert.Equal(7, len(initEnvVar))
+
+	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-yaml": {
+			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens":32,
+			"read_request_timeout_in_ms": 5000,
+			"write_request_timeout_in_ms": 5000
+		},
+		"cluster-info": {
+			"name": "cassandra-demo",
+			"seeds": ""
+		},
+		"datacenter-info": {
+			"name": "dc1"
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms": 30000,
+			"initial_heap_size": "800M",
+			"jmx-connection-type": "remote-no-auth",
+			"max_heap_size": "1600M"
+		},
+		"logback-xml": {
+			"debuglog-enabled": false
+		}
+	}`))
+
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
@@ -592,6 +642,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms":5000,
+			"num_tokens":32,
 			"read_request_timeout_in_ms":5000,
 			"write_request_timeout_in_ms":5000
 		},

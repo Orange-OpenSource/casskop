@@ -88,6 +88,9 @@ spec:
   topology:
     dc:
       - name: dc1
+        config:
+          cassandra-yaml:
+            num_tokens: 32
         resources:
           limits: &dc1_limits
             cpu: 3
