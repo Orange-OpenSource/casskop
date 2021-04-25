@@ -47,7 +47,7 @@ type JvmMemory struct {
 const (
 	cassandraContainerName = "cassandra"
 	bootstrapContainerName = "bootstrap"
-	cassConfigBuilderName = "init-config"
+	cassConfigBuilderName = "config-builder"
 	cassConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
 	defaultJvmMaxHeap      = "2048M"
 	defaultJvmInitHeap      = "512M"
@@ -762,7 +762,7 @@ func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
 	return commonEnvVars
 }
 
-// createInitConfigContainer allows to copy origin config files from init-config container to /bootstrap directory
+// createInitConfigContainer allows to copy origin config files from cassConfigBuilder container to /bootstrap directory
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
