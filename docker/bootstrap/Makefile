@@ -18,8 +18,8 @@ ifeq ($(CI_REGISTRY_IMAGE),)
 else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
-
-VERSION:=0.1.8
+5_sidecars.md
+VERSION:=0.1.9
 TAG?=${VERSION}
 ifeq ($(CIRCLE_BRANCH),master)
 	BRANCH:=latest
