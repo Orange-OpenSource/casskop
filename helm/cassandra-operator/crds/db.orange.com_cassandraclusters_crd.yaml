@@ -8,6 +8,9 @@ spec:
     kind: CassandraCluster
     listKind: CassandraClusterList
     plural: cassandraclusters
+    shortNames:
+      - cc
+      - ccs
     singular: cassandracluster
   scope: Namespaced
   versions:

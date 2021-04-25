@@ -1036,6 +1036,7 @@ type CassandraNodeStatus struct {
 // CassandraCluster is the Schema for the cassandraclusters API
 // +k8s:openapi-gen=true
 // +kubebuilder:storageversion
+// +kubebuilder:resource:path=cassandraclusters,scope=Namespaced,shortName=cc;ccs
 type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
