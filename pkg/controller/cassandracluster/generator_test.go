@@ -575,7 +575,6 @@ func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool {
 
 func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 	var vms []v1.VolumeMount
-	vms = append(vms, v1.VolumeMount{Name: "gc-logs", MountPath: "/var/lib/cassandra/log"})
 	vms = append(vms, v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"})
 
 	return vms

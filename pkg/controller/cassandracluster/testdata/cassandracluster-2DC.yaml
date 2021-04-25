@@ -47,15 +47,6 @@ spec:
   hardAntiAffinity: false
   deletePVC: true
   storageConfigs:
-    - mountPath: /var/lib/cassandra/log
-      name: gc-logs
-      pvcSpec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-wait
-        resources:
-          requests:
-            storage: 10Gi
     - mountPath: /var/log/cassandra
       name: cassandra-logs
       pvcSpec:
