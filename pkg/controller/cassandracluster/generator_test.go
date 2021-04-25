@@ -415,13 +415,11 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
 	dataCapacity, dataClassStorage string) {
-	assert.Equal(t, 3, len(pvcs))
+	assert.Equal(t, 2, len(pvcs))
 	for _, pvc := range pvcs {
 		switch pvc.Name {
 		case "data":
 			assert.Equal(t, generateExpectedDataStoragePVC(expectedlabels, dataCapacity, dataClassStorage), pvc)
-		case "gc-logs":
-			assert.Equal(t, generateExpectedGcLogsStoragePVC(expectedlabels), pvc)
 		case "cassandra-logs":
 			assert.Equal(t, generateExpectedCassandraLogsStoragePVC(expectedlabels), pvc)
 		default:
@@ -509,7 +507,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
-			assert.Equal(t, len(container.VolumeMounts), 8)
+			assert.Equal(t, len(container.VolumeMounts), 7)
 		case "gc-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "cassandra-logs":
