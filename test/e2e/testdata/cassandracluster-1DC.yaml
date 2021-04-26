@@ -23,15 +23,13 @@ spec:
   autoPilot: true
   autoUpdateSeedList: false
   resources:
-    requests: &requests
+    limits:
       cpu: 100m
       memory: 512Mi
-    limits: *requests
 #  cassandraImage: cscetbon/cassandra:4.0-beta1
 #  serverVersion: 4.0.0
-  cassandraImage: cassandra:3.11.6
-  serverVersion: 3.11.6
-  bootstrapImage: cscetbon/cassandra-bootstrap:0.1.5-beta
+  cassandraImage: cassandra:3.11.7
+  bootstrapImage: cscetbon/cassandra-bootstrap:0.1.9
   config:
     jvm-options:
       initial_heap_size: 128M
@@ -42,9 +40,9 @@ spec:
         config:
           jvm-options:
             initial_heap_size: 129M
-            resize_tlb: "true"
+            resize_tlb: true
         rack:
           - name: rack1
             config:
               jvm-options:
-                print_tenuring_distribution: "true"
+                print_tenuring_distribution: true

@@ -1,20 +1,19 @@
-apiVersion: "db.orange.com/v1alpha1"
-kind: "CassandraCluster"
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
 metadata:
   name: cassandra-e2e
   labels:
     cluster: k8s.pic 
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:3.11.6
-  serverVersion: 3.11.7
+  cassandraImage: cassandra:3.11.7
   dataCapacity: "1Gi"
   hardAntiAffinity: false
   deletePVC: false
   autoPilot: true
   config:
     jvm-options:
-      log_gc: "true"
+      log_gc: true
   autoUpdateSeedList: false
   resources:         
     requests: &requests
