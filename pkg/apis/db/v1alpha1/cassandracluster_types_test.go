@@ -502,8 +502,6 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
 	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
 
-	assert.Equal(DefaultUserID, *cluster.Spec.RunAsUser)
-	assert.Equal(DefaultFSGroup, *cluster.Spec.FSGroup)
 	assert.Equal(ClusterPhaseInitial.Name, cluster.Status.Phase)
 	assert.Equal(int32(defaultMaxPodUnavailable), cluster.Spec.MaxPodUnavailable)
 	assert.Equal([]string{"defaults-test-dc1-rack1-0.defaults-test.default"}, cluster.Status.SeedList)

@@ -112,6 +112,7 @@ spec:
                   cluster is deleted it is false by default
                 type: boolean
               fsGroup:
+                default: 1
                 description: FSGroup defines the GID owning volumes in the Cassandra
                   image
                 format: int64
@@ -305,6 +306,7 @@ spec:
                 format: int32
                 type: integer
               runAsUser:
+                default: 999
                 description: RunAsUser define the id of the user to run in the Cassandra
                   image
                 format: int64

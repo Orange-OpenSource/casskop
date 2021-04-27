@@ -203,6 +203,9 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 		},
 	}, sts.Spec.Template.Spec.Tolerations)
 
+	assert.Equal(int64(1001), *sts.Spec.Template.Spec.SecurityContext.RunAsUser)
+	assert.Equal(int64(1002), *sts.Spec.Template.Spec.SecurityContext.FSGroup)
+
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
 		1010, 201, 32, 7, 9, 1205, 151, 17, 50, 30)
