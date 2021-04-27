@@ -8,8 +8,6 @@ spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:latest
   dataCapacity: "1Gi"
-  runAsUser: 1001
-  fsGroup: 1002
   hardAntiAffinity: false
   deletePVC: false
   autoPilot: true
