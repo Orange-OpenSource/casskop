@@ -1637,9 +1637,6 @@ spec:
                 description: Very special Flag to hack CassKop reconcile loop - use
                   with really good Care
                 type: boolean
-            required:
-            - fsGroup
-            - runAsUser
             type: object
           status:
             description: CassandraClusterStatus defines Global state of CassandraCluster

@@ -748,12 +748,12 @@ type CassandraClusterSpec struct {
 	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default:=999
-	RunAsUser int64 `json:"runAsUser"`
+	RunAsUser int64 `json:"runAsUser,omitempty"`
 
 	// FSGroup defines the GID owning volumes in the Cassandra image
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default:=1
-	FSGroup int64 `json:"fsGroup"`
+	FSGroup int64 `json:"fsGroup,omitempty"`
 
 	// Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`
