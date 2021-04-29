@@ -48,6 +48,7 @@ const (
 	cassandraContainerName = "cassandra"
 	bootstrapContainerName = "bootstrap"
 	cassConfigBuilderName = "config-builder"
+	cassBaseConfigBuilderName = "base-config-builder"
 	cassConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
 	defaultJvmMaxHeap      = "2048M"
 	defaultJvmInitHeap      = "512M"
@@ -361,6 +362,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 
 					InitContainers: []v1.Container{
 						createInitConfigContainer(cc, status, dcRackName),
+						createBaseInitConfigContainer(cc),
 						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
 
@@ -777,15 +779,26 @@ func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
 func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
 	resources := initContainerResources()
-	volumeMounts := generateContainerVolumeMount(cc, initContainer)
 
 	return v1.Container{
 		Name:            cassConfigBuilderName,
 		Image:           cassConfigBuilderImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             initContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
-		VolumeMounts:    volumeMounts,
+		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
 		Resources:       resources,
+	}
+}
+
+func createBaseInitConfigContainer(cc *api.CassandraCluster) v1.Container {
+
+	return v1.Container{
+		Name:            cassBaseConfigBuilderName,
+		Image:           cc.Spec.CassandraImage,
+		ImagePullPolicy: cc.Spec.ImagePullPolicy,
+		Command: 		 []string{"/bin/sh"},
+		Args: 			 []string{"-c", "cp -r /etc/cassandra/* /bootstrap/"},
+		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
 	}
 }
 
