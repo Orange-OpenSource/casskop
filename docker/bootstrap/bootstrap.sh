@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Copies any default config files from CassKop bootstrapper image to the /etc/cassandra volume which will replace the one used in cassandra image
+# Copies any default config files from CassKop bootstrapper image to /etc/cassandra volume which will replace the one used in cassandra image
 cp -rLv /${BOOTSTRAP_CONF}/* /etc/cassandra/
 
 # Copies any extra libraries from this bootstrapper image to the extra-lib empty-dir
@@ -26,4 +26,4 @@ if [ -f ${CONFIGMAP}/post_run.sh ]; then
     ${CONFIGMAP}/post_run.sh
 fi
 
-echo '== bootstrap ended :-)'
+echo '**** bootstrap ended ****'
