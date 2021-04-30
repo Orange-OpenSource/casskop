@@ -35,8 +35,7 @@ const (
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
 	defaultCassandraImage     = "cassandra:3.11"
-	//defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.8"
-	defaultBootstrapImage     = "cscetbon/cassandra-bootstrap:0.1.9"
+	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.0.9"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"

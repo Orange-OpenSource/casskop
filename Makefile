@@ -21,8 +21,7 @@ DOCKER_REPO_BASE_TEST ?= orangeopensource
 IMAGE_NAME := $(SERVICE_NAME)
 BUILD_IMAGE ?= orangeopensource/casskop-build
 
-#BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.7
-BOOTSTRAP_IMAGE ?= cscetbon/cassandra-bootstrap:0.1.9
+BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.9
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 

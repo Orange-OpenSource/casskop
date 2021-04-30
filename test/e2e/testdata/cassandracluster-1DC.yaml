@@ -29,7 +29,7 @@ spec:
 #  cassandraImage: cscetbon/cassandra:4.0-beta1
 #  serverVersion: 4.0.0
   cassandraImage: cassandra:3.11.7
-  bootstrapImage: cscetbon/cassandra-bootstrap:0.1.9
+  bootstrapImage: orangeopensource/cassandra-bootstrap:0.1.9
   config:
     jvm-options:
       initial_heap_size: 128M
