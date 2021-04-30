@@ -188,6 +188,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
+		"cassandracluster-uid":                 "cassandra-test-uid",
 		"cassandraclusters.db.orange.com.dc":   "dc1",
 		"cassandraclusters.db.orange.com.rack": "rack1",
 		"dc-rack":                              "dc1-rack1",

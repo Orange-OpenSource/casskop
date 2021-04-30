@@ -220,6 +220,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 						"cassandraclusters.db.orange.com.rack": rack.Name,
 						"app":                                  "cassandracluster",
 						"cassandracluster":                     cc.Name,
+						"cassandracluster-uid":                 string(cc.GetUID()),
 					},
 				},
 				Status: v1.PodStatus{
