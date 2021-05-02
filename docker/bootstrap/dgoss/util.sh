@@ -86,15 +86,9 @@ function createCassandraBootstrapContainer {
     docker run \
            -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
-           -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
-           -e CASSANDRA_GC_STDOUT=true \
-           -e CASSANDRA_NUM_TOKENS=32 \
            -e CASSANDRA_DC=$CASSANDRA_DC \
            -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
@@ -110,16 +104,11 @@ function createCassandraBootstrapContainerNoExtraLib {
     docker run \
            -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
-           -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
            -e CASSANDRA_ENABLE_JOLOKIA=false \
            -e CASSANDRA_EXPORTER_AGENT=false \
-           -e CASSANDRA_NUM_TOKENS=32 \
            -e CASSANDRA_DC=$CASSANDRA_DC \
            -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
@@ -131,15 +120,10 @@ function createCassandraBootstrapContainerWithConfigMap {
     docker run \
           -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
            -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
-           -e CASSANDRA_GC_STDOUT=true \
-           -e CASSANDRA_NUM_TOKENS=32 \
            -e CASSANDRA_DC=$CASSANDRA_DC \
            -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
