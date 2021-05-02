@@ -1,7 +1,6 @@
 apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster
 metadata:
-  uid: cassandra-test-uid
   name: cassandra-demo
   labels:
     cluster: k8s.pic
