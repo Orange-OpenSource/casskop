@@ -70,11 +70,8 @@ with this feature you can do everything you want, and obviously some bad things.
 
 All sidecars added with this configuration will have, at the container init, some of the environment variables from **cassandra container** merged with those defined into the sidecar container
 
-- CASSANDRA_MAX_HEAP
-- CASSANDRA_SEEDS
 - CASSANDRA_CLUSTER_NAME
-- CASSANDRA_GC_STDOUT
-- CASSANDRA_NUM_TOKENS
+- CASSANDRA_SEEDS
 - CASSANDRA_DC
 - CASSANDRA_RACK
 

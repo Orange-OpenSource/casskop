@@ -49,7 +49,7 @@ With the above configuration, the following configuration will be added to the `
 
 ```yaml
 # ...
-  # ...
+#   ...
   containers:
     - args: ["tail", "-F", "/var/log/cassandra/system.log"]
       image: ez123/alpine-tini
@@ -79,7 +79,7 @@ With the above configuration, the following configuration will be added to the `
       volumeMounts:
         - mountPath: /var/log/cassandra
           name: gc-logs
-  # ...
+#   ...
 # ...
 ```
 
@@ -87,11 +87,8 @@ With the above configuration, the following configuration will be added to the `
 Note that all sidecars added with this configuration will have some of the environment variables from cassandra container merged with those defined into the sidecar container
 for example :
 
-- CASSANDRA_MAX_HEAP
-- CASSANDRA_SEEDS
 - CASSANDRA_CLUSTER_NAME
-- CASSANDRA_GC_STDOUT
-- CASSANDRA_NUM_TOKENS
+- CASSANDRA_SEEDS
 - CASSANDRA_DC
 - CASSANDRA_RACK
 :::

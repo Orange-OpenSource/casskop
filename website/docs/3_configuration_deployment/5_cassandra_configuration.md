@@ -187,8 +187,7 @@ The default value used for `-Xmx` depends on whether there is a memory request c
 
 - set the memory request and the memory limit to the same value, so that the pod is in guarantee mode
 
-> CassKop will automatically compute the env var CASSANDRA_MAX_HEAP which is used to define `-Xms` and `-Xmx` in the
-> `/run.sh` docker image script, from 1/4 of container Memory Limit.
+> CassKop will automatically compute the initial and max heap size from 1/4 of the available defined resources.
 
 ## Authentication and authorizations
 

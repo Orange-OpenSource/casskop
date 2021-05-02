@@ -195,7 +195,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 
 	assert := assert.New(t)
 
-	assert.Equal(5, len(bootstrapEnvVar))
+	assert.Equal(6, len(bootstrapEnvVar))
 	assert.Equal(7, len(initEnvVar))
 
 	configFileData, _ := gabs.ParseJSON([]byte(`{
@@ -635,7 +635,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 
 	assert := assert.New(t)
 
-	assert.Equal(5, len(bootstrapContainerEnvVar))
+	assert.Equal(6, len(bootstrapContainerEnvVar))
 	assert.Equal(4, len(containers))
 	assert.Equal(7, len(initContainerEnvVar))
 
@@ -672,6 +672,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 		"CASSANDRA_DC": "",
 		"CASSANDRA_RACK": "",
 		"CASSANDRA_LOG_DIR": "/var/log/cassandra",
+		"CASSANDRA_CLUSTER_NAME": "cassandra-demo",
 	}
 
 	for _, container := range containers {

@@ -39,8 +39,8 @@ import (
 
 /*JvmMemory sets the maximium size of the heap*/
 type JvmMemory struct {
-	maxHeapSize string
-	newHeapSize string
+	maxHeapSize     string
+	initialHeapSize string
 }
 
 /*Bunch of different constants*/
@@ -391,26 +391,20 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		}
 	}
 
-	// Merge bootstrap container environment variables into sidecars.
-
-	var sidecarEnv []v1.EnvVar
-
-	// Collect all env vars from bootstrap container except the heap size
-	for _, env := range bootstrapContainer.Env {
-		sidecarEnv = append(sidecarEnv, env)
-	}
-
-	// Add all those env vars to each sidecar
-	for idx, container := range ss.Spec.Template.Spec.Containers {
-		if container.Name != cassandraContainerName {
-			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, sidecarEnv...)
-		}
-	}
+	addBootstrapContainerEnvVarsToSidecars(bootstrapContainer, ss)
 
 	if err := patch.DefaultAnnotator.SetLastAppliedAnnotation(ss); err != nil {
 		logrus.Warnf("[%s]: error while applying LastApplied Annotation on Statefulset", cc.Name)
 	}
 	return ss, nil
+}
+
+func addBootstrapContainerEnvVarsToSidecars(bootstrapContainer v1.Container, ss *appsv1.StatefulSet) {
+	for idx, container := range ss.Spec.Template.Spec.Containers {
+		if container.Name != cassandraContainerName {
+			ss.Spec.Template.Spec.Containers[idx].Env = append(container.Env, bootstrapContainer.Env...)
+		}
+	}
 }
 
 func generateResourceQuantity(qs string) resource.Quantity {
@@ -420,23 +414,22 @@ func generateResourceQuantity(qs string) resource.Quantity {
 
 func defineJvmMemory(resources v1.ResourceRequirements) JvmMemory {
 
-	var maxHeapSize, newHeapSize string
+	var maxHeapSize, initialHeapSize string
 
 	if resources.Limits.Memory().IsZero() == false {
-		mhsInBytes := float64(resources.Limits.Memory().Value()) * float64(0.25) // Maxheapsize = (container Mem)/4
-		mhsInMB := int(mhsInBytes / float64(1048576))
+		mhsInBytes := float64(resources.Limits.Memory().Value()) / 4
+		mhsInMB := int(mhsInBytes / float64(1024 * 1024))
 		ihs := mhsInMB / 4 // Newheapsize = (container Mem)/8
 		maxHeapSize = strings.Join([]string{strconv.Itoa(mhsInMB), "M"}, "")
-		newHeapSize = strings.Join([]string{strconv.Itoa(ihs), "M"}, "")
-
+		initialHeapSize = strings.Join([]string{strconv.Itoa(ihs), "M"}, "")
 	} else {
 		maxHeapSize = defaultJvmMaxHeap
-		newHeapSize = defaultJvmInitHeap
+		initialHeapSize = defaultJvmInitHeap
 	}
 
 	return JvmMemory{
-		maxHeapSize: maxHeapSize,
-		newHeapSize: newHeapSize,
+		maxHeapSize:     maxHeapSize,
+		initialHeapSize: initialHeapSize,
 	}
 }
 
@@ -585,7 +578,7 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	}
 
 	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
-		"initial_heap_size":       defineJvmMemory(resources).newHeapSize,
+		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
 		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
 		"cassandra_ring_delay_ms": 30000,
 		"jmx-connection-type":     "remote-no-auth",
@@ -699,7 +692,10 @@ func parseConfig(config NodeConfig) *gabs.Container {
 func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterStatus) []v1.EnvVar {
 
 	bootstrapEnvVars := []v1.EnvVar{
-		// TODO CASSANDRA_SEEDS shouldn't be needed anymore, is it ?
+		{
+			Name:  "CASSANDRA_CLUSTER_NAME",
+			Value: cc.GetName(),
+		},
 		{
 			Name:  "CASSANDRA_SEEDS",
 			Value: cc.SeedList(&status.SeedList),
