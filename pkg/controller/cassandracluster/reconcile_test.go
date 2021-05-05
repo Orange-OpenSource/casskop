@@ -525,7 +525,7 @@ func TestCheckNonAllowedChangesScaleDown(t *testing.T) {
 			Labels: map[string]string{
 				"app":                                  "cassandracluster",
 				"cassandracluster":                     "cassandra-demo",
-				"cassandracluster-uid":                 "cassandra-test-uid",
+				"cassandracluster-uid":                 clusterUID,
 				"cassandraclusters.db.orange.com.dc":   "dc2",
 				"cassandraclusters.db.orange.com.rack": "rack1",
 				"cluster":                              "k8s.pic",
