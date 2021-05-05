@@ -52,11 +52,7 @@ endif
 BASEVERSION := $(shell awk -F\" '/Version =/ { print $$2}' version/version.go)
 # Version is for binary, docker image and helm
 
-ifdef CIRCLE_TAG
-	VERSION := ${BRANCH}
-else
-	VERSION := $(BASEVERSION)-${BRANCH}
-endif
+VERSION := ${BRANCH}
 
 HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= docs/helm
