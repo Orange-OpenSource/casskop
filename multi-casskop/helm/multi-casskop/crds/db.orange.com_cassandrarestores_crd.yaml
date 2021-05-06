@@ -48,6 +48,10 @@ spec:
                   the cloud. Defaults to 10
                 format: int32
                 type: integer
+              datacenter:
+                description: Cassandra DC name to restore, used to find the cassandra
+                  nodes in the CassandraCluster
+                type: string
               entities:
                 description: Database entities to restore, it might be either only
                   keyspaces or only tables prefixed by their respective keyspace,
