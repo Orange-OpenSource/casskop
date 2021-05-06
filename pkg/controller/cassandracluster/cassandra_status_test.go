@@ -96,9 +96,7 @@ func HelperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster,
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
 
-	if cc.ObjectMeta.UID == "" {
-		cc.ObjectMeta.UID = types.UID(clusterUID) // Set default UID for cc
-	}
+	cc.ObjectMeta.UID = types.UID(clusterUID) // Set default UID for cc
 
 	ccList := api.CassandraClusterList{
 		TypeMeta: metav1.TypeMeta{
