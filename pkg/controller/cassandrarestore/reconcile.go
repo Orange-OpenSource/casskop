@@ -101,7 +101,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreRequired",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup,  cassandraRestore.Spec.Datacenter,""))
 		return common.Reconciled()
 	}
 
