@@ -80,7 +80,6 @@ spec:
                 type: string
             required:
             - cassandraCluster
-            - datacenter
             - snapshotTag
             - storageLocation
             type: object

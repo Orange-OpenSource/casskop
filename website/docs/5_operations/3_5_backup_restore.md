@@ -99,3 +99,10 @@ With the object above, table k1.t1 will be restored under k1.t2 using the backup
 
 In the restore phase, you can specify a subset of the entities specified in the backup. For instance, you can backup 2
 tables and only restore one.
+
+### Datacenter
+
+It can be specified in a backup or a restore and declares where data must be backed up or restored. If not specified it 
+will run everywhere and entities must exist if they're specified. Specifying it in a restore will declare where data 
+will be restored but as icarus truncates entities it restores, it won't prevent the truncate from cleaning data in non 
+chosen datacenters.

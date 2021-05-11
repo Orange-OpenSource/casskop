@@ -579,6 +579,8 @@ github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20201103172213-3e9c43
 github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20201103172213-3e9c434b280c/go.mod h1:2+9I3yZFu2UU6G+fRrnJqUH9tl1iq2W3dCUkjzQTMBM=
 github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20210115143219-869427dc2595 h1:wbD83uZxDmoTmO4F4kmSL0yba6vYgHsyvjEIRWxSdzU=
 github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20210115143219-869427dc2595/go.mod h1:2+9I3yZFu2UU6G+fRrnJqUH9tl1iq2W3dCUkjzQTMBM=
+github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20210427160512-5264f1cbba08 h1:kUQehfMbAgZR4PklnZ5YVAj7a5DoWf9tIpVbZud22xU=
+github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20210427160512-5264f1cbba08/go.mod h1:2+9I3yZFu2UU6G+fRrnJqUH9tl1iq2W3dCUkjzQTMBM=
 github.com/jackc/fake v0.0.0-20150926172116-812a484cc733/go.mod h1:WrMFNQdiFJ80sQsxDoMokWK1W5TQtxBFNpzWTD84ibQ=
 github.com/jackc/pgx v3.2.0+incompatible/go.mod h1:0ZGrqGqkRlliWnWB4zKnWtjbSWbGkVEFm4TeybAXq+I=
 github.com/jarcoal/httpmock v1.0.4 h1:jp+dy/+nonJE4g4xbVtl9QdrUNbn6/3hDT5R4nDIZnA=
