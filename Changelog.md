@@ -3,7 +3,16 @@
 
 ## v1.1.4
 
+- PR [#325](https://github.com/Orange-OpenSource/casskop/pull/325) - Add datacenter to Restore and take it into accoun
+  during backup/restore operations
+- PR [#322](https://github.com/Orange-OpenSource/casskop/pull/322) - Label each PVC with the cluster uid
+- PR [#319](https://github.com/Orange-OpenSource/casskop/pull/319) - Fix the way FSGroup and RunAsUser are used
 - PR [#314](https://github.com/Orange-OpenSource/casskop/pull/314) - Added `fsGroup` to `CassandraCluster.Spec`
+- PR [#313](https://github.com/Orange-OpenSource/casskop/pull/313) - Add allow annotations to be passed from
+  Multicasskop
+- PR [#307](https://github.com/Orange-OpenSource/casskop/pull/307) - Patch kuttl test to work with releases
+- PR [#305](https://github.com/Orange-OpenSource/casskop/pull/305) - Bump prismjs from 1.22.0 to 1.23.0 in /website
+
 
 ## v1.1.3
 
