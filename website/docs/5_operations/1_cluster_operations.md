@@ -22,6 +22,7 @@ Some Updates in the `CassandraCluster` CRD object will trigger a rolling update 
 - `spec.version`
 - `spec.configMap`
 - `spec.runAsUser`
+- `spec.fsGroup`
 
 Some Updates in the `CassandraCluster` CRD object will not trigger change on the cluster but only in future behavior of
 CassKop :

@@ -36,7 +36,7 @@ const (
 
 	defaultCassandraImage     = "cassandra:3.11"
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
-	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.0.9"
+	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable  = 1
@@ -54,10 +54,7 @@ const (
 	//DefaultDelayWaitForDecommission is the time to wait for the decommission to happen on the Pod
 	//The operator will start again if it is not the case
 	DefaultDelayWaitForDecommission = 120
-
-	//DefaultUserID is the default ID to use in cassandra image (RunAsUser)
-	DefaultUserID int64 = 999
-)
+	)
 
 // ClusterStateInfo describe a cluster state
 type ClusterStateInfo struct {
@@ -139,9 +136,6 @@ func (cc *CassandraCluster) CheckDefaults() {
 		ccs.InitContainerCmd = InitContainerCmd
 	}
 
-	if ccs.RunAsUser == nil {
-		ccs.RunAsUser = func(i int64) *int64 { return &i }(DefaultUserID)
-	}
 	if ccs.ReadOnlyRootFilesystem == nil {
 		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
 	}
@@ -723,7 +717,13 @@ type CassandraClusterSpec struct {
 
 	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1
-	RunAsUser *int64 `json:"runAsUser,omitempty"`
+	// +kubebuilder:default:=999
+	RunAsUser int64 `json:"runAsUser,omitempty"`
+
+	// FSGroup defines the GID owning volumes in the Cassandra image
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=1
+	FSGroup int64 `json:"fsGroup,omitempty"`
 
 	// Make the pod as Readonly
 	ReadOnlyRootFilesystem *bool `json:"readOnlyRootFilesystem,omitempty"`

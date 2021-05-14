@@ -41,6 +41,7 @@ func LabelsForCassandraDCRack(cc *api.CassandraCluster, dcName string, rackName 
 	m := map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     cc.GetName(),
+		"cassandracluster-uid":                 string(cc.GetUID()),
 		"dc-rack":                              cc.GetDCRackName(dcName, rackName),
 		"cassandraclusters.db.orange.com.dc":   dcName,
 		"cassandraclusters.db.orange.com.rack": rackName,
@@ -52,7 +53,10 @@ func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]st
 	m := map[string]string{
 		"app":                                "cassandracluster",
 		"cassandracluster":                   cc.GetName(),
-		"cassandraclusters.db.orange.com.dc": dcName,
+	}
+
+	if len(dcName) > 0{
+		m["cassandraclusters.db.orange.com.dc"] = dcName
 	}
 	return MergeLabels(cc.GetLabels(), m)
 }

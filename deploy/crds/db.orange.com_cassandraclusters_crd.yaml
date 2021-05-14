@@ -94,6 +94,12 @@ spec:
                 deletePVC:
                   description: DeletePVC defines if the PVC must be deleted when the cluster is deleted it is false by default
                   type: boolean
+                fsGroup:
+                  default: 1
+                  description: FSGroup defines the GID owning volumes in the Cassandra image
+                  format: int64
+                  minimum: 1
+                  type: integer
                 hardAntiAffinity:
                   description: HardAntiAffinity defines if the PodAntiAffinity of the statefulset has to be hard (it's soft by default)
                   type: boolean
@@ -231,6 +237,7 @@ spec:
                   format: int32
                   type: integer
                 runAsUser:
+                  default: 999
                   description: RunAsUser define the id of the user to run in the Cassandra image
                   format: int64
                   minimum: 1

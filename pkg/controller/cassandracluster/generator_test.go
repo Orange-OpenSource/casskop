@@ -335,6 +335,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert.Equal(map[string]string{
 		"app":                                  "cassandracluster",
 		"cassandracluster":                     "cassandra-demo",
+		"cassandracluster-uid":                 clusterUID,
 		"cassandraclusters.db.orange.com.dc":   "dc1",
 		"cassandraclusters.db.orange.com.rack": "rack1",
 		"dc-rack":                              "dc1-rack1",
@@ -349,6 +350,9 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Effect:   v1.TaintEffectNoSchedule,
 		},
 	}, sts.Spec.Template.Spec.Tolerations)
+
+	assert.Equal(int64(1001), *sts.Spec.Template.Spec.SecurityContext.RunAsUser)
+	assert.Equal(int64(1002), *sts.Spec.Template.Spec.SecurityContext.FSGroup)
 
 	checkVolumeClaimTemplates(t, labels, sts.Spec.VolumeClaimTemplates, "10Gi", "test-storage")
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,

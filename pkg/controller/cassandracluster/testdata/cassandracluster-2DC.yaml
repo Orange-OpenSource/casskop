@@ -16,6 +16,8 @@ spec:
       requests:
         cpu: 1
         memory: 1Gi
+  runAsUser: 1001
+  fsGroup: 1002
   livenessInitialDelaySeconds: 1205
   livenessHealthCheckTimeout: 151
   livenessHealthCheckPeriod: 17

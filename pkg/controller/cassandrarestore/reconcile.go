@@ -101,7 +101,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreRequired",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup,  cassandraRestore.Spec.Datacenter,""))
 		return common.Reconciled()
 	}
 
@@ -116,7 +116,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					cassandraRestore,
 					v1.EventTypeWarning,
 					"PerformRestoreOperationFailed",
-					r.restoreEventMessage(cassandraBackup, " failed to run, will retry"))
+					r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, " failed to run, will retry"))
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
@@ -127,7 +127,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreInitiated",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, ""))
 
 		return common.Reconciled()
 	}
@@ -148,7 +148,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				r.recorder.Event(cassandraRestore,
 					v1.EventTypeNormal,
 					"RestoreFailed",
-					r.restoreEventMessage(cassandraBackup, err.Error()))
+					r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, err.Error()))
 				return common.Reconciled()
 			default:
 				return common.RequeueWithError(reqLogger, err.Error(), err)
@@ -157,16 +157,16 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreCompleted",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, ""))
 	}
 	return common.Reconciled()
 }
 
 func (r ReconcileCassandraRestore) restoreEventMessage(cassandraBackup *v1alpha1.CassandraBackup,
-	message string) string {
+	datacenter string, message string) string {
 	return fmt.Sprintf("Restore of backup %s of datacenter %s of cluster %s to %s " +
 		"under snapshot %s. %s", cassandraBackup.Name,
-		cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation,
+		datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation,
 		cassandraBackup.Spec.SnapshotTag, message)
 }
 

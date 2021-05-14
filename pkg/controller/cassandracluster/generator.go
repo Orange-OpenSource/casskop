@@ -355,9 +355,9 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 					Tolerations: tolerations,
 					SecurityContext: &v1.PodSecurityContext{
-						RunAsUser:    cc.Spec.RunAsUser,
+						RunAsUser:    func(i int64) *int64 { return &i }(cc.Spec.RunAsUser),
 						RunAsNonRoot: func(b bool) *bool { return &b }(true),
-						FSGroup:      func(i int64) *int64 { return &i }(1),
+						FSGroup:      func(i int64) *int64 { return &i }(cc.Spec.FSGroup),
 					},
 
 					InitContainers: []v1.Container{
