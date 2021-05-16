@@ -42,11 +42,11 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 
 	UnsetRollingRestart(storedCC)
 
-	if cc.Spec.RunAsUser != 0 && cc.Spec.RunAsUser != storedCC.Spec.RunAsUser {
+	if cc.Spec.RunAsUser == 0 && cc.Spec.RunAsUser != storedCC.Spec.RunAsUser {
 		cc.Spec.RunAsUser = storedCC.Spec.RunAsUser
 	}
 
-	if cc.Spec.FSGroup != 0  && cc.Spec.FSGroup != storedCC.Spec.FSGroup {
+	if cc.Spec.FSGroup == 0  && cc.Spec.FSGroup != storedCC.Spec.FSGroup {
 		cc.Spec.FSGroup = storedCC.Spec.FSGroup
 	}
 
