@@ -50,6 +50,10 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 		cc.Spec.FSGroup = storedCC.Spec.FSGroup
 	}
 
+	if cc.Spec.ServerType == ""  && cc.Spec.ServerType != storedCC.Spec.ServerType {
+		cc.Spec.ServerType = storedCC.Spec.ServerType
+	}
+
 	//TODO: need new way to detect changes
 	if !apiequality.Semantic.DeepEqual(storedCC.Spec, cc.Spec) {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).
