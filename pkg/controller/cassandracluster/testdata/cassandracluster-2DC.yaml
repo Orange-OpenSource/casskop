@@ -87,6 +87,9 @@ spec:
       cpu: 1
       memory: 2Gi
     requests: *limits
+  config:
+    cassandra-yaml:
+      num_tokens: 64
   topology:
     dc:
       - name: dc1
@@ -109,6 +112,9 @@ spec:
           - name: rack2
             labels: 
               location.dfy.orange.com/street : street2
+            config:
+              cassandra-yaml:
+                num_tokens: 16
       - name: dc2
         nodesPerRacks: 1
         labels: 

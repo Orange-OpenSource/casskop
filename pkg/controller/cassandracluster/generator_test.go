@@ -273,19 +273,12 @@ func TestInitContainerConfiguration(t *testing.T) {
 }
 
 func TestInitContainerConfigFileData(t *testing.T) {
-	dcName := "dc1"
-	rackName := "rack1"
-	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
-
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 	cc.Spec.ServerVersion = "3.11.7"
-	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
-		"jvm-options": {
-			"initial_heap_size": "800M",
-			"max_heap_size": "1600M",
-		},
-	})
 	cassieResources := cc.Spec.Resources
+	dcName, rackName := "dc1", "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
 	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert := assert.New(t)
@@ -295,7 +288,7 @@ func TestInitContainerConfigFileData(t *testing.T) {
 	configFileData, _ := gabs.ParseJSON([]byte(`{
 		"cassandra-yaml": {
 			"counter_write_request_timeout_in_ms": 5000,
-			"num_tokens":32,
+			"num_tokens": 32,
 			"read_request_timeout_in_ms": 5000,
 			"write_request_timeout_in_ms": 5000
 		},
@@ -308,15 +301,27 @@ func TestInitContainerConfigFileData(t *testing.T) {
 		},
 		"jvm-options": {
 			"cassandra_ring_delay_ms": 30000,
-			"initial_heap_size": "800M",
+			"initial_heap_size": "128M",
 			"jmx-connection-type": "remote-no-auth",
-			"max_heap_size": "1600M"
+			"max_heap_size": "512M"
 		},
 		"logback-xml": {
 			"debuglog-enabled": false
 		}
 	}`))
 
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
+
+	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack2")
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	configFileData.SetP(16, "cassandra-yaml.num_tokens")
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
+
+	dcName = "dc2"
+	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack1")
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	configFileData.SetP(64, "cassandra-yaml.num_tokens")
+	configFileData.SetP("dc2", "datacenter-info.name")
 	assert.Equal(configFileData.String(), initEnvVar[0].Value)
 }
 
