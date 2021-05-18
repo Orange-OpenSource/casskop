@@ -34,7 +34,7 @@ const (
 	DefaultReadinessHealthCheckTimeout  int32 = 10
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
-	defaultCassandraImage     = "cassandra:3.11"
+	defaultCassandraImage     = "cassandra:3.11.10"
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
