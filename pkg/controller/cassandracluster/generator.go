@@ -78,7 +78,8 @@ const (
 
 type NodeConfig map[string]map[string]interface{}
 
-func generateCassandraService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraService(cc *api.CassandraCluster, labels map[string]string,
+	ownerRefs []metav1.OwnerReference) *v1.Service {
 
 	var annotations = map[string]string{}
 	if cc.Spec.Service != nil {
@@ -113,7 +114,8 @@ func generateCassandraService(cc *api.CassandraCluster, labels map[string]string
 	}
 }
 
-func generateCassandraExporterService(cc *api.CassandraCluster, labels map[string]string, ownerRefs []metav1.OwnerReference) *v1.Service {
+func generateCassandraExporterService(cc *api.CassandraCluster, labels map[string]string,
+	ownerRefs []metav1.OwnerReference) *v1.Service {
 	name := cc.GetName()
 	namespace := cc.Namespace
 
@@ -246,7 +248,8 @@ func generateStorageConfigVolumeClaimTemplates(cc *api.CassandraCluster, labels 
 	return pvcs, nil
 }
 
-func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string, dcName string) ([]v1.PersistentVolumeClaim, error) {
+func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]string,
+	dcName string) ([]v1.PersistentVolumeClaim, error) {
 
 	var pvc []v1.PersistentVolumeClaim
 	dataCapacity := cc.GetDataCapacityForDC(dcName)
@@ -433,7 +436,8 @@ func defineJvmMemory(resources v1.ResourceRequirements) JvmMemory {
 	}
 }
 
-func generatePodDisruptionBudget(name string, namespace string, labels map[string]string, ownerRefs metav1.OwnerReference, maxUnavailable intstr.IntOrString) *policyv1beta1.PodDisruptionBudget {
+func generatePodDisruptionBudget(name string, namespace string, labels map[string]string,
+	ownerRefs metav1.OwnerReference, maxUnavailable intstr.IntOrString) *policyv1beta1.PodDisruptionBudget {
 	return &policyv1beta1.PodDisruptionBudget{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PodDisruptionBudget",
@@ -600,16 +604,9 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	logrus.Warnf("cc.Spec: %+v", cc.Spec)
-	logrus.Warnf("cc.Spec.Config: %+v", cc.Spec.Config)
-	logrus.Warnf("dc.Config: %+v", dc.Config)
-	logrus.Warnf("rack.Config: %+v", rack.Config)
-
 	mergeConfig(cc.Spec.Config, parsedConfig)
 	mergeConfig(dc.Config, parsedConfig)
 	mergeConfig(rack.Config, parsedConfig)
-
-	logrus.Warnf("merged configuration: %s", parsedConfig.String())
 
 	for key, value := range defaultConfig {
 		for subkey, subvalue := range value {
@@ -847,7 +844,8 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 		resources = dcResources
 	}
 
-	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer), generateStorageConfigVolumesMount(cc)...)
+	volumeMounts := append(generateContainerVolumeMount(cc, cassandraContainer),
+		generateStorageConfigVolumesMount(cc)...)
 
 	var command = []string{}
 	if cc.Spec.Debug {

@@ -31,9 +31,6 @@ spec:
   runAsUser: 999
   shareProcessNamespace: true
   resources:         
-    requests:
-      cpu: '1'
-      memory: 2Gi
     limits:
       cpu: '1'
       memory: 2Gi

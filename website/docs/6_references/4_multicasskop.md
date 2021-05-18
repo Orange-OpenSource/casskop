@@ -42,10 +42,9 @@ spec:
       nodesPerRacks: 1
       runAsUser: 999
       resources:
-        requests: &requests
+        limits:
           cpu: '1'
           memory: 2Gi
-        limits: *requests
     status:
       seedlist:   #<-- at this time the seedlist must be fullfilled manually with known predictive name of pods
         - cassandra-demo-dc1-rack1-0.casskop.external-dns-test.gcp.trycatchlearn.fr
