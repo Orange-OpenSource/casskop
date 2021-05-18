@@ -364,7 +364,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					},
 
 					InitContainers: []v1.Container{
-						createBaseInitConfigContainer(cc),
+						createBaseConfigBuilderContainer(cc),
 						createInitConfigContainer(cc, status, dcRackName),
 						createCassandraBootstrapContainer(cc, status, dcRackName),
 					},
@@ -783,7 +783,7 @@ func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraCl
 	}
 }
 
-func createBaseInitConfigContainer(cc *api.CassandraCluster) v1.Container {
+func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
 
 	return v1.Container{
 		Name:            cassBaseConfigBuilderName,

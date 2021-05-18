@@ -12,7 +12,7 @@ container when the pod is started.
 There is a specific bootstrap image that is build from the docker directory and contains all required files or scripts
 to work with CassKop.
 
-### Initcontainer 1 : init-config
+### Initcontainer 1 : base-config-builder
 
 The init container is responsible for the following actions :
 
@@ -30,15 +30,23 @@ cp -vr /etc/cassandra/* /bootstrap
 
 - This command can be changed using  `Spec.initContainerCmd`
 
-### Initcontainer 2 : bootstrap
+### Initcontainer 2 : config-builder
+
+This container is responsible for the following actions :
+
+- Generate all the cassandra configuration (cassandra.yaml, java. etc..) from the different config entries in the
+  CassandraCluster object level (spec, datacenters and racks)
+
+It uses cass-config-builder which is a tool developed by Datastax.
+
+### Initcontainer 3 : bootstrap
 
 The bootstrap Container :
 
 - applying files and additional jar from the bootstrap image to the default configuration
 - applying the user's configmap custom configuration (if any) on top of the default configuration
-- modifying the configuration to be suitable to run with Casskop:
+- modifying the configuration to be suitable to run with CassKop:
   - update cluster name
-  - configure dc/rack properties
   - applying seedlist
   - add cassandra exporter and jolokia agent
   - ..
@@ -79,6 +87,65 @@ example to scale up the nodesPerRacks in DC2 :
 
 If we changes on of these properties then CassKop will trigger either a [ScaleUp](/casskop/docs/5_operations/1_cluster_operations#scaleup)
 or a [ScaleDown](/casskop/docs/5_operations/1_cluster_operations#scaledown) operation.
+
+
+## Configuration embedded in CassandraCluster
+
+The configuration of the different components of Cassandra can be changed in the object and be overriden at different
+levels. Here is an example showing how to update some Java and Cassdnra parameters as well and overwrite them at the
+datacenter and rack level:
+
+```yaml
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-demo
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:3.11.7
+  restartCountBeforePodDeletion: 3
+  dataStorageClass: local-storage
+  hardAntiAffinity: false
+  deletePVC: true
+  autoPilot: true
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+  config:
+    cassandra-yaml:
+      num_tokens: 64
+  topology:
+    dc:
+      - name: dc1
+        config:
+          cassandra-yaml:
+            num_tokens: 32
+        resources:
+          limits:
+            cpu: 3
+            memory: 3Gi
+        labels:
+          location.dfy.orange.com/site : mts
+        rack:
+          - name: rack1
+            labels:
+              location.dfy.orange.com/street : street1
+          - name: rack2
+            labels:
+              location.dfy.orange.com/street : street2
+            config:
+              cassandra-yaml:
+                num_tokens: 16
+      - name: dc2
+        nodesPerRacks: 1
+        labels:
+          location.dfy.orange.com/site : mts
+        rack:
+          - name: rack1
+            labels:
+              location.dfy.orange.com/street : street3
+```
 
 ## Configuration override using configMap
 
