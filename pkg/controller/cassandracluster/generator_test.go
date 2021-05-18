@@ -381,7 +381,8 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	ccDefault.CheckDefaults()
 	labelsDefault, nodeSelectorDefault := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
-	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault, labelsDefault, nodeSelectorDefault, nil)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault,
+		labelsDefault, nodeSelectorDefault, nil)
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
@@ -396,6 +397,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Limits:   resources,
 		})
 	checkResourcesConfiguration(t, stsDefault.Spec.Template.Spec.Containers, "1", "2Gi")
+
+	ccDefault.Spec.BackRestSidecar.Image = ""
+	ccDefault.CheckDefaults()
+	assert.Equal(ccDefault.Spec.BackRestSidecar.Image, api.DefaultBackRestImage)
 }
 
 func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpu string, memory string) {

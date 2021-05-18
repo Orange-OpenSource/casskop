@@ -165,6 +165,8 @@ func (cc *CassandraCluster) CheckDefaults() {
 	// BackupRestore default config
 	if ccs.BackRestSidecar == nil {
 		ccs.BackRestSidecar = &BackRestSidecar{Image: DefaultBackRestImage}
+	} else if ccs.BackRestSidecar.Image == "" {
+		ccs.BackRestSidecar.Image = DefaultBackRestImage
 	}
 }
 
