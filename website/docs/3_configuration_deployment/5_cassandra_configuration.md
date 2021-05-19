@@ -43,13 +43,13 @@ It uses cass-config-builder which is a tool developed by Datastax.
 
 The bootstrap Container :
 
-- applying files and additional jar from the bootstrap image to the default configuration
-- applying the user's configmap custom configuration (if any) on top of the default configuration
-- modifying the configuration to be suitable to run with CassKop:
-  - update cluster name
-  - applying seedlist
-  - add cassandra exporter and jolokia agent
-  - ..
+- Adding files and additional jar from the bootstrap image to the default configuration
+- Applying a configmap on top of the default configuration
+- Modifying the configuration to be suitable to run with CassKop:
+  * Updating the cluster name
+  * Setting the seedlist
+  * Adding a Cassandra exporter and Jolokia agent
+  * ..
 
 We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
 required actions, see [Bootstrap](https://github.com/Orange-OpenSource/casskop/tree/master/docker/bootstrap).
@@ -160,9 +160,7 @@ We have a specific Cassandra Docker image startup script that will overwrite eac
 
 Typical overwriting files may be :
 
-- cassandra.yaml
-- jvm.options
-- specifying a pre_run.sh script
+- specifying a pre_run.sh and/or post_run.sh script
 
 See the example below:
 
