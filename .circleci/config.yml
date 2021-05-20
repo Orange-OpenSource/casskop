@@ -95,6 +95,7 @@ orbs:
               name: Operator acceptance test
               no_output_timeout: 1200
               command: |
+                ln -s test/e2e/testdata
                 if [ << parameters.test_type >> = "e2e" ]
                 then
                   kubectl create namespace cassandra-e2e
@@ -350,8 +351,6 @@ jobs:
       - run:
           name: deploy
           command: |
-            echo $(pwd)
-            ls -la
             git config --global user.name "${GH_NAME}"
             git config --global user.email "${GH_EMAIL}"
             echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc

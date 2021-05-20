@@ -48,7 +48,8 @@ func helperLoadBytes(t *testing.T, name string) []byte {
 
 //HelperInitCluster goal is to create objects from the testdata/file.yaml pointed by name.
 //for now we can create Secret or CassandraCluster, we may add more objects in futur if needed
-func HelperInitCluster(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, name, namespace string) *api.CassandraCluster {
+func HelperInitCluster(t *testing.T, f *framework.Framework, ctx *framework.Context,
+	name, namespace string) *api.CassandraCluster {
 	var cc *api.CassandraCluster
 
 	fileR := helperLoadBytes(t, name)
@@ -314,7 +315,8 @@ func ExecPod(f *framework.Framework, namespace string, pod *corev1.Pod, cmd []st
 
 }
 
-func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, configMapName, namespace string) {
+func HelperInitCassandraConfigMap(t *testing.T, f *framework.Framework, ctx *framework.Context,
+	configMapName, namespace string) {
 	configMapFile := helperLoadBytes(t, configMapName+".yaml")
 	decode := serializer.NewCodecFactory(f.Scheme).UniversalDeserializer().Decode
 	configMapString := string(configMapFile[:])
