@@ -421,7 +421,8 @@ kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
 	@echo "args are: ScaleUpAndDown" && exit 1
 endif
-	kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(KUTTL_ARGS)
+	cd test/e2e/kuttl
+	kuttl test --test $(KUTTL_ARGS)
 
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }

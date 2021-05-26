@@ -11,12 +11,6 @@ spec:
   autoPilot: true
   autoUpdateSeedList: false
   dataStorageClass: local-path
-  backRestSidecar:
-    resources:
-      requests: &backRestRequests
-        memory: 128Mi
-        cpu: 100m
-      limits: *backRestRequests
   resources:
     requests: &requests
       memory: 512Mi
