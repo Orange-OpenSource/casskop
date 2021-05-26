@@ -419,7 +419,7 @@ endif
 
 kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
-	@echo "args are: ScaleUpAndDown" && exit 1
+	@echo "A test folder is required" && exit 1
 endif
 	cd test/e2e/kuttl
 	BASEDIR=../../../..
