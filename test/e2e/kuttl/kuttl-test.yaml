@@ -5,6 +5,6 @@ testDirs:
 timeout: 300
 commands:
   - script: |
-      BASEDIR=../../../..
+      BASEDIR=../../..
       VERSION=$([ -n "$CIRCLE_TAG" ] && echo $CIRCLE_TAG || echo $CIRCLE_BRANCH)
       helm install casskop $BASEDIR/helm/cassandra-operator --set image.tag=$VERSION --namespace $NAMESPACE
