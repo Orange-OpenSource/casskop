@@ -1,0 +1,15 @@
+apiVersion: db.orange.com/v1alpha1
+kind: Pod
+metadata:
+  name: cassandra-e2e-dc1-rack1-0
+  labels:
+    operation-name: cleanup
+    operation-status: Done
+---
+apiVersion: db.orange.com/v1alpha1
+kind: Pod
+metadata:
+  name: cassandra-e2e-dc1-rack1-1
+  labels:
+    operation-name: cleanup
+    operation-status: Done

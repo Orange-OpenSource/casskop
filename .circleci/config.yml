@@ -18,7 +18,6 @@ orbs:
         resource_class: large
     jobs:
       e2e-orb:
-        # PARAMETERS
         parameters:
           test_name:
             description: name of the test in e2e code
@@ -455,22 +454,29 @@ workflows:
 #          <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-#          name: kuttl-test scaling
+          name: kuttl-test scaling
           test_name: scaling
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-#          name: kuttl-test scaling
+          name: kuttl-test multi-dcs
           test_name: multi-dcs
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-#          name: kuttl-test scaling
+          name: kuttl-test sidecars
           test_name: sidecars
+          requires:
+            - build-casskop
+          <<: *ignore_fork_pr_filter
+
+      - k3d/e2e-orb:
+          name: kuttl-test cleanup
+          test_name: cleanup
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter

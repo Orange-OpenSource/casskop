@@ -3,7 +3,7 @@ kind: CassandraCluster
 metadata:
   name: cassandra-e2e
 spec:
-  nodesPerRacks: 1
+  nodesPerRacks: 2
   cassandraImage: cassandra:latest
   dataCapacity: "1Gi"
   hardAntiAffinity: false
@@ -11,10 +11,9 @@ spec:
   autoPilot: true
   autoUpdateSeedList: false
   resources:
-    requests: &requests
+    limits:
       cpu: 100m
       memory: 512Mi
-    limits: *requests
   topology:
     dc:
       - name: dc1
