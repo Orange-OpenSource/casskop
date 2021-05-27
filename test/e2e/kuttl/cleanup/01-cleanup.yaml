@@ -10,7 +10,7 @@ spec:
         rack:
           - name: rack1
 ---
-apiVersion: db.orange.com/v1alpha1
+apiVersion: v1
 kind: Pod
 metadata:
   name: cassandra-e2e-dc1-rack1-0
@@ -18,7 +18,7 @@ metadata:
     operation-name: cleanup
     operation-status: ToDo
 ---
-apiVersion: db.orange.com/v1alpha1
+apiVersion: v1
 kind: Pod
 metadata:
   name: cassandra-e2e-dc1-rack1-1
