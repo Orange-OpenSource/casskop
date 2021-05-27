@@ -418,51 +418,9 @@ workflows:
             - unit-test-casskop
           <<: *canonical_repo_filter
 
-#      - k3d/e2e-orb:
-#          name: e2e-test RollingRestart
-#          test_name: RollingRestart
-#          requires:
-#            - build-casskop
-#          <<: *ignore_fork_pr_filter
-#
-#      - k3d/e2e-orb:
-#          name: e2e-test ScaleDownSimple
-#          test_name: ClusterScaleDownSimple
-#          requires:
-#            - build-casskop
-#          <<: *ignore_fork_pr_filter
-#
-#      - k3d/e2e-orb:
-#          name: e2e-test CreateOneClusterService
-#          test_name: CreateOneClusterService
-#          requires:
-#            - build-casskop
-#          <<: *ignore_fork_pr_filter
-
-#      - k3d/e2e-orb:
-#          name: e2e-test UpdateConfigMap
-#          test_name: UpdateConfigMap
-#          requires:
-#            - build-casskop
-#          <<: *ignore_fork_pr_filter
-
-#      - k3d/e2e-orb:
-#          name: e2e-test ExecuteCleanup
-#          test_name: ExecuteCleanup
-#          requires:
-#            - build-casskop
-#          <<: *ignore_fork_pr_filter
-
       - k3d/e2e-orb:
-          name: kuttl-test scaling
-          test_name: scaling
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
-
-      - k3d/e2e-orb:
-          name: kuttl-test multi-dcs
-          test_name: multi-dcs
+          name: kuttl-test operations
+          test_name: operations
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
@@ -475,8 +433,15 @@ workflows:
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: kuttl-test cleanup
-          test_name: cleanup
+          name: kuttl-test multi-dcs
+          test_name: multi-dcs
+          requires:
+            - build-casskop
+          <<: *ignore_fork_pr_filter
+
+      - k3d/e2e-orb:
+          name: kuttl-test scaling
+          test_name: scaling
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
