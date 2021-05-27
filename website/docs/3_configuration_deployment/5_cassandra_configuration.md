@@ -37,7 +37,7 @@ This container is responsible for the following actions :
 - Generate all the cassandra configuration (cassandra.yaml, java. etc..) from the different config entries in the
   CassandraCluster object level (spec, datacenters and racks)
 
-It uses cass-config-builder which is a tool developed by Datastax.
+It uses [cass-config-builder](https://github.com/datastax/cass-config-builder) which is a tool developed by Datastax.
 
 ### Initcontainer 3 : bootstrap
 
