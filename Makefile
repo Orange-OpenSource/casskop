@@ -421,11 +421,8 @@ kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
 	@echo "A test folder is required" && exit 1
 endif
-	cd test/e2e/kuttl
-	BASEDIR=../../../..
-	VERSION=$([ -n "$CIRCLE_TAG" ] && echo $CIRCLE_TAG || echo $CIRCLE_BRANCH)
-	helm install casskop $BASEDIR/helm/cassandra-operator --set image.tag=$VERSION
-	kuttl test --test $(KUTTL_ARGS) --namespace default
+	helm install casskop helm/cassandra-operator --set image.tag=$(BRANCH)
+	cd test/e2e/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 e2e-test-fix-scale-down:
 	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
