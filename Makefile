@@ -62,7 +62,7 @@ ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
 endif
 
-# Compute image to uses for e2e tests
+# Compute image to use during tests
 ifdef CIRCLE_BRANCH
   ifeq ($(CIRCLE_BRANCH),master)
 	  E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):$(VERSION)
@@ -83,9 +83,6 @@ endif
 
 build-image:
 	@echo $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
-
-e2eimage:
-	@echo $(E2EIMAGE)
 
 params:
 	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
@@ -363,68 +360,17 @@ image:
 
 export CGO_ENABLED:=0
 
-e2e:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-docker-e2e:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-
-define scale-test
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^$1$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-endef
-
-e2e-scaleup:
-	$(call scale-test,ClusterScaleUp)
-
-e2e-scaledown:
-	$(call scale-test,ClusterScaleDown)
-
-e2e-empty:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$"
-
-e2e-test-fix:
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-ifeq (e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(E2E_ARGS):;@:)
-endif
-
-e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)
-	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
-endif
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-#docker-e2e-test-fix and docker-e2e-test-fix-args need vendor rep to be filled (go mod vendor)
-docker-e2e-test-fix:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --operator-namespace cassandra-e2e'
-
-#execute Test filters based on given Regex
-ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(E2E_ARGS):;@:)
-endif
 ifeq (kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   KUTTL_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(KUTTL_ARGS):;@:)
 endif
 
-docker-e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)
-	@echo "args are: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
-endif
-	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
 kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
-	@echo "args are: ScaleUpAndDown" && exit 1
+	@echo "A test folder is required" && exit 1
 endif
-	kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(KUTTL_ARGS)
-
-e2e-test-fix-scale-down:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	helm install casskop helm/cassandra-operator --set image.tag=$(BRANCH)
+	cd test/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 dgoss-bootstrap:
 	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
@@ -433,7 +379,6 @@ configure-psp:
 	kubectl get clusterrole psp:cassie -o yaml
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml | grep -vE '(annotations|creationTimestamp|resourceVersion|uid|selfLink|last-applied-configuration)' | sed 's/cassandra/cassandra-e2e/' | kubectl apply -f -
-
 
 # Usage example:
 # REPLICATION_FACTOR=3 make cassandra-stress small

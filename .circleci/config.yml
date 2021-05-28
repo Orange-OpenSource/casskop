@@ -18,16 +18,11 @@ orbs:
         resource_class: large
     jobs:
       e2e-orb:
-        # PARAMETERS
         parameters:
           test_name:
             description: name of the test in e2e code
             type: string
             default: e2e code name
-          test_type:
-            description: type of test (e2e or kuttl)
-            type: string
-            default: e2e
           operatorDir:
             type: string
             description: relative path where the build must be run
@@ -95,21 +90,7 @@ orbs:
               name: Operator acceptance test
               no_output_timeout: 1200
               command: |
-                if [ << parameters.test_type >> = "e2e" ]
-                then
-                  kubectl create namespace cassandra-e2e
-                  ./tools/circleci-get-logs.sh&
-                  make docker-e2e-test-fix-arg << parameters.test_name >> || {
-                    kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ;
-                    echo "Show Operator logs:"
-                    cat operator.log
-                    false;
-                  }
-                fi
-                if [ << parameters.test_type >> = "kuttl" ]
-                then
-                  make kuttl-test-fix-arg << parameters.test_name >>
-                fi
+                make kuttl-test-fix-arg << parameters.test_name >>
   operator:
     # Parameters anchor
     .params_operator: &params_operator
@@ -438,58 +419,29 @@ workflows:
           <<: *canonical_repo_filter
 
       - k3d/e2e-orb:
-          name: e2e-test RollingRestart
-          test_name: RollingRestart
+          name: kuttl-test operations
+          test_name: operations
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: e2e-test ScaleUp
-          test_name: ClusterScaleUp
+          name: kuttl-test sidecars
+          test_name: sidecars
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: e2e-test ScaleDown
-          test_name: ClusterScaleDown
+          name: kuttl-test multi-dcs
+          test_name: multi-dcs
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
       - k3d/e2e-orb:
-          name: e2e-test ScaleDownSimple
-          test_name: ClusterScaleDownSimple
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
-
-      - k3d/e2e-orb:
-          name: e2e-test CreateOneClusterService
-          test_name: CreateOneClusterService
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
-
-      - k3d/e2e-orb:
-          name: e2e-test UpdateConfigMap
-          test_name: UpdateConfigMap
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
-
-      - k3d/e2e-orb:
-          name: e2e-test ExecuteCleanup
-          test_name: ExecuteCleanup
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
-
-      - k3d/e2e-orb:
-          name: kuttl-test ScaleUpAndDown
-          test_name: ScaleUpAndDown # Has be be the same as the TestCase (folder) in Kuttl directory
-          test_type: kuttl
+          name: kuttl-test scaling
+          test_name: scaling
           requires:
             - build-casskop
           <<: *ignore_fork_pr_filter
