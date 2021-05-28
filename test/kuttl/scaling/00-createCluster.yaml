@@ -4,11 +4,6 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  imageJolokiaSecret:
-    name: jolokia-auth
-  dataCapacity: "1Gi"
-  hardAntiAffinity: false
-  deletePVC: false
   autoPilot: true
   autoUpdateSeedList: false
   resources:
