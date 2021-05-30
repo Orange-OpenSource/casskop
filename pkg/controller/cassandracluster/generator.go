@@ -546,7 +546,6 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 
 func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
-	//in statefulset.go we surcharge this value with conditions
 	seedList := cc.SeedList(&status.SeedList)
 
 	image := strings.Split(cc.Spec.CassandraImage, ":")
@@ -581,13 +580,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 		},
 	}
 
-	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
-		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
-		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
-		"cassandra_ring_delay_ms": 30000,
-		"jmx-connection-type":     "remote-no-auth",
-	}
-
 	dcName := cc.GetDCNameFromDCRackName(dcRackName)
 
 	config := NodeConfig{
@@ -601,12 +593,20 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	}
 
 	parsedConfig := parseConfig(config)
+
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	mergeConfig(cc.Spec.Config, parsedConfig)
-	mergeConfig(dc.Config, parsedConfig)
-	mergeConfig(rack.Config, parsedConfig)
+	mergeConfig(cc.Spec.Config, parsedConfig, serverVersion)
+	mergeConfig(dc.Config, parsedConfig, serverVersion)
+	mergeConfig(rack.Config, parsedConfig, serverVersion)
+
+	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
+		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
+		"max_heap_size":           defineJvmMemory(resources).maxHeapSize,
+		"cassandra_ring_delay_ms": 30000,
+		"jmx-connection-type":     "remote-no-auth",
+	}
 
 	for key, value := range defaultConfig {
 		for subkey, subvalue := range value {
@@ -672,10 +672,14 @@ func jvmOptionName(cc *api.CassandraCluster) (jvmOption string)  {
 	return
 }
 
-func mergeConfig(config json.RawMessage, parsedConfig *gabs.Container) {
+func mergeConfig(config json.RawMessage, currentParsedConfig *gabs.Container, serverVersion string) {
 	if config != nil {
-		parsedCassandraClusterConfig, _ := gabs.ParseJSON(config)
-		parsedConfig.MergeFn(parsedCassandraClusterConfig,
+		parsedConfig, _ := gabs.ParseJSON(config)
+		if strings.HasPrefix(serverVersion, "4") && parsedConfig.Path("jvm-options") != nil {
+			parsedConfig.SetP(parsedConfig.Path("jvm-options").Data(), "jvm-server-options")
+			parsedConfig.DeleteP("jvm-options")
+		}
+		currentParsedConfig.MergeFn(parsedConfig,
 			func(dest, source interface{}) interface{} { return source })
 	}
 }

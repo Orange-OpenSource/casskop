@@ -182,7 +182,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
 	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
-	cc.Spec.ServerVersion = "3.11.7"
+	cc.Spec.ServerVersion = "4.0.1"
 	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"jvm-options": {
 			"initial_heap_size": "800M",
@@ -190,10 +190,10 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 	})
 	cassieResources := cc.Spec.Resources
-	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert := assert.New(t)
+	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert.Equal(6, len(bootstrapEnvVar))
 	assert.Equal(7, len(initEnvVar))
@@ -212,7 +212,7 @@ func TestInitContainerConfiguration(t *testing.T) {
 		"datacenter-info": {
 			"name": "dc1"
 		},
-		"jvm-options": {
+		"jvm-server-options": {
 			"cassandra_ring_delay_ms": 30000,
 			"initial_heap_size": "800M",
 			"jmx-connection-type": "remote-no-auth",
@@ -226,17 +226,17 @@ func TestInitContainerConfiguration(t *testing.T) {
 	vars := map[string]interface{}{
 		"CONFIG_FILE_DATA": configFileData.String(),
 		"PRODUCT_NAME": "cassandra",
-		"PRODUCT_VERSION": "3.11.7",
+		"PRODUCT_VERSION": "4.0.1",
 	}
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
 
 	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
 		"cassandra-yaml": {
-			"read_request_timeout_in_ms":10000,
+			"read_request_timeout_in_ms": 10000,
 		},
 		"jvm-options": {
-			"cassandra_ring_delay_ms":10000,
+			"cassandra_ring_delay_ms": 10000,
 			"initial_heap_size": "800M",
 			"max_heap_size": "4G",
 		},
@@ -255,19 +255,27 @@ func TestInitContainerConfiguration(t *testing.T) {
 		},
 	})
 
+	cc.Spec.ServerVersion = "3.11.9"
+
 	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
 
 	assert.Equal(7, len(initEnvVar))
 
 	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
 	configFileData.DeleteP("cassandra-yaml.num_tokens")
+	configFileData.DeleteP("jvm-server-options")
 	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
 	configFileData.SetP("1024M", "jvm-options.initial_heap_size")
 	configFileData.SetP("4G", "jvm-options.max_heap_size")
 	configFileData.SetP("true", "jvm-options.resize_tlb")
 	configFileData.SetP("true", "jvm-options.print_tenuring_distribution")
+	configFileData.SetP("remote-no-auth", "jvm-options.jmx-connection-type")
 
-	vars["CONFIG_FILE_DATA"] = configFileData.String()
+	vars = map[string]interface{}{
+		"CONFIG_FILE_DATA": configFileData.String(),
+		"PRODUCT_NAME": "cassandra",
+		"PRODUCT_VERSION": cc.Spec.ServerVersion,
+	}
 
 	checkInitContainerVarEnv(t, initEnvVar, vars)
 }
