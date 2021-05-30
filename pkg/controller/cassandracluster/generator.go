@@ -593,30 +593,12 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	}
 
 	parsedConfig := parseConfig(config)
-
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	println("config")
-	println(parsedConfig.String())
-	println("cc.Spec.Config")
-	println(cc.Spec.Config)
-	println("dc.Config")
-	println(dc.Config)
-	println("rack.Config")
-	println(rack.Config)
-
 	mergeConfig(cc.Spec.Config, parsedConfig, serverVersion)
-	println("merged with cc.Spec.Config")
-	println(cc.Spec.Config)
-	println(parsedConfig.String())
 	mergeConfig(dc.Config, parsedConfig, serverVersion)
-	println("merged with dc.Config")
-	println(parsedConfig.String())
 	mergeConfig(rack.Config, parsedConfig, serverVersion)
-
-	println("merged with rack.Config")
-	println(parsedConfig.String())
 
 	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
 		"initial_heap_size":       defineJvmMemory(resources).initialHeapSize,
@@ -633,9 +615,6 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 			}
 		}
 	}
-
-	println("5")
-	println(parsedConfig.String())
 
 	return []v1.EnvVar{
 		{
