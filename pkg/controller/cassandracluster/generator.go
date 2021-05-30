@@ -597,18 +597,25 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	dc := cc.GetDCFromDCRackName(dcRackName)
 	rack := cc.GetRackFromDCRackName(dcRackName)
 
-	println("1")
+	println("config")
 	println(parsedConfig.String())
+	println("cc.Spec.Config")
+	println(cc.Spec.Config)
+	println("dc.Config")
+	println(dc.Config)
+	println("rack.Config")
+	println(rack.Config)
 
 	mergeConfig(cc.Spec.Config, parsedConfig, serverVersion)
-	println("2")
+	println("merged with cc.Spec.Config")
+	println(cc.Spec.Config)
 	println(parsedConfig.String())
 	mergeConfig(dc.Config, parsedConfig, serverVersion)
-	println("3")
+	println("merged with dc.Config")
 	println(parsedConfig.String())
 	mergeConfig(rack.Config, parsedConfig, serverVersion)
 
-	println("4")
+	println("merged with rack.Config")
 	println(parsedConfig.String())
 
 	defaultConfig[jvmOptionName(cc)] = map[string]interface{}{
