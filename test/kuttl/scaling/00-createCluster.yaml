@@ -4,27 +4,25 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  autoPilot: true
-  autoUpdateSeedList: false
-  resources:
-    limits:
-      cpu: 100m
-      memory: 512Mi
-  cassandraImage: cscetbon/cassandra:4.0-beta1
+  cassandraImage: cassandra:4.0-rc1
   serverVersion: 4.0.0
   config:
     jvm-options:
-      initial_heap_size: 128M
+      initial_heap_size: 32M
       max_heap_size: 256M
+  deletePVC: true
+  autoPilot: true
+  backRestSidecar:
+    resources:
+      limits:
+        memory: 128Mi
+        cpu: 100m
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
   topology:
     dc:
       - name: dc1
-        config:
-          jvm-options:
-            initial_heap_size: 129M
-            resize_tlb: true
         rack:
           - name: rack1
-            config:
-              jvm-options:
-                print_tenuring_distribution: true
