@@ -448,6 +448,9 @@ workflows:
 
       - deploy-website:
           name: deploy-website
+          env:
+            CI_PULL_REQUEST:
+            CIRCLE_PULL_REQUEST:
           requires:
             - report-casskop
 
