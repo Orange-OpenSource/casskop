@@ -36,4 +36,3 @@ spec:
       regex: (.*)
       replacement: $1
       action: replace
-

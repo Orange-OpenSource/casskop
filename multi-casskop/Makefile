@@ -60,12 +60,7 @@ endif
 BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$2}')
 #Version is for binary, docker image and helm
 
-ifdef CIRCLE_TAG
-	VERSION := ${BRANCH}
-else
-	VERSION := $(BASEVERSION)-${BRANCH}
-endif
-
+VERSION := ${BRANCH}
 HELM_VERSION    := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= ../docs/helm
 #si branche master, on pousse le tag latest

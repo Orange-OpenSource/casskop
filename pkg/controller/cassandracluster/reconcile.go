@@ -262,10 +262,10 @@ func hasChange(changelog diff.Changelog, changeType string, paths ...string) boo
 	idx := "-1"
 	var includedFiltersFound, excludedFiltersFound map[string]bool
 	for _, cl := range changelog {
-		// Only scan changes on Name/NumTokens
+		// Only scan changes on Name
 		if cl.Type == changeType &&
 			// DC Changes
-			(cl.Path[2] == "Name" || cl.Path[2] == "NumTokens" ||
+			(cl.Path[2] == "Name" ||
 				// Rack changes
 				(len(cl.Path) > 4 && cl.Path[4] == "Name")) {
 			if noPaths {
@@ -504,15 +504,16 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 						}
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"LastActionName":   dcRackStatus.CassandraLastAction.Name,
-							"LastActionStatus": dcRackStatus.CassandraLastAction.Status}).Warning(
-							"Should Not see this message ;)" +
-								" Waiting Rack to be running before continuing, we loop on Next Rack, maybe we don't want that")
+							"LastActionStatus": dcRackStatus.CassandraLastAction.Status,
+							"Phase": dcRackStatus.Phase,
+						}).Warning(
+							"Should Not see this message ;) Waiting Rack to be running before continuing, we " +
+								"loop on Next Rack, maybe we don't want that")
 						continue
-
 					}
 				}
-
 			}
+
 			if err = rcc.ensureCassandraService(cc); err != nil {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Errorf("ensureCassandraService Error: %v", err)
 			}

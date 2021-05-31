@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	json "encoding/json"
+
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -242,6 +244,11 @@ func (in *CassandraClusterSpec) DeepCopyInto(out *CassandraClusterSpec) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = make(json.RawMessage, len(*in))
+		copy(*out, *in)
 	}
 	out.ImagePullSecret = in.ImagePullSecret
 	out.ImageJolokiaSecret = in.ImageJolokiaSecret
@@ -540,6 +547,11 @@ func (in *DC) DeepCopyInto(out *DC) {
 			(*out)[key] = val
 		}
 	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = make(json.RawMessage, len(*in))
+		copy(*out, *in)
+	}
 	if in.Rack != nil {
 		in, out := &in.Rack, &out.Rack
 		*out = make(RackSlice, len(*in))
@@ -549,11 +561,6 @@ func (in *DC) DeepCopyInto(out *DC) {
 	}
 	if in.NodesPerRacks != nil {
 		in, out := &in.NodesPerRacks, &out.NodesPerRacks
-		*out = new(int32)
-		**out = **in
-	}
-	if in.NumTokens != nil {
-		in, out := &in.NumTokens, &out.NumTokens
 		*out = new(int32)
 		**out = **in
 	}
@@ -687,6 +694,11 @@ func (in *Rack) DeepCopyInto(out *Rack) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.Config != nil {
+		in, out := &in.Config, &out.Config
+		*out = make(json.RawMessage, len(*in))
+		copy(*out, *in)
 	}
 	return
 }

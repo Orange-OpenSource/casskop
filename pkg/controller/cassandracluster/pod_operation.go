@@ -388,7 +388,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 					"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name,
 					"operationMode": operationMode,
 					"DefaultDelayWaitForDecommission": api.DefaultDelayWaitForDecommission,
-				}).Info("Decommission was applied less than DefaultDelayWaitForDecommission seconds, waiting")
+				}).Info("Decommission was applied less than {DefaultDelayWaitForDecommission} seconds, waiting")
 			} else {
 				logrus.WithFields(logrus.Fields{
 					"cluster": cc.Name, "rack": dcRackName, "pod": lastPod.Name, "operationMode": operationMode,
@@ -500,7 +500,7 @@ func (rcc *ReconcileCassandraCluster) ensureDecommissionToDo(cc *api.CassandraCl
 
 	go func() {
 		logrus.WithFields(logrusFields).Debug("Node decommission starts")
-		err = jolokiaClient.NodeDecommission()
+		err = jolokiaClient.NodeDecommission(cc.Spec.ServerVersion >= "4.0")
 		logrus.WithFields(logrusFields).Debug("Node decommission ended")
 		if err != nil {
 			logrusFields["err"] = err

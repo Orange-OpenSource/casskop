@@ -34,7 +34,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	//patch "github.com/banzaicloud/k8s-objectmatcher/patch"
 )
 
 var (
@@ -297,19 +296,18 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 }
 
 func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {
-	for _, ic := range sts.Spec.Template.Spec.InitContainers {
-		if ic.Name == "bootstrap" {
-			return &ic
+	for _, container := range sts.Spec.Template.Spec.InitContainers {
+		if container.Name == "bootstrap" {
+			return &container
 		}
 	}
 	return nil
 }
 
 func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
-	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
-	//TODO: check if this test is necessary
-	if ic != nil {
-		for _, env := range ic.Env {
+	container := getBootstrapContainerFromStatefulset(storedStatefulSet)
+	if container != nil {
+		for _, env := range container.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
 				return strings.Split(env.Value, ",")
 			}

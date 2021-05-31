@@ -4,17 +4,23 @@ metadata:
   name: cassandra-e2e
 spec:
   nodesPerRacks: 1
-  cassandraImage: cassandra:latest
-  dataCapacity: "1Gi"
-  hardAntiAffinity: false
-  deletePVC: false
+  cassandraImage: cassandra:4.0-rc1
+  serverVersion: 4.0.0
+  config:
+    jvm-options:
+      initial_heap_size: 32M
+      max_heap_size: 256M
+  deletePVC: true
   autoPilot: true
-  autoUpdateSeedList: false
+  backRestSidecar:
+    resources:
+      limits:
+        memory: 128Mi
+        cpu: 100m
   resources:
-    requests: &requests
-      cpu: 100m
+    limits:
+      cpu: 200m
       memory: 512Mi
-    limits: *requests
   topology:
     dc:
       - name: dc1

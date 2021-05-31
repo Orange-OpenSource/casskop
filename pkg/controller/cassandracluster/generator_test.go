@@ -15,7 +15,9 @@
 package cassandracluster
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/Jeffail/gabs"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -149,12 +151,13 @@ func TestVolumeMounts(t *testing.T) {
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 
 	volumeMounts = generateContainerVolumeMount(cc, cassandraContainer)
-	assert.Equal(t, 5, len(volumeMounts))
+	assert.Equal(t, 6, len(volumeMounts))
 	assert.Equal(t, "/etc/cassandra", volumeMounts[getPos(volumeMounts, "bootstrap")].MountPath)
 	assert.Equal(t, "/extra-lib", volumeMounts[getPos(volumeMounts, "extra-lib")].MountPath)
 	assert.Equal(t, "/opt/bin", volumeMounts[getPos(volumeMounts, "tools")].MountPath)
 	assert.Equal(t, "/tmp", volumeMounts[getPos(volumeMounts, "tmp")].MountPath)
 	assert.Equal(t, "/var/lib/cassandra", volumeMounts[getPos(volumeMounts, "data")].MountPath)
+	assert.Equal(t, "/var/log/cassandra", volumeMounts[getPos(volumeMounts, "log")].MountPath)
 }
 
 func TestGenerateCassandraService(t *testing.T) {
@@ -171,6 +174,163 @@ func TestGenerateCassandraService(t *testing.T) {
 		svc.Labels)
 	assert.Equal(map[string]string{"external-dns.alpha.kubernetes.io/hostname": "my.custom.domain.com."},
 		svc.Annotations)
+}
+
+func TestInitContainerConfiguration(t *testing.T) {
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.Spec.ServerVersion = "4.0.1"
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"initial_heap_size": "800M",
+			"max_heap_size": "1600M",
+		},
+	})
+	cassieResources := cc.Spec.Resources
+
+	assert := assert.New(t)
+	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
+
+	assert.Equal(6, len(bootstrapEnvVar))
+	assert.Equal(7, len(initEnvVar))
+
+	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-yaml": {
+			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens":32,
+			"read_request_timeout_in_ms": 5000,
+			"write_request_timeout_in_ms": 5000
+		},
+		"cluster-info": {
+			"name": "cassandra-demo",
+			"seeds": ""
+		},
+		"datacenter-info": {
+			"name": "dc1"
+		},
+		"jvm-server-options": {
+			"cassandra_ring_delay_ms": 30000,
+			"initial_heap_size": "800M",
+			"jmx-connection-type": "remote-no-auth",
+			"max_heap_size": "1600M"
+		},
+		"logback-xml": {
+			"debuglog-enabled": false
+		}
+	}`))
+
+	vars := map[string]interface{}{
+		"CONFIG_FILE_DATA": configFileData.String(),
+		"PRODUCT_NAME": "cassandra",
+		"PRODUCT_VERSION": "4.0.1",
+	}
+
+	checkInitContainerVarEnv(t, initEnvVar, vars)
+
+	cc.Spec.Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"cassandra-yaml": {
+			"read_request_timeout_in_ms": 10000,
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms": 10000,
+			"initial_heap_size": "800M",
+			"max_heap_size": "4G",
+		},
+	})
+
+	cc.Spec.Topology.DC[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"resize_tlb": "true",
+			"initial_heap_size": "1024M",
+		},
+	})
+
+	cc.Spec.Topology.DC[0].Rack[0].Config, _ = json.Marshal(map[string]map[string]interface{}{
+		"jvm-options": {
+			"print_tenuring_distribution": "true",
+		},
+	})
+
+	cc.Spec.ServerVersion = "3.11.9"
+
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	assert.Equal(7, len(initEnvVar))
+
+	configFileData.SetP(10000, "cassandra-yaml.read_request_timeout_in_ms")
+	configFileData.DeleteP("cassandra-yaml.num_tokens")
+	configFileData.DeleteP("jvm-server-options")
+	configFileData.SetP(10000, "jvm-options.cassandra_ring_delay_ms")
+	configFileData.SetP("1024M", "jvm-options.initial_heap_size")
+	configFileData.SetP("4G", "jvm-options.max_heap_size")
+	configFileData.SetP("true", "jvm-options.resize_tlb")
+	configFileData.SetP("true", "jvm-options.print_tenuring_distribution")
+	configFileData.SetP("remote-no-auth", "jvm-options.jmx-connection-type")
+
+	vars = map[string]interface{}{
+		"CONFIG_FILE_DATA": configFileData.String(),
+		"PRODUCT_NAME": "cassandra",
+		"PRODUCT_VERSION": cc.Spec.ServerVersion,
+	}
+
+	checkInitContainerVarEnv(t, initEnvVar, vars)
+}
+
+func TestInitContainerConfigFileData(t *testing.T) {
+	_, cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
+	cc.Spec.ServerVersion = "3.11.7"
+	cassieResources := cc.Spec.Resources
+	dcName, rackName := "dc1", "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+
+	assert := assert.New(t)
+
+	assert.Equal(7, len(initEnvVar))
+
+	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-yaml": {
+			"counter_write_request_timeout_in_ms": 5000,
+			"num_tokens": 32,
+			"read_request_timeout_in_ms": 5000,
+			"write_request_timeout_in_ms": 5000
+		},
+		"cluster-info": {
+			"name": "cassandra-demo",
+			"seeds": ""
+		},
+		"datacenter-info": {
+			"name": "dc1"
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms": 30000,
+			"initial_heap_size": "128M",
+			"jmx-connection-type": "remote-no-auth",
+			"max_heap_size": "512M"
+		},
+		"logback-xml": {
+			"debuglog-enabled": false
+		}
+	}`))
+
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
+
+	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack2")
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	configFileData.SetP(16, "cassandra-yaml.num_tokens")
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
+
+	dcName = "dc2"
+	dcRackName = fmt.Sprintf("%s-%s", dcName, "rack1")
+	initEnvVar = initContainerEnvVar(cc, &cc.Status, cc.Spec.Resources, dcRackName)
+	configFileData.SetP(64, "cassandra-yaml.num_tokens")
+	configFileData.SetP("dc2", "datacenter-info.name")
+	assert.Equal(configFileData.String(), initEnvVar[0].Value)
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
@@ -214,7 +374,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
 	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
-		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
+		"gcr.io/cassandra-operator/instaclustr-icarus:1.0.9",
 		v1.PullAlways,
 		v1.ResourceRequirements{
 			Requests: generateResourceList("1", "1Gi"),
@@ -234,7 +394,8 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	ccDefault.CheckDefaults()
 	labelsDefault, nodeSelectorDefault := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
-	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault, labelsDefault, nodeSelectorDefault, nil)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault,
+		labelsDefault, nodeSelectorDefault, nil)
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
@@ -249,6 +410,10 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Limits:   resources,
 		})
 	checkResourcesConfiguration(t, stsDefault.Spec.Template.Spec.Containers, "1", "2Gi")
+
+	ccDefault.Spec.BackRestSidecar.Image = ""
+	ccDefault.CheckDefaults()
+	assert.Equal(ccDefault.Spec.BackRestSidecar.Image, api.DefaultBackRestImage)
 }
 
 func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpu string, memory string) {
@@ -322,13 +487,11 @@ func checkLiveAndReadiNessProbe(t *testing.T, containers []v1.Container,
 
 func checkVolumeClaimTemplates(t *testing.T, expectedlabels map[string]string, pvcs []v1.PersistentVolumeClaim,
 	dataCapacity, dataClassStorage string) {
-	assert.Equal(t, 3, len(pvcs))
+	assert.Equal(t, 2, len(pvcs))
 	for _, pvc := range pvcs {
 		switch pvc.Name {
 		case "data":
 			assert.Equal(t, generateExpectedDataStoragePVC(expectedlabels, dataCapacity, dataClassStorage), pvc)
-		case "gc-logs":
-			assert.Equal(t, generateExpectedGcLogsStoragePVC(expectedlabels), pvc)
 		case "cassandra-logs":
 			assert.Equal(t, generateExpectedCassandraLogsStoragePVC(expectedlabels), pvc)
 		default:
@@ -412,7 +575,7 @@ func generateExpectedCassandraLogsStoragePVC(expectedlabels map[string]string) v
 }
 
 func checkVolumeMount(t *testing.T, containers []v1.Container) {
-	assert.Equal(t, len(containers), 4)
+	assert.Equal(t, 4, len(containers))
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
@@ -422,7 +585,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 		case "cassandra-logs":
 			assert.Equal(t, len(container.VolumeMounts), 1)
 		case "backrest-sidecar":
-			assert.Equal(t, len(container.VolumeMounts), 4)
+			assert.Equal(t, 5, len(container.VolumeMounts))
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -482,7 +645,6 @@ func volumesContains(vms []v1.VolumeMount, mount v1.VolumeMount) bool {
 
 func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 	var vms []v1.VolumeMount
-	vms = append(vms, v1.VolumeMount{Name: "gc-logs", MountPath: "/var/lib/cassandra/log"})
 	vms = append(vms, v1.VolumeMount{Name: "cassandra-logs", MountPath: "/var/log/cassandra"})
 
 	return vms
@@ -490,35 +652,59 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 
 func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
 	cassieResources := cc.Spec.Resources
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	initContainerEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+	bootstrapContainerEnvVar := bootstrapContainerEnvVar(cc, &cc.Status)
 
 	assert := assert.New(t)
 
-	envVar := map[string]string{}
-	cassandraMaxHeapSet := false
+	assert.Equal(6, len(bootstrapContainerEnvVar))
+	assert.Equal(4, len(containers))
+	assert.Equal(7, len(initContainerEnvVar))
 
-	for _, env := range bootstrapEnvVar {
-		envVar[env.Name] = env.Value
-		if env.Name == cassandraMaxHeap {
-			cassandraMaxHeapSet = true
+	configFileData, _ := gabs.ParseJSON([]byte(`{
+		"cassandra-yaml": {
+			"counter_write_request_timeout_in_ms":5000,
+			"num_tokens":32,
+			"read_request_timeout_in_ms":5000,
+			"write_request_timeout_in_ms":5000
+		},
+		"cluster-info": {
+			"name":  "cassandra-demo",
+			"seeds": ""
+		},
+		"datacenter-info": {
+			"name": "dc1"
+		},
+		"jvm-options": {
+			"cassandra_ring_delay_ms":30000,
+			"initial_heap_size":"128M",
+			"jmx-connection-type":"remote-no-auth",
+			"max_heap_size":"512M"
+		},
+		"logback-xml": {
+			"debuglog-enabled": false
 		}
-	}
+	}`))
 
-	assert.True(cassandraMaxHeapSet)
-	assert.Equal(envVar[cassandraMaxHeap], "512M")
-
-	// The cassandra heap should not be set on other containers
-	delete(envVar, cassandraMaxHeap)
-
-	for name, value := range envVar {
-		assert.Equal(value, envVar[name])
+	vars := map[string]interface{}{
+		"CONFIG_FILE_DATA": configFileData.String(),
+		"PRODUCT_NAME":     "cassandra",
+		"PRODUCT_VERSION":  "3.11.7",
+		"CASSANDRA_SEEDS": "",
+		"CASSANDRA_DC": "",
+		"CASSANDRA_RACK": "",
+		"CASSANDRA_LOG_DIR": "/var/log/cassandra",
+		"CASSANDRA_CLUSTER_NAME": "cassandra-demo",
 	}
 
 	for _, container := range containers {
 		if container.Name != cassandraContainerName {
 			for _, env := range container.Env {
-				assert.Contains(envVar, env.Name)
-				assert.Equal(envVar[env.Name], env.Value)
+				if env.Name == "POD_IP" {
+					continue
+				}
+				assert.Contains(vars, env.Name)
+				assert.Equal(vars[env.Name], env.Value)
 			}
 		} else {
 			// Check cassandra container env vars
@@ -532,6 +718,17 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 				},
 			}
 			assert.Contains(container.Env, podIP)
+
+			checkInitContainerVarEnv(t, initContainerEnvVar, vars)
+		}
+	}
+}
+
+func checkInitContainerVarEnv(t *testing.T, initContainerEnvVar []v1.EnvVar, vars map[string]interface{}) {
+	assert := assert.New(t)
+	for _, env := range initContainerEnvVar {
+		if value, ok := vars[env.Name]; ok {
+			assert.Equal(value, env.Value)
 		}
 	}
 }

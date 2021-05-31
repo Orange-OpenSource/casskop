@@ -1,5 +1,5 @@
-apiVersion: "db.orange.com/v1alpha1"
-kind: "CassandraCluster"
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
 metadata:
   name: cassandra-demo
   labels:
@@ -7,14 +7,14 @@ metadata:
   namespace: ns
 spec:
   backRestSidecar:
-    image: "eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug"
+    image: gcr.io/cassandra-operator/instaclustr-icarus:1.0.9
     imagePullPolicy: Always
     resources:
       limits:
-        cpu: "2"
+        cpu: 2
         memory: 3Gi
       requests:
-        cpu: "1"
+        cpu: 1
         memory: 1Gi
   runAsUser: 1001
   fsGroup: 1002
@@ -29,7 +29,7 @@ spec:
   readinessFailureThreshold: 7
   readinessSuccessThreshold: 9
   nodesPerRacks: 1
-  cassandraImage: cassandra:latest
+  cassandraImage: cassandra:3.11.7
   restartCountBeforePodDeletion: 3
   imagePullSecret:
     name: advisedev # To authenticate on docker registry
@@ -49,17 +49,8 @@ spec:
   hardAntiAffinity: false
   deletePVC: true
   storageConfigs:
-    - mountPath: "/var/lib/cassandra/log"
-      name: "gc-logs"
-      pvcSpec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: standard-wait
-        resources:
-          requests:
-            storage: 10Gi
-    - mountPath: "/var/log/cassandra"
-      name: "cassandra-logs"
+    - mountPath: /var/log/cassandra
+      name: cassandra-logs
       pvcSpec:
         accessModes:
           - ReadWriteOnce
@@ -91,23 +82,25 @@ spec:
         - mountPath: /var/log/cassandra
           name: gc-logs
   autoPilot: true
-  resources:         
-    requests:
-      cpu: '1'
+  resources:
+    limits: &limits
+      cpu: 1
       memory: 2Gi
-    limits:
-      cpu: '1'
-      memory: 2Gi
+    requests: *limits
+  config:
+    cassandra-yaml:
+      num_tokens: 64
   topology:
     dc:
       - name: dc1
+        config:
+          cassandra-yaml:
+            num_tokens: 32
         resources:
-          requests:
-            cpu: '3'
+          limits: &dc1_limits
+            cpu: 3
             memory: 3Gi
-          limits:
-            cpu: '3'
-            memory: 3Gi
+          requests: *dc1_limits
         dataCapacity: 10Gi
         dataStorageClass: test-storage
         labels:
@@ -119,6 +112,9 @@ spec:
           - name: rack2
             labels: 
               location.dfy.orange.com/street : street2
+            config:
+              cassandra-yaml:
+                num_tokens: 16
       - name: dc2
         nodesPerRacks: 1
         labels: 

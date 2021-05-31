@@ -165,7 +165,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 		},
 	}
 
-	//The first Reconcile Just make Init
+	//The first Reconcile just makes Init
 	res, err := rcc.Reconcile(req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
@@ -184,7 +184,7 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 		t.Error("reconcile did not requeue request as expected")
 	}
 
-	//Second Reconcile create objects
+	//Second Reconcile creates objects
 	res, err = rcc.Reconcile(req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
@@ -231,7 +231,6 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 					ContainerStatuses: []v1.ContainerStatus{
 						{
 							Name: "cassandra",
-							//Image: cc.Spec.BaseImage + ":" + cc.Spec.Version
 							Ready: true,
 						},
 					},
@@ -259,7 +258,8 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 	if err = rcc.Client.Get(context.TODO(), req.NamespacedName, cc); err != nil {
 		t.Fatalf("can't get cassandracluster: (%v)", err)
 	}
-	assert.Equal(cc.Status.Phase, api.ClusterPhaseRunning.Name)
+
+	assert.Equal(api.ClusterPhaseRunning.Name, cc.Status.Phase)
 
 	for _, dcRackName := range cc.GetDCRackNames() {
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].Phase, api.ClusterPhaseRunning.Name,
@@ -269,8 +269,8 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 		assert.Equal(cc.Status.CassandraRackStatus[dcRackName].CassandraLastAction.Status, api.StatusDone,
 			"dc-rack %s", dcRackName)
 	}
-	assert.Equal(cc.Status.LastClusterAction, api.ClusterPhaseInitial.Name)
-	assert.Equal(cc.Status.LastClusterActionStatus, api.StatusDone)
+	assert.Equal(api.ClusterPhaseInitial.Name, cc.Status.LastClusterAction)
+	assert.Equal(api.StatusDone, cc.Status.LastClusterActionStatus)
 
 	return rcc, &req
 }

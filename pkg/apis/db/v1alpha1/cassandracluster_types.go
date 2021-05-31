@@ -34,13 +34,12 @@ const (
 	DefaultReadinessHealthCheckTimeout  int32 = 10
 	DefaultReadinessHealthCheckPeriod   int32 = 10
 
-	defaultCassandraImage     = "cassandra:3.11"
-	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.8"
+	defaultCassandraImage     = "cassandra:3.11.10"
+	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable  = 1
-	defaultNumTokens          = 256
 	defaultImagePullPolicy    = v1.PullAlways
 
 	DefaultCassandraDC   = "dc1"
@@ -166,6 +165,8 @@ func (cc *CassandraCluster) CheckDefaults() {
 	// BackupRestore default config
 	if ccs.BackRestSidecar == nil {
 		ccs.BackRestSidecar = &BackRestSidecar{Image: DefaultBackRestImage}
+	} else if ccs.BackRestSidecar.Image == "" {
+		ccs.BackRestSidecar.Image = DefaultBackRestImage
 	}
 }
 
@@ -250,17 +251,6 @@ func (cc *CassandraCluster) getDCNodesPerRacksFromIndex(dc int) int32 {
 		return cc.Spec.NodesPerRacks
 	}
 	return *storeDC.NodesPerRacks
-}
-
-func (cc *CassandraCluster) getDCNumTokensPerRacksFromIndex(dc int) int32 {
-	if dc >= cc.GetDCSize() {
-		return defaultNumTokens
-	}
-	storeDC := cc.Spec.Topology.DC[dc]
-	if storeDC.NumTokens == nil {
-		return defaultNumTokens
-	}
-	return *storeDC.NumTokens
 }
 
 //GetRackSize return the numbers of the Rack in the DC at indice dc
@@ -357,7 +347,7 @@ func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterSt
 func (cc *CassandraCluster) InitSeedList() []string {
 
 	var dcName, rackName string
-	var nbRack int = 0
+	var nbRack = 0
 	var indice int32
 	var seedList []string
 
@@ -383,7 +373,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 				}
 			} else {
-
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -391,13 +380,9 @@ func (cc *CassandraCluster) InitSeedList() []string {
 					nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 
 					switch racksize {
-					case 1:
-						for indice = 0; indice < nodesPerRacks && indice < 3 && nbSeedInDC < 3; indice++ {
-							cc.addNewSeed(&seedList, dcName, rackName, indice)
-							nbSeedInDC++
-						}
-					case 2:
-						for indice = 0; indice < nodesPerRacks && indice < 2 && nbSeedInDC < 3; indice++ {
+					case 1, 2:
+						for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
+							nbSeedInDC < 3; indice++ {
 							cc.addNewSeed(&seedList, dcName, rackName, indice)
 							nbSeedInDC++
 						}
@@ -407,7 +392,6 @@ func (cc *CassandraCluster) InitSeedList() []string {
 							nbSeedInDC++
 						}
 					}
-
 				}
 			}
 		}
@@ -470,7 +454,7 @@ func (cc *CassandraCluster) GetRemovedDCName(oldCRD *CassandraCluster) string {
 //InitCassandraRackList initiate the Status structure for CassandraRack
 func (cc *CassandraCluster) InitCassandraRackList() int {
 	var dcName, rackName string
-	var nbRack int = 0
+	var nbRack = 0
 
 	cc.Status.CassandraRackStatus = make(map[string]*CassandraRackStatus)
 	dcsize := cc.GetDCSize()
@@ -491,7 +475,6 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 				cc.initCassandraRack(dcName, rackName)
 				cc.initTopology(dcName, rackName)
 			} else {
-
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					nbRack++
@@ -568,6 +551,18 @@ func (cc *CassandraCluster) GetDCFromDCRackName(dcRackName string) *DC {
 	return cc.getDCFromIndex(index)
 }
 
+// Get Rack by its rack name
+func (cc *CassandraCluster) GetRackFromDCRackName(dcRackName string) *Rack {
+	_, rackName := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
+	dc := cc.GetDCFromDCRackName(dcRackName)
+	for _, rack := range dc.Rack {
+		if rack.Name == rackName {
+			return &rack
+		}
+	}
+	return nil
+}
+
 // GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
 func (cc *CassandraCluster) GetNodesPerRacks(dcRackName string) int32 {
 	nodesPerRacks := cc.GetDCNodesPerRacksFromDCRackName(dcRackName)
@@ -617,29 +612,6 @@ func (cc *CassandraCluster) GetDCNodesPerRacksFromDCRackName(dcRackName string) 
 		}
 	}
 	return cc.Spec.NodesPerRacks
-}
-
-// GetNodesPerRacks sends back the number of cassandra nodes to uses for this dc-rack
-func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
-	dcsize := cc.GetDCSize()
-
-	if dcsize < 1 {
-		return defaultNumTokens
-	}
-	for dc := 0; dc < dcsize; dc++ {
-		dcName := cc.GetDCName(dc)
-		racksize := cc.GetRackSize(dc)
-		if racksize < 1 {
-			return defaultNumTokens
-		}
-		for rack := 0; rack < racksize; rack++ {
-			rackName := cc.GetRackName(dc, rack)
-			if dcRackName == cc.GetDCRackName(dcName, rackName) {
-				return cc.getDCNumTokensPerRacksFromIndex(dc)
-			}
-		}
-	}
-	return defaultNumTokens
 }
 
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
@@ -784,9 +756,6 @@ type CassandraClusterSpec struct {
 	AutoPilot          bool `json:"autoPilot,omitempty"`
 	NoCheckStsAreEqual bool `json:"noCheckStsAreEqual,omitempty"`
 
-	//GCStdout set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default
-	GCStdout bool `json:"gcStdout,omitempty" default:"true"`
-
 	//AutoUpdateSeedList defines if the Operator automatically update the SeedList according to new cluster CRD topology
 	//by default a boolean is false
 	AutoUpdateSeedList bool `json:"autoUpdateSeedList,omitempty"`
@@ -821,6 +790,19 @@ type CassandraClusterSpec struct {
 	// If this is empty, operator will uses default cassandra.yaml from the baseImage
 	// If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
 	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// Version string for config builder https://github.com/datastax/cass-config-definitions,
+	// used to generate Cassandra server configuration
+	ServerVersion string `json:"serverVersion,omitempty"`
+
+	// Server type: "cassandra" or "dse" for config builder, default to cassandra
+	// +kubebuilder:validation:Enum=cassandra;dse
+	// +kubebuilder:default:=cassandra
+	ServerType string `json:"serverType,omitempty"`
+
+	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
 
 	// Name of the secret to uses to authenticate on Docker registries
 	// If this is empty, operator do nothing
@@ -902,6 +884,11 @@ type DC struct {
 	Name string `json:"name,omitempty"`
 	//Labels used to target Kubernetes nodes
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
+
 	//List of Racks defined in the Cassandra DC
 	Rack RackSlice `json:"rack,omitempty"`
 
@@ -909,9 +896,6 @@ type DC struct {
 	// Default: 1.
 	// Optional, if not filled, used value define in CassandraClusterSpec
 	NodesPerRacks *int32 `json:"nodesPerRacks,omitempty"`
-
-	//NumTokens : configure the CASSANDRA_NUM_TOKENS parameter which can be different for each DD
-	NumTokens *int32 `json:"numTokens,omitempty"`
 
 	// Define the Capacity for Persistent Volume Claims in the local storage
 	// +kubebuilder:validation:Pattern=^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
@@ -928,14 +912,20 @@ type Rack struct {
 	//Name of the Rack
 	// +kubebuilder:validation:Pattern=^[^-]+$
 	Name string `json:"name,omitempty"`
+
+	//Labels used to target Kubernetes nodes
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Config for the Cassandra nodes
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config json.RawMessage `json:"config,omitempty"`
+
 	// Flag to tell the operator to trigger a rolling restart of the Rack
 	RollingRestart bool `json:"rollingRestart,omitempty"`
 
 	//The Partition to control the Statefulset Upgrade
 	RollingPartition int32 `json:"rollingPartition,omitempty"`
 
-	//Labels used to target Kubernetes nodes
-	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // PodPolicy defines the policy for pods owned by CassKop operator.
@@ -1047,10 +1037,12 @@ type CassandraNodeStatus struct {
 // CassandraCluster is the Schema for the cassandraclusters API
 // +k8s:openapi-gen=true
 // +kubebuilder:storageversion
+// +kubebuilder:resource:path=cassandraclusters,scope=Namespaced,shortName=cassc;casscs
 type CassandraCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +kubebuilder:pruning:PreserveUnknownFields
 	Spec   CassandraClusterSpec   `json:"spec,omitempty"`
 	Status CassandraClusterStatus `json:"status,omitempty"`
 }

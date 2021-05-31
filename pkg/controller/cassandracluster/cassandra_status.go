@@ -264,7 +264,8 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 }
 
 //UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detect a changes
-func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string,
+	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
 	storedSeedListTab := getStoredSeedListTab(storedStatefulSet)
 

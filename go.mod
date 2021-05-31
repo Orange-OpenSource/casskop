@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	emperror.dev/errors v0.7.0
+	github.com/Jeffail/gabs v1.4.0
 	github.com/allamand/godebug v0.0.0-20190404121221-3ec752cd7166
 	github.com/antihax/optional v1.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.3.3
@@ -12,6 +13,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/spec v0.19.4
 	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/imdario/mergo v0.3.8
 	github.com/instaclustr/instaclustr-icarus-go-client v0.0.0-20210427160512-5264f1cbba08
 	github.com/jarcoal/httpmock v1.0.4
 	github.com/kylelemons/godebug v1.1.0 // indirect

@@ -28,7 +28,9 @@ spec:
     dc:
       - name: dc1
         nodesPerRacks: 1
-        numTokens: 256
+        config:
+          cassandra-yaml:
+            num_tokens: 256
         rack:
           - name: rack1
             labels: 
@@ -41,7 +43,9 @@ spec:
               location.physical/rack : "3"
       - name: dc2
         nodesPerRacks: 1
-        numTokens: 256
+        config:
+          cassandra-yaml:
+            num_tokens: 256
         labels:
           failure-domain.beta.kubernetes.io/region: "europe-west1"
           failure-domain.beta.kubernetes.io/zone: "europe-west1-b"

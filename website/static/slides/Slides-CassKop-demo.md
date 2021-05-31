@@ -122,7 +122,9 @@ spec:
   hardAntiAffinity: true
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: true
   maxPodUnavailable: 1
   resources:

@@ -24,7 +24,6 @@ spec:
       hardAntiAffinity: true
       deletePVC: true
       autoPilot: true
-      gcStdout: false
       autoUpdateSeedList: false
       maxPodUnavailable: 1
       nodesPerRacks: 1
@@ -52,8 +51,10 @@ spec:
         topology:
           dc:
             - name: dc1
-              nodesPerRacks: 2 
-              numTokens: 32
+              nodesPerRacks: 2
+              config:
+                cassandra-yaml:
+                  num_tokens: 32
               rack:
                 - name: rack1
     k8s-cluster2:
@@ -66,6 +67,8 @@ spec:
           dc:
             - name: dc2
               nodesPerRacks: 2
-              numTokens: 32
+              config:
+                cassandra-yaml:
+                  num_tokens: 32
               rack:
                 - name: rack4
