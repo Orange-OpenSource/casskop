@@ -457,7 +457,7 @@ workflows:
           name: deploy-website
           requires:
             - report-casskop
-          <<: *website_publish
+#          <<: *website_publish
 
   # MultiCassKop operator workflow.
   ci-multicasskop-operator:
