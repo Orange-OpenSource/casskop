@@ -1,1 +1,0 @@
-readiness-probe.sh
