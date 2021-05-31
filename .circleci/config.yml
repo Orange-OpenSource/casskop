@@ -312,22 +312,22 @@ jobs:
     steps:
       - checkout:
           path: /home/circleci/casskop
-            - restore_cache:
-                name: Restore Yarn cache
-                keys:
-                  - yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
-                  # Fallback in case checksum fails
-                  - yarn-{{ .Branch }}
-            - run:
-                name: Install packages with Yarn
-                command: |
-                    yarn install --non-interactive --cache-folder ~/.cache/yarn
-            - save_cache:
-                name: Save Yarn cache
-                paths:
-                  - node_modules
-                  - ~/.cache/yarn
-                key: yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Yarn cache
+          keys:
+            - yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            # Fallback in case checksum fails
+            - yarn-{{ .Branch }}
+      - run:
+          name: Install packages with Yarn
+          command: |
+              yarn install --non-interactive --cache-folder ~/.cache/yarn
+      - save_cache:
+          name: Save Yarn cache
+          paths:
+            - node_modules
+            - ~/.cache/yarn
+          key: yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
       - run:
           name: deploy
           command: |
