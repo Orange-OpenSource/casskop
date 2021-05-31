@@ -312,22 +312,22 @@ jobs:
     steps:
       - checkout:
           path: /home/circleci/casskop
-      #      - restore_cache:
-      #          name: Restore yarn Scanner
-      #          keys:
-      #            - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
-      #            # Fallback in case checksum fails
-      #            - root-yarn-{{ .Branch }}-
-      #      - run:
-      #          name: root-yarn
-      #          command: |
-      #              yarn install --non-interactive --cache-folder ~/.cache/yarn
-      #      - save_cache:
-      #          name: Save yarn cache
-      #          paths:
-      #            - node_modules
-      #            - ~/.cache/yarn
-      #          key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - restore_cache:
+                name: Restore Yarn cache
+                keys:
+                  - yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+                  # Fallback in case checksum fails
+                  - yarn-{{ .Branch }}
+            - run:
+                name: Install packages with Yarn
+                command: |
+                    yarn install --non-interactive --cache-folder ~/.cache/yarn
+            - save_cache:
+                name: Save Yarn cache
+                paths:
+                  - node_modules
+                  - ~/.cache/yarn
+                key: yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
       - run:
           name: deploy
           command: |
@@ -344,6 +344,8 @@ jobs:
   filters:
     tags:
       only: /.*/
+    branches:
+      ignore: gh-pages
 
 .canonical_repo_filter: &canonical_repo_filter
   filters:
@@ -352,6 +354,7 @@ jobs:
     branches:
       # report sonar only from canonical repository
       only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
+      ignore: gh-pages
 
 .ignore_fork_pr_filter: &ignore_fork_pr_filter
   filters:
@@ -359,7 +362,7 @@ jobs:
       only: /.*/
     branches:
       # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-      ignore: /pull\/[0-9]+/
+      ignore: /(?:pull\/[0-9]+|gh-pages)/
 
 .only_on_release_tag: &only_on_release_tag
   filters:
