@@ -330,10 +330,6 @@ jobs:
           key: yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
       - run:
           name: deploy
-          # TODO remove when tests are done
-          environment:
-            CI_PULL_REQUEST:
-            CIRCLE_PULL_REQUEST:
           command: |
             git config --global user.name "${GH_NAME}"
             git config --global user.email "${GH_EMAIL}"
