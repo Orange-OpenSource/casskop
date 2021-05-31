@@ -373,13 +373,6 @@ jobs:
     tags:
       only: /v[0-9]+(\.[0-9]+)*-release/
 
-.website_publish: &website_publish
-  filters:
-    # ignore any commit on any branch by default
-    branches:
-      only:
-        - master
-
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
   operatorDir: casskop/multi-casskop
@@ -457,7 +450,6 @@ workflows:
           name: deploy-website
           requires:
             - report-casskop
-#          <<: *website_publish
 
   # MultiCassKop operator workflow.
   ci-multicasskop-operator:
