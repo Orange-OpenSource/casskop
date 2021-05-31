@@ -348,8 +348,6 @@ jobs:
   filters:
     tags:
       only: /.*/
-    branches:
-      ignore: gh-pages
 
 .canonical_repo_filter: &canonical_repo_filter
   filters:
@@ -358,7 +356,6 @@ jobs:
     branches:
       # report sonar only from canonical repository
       only: /^(?!pull\/).*$/ # https://stackoverflow.com/a/5334825/358804
-      ignore: gh-pages
 
 .ignore_fork_pr_filter: &ignore_fork_pr_filter
   filters:
@@ -366,7 +363,7 @@ jobs:
       only: /.*/
     branches:
       # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-      ignore: /(?:pull\/[0-9]+|gh-pages)/
+      ignore: /pull\/[0-9]+/
 
 .only_on_release_tag: &only_on_release_tag
   filters:
