@@ -316,12 +316,12 @@ jobs:
           name: Restore Yarn cache
           keys:
             - yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            # Fallback in case checksum fails
+            # Fallback in case checksum fails and install dependencies on top of it
             - yarn-{{ .Branch }}
       - run:
           name: Install packages with Yarn
           command: |
-              yarn install --non-interactive --cache-folder ~/.cache/yarn
+              yarn install --frozen-lockfile --non-interactive --cache-folder ~/.cache/yarn
       - save_cache:
           name: Save Yarn cache
           paths:
