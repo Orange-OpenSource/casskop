@@ -29,7 +29,7 @@ func backup(
 	if err != nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
 		recorder.Event(backupClient.backup,
-			corev1.EventTypeNormal,
+			corev1.EventTypeWarning,
 			"BackupNotInitiated",
 			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s failed.",
 				backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,

@@ -312,22 +312,22 @@ jobs:
     steps:
       - checkout:
           path: /home/circleci/casskop
-      #      - restore_cache:
-      #          name: Restore yarn Scanner
-      #          keys:
-      #            - root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
-      #            # Fallback in case checksum fails
-      #            - root-yarn-{{ .Branch }}-
-      #      - run:
-      #          name: root-yarn
-      #          command: |
-      #              yarn install --non-interactive --cache-folder ~/.cache/yarn
-      #      - save_cache:
-      #          name: Save yarn cache
-      #          paths:
-      #            - node_modules
-      #            - ~/.cache/yarn
-      #          key: root-yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Yarn cache
+          keys:
+            - yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            # Fallback in case checksum fails and install dependencies on top of it
+            - yarn-{{ .Branch }}
+      - run:
+          name: Install packages with Yarn
+          command: |
+              yarn install --frozen-lockfile --non-interactive --cache-folder ~/.cache/yarn
+      - save_cache:
+          name: Save Yarn cache
+          paths:
+            - node_modules
+            - ~/.cache/yarn
+          key: yarn-{{ .Branch }}-{{ checksum "yarn.lock" }}
       - run:
           name: deploy
           command: |
@@ -369,13 +369,6 @@ jobs:
     # only act on version tags
     tags:
       only: /v[0-9]+(\.[0-9]+)*-release/
-
-.website_publish: &website_publish
-  filters:
-    # ignore any commit on any branch by default
-    branches:
-      only:
-        - master
 
 ## Parameters anchors
 .params_multicasskop: &params_multicasskop
@@ -454,7 +447,6 @@ workflows:
           name: deploy-website
           requires:
             - report-casskop
-          <<: *website_publish
 
   # MultiCassKop operator workflow.
   ci-multicasskop-operator:
