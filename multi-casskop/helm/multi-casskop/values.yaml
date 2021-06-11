@@ -2,7 +2,7 @@
 ##
 image:
   repository: orangeopensource/multi-casskop
-  tag: v1.1.4-release
+  tag: v2.0.0-release
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
