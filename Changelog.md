@@ -1,6 +1,15 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.0.0
+
+- PR [#331](https://github.com/Orange-OpenSource/casskop/pull/331) - Bump ws from 6.2.1 to 6.2.2 in /website
+- PR [#330](https://github.com/Orange-OpenSource/casskop/pull/330) - Do not crash if backup is created with non existing
+  Datacenter
+- PR [#246](https://github.com/Orange-OpenSource/casskop/pull/246) - Support of Cassandra 4.0
+- PR [#329](https://github.com/Orange-OpenSource/casskop/pull/329) - Bump dns-packet from 1.3.1 to 1.3.4 in /website
+- PR [#328](https://github.com/Orange-OpenSource/casskop/pull/328) - e2e tests use kuttl only
+
 ## v1.1.4
 
 - PR [#325](https://github.com/Orange-OpenSource/casskop/pull/325) - Add datacenter to Restore and take it into accoun
