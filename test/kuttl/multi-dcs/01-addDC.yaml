@@ -21,3 +21,6 @@ spec:
       - name: dc1
         rack:
           - name: rack1
+      - name: dc2
+        rack:
+          - name: rack1
