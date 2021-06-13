@@ -45,27 +45,27 @@ orbs:
                 mkdir -p ${HOME}/.kube
           - checkout:
               path: /home/circleci/casskop
-          - run:
-              name: Create file with build image version
-              command: |
-                make build-image > casskop-build-image-tar
-          - restore_cache:
-              keys:
-                - '{{ checksum "casskop-build-image-tar" }}'
-          - run:
-              name: Load Casskop build image into k3d
-              command: |
-                if [ ! -f "casskop-build-image.tar" ]
-                then
-                  docker pull $(cat casskop-build-image-tar)
-                  docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
-                fi
-                k3d image import casskop-build-image.tar
-          - save_cache:
-              name: Save Casskop build image
-              key: '{{ checksum "casskop-build-image-tar" }}'
-              paths:
-                - casskop-build-image.tar
+#          - run:
+#              name: Create file with build image version
+#              command: |
+#                make build-image > casskop-build-image-tar
+#          - restore_cache:
+#              keys:
+#                - '{{ checksum "casskop-build-image-tar" }}'
+#          - run:
+#              name: Load Casskop build image into k3d
+#              command: |
+#                if [ ! -f "casskop-build-image.tar" ]
+#                then
+#                  docker pull $(cat casskop-build-image-tar)
+#                  docker save $(cat casskop-build-image-tar) > casskop-build-image.tar
+#                fi
+#                k3d image import casskop-build-image.tar
+#          - save_cache:
+#              name: Save Casskop build image
+#              key: '{{ checksum "casskop-build-image-tar" }}'
+#              paths:
+#                - casskop-build-image.tar
           - run:
               name: Setup kubectl
               command: |
@@ -132,10 +132,10 @@ orbs:
           # Build steps
           - run:
               name: Download dependencies
-              command: if [ ! -d vendor ]; then go mod download; fi
+              command: [[ ! -d vendor ]] && go mod download
           - run:
               name: Vendor dependencies
-              command: if [ ! -d vendor ]; then go mod vendor; fi
+              command: [[ ! -d vendor ]] && go mod vendor
           - run:
               name: Generate k8s
               command: |
