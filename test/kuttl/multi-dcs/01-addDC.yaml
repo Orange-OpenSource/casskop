@@ -1,0 +1,13 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+      - name: dc2
+        rack:
+          - name: rack1
