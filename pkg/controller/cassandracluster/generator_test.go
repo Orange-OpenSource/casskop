@@ -211,7 +211,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	checkLiveAndReadiNessProbe(t, sts.Spec.Template.Spec.Containers,
 		1010, 201, 32, 7, 9, 1205, 151, 17, 50, 30)
 	checkVolumeMount(t, sts.Spec.Template.Spec.Containers)
-	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName)
+	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName, "3072M")
 	checkDefaultInitContainerResources(t, sts.Spec.Template.Spec.InitContainers)
 	checkBackRestSidecar(t, sts.Spec.Template.Spec.Containers,
 		"eu.gcr.io/poc-rtc/cassandra-sidecar:v6.2.0-debug",
@@ -220,7 +220,7 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Requests: generateResourceList("1", "1Gi"),
 			Limits:   generateResourceList("2", "3Gi"),
 		})
-	checkResourcesConfiguration(t, sts.Spec.Template.Spec.Containers, "3", "3Gi")
+	checkResourcesConfiguration(t, sts.Spec.Template.Spec.Containers, "3", "3Gi", "3", "12Gi")
 
 	cc.Spec.StorageConfigs[0].PVCSpec = nil
 	_, err := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
@@ -234,7 +234,8 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 
 	ccDefault.CheckDefaults()
 	labelsDefault, nodeSelectorDefault := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(ccDefault, 0, 0)
-	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault, labelsDefault, nodeSelectorDefault, nil)
+	stsDefault, _ := generateCassandraStatefulSet(ccDefault, &ccDefault.Status, dcNameDefault, dcRackNameDefault,
+		labelsDefault, nodeSelectorDefault, nil)
 
 	checkVolumeClaimTemplates(t, labels, stsDefault.Spec.VolumeClaimTemplates, "3Gi", "local-storage")
 	checkLiveAndReadiNessProbe(t, stsDefault.Spec.Template.Spec.Containers,
@@ -248,16 +249,32 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 			Requests: resources,
 			Limits:   resources,
 		})
-	checkResourcesConfiguration(t, stsDefault.Spec.Template.Spec.Containers, "1", "2Gi")
+	checkResourcesConfiguration(t, stsDefault.Spec.Template.Spec.Containers, "1", "2Gi","1", "4Gi")
 }
 
-func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpu string, memory string) {
+func TestGenerateCassandraStatefulSetWithResourceInDC(t *testing.T) {
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+
+
+	cc.Spec.Topology.DC[0].Resources = v1.ResourceRequirements{}
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	checkVarEnv(t, sts.Spec.Template.Spec.Containers, cc, dcRackName, "1024M")
+}
+
+
+func checkResourcesConfiguration(t *testing.T, containers []v1.Container, requestsCPU, requestsMemory, limitsCPU,
+	limitsMemory string) {
 	for _, c := range containers {
 		if c.Name == "cassandra" {
-			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Requests.Cpu())
-			assert.Equal(t, resource.MustParse(memory), *c.Resources.Requests.Memory())
-			assert.Equal(t, resource.MustParse(cpu), *c.Resources.Limits.Cpu())
-			assert.Equal(t, resource.MustParse(memory),  *c.Resources.Limits.Memory())
+			assert.Equal(t, resource.MustParse(requestsCPU), *c.Resources.Requests.Cpu())
+			assert.Equal(t, resource.MustParse(requestsMemory), *c.Resources.Requests.Memory())
+			assert.Equal(t, resource.MustParse(limitsCPU), *c.Resources.Limits.Cpu())
+			assert.Equal(t, resource.MustParse(limitsMemory),  *c.Resources.Limits.Memory())
 		}
 	}
 }
@@ -488,9 +505,8 @@ func generateCassandraStorageConfigVolumeMounts() []v1.VolumeMount {
 	return vms
 }
 
-func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName string) {
-	cassieResources := cc.Spec.Resources
-	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraCluster, dcRackName, maxHeapSize string) {
+	bootstrapEnvVar := bootstrapContainerEnvVar(cc, &cc.Status, dcRackName)
 
 	assert := assert.New(t)
 
@@ -505,7 +521,7 @@ func checkVarEnv(t *testing.T, containers []v1.Container, cc *api.CassandraClust
 	}
 
 	assert.True(cassandraMaxHeapSet)
-	assert.Equal(envVar[cassandraMaxHeap], "512M")
+	assert.Equal(maxHeapSize, envVar[cassandraMaxHeap])
 
 	// The cassandra heap should not be set on other containers
 	delete(envVar, cassandraMaxHeap)

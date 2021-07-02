@@ -97,7 +97,7 @@ spec:
       memory: 2Gi
     limits:
       cpu: '1'
-      memory: 2Gi
+      memory: 4Gi
   topology:
     dc:
       - name: dc1
@@ -107,7 +107,7 @@ spec:
             memory: 3Gi
           limits:
             cpu: '3'
-            memory: 3Gi
+            memory: 12Gi
         dataCapacity: 10Gi
         dataStorageClass: test-storage
         labels:

@@ -642,6 +642,27 @@ func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
 	return defaultNumTokens
 }
 
+func (cc *CassandraCluster) ResourceOfRack(dcRackName string) v1.ResourceRequirements {
+	dcName := cc.GetDCNameFromDCRackName(dcRackName)
+	dcsize := cc.GetDCSize()
+	defaultResources := cc.Spec.Resources
+
+	if dcsize < 1 {
+		return defaultResources
+	}
+
+	for dc := 0; dc < dcsize; dc++ {
+		if dcName == cc.GetDCName(dc) {
+			storeDC := cc.Spec.Topology.DC[dc]
+			if storeDC.Resources.Limits.Memory().IsZero() {
+				return defaultResources
+			}
+			return storeDC.Resources
+		}
+	}
+	return defaultResources
+}
+
 // GetRollingPartitionPerRacks return rollingPartition defined in spec.topology.dc[].rack[].rollingPartition
 func (cc *CassandraCluster) GetRollingPartitionPerRacks(dcRackName string) int32 {
 	dcsize := cc.GetDCSize()

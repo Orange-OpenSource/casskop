@@ -283,8 +283,8 @@ func generateVolumeClaimTemplate(cc *api.CassandraCluster, labels map[string]str
 }
 
 func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
-	dcName string, dcRackName string,
-	labels map[string]string, nodeSelector map[string]string, ownerRefs []metav1.OwnerReference) (*appsv1.StatefulSet, error) {
+	dcName string, dcRackName string, labels map[string]string, nodeSelector map[string]string,
+	ownerRefs []metav1.OwnerReference) (*appsv1.StatefulSet, error) {
 	name := cc.GetName()
 	namespace := cc.Namespace
 	volumes := generateCassandraVolumes(cc)
@@ -410,22 +410,20 @@ func generateResourceQuantity(qs string) resource.Quantity {
 	return q
 }
 
-func defineJvmMemory(resources v1.ResourceRequirements) JvmMemory {
-
-	var mhs string
-
-	if resources.Limits.Memory().IsZero() == false {
-		m := float64(resources.Limits.Memory().Value()) * float64(0.25) // Maxheapsize should be 1/4 of container Memory Limit
-		mi := int(m / float64(1048576))
-		mhs = strings.Join([]string{strconv.Itoa(mi), "M"}, "")
-
-	} else {
-		mhs = defaultJvmMaxHeap
+func defineJvmMemory(cc *api.CassandraCluster, dcRackName string) JvmMemory {
+	resources := cc.ResourceOfRack(dcRackName)
+	jvmMemory := JvmMemory{
+		maxHeapSize: defaultJvmMaxHeap,
 	}
 
-	return JvmMemory{
-		maxHeapSize: mhs,
+	if resources.Limits.Memory().IsZero() {
+		return jvmMemory
 	}
+
+	m := float64(resources.Limits.Memory().Value()) * float64(0.25) // Maxheapsize should be 1/4 of container Memory Limit
+	mi := int(m / float64(1048576))
+	jvmMemory.maxHeapSize = strings.Join([]string{strconv.Itoa(mi), "M"}, "")
+	return jvmMemory
 }
 
 func generatePodDisruptionBudget(name string, namespace string, labels map[string]string, ownerRefs metav1.OwnerReference, maxUnavailable intstr.IntOrString) *policyv1beta1.PodDisruptionBudget {
@@ -536,7 +534,7 @@ func createPodAntiAffinity(hard bool, labels map[string]string) *v1.PodAntiAffin
 }
 
 func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
-	resources v1.ResourceRequirements, dcRackName string) []v1.EnvVar {
+	dcRackName string) []v1.EnvVar {
 	name := cc.GetName()
 	//in statefulset.go we surcharge this value with conditions
 	seedList := cc.SeedList(&status.SeedList)
@@ -544,7 +542,7 @@ func bootstrapContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClu
 	bootstrapEnvVars := []v1.EnvVar{
 		{
 			Name:  "CASSANDRA_MAX_HEAP",
-			Value: defineJvmMemory(resources).maxHeapSize,
+			Value: defineJvmMemory(cc, dcRackName).maxHeapSize,
 		},
 		{
 			Name:  "CASSANDRA_SEEDS",
@@ -654,7 +652,7 @@ func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.Cas
 		Name:            bootstrapContainerName,
 		Image:           cc.Spec.BootstrapImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
-		Env:             bootstrapContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
+		Env:             bootstrapContainerEnvVar(cc, status, dcRackName),
 		VolumeMounts:    volumeMounts,
 		Resources:       initContainerResources(),
 	}
@@ -673,7 +671,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 	dcRackName string) []v1.Container {
 	var containers []v1.Container
 	containers = append(containers, cc.Spec.SidecarConfigs...)
-	containers = append(containers, createCassandraContainer(cc, status, dcRackName))
+	containers = append(containers, createCassandraContainer(cc, dcRackName))
 	containers = append(containers, backrestSidecarContainer(cc))
 
 	return containers
@@ -681,8 +679,7 @@ func generateContainers(cc *api.CassandraCluster, status *api.CassandraClusterSt
 
 /* CreateCassandraContainer create the main container for cassandra
  */
-func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
-	dcRackName string) v1.Container {
+func createCassandraContainer(cc *api.CassandraCluster, dcRackName string) v1.Container {
 
 	var resources v1.ResourceRequirements
 	dcResources := cc.GetDCFromDCRackName(dcRackName).Resources
