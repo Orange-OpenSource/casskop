@@ -642,7 +642,7 @@ func (cc *CassandraCluster) NumTokensPerRacks(dcRackName string) int32 {
 	return defaultNumTokens
 }
 
-func (cc *CassandraCluster) ResourceOfRack(dcRackName string) v1.ResourceRequirements {
+func (cc *CassandraCluster) ResourcesOfRack(dcRackName string) v1.ResourceRequirements {
 	dcName := cc.GetDCNameFromDCRackName(dcRackName)
 	dcsize := cc.GetDCSize()
 	defaultResources := cc.Spec.Resources

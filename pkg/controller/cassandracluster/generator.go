@@ -411,7 +411,7 @@ func generateResourceQuantity(qs string) resource.Quantity {
 }
 
 func defineJvmMemory(cc *api.CassandraCluster, dcRackName string) JvmMemory {
-	resources := cc.ResourceOfRack(dcRackName)
+	resources := cc.ResourcesOfRack(dcRackName)
 	jvmMemory := JvmMemory{
 		maxHeapSize: defaultJvmMaxHeap,
 	}
