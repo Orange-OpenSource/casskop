@@ -9,7 +9,7 @@ spec:
   hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
-  autoUpdateSeedList: false
+  autoUpdateSeedList: true
   dataStorageClass: local-path
   resources:
     requests: &requests
