@@ -1,1 +1,0 @@
-(window.webpackJsonp=window.webpackJsonp||[]).push([[49],{121:function(s){s.exports=JSON.parse('{"allTagsPath":"/casskop/blog/tags","slug":"storage","name":"storage","count":1,"permalink":"/casskop/blog/tags/storage"}')}}]);
