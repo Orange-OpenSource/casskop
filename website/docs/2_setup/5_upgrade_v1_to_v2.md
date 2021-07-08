@@ -15,7 +15,7 @@ It's highly recommended that you test this procedure on a testing environment fi
 
 In order to upgrade to version 2 without impacting your users you need to follow those steps.
 
-## Collect your configmap parameters
+## Collect your ConfigMap parameters
 If you use a ConfigMap, you can't use parameters other than pre_run.sh and post_run.sh
 Collect all the non default parameters that you use and also the number of tokens. you'll
 need those when it's time to set the configuration in your CassandraCluster objects.
@@ -81,6 +81,11 @@ will be picked for you.
 
 If you have a doubt on what name to use for a parameter in your cassandra.yaml,
 you can take a look at https://github.com/datastax/cass-config-definitions/tree/1b7eaf4e50447fc8168c4a6c16d0ed986941edf8/resources/cassandra-yaml/cassandra
+
+## Edit your ConfigMap
+Remove all other keys than pre_run.sh and post_run.sh from your file.
+Of course if you're not using any of those 2 files you can even get rid of this
+ConfigMap and remove it from your CassandraCluster object.
 
 ## Install the latest version of the operator
 Now you can install version 2 of the operator by running the usual install
