@@ -10,7 +10,7 @@ spec:
   deletePVC: true
   autoPilot: true
   autoUpdateSeedList: true
-  dataStorageClass: local-path
+  dataStorageClass: standard
   resources:
     requests: &requests
       memory: 512Mi
@@ -21,3 +21,4 @@ spec:
       - name: dc1
         rack:
           - name: rack1
+          - name: rack2
