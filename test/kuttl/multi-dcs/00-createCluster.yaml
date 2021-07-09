@@ -10,7 +10,6 @@ spec:
   deletePVC: true
   autoPilot: true
   autoUpdateSeedList: true
-  dataStorageClass: standard
   dataStorageClass: local-path
   resources:
     requests: &requests
