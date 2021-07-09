@@ -35,6 +35,6 @@ kind: CassandraCluster
 metadata:
   name: cassandra-e2e
 status:
-  lastClusterAction: UpdateSeedList
+  lastClusterAction: Initializing
   lastClusterActionStatus: Done
   phase: Running
