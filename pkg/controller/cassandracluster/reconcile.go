@@ -505,7 +505,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 						logrus.WithFields(logrus.Fields{"cluster": cc.Name, "dc-rack": dcRackName,
 							"LastActionName":   dcRackStatus.CassandraLastAction.Name,
 							"LastActionStatus": dcRackStatus.CassandraLastAction.Status,
-							"Phase": dcRackStatus.Phase,
+							"Phase":            dcRackStatus.Phase,
 						}).Warning(
 							"Should Not see this message ;) Waiting Rack to be running before continuing, we " +
 								"loop on Next Rack, maybe we don't want that")
@@ -638,7 +638,9 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 
 				rackName := cc.GetRackName(dc, rack)
 				dcRackName := cc.GetDCRackName(dcName, rackName)
+				fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 				dcRackStatus := status.CassandraRackStatus[dcRackName]
+				fmt.Println("BBBBBBBBBBBBBBBBBBB ", dcRackStatus, " et id ", dcRackName)
 
 				if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 					dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
