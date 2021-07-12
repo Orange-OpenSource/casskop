@@ -11,14 +11,15 @@ kind: StatefulSet
 metadata:
   name: cassandra-e2e-dc1-rack2
 status:
-  currentReplicas: 1
-  replicas: 1
+  currentReplicas: 0
+  replicas: 0
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: cassandra-e2e-dc2-rack1
 status:
+  currentReplicas: 0
   replicas: 0
 ---
 apiVersion: db.orange.com/v1alpha1
