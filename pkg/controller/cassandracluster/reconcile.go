@@ -675,7 +675,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 			}
 		}
 	}
-	return
+	return nil
 }
 
 func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,
