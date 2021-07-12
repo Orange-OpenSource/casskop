@@ -27,7 +27,7 @@ kind: CassandraCluster
 metadata:
   name: cassandra-e2e
 status:
-#  lastClusterAction: ScaleDown
-  lastClusterAction: CorrectCRDConfig
+  lastClusterAction: ScaleDown
+#  lastClusterAction: CorrectCRDConfig
   lastClusterActionStatus: Done
   phase: Running
