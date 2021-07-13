@@ -639,7 +639,10 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 
 				rackName := cc.GetRackName(dc, rack)
 				dcRackName := cc.GetDCRackName(dcName, rackName)
+				logrus.Println("AAAAAAAAAAA")
 				dcRackStatus := status.CassandraRackStatus[dcRackName]
+				json, _ := json.Marshal(dcRackStatus)
+				logrus.Println("BBBBBBBBB ", string(json))
 
 				if dcRackStatus == nil {
 					return errors.New("DC Rack Status empty")
@@ -664,7 +667,15 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 
 					rackName := cc.GetRackName(dc, rack)
 					dcRackName := cc.GetDCRackName(dcName, rackName)
+
+					logrus.Println("CCCCCCCCCCCC")
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
+					json, _ := json.Marshal(dcRackStatus)
+					logrus.Println("DDDDDDDDDDD ", string(json))
+
+					if dcRackStatus == nil {
+						return errors.New("DC Rack Status empty")
+					}
 
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 						"dc-rack": dcRackName}).Infof("Update Rack Status UpdateSeedList=ToDo")
