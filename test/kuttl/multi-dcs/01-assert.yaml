@@ -2,7 +2,7 @@ apiVersion: kuttl.dev/v1beta1
 kind: TestAssert
 timeout: 500
 commands:
-  - script: "kubectl get pods -n $NAMESPACE -o json | jq '(.items | length) != 5 then halt_error(-2) else \"OK\" end' 2> /dev/null"
+  - script: "kubectl get pods -n $NAMESPACE -o json | jq '.items | length' | jq 'if . != 5 then halt_error(-2) else \"OK\" end' 2> /dev/null"
   - script: "kubectl get pods -n $NAMESPACE -o json | jq 'if .items[].status.containerStatuses[].restartCount != 0 then halt_error(-2) else \"OK\" end' 2> /dev/null"
 ---
 apiVersion: apps/v1
