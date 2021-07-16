@@ -42,7 +42,6 @@ import (
 
 var clusterName = "cassandra-demo"
 var namespace   = "ns"
-var clusterUID = "cassandra-demo-uid"
 
 var cc2Dcs = `
 apiVersion: "db.orange.com/v1alpha1"
@@ -95,8 +94,6 @@ func HelperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster,
 	*api.CassandraCluster) {
 	var cc api.CassandraCluster
 	yaml.Unmarshal(common.HelperLoadBytes(t, name), &cc)
-
-	cc.ObjectMeta.UID = types.UID(clusterUID) // Set default UID for cc
 
 	ccList := api.CassandraClusterList{
 		TypeMeta: metav1.TypeMeta{
@@ -223,7 +220,6 @@ func helperCreateCassandraCluster(t *testing.T, cassandraClusterFileName string)
 						"cassandraclusters.db.orange.com.rack": rack.Name,
 						"app":                                  "cassandracluster",
 						"cassandracluster":                     cc.Name,
-						"cassandracluster-uid":                 string(cc.GetUID()),
 					},
 				},
 				Status: v1.PodStatus{
