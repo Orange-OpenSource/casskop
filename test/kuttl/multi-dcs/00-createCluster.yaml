@@ -21,10 +21,9 @@ spec:
   autoUpdateSeedList: true
   dataStorageClass: local-path
   resources:
-    requests: &requests
+    limits:
       memory: 512Mi
       cpu: 200m
-    limits: *requests
   topology:
     dc:
       - name: dc1
