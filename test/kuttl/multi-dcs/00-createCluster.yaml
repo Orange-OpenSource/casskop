@@ -1,12 +1,3 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-timeout: 500
-commands:
-  - script: |
-      wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-      chmod +x jq-linux64
-      sudo mv jq-linux64 $(which jq)
----
 apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster
 metadata:

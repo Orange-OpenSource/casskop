@@ -56,12 +56,17 @@ orbs:
               name: Setup helm
               command: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
           - run:
-                name: Setup kuttl
-                command: |
-                  set -x
-                  sudo chmod o+w /usr/local/bin/
-                  curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.9.0/kubectl-kuttl_0.9.0_linux_x86_64 -o /usr/local/bin/kuttl
-                  chmod +x /usr/local/bin/kuttl
+              name: Setup kuttl
+              command: |
+                set -x
+                sudo chmod o+w /usr/local/bin/
+                curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.9.0/kubectl-kuttl_0.11.0_linux_x86_64 -o /usr/local/bin/kuttl
+                chmod +x /usr/local/bin/kuttl
+          - run:
+              name: Install tools
+              command: |
+                curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o /usr/local/bin/jq
+                chmod +x /usr/local/bin/jq
           - attach_workspace: # Attach artifact from workdir
               at: /home/circleci
           # Acceptance test
