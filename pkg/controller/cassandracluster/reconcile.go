@@ -453,7 +453,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 			}
 
 			//If we have added a dc/rack to the CRD, we add it to the Status
-			if _, ok := status.CassandraRackStatus[dcRackName]; !ok {
+			if _, exists := status.CassandraRackStatus[dcRackName]; !exists {
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("DC-Rack(%s-%s) does not exist, "+
 					"initialize it in status", dcName, rackName)
 				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
@@ -642,6 +642,9 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 				dcRackStatus := status.CassandraRackStatus[dcRackName]
 
 				if dcRackStatus == nil {
+					// TODO continue instead
+					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+						"dc-rack": dcRackName}).Infof("Rack Status is nil, returns an error for now")
 					return errors.New("DC Rack Status empty")
 				}
 
@@ -656,7 +659,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 			}
 		}
 
-		//If all racks are in "configuring" state, we set all status to ToDo to trigger the operator actions
+		//If all racks are in "configuring" state, we update the status to trigger the operator actions
 		if setOperationOngoing {
 			for dc := 0; dc < cc.GetDCSize(); dc++ {
 				dcName := cc.GetDCName(dc)
@@ -667,9 +670,9 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-					if dcRackStatus == nil {
-						return errors.New("DC Rack Status empty")
-					}
+					//if dcRackStatus == nil {
+					//	return errors.New("DC Rack Status empty")
+					//}
 
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 						"dc-rack": dcRackName}).Infof("Update Rack Status UpdateSeedList=ToDo")

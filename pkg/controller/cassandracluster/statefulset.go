@@ -304,7 +304,7 @@ func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container
 	return nil
 }
 
-func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
+func getStoredSeedList(storedStatefulSet *appsv1.StatefulSet) []string {
 	container := getBootstrapContainerFromStatefulset(storedStatefulSet)
 	if container != nil {
 		for _, env := range container.Env {

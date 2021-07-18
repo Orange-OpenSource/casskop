@@ -17,6 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"github.com/r3labs/diff"
 	"reflect"
 	"strconv"
 	"time"
@@ -267,24 +268,15 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string,
 	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
-	storedSeedListTab := getStoredSeedListTab(storedStatefulSet)
+	storedSeedList := getStoredSeedList(storedStatefulSet)
 
 	//If Automatic Update of SeedList is enabled in the CRD
 	if cc.Spec.AutoUpdateSeedList {
-		//We compute what would be the best SeedList according to CRD Topology
-		newSeedListTab := cc.InitSeedList()
-		//We check if some nodes of the newSeedList are missing from Actual one
-		if !k8s.ContainSlice(storedSeedListTab, newSeedListTab) {
-			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Add Nodes): %v -> %v", cc.Name,
-				dcRackName, storedSeedListTab, status.SeedList)
-		}
-
-		//We Check if some nodes disapears from new SeedList (that should be a scale down, ore simply add nodes in another rack ??
-		if !k8s.ContainSlice(newSeedListTab, storedSeedListTab) {
-			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Remove Nodes): %v -> %v", cc.Name,
-				dcRackName, storedSeedListTab, status.SeedList)
+		seedList := cc.InitSeedList()
+		if changes, err := diff.Diff(storedSeedList, seedList); err == nil && len(changes) == 0 {
+			status.SeedList = k8s.MergeSlice(storedSeedList, seedList)
+			logrus.Infof("[%s][%s]: We may need to update the seed list: %v -> %v", cc.Name,
+				dcRackName, storedSeedList, status.SeedList)
 		}
 	}
 
@@ -293,7 +285,7 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 	// Once all racks will be enabled with UpdateSeedList=Configuring,
 	// then we update to ongoing and start the rollUpgrade
 	// This is to ensure that we won't do 2 different kind of operations in different racks at the same time (ex:scaling + updateseedlist)
-	if !reflect.DeepEqual(status.SeedList, storedSeedListTab) {
+	if !reflect.DeepEqual(status.SeedList, storedSeedList) {
 		logrus.Infof("[%s][%s]: We ask to Change the Cassandra SeedList", cc.Name, dcRackName)
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusConfiguring
