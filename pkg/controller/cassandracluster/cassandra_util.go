@@ -24,8 +24,9 @@ import (
 
 //hasNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
 func (rcc *ReconcileCassandraCluster) hasNoPodDisruption() bool {
-	status := rcc.storedPdb.Status
-	return status.DesiredHealthy-status.CurrentHealthy <= rcc.storedPdb.Spec.MaxUnavailable.IntVal
+	return rcc.storedPdb.Status.DisruptionsAllowed >= 0
+	//status := rcc.storedPdb.Status
+	//return status.DesiredHealthy-status.CurrentHealthy <= rcc.storedPdb.Spec.MaxUnavailable.IntVal
 }
 
 //weAreScalingDown return true if we are Scaling Down the provided dc-rack
