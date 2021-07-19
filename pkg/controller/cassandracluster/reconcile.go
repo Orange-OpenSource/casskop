@@ -643,7 +643,8 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 					// TODO continue instead
 					logrus.WithFields(logrus.Fields{
 						"cluster": cc.Name, "dc-rack": dcRackName,
-					}).Infof("Rack Status is nil, returns an error for now")
+					}).Infof("LOOP 1: Rack Status is nil, returns an error for now")
+					logrus.Infof("Topology: +%v", cc.Spec.Topology)
 					return errors.New("DC Rack Status empty")
 				}
 
@@ -666,9 +667,14 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 					dcRackName := cc.GetDCRackName(dcName, rackName)
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-					//if dcRackStatus == nil {
-					//	return errors.New("DC Rack Status empty")
-					//}
+					if dcRackStatus == nil {
+						// TODO continue instead
+						logrus.WithFields(logrus.Fields{
+							"cluster": cc.Name, "dc-rack": dcRackName,
+						}).Infof("LOOP 2: Rack Status is nil, returns an error for now")
+						logrus.Infof("Topology: +%v", cc.Spec.Topology)
+						//return errors.New("DC Rack Status empty")
+					}
 
 					logrus.WithFields(logrus.Fields{
 						"cluster": cc.Name, "dc-rack": dcRackName,
