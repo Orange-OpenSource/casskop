@@ -126,7 +126,6 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		}
 
 		// Update Status if Topology for SeedList has changed
-		//if lastAction.Status != api.StatusFinalizing {
 		if UpdateStatusIfSeedListHasChanged(cc, dcRackName, storedStatefulSet, status) {
 			return nil
 		}
@@ -275,8 +274,8 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 		seedList := cc.InitSeedList()
 		if changes, err := diff.Diff(storedSeedList, seedList); err == nil && len(changes) != 0 {
 			status.SeedList = k8s.MergeSlice(storedSeedList, seedList)
-			logrus.Infof("[%s][%s]: We may need to update the seed list: %v -> %v", cc.Name,
-				dcRackName, storedSeedList, status.SeedList)
+			logrus.Infof("[%s][%s]: We need to update the seed list: %v -> %v",
+				cc.Name, dcRackName, storedSeedList, status.SeedList)
 		}
 	}
 
