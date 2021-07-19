@@ -631,6 +631,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 		status.LastClusterActionStatus == api.StatusConfiguring {
 		var setOperationOngoing = true
 
+		logrus.Info("LOOP 1: start")
 		//All racks must be configuring the seed list or in initializing mode
 		for dc := 0; dc < cc.GetDCSize(); dc++ {
 			dcName := cc.GetDCName(dc)
@@ -657,6 +658,9 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 				}
 			}
 		}
+
+		logrus.Info("LOOP 1: done")
+		logrus.Info("LOOP 2: start")
 
 		//If all racks are in "configuring" state, we update the status to trigger the operator actions
 		if setOperationOngoing {
@@ -686,6 +690,7 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 			}
 		}
 	}
+	logrus.Info("LOOP 2: done")
 	return nil
 }
 
