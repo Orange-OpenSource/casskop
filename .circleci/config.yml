@@ -46,30 +46,18 @@ orbs:
           - checkout:
               path: /home/circleci/casskop
           - run:
-              name: Setup kubectl
-              command: |
-                set -x
-                sudo chmod o+w /usr/local/bin/
-                wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
-                chmod +x /usr/local/bin/kubectl
-          - run:
-              name: Setup helm
-              command: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-          - run:
-              name: Setup kuttl
-              command: |
-                set -x
-                sudo chmod o+w /usr/local/bin/
-                curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.11.0/kubectl-kuttl_0.11.0_linux_x86_64 -o /usr/local/bin/kuttl
-                chmod +x /usr/local/bin/kuttl
-          - run:
               name: Install tools
               command: |
                 set -x
-                sudo rm /usr/local/bin/jq
                 sudo chmod o+w /usr/local/bin/
+                sudo rm /usr/local/bin/jq
+                wget -P /usr/local/bin/ https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
+                curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.11.0/kubectl-kuttl_0.11.0_linux_x86_64 -o /usr/local/bin/kuttl
                 curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o /usr/local/bin/jq
-                chmod +x /usr/local/bin/jq
+                chmod +x /usr/local/bin/*
+          - run:
+              name: Setup helm
+              command: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
           - attach_workspace: # Attach artifact from workdir
               at: /home/circleci
           # Acceptance test
