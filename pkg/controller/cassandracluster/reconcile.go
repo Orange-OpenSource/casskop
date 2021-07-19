@@ -442,6 +442,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.Cassandra
 func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 	status *api.CassandraClusterStatus) (err error) {
 
+	newStatus := false
 	for dc := 0; dc < cc.GetDCSize(); dc++ {
 		dcName := cc.GetDCName(dc)
 		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
@@ -457,7 +458,8 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 					"initialize it in status", dcName, rackName)
 				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 				cc.InitCassandraRackinStatus(status, dcName, rackName)
-				return nil
+				newStatus = true
+				continue
 			}
 			dcRackStatus := status.CassandraRackStatus[dcRackName]
 
@@ -553,6 +555,10 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 		}
 
 	}
+	if newStatus{
+		return nil
+	}
+
 
 	//If cluster is deleted and DeletePVC is set, we can now stop preventing the cluster from being deleted
 	//cause PVCs have been deleted
@@ -689,8 +695,8 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 				}
 			}
 		}
+		logrus.Info("LOOP 2: done")
 	}
-	logrus.Info("LOOP 2: done")
 	return nil
 }
 
