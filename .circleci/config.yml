@@ -55,7 +55,7 @@ orbs:
                 curl -L https://github.com/kudobuilder/kuttl/releases/download/v0.11.0/kubectl-kuttl_0.11.0_linux_x86_64 -o /usr/local/bin/kuttl
                 curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o /usr/local/bin/jq
                 sudo chmod a+x /usr/local/bin/*
-                https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+                curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
           - attach_workspace: # Attach artifact from workdir
               at: /home/circleci
           # Acceptance test
