@@ -1,3 +1,10 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 500
+commands:
+  - script: "kubectl get pods -n $NAMESPACE -o json | jq '.items | length' | jq 'if . != 5 then halt_error(-2) else \"OK\" end' 2> /dev/null"
+  - script: "kubectl get pods -n $NAMESPACE -o json | jq 'if .items[].status.containerStatuses[].restartCount != 0 then halt_error(-2) else \"OK\" end' 2> /dev/null"
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -10,6 +17,22 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: cassandra-e2e-dc2-rack1
+status:
+  currentReplicas: 1
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra-e2e-dc1-rack2
+status:
+  currentReplicas: 1
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cassandra-e2e-dc2-rack2
 status:
   currentReplicas: 1
   replicas: 1

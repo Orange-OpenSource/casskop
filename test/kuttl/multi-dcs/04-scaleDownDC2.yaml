@@ -8,7 +8,9 @@ spec:
       - name: dc1
         rack:
           - name: rack1
+          - name: rack2
       - name: dc2
         nodesPerRacks: 0
         rack:
           - name: rack1
+          - name: rack2

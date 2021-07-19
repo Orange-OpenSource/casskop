@@ -360,42 +360,42 @@ func (cc *CassandraCluster) InitSeedList() []string {
 		for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 			cc.addNewSeed(&seedList, dcName, rackName, indice)
 		}
-	} else {
-		for dc := 0; dc < dcsize; dc++ {
+		return seedList
+	}
+	for dc := 0; dc < dcsize; dc++ {
 			dcName = cc.GetDCName(dc)
 			var nbSeedInDC int = 0
-
 			racksize := cc.GetRackSize(dc)
+
 			if racksize < 1 {
 				rackName = DefaultCassandraRack
 				nbRack++
 				for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 				}
-			} else {
-				for rack := 0; rack < racksize; rack++ {
-					rackName = cc.GetRackName(dc, rack)
-					dcRackName := cc.GetDCRackName(dcName, rackName)
-					nbRack++
-					nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+				continue
+			}
+			for rack := 0; rack < racksize; rack++ {
+				rackName = cc.GetRackName(dc, rack)
+				dcRackName := cc.GetDCRackName(dcName, rackName)
+				nbRack++
+				nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 
-					switch racksize {
-					case 1, 2:
-						for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
-							nbSeedInDC < 3; indice++ {
-							cc.addNewSeed(&seedList, dcName, rackName, indice)
-							nbSeedInDC++
-						}
-					default:
-						if nbSeedInDC < 3 {
-							cc.addNewSeed(&seedList, dcName, rackName, 0)
-							nbSeedInDC++
-						}
+				switch racksize {
+				case 1, 2:
+					for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
+						nbSeedInDC < 3; indice++ {
+						cc.addNewSeed(&seedList, dcName, rackName, indice)
+						nbSeedInDC++
+					}
+				default:
+					if nbSeedInDC < 3 {
+						cc.addNewSeed(&seedList, dcName, rackName, 0)
+						nbSeedInDC++
 					}
 				}
 			}
 		}
-	}
 	return seedList
 }
 
