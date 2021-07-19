@@ -264,7 +264,7 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 	return false
 }
 
-//UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detect a changes
+//UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detects a change
 func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string,
 	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
@@ -273,7 +273,7 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 	//If Automatic Update of SeedList is enabled in the CRD
 	if cc.Spec.AutoUpdateSeedList {
 		seedList := cc.InitSeedList()
-		if changes, err := diff.Diff(storedSeedList, seedList); err == nil && len(changes) == 0 {
+		if changes, err := diff.Diff(storedSeedList, seedList); err == nil && len(changes) != 0 {
 			status.SeedList = k8s.MergeSlice(storedSeedList, seedList)
 			logrus.Infof("[%s][%s]: We may need to update the seed list: %v -> %v", cc.Name,
 				dcRackName, storedSeedList, status.SeedList)
@@ -302,7 +302,8 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 //UpdateStatusIfScaling will detect any change of replicas
 //To Scale Down the operator will need to first decommission the last node from Cassandra before removing it from kubernetes.
 //To Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
-func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
+	status *api.CassandraClusterStatus) bool {
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction

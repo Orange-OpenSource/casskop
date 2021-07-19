@@ -173,7 +173,6 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	assert := assert.New(t)
 
 	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
-	//Allow Update SeedList
 	cc.Spec.AutoUpdateSeedList = true
 
 	//1. Init
@@ -191,12 +190,12 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 
 	status := cc.Status.DeepCopy()
 
-	//Add pod of dc1-rack1 at the end of existing seedlist
+	//Add pod of dc1-rack1 at the end of existing seed list
 	var b = []string{
 		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
-		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
 		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 	}
 
 	dc1rack1sts := common.HelperGetStatefulset(t, "dc1-rack1")
@@ -225,7 +224,8 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 
-	assert.Equal(true, reflect.DeepEqual(b, status.SeedList))
+	assert.Equal(true, reflect.DeepEqual(b, status.SeedList),
+		fmt.Sprintf("%s is not equal to %s", b, status.SeedList))
 }
 
 func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
@@ -256,9 +256,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 	//Add pod of dc1-rack1 at the end of existing seedlist
 	var b = []string{
 		"cassandra-demo-dc1-rack1-0.cassandra-demo.ns",
-		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-dc1-rack2-0.cassandra-demo.ns",
 		"cassandra-demo-dc2-rack1-0.cassandra-demo.ns",
+		"cassandra-demo-dc1-rack1-1.cassandra-demo.ns",
 		"cassandra-demo-dc2-rack1-1.cassandra-demo.ns",
 	}
 

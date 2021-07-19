@@ -200,7 +200,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	//We will not Update the Statefulset
-	// if there is existing disruptions on Pods
+	// if there is an existing pod disruptions
 	// Or if we are not scaling Down the current statefulset
 	if !rcc.hasNoPodDisruption() {
 		if rcc.cc.Spec.UnlockNextOperation {
@@ -219,7 +219,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	statefulSet.Spec.Template.SetLabels(rcc.storedStatefulSet.Spec.Template.GetLabels())
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
-	//and change the status to Finalizing (it start a RollingUpdate)
+	//and change the status to Finalizing (it starts a RollingUpdate)
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
