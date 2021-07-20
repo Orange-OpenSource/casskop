@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
@@ -539,7 +540,13 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Debug("Statefulset is getting updated " +
 					"we break ReconcileRack")
+				// Wait until isStatefulSetNotReady(storedStatefulSet) is true ?
+				// Wait until hasNoPodDisruption is false ?
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+					"dc-rack": dcRackName}).Debug("CYRIL Sleep 10 seconds for the statefulset to start being updated")
+				time.Sleep(10)
 				return nil
+				//return fmt.Errorf("Fake error to wait")
 			}
 
 			//If the Phase is not running then we won't check on Next Racks so we return
