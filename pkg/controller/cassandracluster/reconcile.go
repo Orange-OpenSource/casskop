@@ -555,10 +555,10 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 		}
 
 	}
+
 	if newStatus{
 		return nil
 	}
-
 
 	//If cluster is deleted and DeletePVC is set, we can now stop preventing the cluster from being deleted
 	//cause PVCs have been deleted
@@ -576,7 +576,6 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 	for dc := 0; dc < cc.GetDCSize(); dc++ {
 		dcName := cc.GetDCName(dc)
 		for rack := 0; rack < cc.GetRackSize(dc); rack++ {
-
 			rackName := cc.GetRackName(dc, rack)
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			dcRackStatus, exist := status.CassandraRackStatus[dcRackName]

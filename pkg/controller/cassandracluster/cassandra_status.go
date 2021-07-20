@@ -64,8 +64,8 @@ func (rcc *ReconcileCassandraCluster) updateCassandraStatus(cc *api.CassandraClu
 
 // getNextCassandraClusterStatus goal is to detect some changes in the status between cassandracluster and its statefulset
 // We follow only one change at a Time : so this function will return on the first change found
-func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc,
-	rack int, dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc, rack int,
+	dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
 	//UpdateStatusIfUpdateResources(cc, dcRackName, storedStatefulSet, status)
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -130,7 +130,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 			return nil
 		}
 
-		if UpdateStatusIfRollingRestart(cc, dc, rack, dcRackName, storedStatefulSet, status) {
+		if UpdateStatusIfRollingRestart(cc, dc, rack, dcRackName, status) {
 			return nil
 		}
 
@@ -246,7 +246,7 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName st
 }
 
 func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
-	rack int, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+	rack int, dcRackName string, status *api.CassandraClusterStatus) bool {
 
 	if cc.Spec.Topology.DC[dc].Rack[rack].RollingRestart {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,

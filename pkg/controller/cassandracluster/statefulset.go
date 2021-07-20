@@ -292,7 +292,6 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	return api.BreakResyncLoop, rcc.UpdateStatefulSet(statefulSet)
-
 }
 
 func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {
