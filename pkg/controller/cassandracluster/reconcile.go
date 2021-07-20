@@ -544,7 +544,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				// Wait until hasNoPodDisruption is false ?
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
 					"dc-rack": dcRackName}).Debug("CYRIL Sleep 10 seconds for the statefulset to start being updated")
-				time.Sleep(10)
+				time.Sleep( time.Second * 10)
 				return nil
 				//return fmt.Errorf("Fake error to wait")
 			}
