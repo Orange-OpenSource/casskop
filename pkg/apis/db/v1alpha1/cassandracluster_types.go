@@ -310,25 +310,14 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 }
 
 // InitCassandraRack Initialisation of a CassandraRack Structure which is appended to the CRD status
-func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var rackStatus = CassandraRackStatus{
-		Phase: ClusterPhaseInitial.Name,
-		CassandraLastAction: CassandraLastAction{
-			Name:   ClusterPhaseInitial.Name,
-			Status: StatusOngoing,
-		},
-	}
-
-	//The key of each CassandraRackStatus is the name of "<dcName>-<rackName>"
-	cc.Status.CassandraRackStatus[dcRackName] = &rackStatus
-}
-
-// InitCassandraRack Initialisation of a CassandraRack Structure which is appended to the CRD status
 // In this method we create it in status var instead of directly in cc object
 // This is because except for init the cc, ca always work with a separate status which updates the cc
 // in a defer statement in Reconcile method
-func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterStatus, dcName string, rackName string) {
+func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
+	cc.setInitRackStatus(status, dcName, rackName)
+}
+
+func (cc *CassandraCluster) setInitRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	var rackStatus CassandraRackStatus = CassandraRackStatus{
 		Phase: ClusterPhaseInitial.Name,
@@ -463,7 +452,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 		dcName = DefaultCassandraDC
 		rackName = DefaultCassandraRack
 		nbRack++
-		cc.initCassandraRack(dcName, rackName)
+		cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 		cc.initTopology(dcName, rackName)
 	} else {
 		for dc := 0; dc < dcsize; dc++ {
@@ -472,13 +461,13 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 			if racksize < 1 {
 				rackName = DefaultCassandraRack
 				nbRack++
-				cc.initCassandraRack(dcName, rackName)
+				cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 				cc.initTopology(dcName, rackName)
 			} else {
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					nbRack++
-					cc.initCassandraRack(dcName, rackName)
+					cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 				}
 			}
 		}

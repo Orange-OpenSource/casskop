@@ -347,14 +347,14 @@ func UpdateStatusIfStatefulSetChanged(dcRackName string, storedStatefulSet *apps
 func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+	rackLastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	now := metav1.Now()
 
-	if lastAction.Status == api.StatusOngoing ||
-		lastAction.Status == api.StatusContinue {
+	if rackLastAction.Status == api.StatusOngoing ||
+		rackLastAction.Status == api.StatusContinue {
 
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-		switch lastAction.Name {
+		switch rackLastAction.Name {
 
 		case api.ActionScaleUp.Name:
 
@@ -370,8 +370,8 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				//We need lastPod to be running to consider ScaleUp ended
 				if cassandraPodIsReady(&pod) {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleUp is Done")
-					lastAction.Status = api.StatusDone
-					lastAction.EndTime = &now
+					rackLastAction.Status = api.StatusDone
+					rackLastAction.EndTime = &now
 
 					labels := map[string]string{"operation-name": api.OperationCleanup}
 					if cc.Spec.AutoPilot {
@@ -392,8 +392,8 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				if cc.Status.CassandraRackStatus[dcRackName].PodLastOperation.Name == api.OperationDecommission &&
 					cc.Status.CassandraRackStatus[dcRackName].PodLastOperation.Status == api.StatusDone {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleDown is Done")
-					lastAction.Status = api.StatusDone
-					lastAction.EndTime = &now
+					rackLastAction.Status = api.StatusDone
+					rackLastAction.EndTime = &now
 					return true
 				}
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleDown not yet Completed: Waiting for Pod operation to be Done")
@@ -407,10 +407,10 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 		default:
 			// Do the update has finished on all pods ?
 			if storedStatefulSet.Status.CurrentRevision == storedStatefulSet.Status.UpdateRevision {
-				logrus.Infof("[%s][%s]: Update %s is Done", cc.Name, dcRackName, lastAction.Name)
-				lastAction.Status = api.StatusDone
+				logrus.Infof("[%s][%s]: Update %s is Done", cc.Name, dcRackName, rackLastAction.Name)
+				rackLastAction.Status = api.StatusDone
 				now := metav1.Now()
-				lastAction.EndTime = &now
+				rackLastAction.EndTime = &now
 				return true
 			}
 

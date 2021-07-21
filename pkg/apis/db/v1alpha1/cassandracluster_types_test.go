@@ -211,7 +211,7 @@ func TestInitCassandraRackinStatus(t *testing.T) {
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["stats-rack2"].CassandraLastAction.Name)
 	assert.Equal(4, len(cc.Status.CassandraRackStatus))
 	//Add new DC from existing RackStatus
-	cc.InitCassandraRackinStatus(&cc.Status, "foo", "bar")
+	cc.InitCassandraRackStatus(&cc.Status, "foo", "bar")
 
 	assert.Equal(ClusterPhaseInitial.Name, cc.Status.CassandraRackStatus["foo-bar"].CassandraLastAction.Name)
 	assert.Equal(5, len(cc.Status.CassandraRackStatus))

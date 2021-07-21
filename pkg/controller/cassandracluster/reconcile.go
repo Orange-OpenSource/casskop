@@ -458,7 +458,7 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("DC-Rack(%s-%s) does not exist, "+
 					"initialize it in status", dcName, rackName)
 				ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
-				cc.InitCassandraRackinStatus(status, dcName, rackName)
+				cc.InitCassandraRackStatus(status, dcName, rackName)
 				newStatus = true
 				continue
 			}
