@@ -537,14 +537,12 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				needUpdate = true
 			}
 			if breakLoop {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Debug("Statefulset is getting updated " +
-					"we break ReconcileRack")
+				rcc.waitForStatefulSetToBeUpdated(cc, dcRackName, err)
 				// Wait until isStatefulSetNotReady(storedStatefulSet) is true ?
 				// Wait until hasNoPodDisruption is false ?
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-					"dc-rack": dcRackName}).Debug("CYRIL Sleep 10 seconds for the statefulset to start being updated")
-				time.Sleep( time.Second * 10)
+				//logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+				//	"dc-rack": dcRackName}).Debug("CYRIL Sleep 10 seconds for the statefulset to start being updated")
+				//time.Sleep( time.Second * 10)
 				return nil
 				//return fmt.Errorf("Fake error to wait")
 			}
@@ -575,6 +573,34 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 	}
 
 	return nil
+}
+
+func (rcc *ReconcileCassandraCluster) waitForStatefulSetToBeUpdated(cc *api.CassandraCluster, dcRackName string,
+	err error) {
+	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+		"dc-rack": dcRackName}).Debug("Statefulset is getting updated " +
+		"we break ReconcileRack")
+
+	DisruptionMonitorChannel := make(chan string)
+	go func(ch chan string) {
+		pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
+		for {
+			time.Sleep(time.Second)
+			if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(pdbEnvelope.Namespace,
+				pdbEnvelope.Name); err == nil && !rcc.hasNoPodDisruption() {
+				ch <- "Stop waiting"
+			}
+		}
+	}(DisruptionMonitorChannel)
+
+	select {
+	case <-DisruptionMonitorChannel:
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName}).Debug("Statefulset is being updated")
+	case <-time.After(time.Second * 10):
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName}).Debug("Timeout for Statefulset to start being updated expired")
+	}
 }
 
 // UpdateCassandraClusterStatusPhase sets the Cluster Phase according to StatefulSet Status.

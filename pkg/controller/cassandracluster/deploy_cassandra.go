@@ -17,8 +17,8 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
-
 	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 
@@ -71,15 +71,18 @@ func (rcc *ReconcileCassandraCluster) ensureCassandraServiceMonitoring(cc *api.C
 // ensureCassandraPodDisruptionBudget generate and apply the PodDisruptionBudget
 // take dcName to accordingly named the pdb, and target the pods
 func (rcc *ReconcileCassandraCluster) ensureCassandraPodDisruptionBudget(cc *api.CassandraCluster) error {
-	labels := k8s.LabelsForCassandra(cc)
-
-	pdb := generatePodDisruptionBudget(cc.Name, cc.Namespace, labels, k8s.AsOwner(cc),
-		intstr.FromInt(int(cc.Spec.MaxPodUnavailable)))
+	pdb := rcc.podDisruptionBudgetEnvelope(cc)
 	err := rcc.CreateOrUpdatePodDisruptionBudget(pdb)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		logrus.Errorf("CreateOrUpdatePodDisruptionBudget Error: %v", err)
 	}
 	return err
+}
+
+func (rcc *ReconcileCassandraCluster) podDisruptionBudgetEnvelope(cc *api.CassandraCluster) *policyv1beta1.PodDisruptionBudget {
+	labels := k8s.LabelsForCassandra(cc)
+	return generatePodDisruptionBudget(cc.Name, cc.Namespace, labels, k8s.AsOwner(cc),
+		intstr.FromInt(int(cc.Spec.MaxPodUnavailable)))
 }
 
 // ensureCassandraStatefulSet generate and apply the statefulset
