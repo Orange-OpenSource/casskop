@@ -767,7 +767,7 @@ type CassandraClusterSpec struct {
 	// no action will be performed based on restart count.
 	RestartCountBeforePodDeletion int32 `json:"restartCountBeforePodDeletion,omitempty"`
 
-	// Very special Flag to hack CassKop reconcile loop - use with really good Care
+	// Very special Flag to hack CassKop reconcile loop - use with really good care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
 	// Define the Capacity for Persistent Volume Claims in the local storage

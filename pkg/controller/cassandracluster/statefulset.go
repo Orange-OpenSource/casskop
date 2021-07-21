@@ -186,6 +186,19 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 //CreateOrUpdateStatefulSet Create statefulset if not found, or update it
 func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
+	// if there is an existing pod disruptions
+	// Or if we are not scaling Down the current statefulset
+	if !rcc.hasNoPodDisruption() {
+		if rcc.cc.Spec.UnlockNextOperation {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
+				"Cluster has a disruption but we have unlock the next operation")
+		} else {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
+				"Cluster has a disruption, waiting before applying any potential changes to statefulset")
+			return api.ContinueResyncLoop, nil
+		}
+	}
+
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var err error
 	now := metav1.Now()
@@ -197,20 +210,6 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 			return api.BreakResyncLoop, rcc.CreateStatefulSet(statefulSet)
 		}
 		return api.ContinueResyncLoop, err
-	}
-
-	//We will not Update the Statefulset
-	// if there is an existing pod disruptions
-	// Or if we are not scaling Down the current statefulset
-	if !rcc.hasNoPodDisruption() {
-		if rcc.cc.Spec.UnlockNextOperation {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
-				"Cluster has a disruption but we have unlock the next operation")
-		} else {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
-				"Cluster has a disruption, waiting before applying any changes to statefulset")
-			return api.ContinueResyncLoop, nil
-		}
 	}
 
 	// Already exists, need to Update.

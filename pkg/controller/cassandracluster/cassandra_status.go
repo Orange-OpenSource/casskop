@@ -134,7 +134,7 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 			return nil
 		}
 
-		if UpdateStatusIfStatefulSetChanged(cc, dcRackName, storedStatefulSet, status) {
+		if UpdateStatusIfStatefulSetChanged(dcRackName, storedStatefulSet, status) {
 			return nil
 		}
 	} else {
@@ -325,14 +325,14 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 }
 
 // UpdateStatusIfStatefulSetChanged detects if there is a change in the statefulset which was not already caught
-// If we detect a Statefulset change with this method, then the operator won't catch it before the statefulset tells the operator
-// that a change is ongoing.
-// That mean that all statefulsets may do their rolling upgrade in parallel, so there will be <nbRacks> node down in // in the cluster.
-func UpdateStatusIfStatefulSetChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
-	// If We come Here, We have not detected any change with out specific tests
+// If we detect a Statefulset change with this method, then the operator won't catch it before the statefulset tells
+// the operator that a change is ongoing. That means that all statefulsets may do their rolling upgrade in parallel, so
+// there will be <nbRacks> node down in // in the cluster.
+func UpdateStatusIfStatefulSetChanged(dcRackName string, storedStatefulSet *appsv1.StatefulSet,
+	status *api.CassandraClusterStatus) bool {
+	// We have not detected any change with out specific tests
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	if storedStatefulSet.Status.CurrentRevision != storedStatefulSet.Status.UpdateRevision {
-
 		lastAction.Name = api.ActionUpdateStatefulSet.Name
 		lastAction.Status = api.StatusOngoing
 		now := metav1.Now()
@@ -444,7 +444,6 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 
 		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 
-		//Do we have reach requested number of replicas ?
 		if isStatefulSetNotReady(storedStatefulSet) {
 			logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas count is not okay")
 			return
