@@ -270,7 +270,7 @@ func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
 }
 
 // GetDCRackName compute dcName + RackName to be used in statefulsets, services..
-// it return empty if the name don't match with kubernetes domain name validation regexp
+// it returns empty if the name don't match with kubernetes domain name validation regexp
 func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string {
 	dcRackName := dcName + "-" + rackName
 	if regexDCRackName.MatchString(dcRackName) {
@@ -281,7 +281,7 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 	return ""
 }
 
-//GetDCFromDCRackName send dc name from dcRackName (dc-rack)
+//GetDCNameFromDCRackName send dc name from dcRackName (dc-rack)
 func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
 	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	return dc
@@ -309,9 +309,9 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 	}
 }
 
-// InitCassandraRack Initialisation of a CassandraRack Structure which is appended to the CRD status
+// InitCassandraRackStatus Initialisation of a CassandraRack Structure which is appended to the CRD status
 // In this method we create it in status var instead of directly in cc object
-// This is because except for init the cc, ca always work with a separate status which updates the cc
+// This is because except for init the cc, can always work with a separate status which updates the cc
 // in a defer statement in Reconcile method
 func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	cc.setInitRackStatus(status, dcName, rackName)
