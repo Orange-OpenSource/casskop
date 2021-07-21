@@ -183,7 +183,7 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	return true
 }
 
-//CreateOrUpdateStatefulSet Create statefulset if not existing, or update it if existing.
+//CreateOrUpdateStatefulSet Create statefulset if not found, or update it
 func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
 	dcRackStatus := status.CassandraRackStatus[dcRackName]

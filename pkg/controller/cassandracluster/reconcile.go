@@ -537,7 +537,10 @@ func (rcc *ReconcileCassandraCluster) ReconcileRack(cc *api.CassandraCluster,
 				needUpdate = true
 			}
 			if breakLoop {
-				rcc.waitForStatefulSetToBeUpdated(cc, dcRackName, err)
+				if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
+					status.LastClusterActionStatus == api.StatusConfiguring {
+					rcc.waitForStatefulSetToBeUpdated(cc, dcRackName, err)
+				}
 				return nil
 			}
 
@@ -574,28 +577,27 @@ func (rcc *ReconcileCassandraCluster) waitForStatefulSetToBeUpdated(cc *api.Cass
 	logrus.WithFields(logrus.Fields{
 		"cluster": cc.Name, "dc-rack": dcRackName,
 	}).Debug("Statefulset is getting updated we break ReconcileRack")
-	time.Sleep(time.Second * 10)
 
-	//DisruptionMonitorChannel := make(chan string)
-	//go func(ch chan string) {
-	//	pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
-	//	for {
-	//		time.Sleep(time.Millisecond * 500)
-	//		if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(pdbEnvelope.Namespace,
-	//			pdbEnvelope.Name); err == nil && !rcc.hasNoPodDisruption() {
-	//			ch <- "Stop waiting"
-	//		}
-	//	}
-	//}(DisruptionMonitorChannel)
-	//
-	//select {
-	//case <-DisruptionMonitorChannel:
-	//	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-	//		"dc-rack": dcRackName}).Debug("Statefulset is being updated")
-	//case <-time.After(time.Second * 10):
-	//	logrus.WithFields(logrus.Fields{"cluster": cc.Name,
-	//		"dc-rack": dcRackName}).Debug("Timeout for Statefulset to start being updated expired")
-	//}
+	DisruptionMonitorChannel := make(chan string)
+	go func(ch chan string) {
+		pdbEnvelope := rcc.podDisruptionBudgetEnvelope(cc)
+		for {
+			time.Sleep(time.Millisecond * 500)
+			if rcc.storedPdb, err = rcc.GetPodDisruptionBudget(pdbEnvelope.Namespace,
+				pdbEnvelope.Name); err == nil && !rcc.hasNoPodDisruption() {
+				ch <- "Stop waiting"
+			}
+		}
+	}(DisruptionMonitorChannel)
+
+	select {
+	case <-DisruptionMonitorChannel:
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName}).Debug("Statefulset is being updated")
+	case <-time.After(time.Second * 10):
+		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
+			"dc-rack": dcRackName}).Debug("Timeout for Statefulset to start being updated expired")
+	}
 }
 
 // UpdateCassandraClusterStatusPhase sets the Cluster Phase according to StatefulSet Status.
