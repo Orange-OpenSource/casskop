@@ -6,7 +6,6 @@ spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:3.11.9
   dataCapacity: "256Mi"
-  hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
   autoUpdateSeedList: true
