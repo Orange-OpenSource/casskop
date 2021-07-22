@@ -84,6 +84,10 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2(t *testing.T) {
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
+	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
+
 	//Flip with AutoUpdateSeedList= true -> update status
 	if err := FlipCassandraClusterUpdateSeedListStatus(cc, status); err != nil {
 		assert.Fail(err.Error())
@@ -158,6 +162,9 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
 
+	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+
 	//Flip with AutoUpdateSeedList= true -> update status
 	if err := FlipCassandraClusterUpdateSeedListStatus(cc, status); err != nil {
 		assert.Fail(err.Error())
@@ -165,8 +172,7 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDC2ManualSeedList(t *testi
 
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack1"].CassandraLastAction.Status)
 	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc1-rack2"].CassandraLastAction.Status)
-	assert.Equal(api.StatusToDo, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
-
+	assert.Equal(api.StatusConfiguring, status.CassandraRackStatus["dc2-rack1"].CassandraLastAction.Status)
 }
 
 func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
@@ -214,6 +220,10 @@ func TestFlipCassandraClusterUpdateSeedListStatusscaleDC1(t *testing.T) {
 
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
+
+	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	if err := FlipCassandraClusterUpdateSeedListStatus(cc, status); err != nil {
@@ -276,6 +286,10 @@ func TestFlipCassandraClusterUpdateSeedListStatusScaleDown(t *testing.T) {
 
 	//UpdateClusterStatus
 	UpdateCassandraClusterStatusPhase(cc, status)
+
+	status.CassandraRackStatus["dc1-rack1"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc1-rack2"].Phase = api.ClusterPhaseRunning.Name
+	status.CassandraRackStatus["dc2-rack1"].Phase = api.ClusterPhaseRunning.Name
 
 	//Flip with AutoUpdateSeedList= true -> update status
 	if err := FlipCassandraClusterUpdateSeedListStatus(cc, status); err != nil {
