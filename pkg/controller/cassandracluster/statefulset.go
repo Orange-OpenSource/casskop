@@ -224,7 +224,8 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		"CassandraLastAction.Status": dcRackStatus.CassandraLastAction.Status}).Info("DEBUG CYRIL")
 
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
+		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
+			dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
 		dcRackStatus.CassandraLastAction.StartTime = &now
