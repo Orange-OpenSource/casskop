@@ -12,4 +12,3 @@ spec:
       - name: dc2
         rack:
           - name: rack1
-          - name: rack2
