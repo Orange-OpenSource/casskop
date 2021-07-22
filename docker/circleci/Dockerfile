@@ -1,5 +1,5 @@
 #https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/golang/images/1.12.4/Dockerfile
-FROM golang:1.14
+FROM golang:1.16
 
 # Make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90circleci \
@@ -64,6 +64,7 @@ RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTAL
 RUN curl -sSL https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4/gotestsum_0.3.4_linux_amd64.tar.gz | \
   tar -xz -C /usr/local/bin gotestsum
 RUN go get -u golang.org/x/lint/golint
+RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
 
 # Install kubectl cli
 RUN curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl  \
@@ -77,19 +78,9 @@ RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-am
 
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION
-RUN mkdir -p $GOPATH/src/github.com/operator-framework \
-    && mkdir -p $GOPATH/src/github.com/erdrix \
-##    && go get -u github.com/operator-framework/operator-sdk || true \
-    && go get -d github.com/erdrix/operator-sdk || true \
-    && mv $GOPATH/src/github.com/erdrix/operator-sdk $GOPATH/src/github.com/operator-framework/operator-sdk \
-    && cd $GOPATH/src/github.com/operator-framework/operator-sdk \
-    && git checkout $OPERATOR_SDK_VERSION \
-    && make tidy \
-    && make install \
-    && make clean && rm -rf vendor && rm -rf .git \
-    && go clean \
-    && rm -rf /root/.cache \
-    && rm -rf /go/pkg/dep/sources/
+RUN curl -sSL https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu -o /usr/local/bin/operator-sdk \
+    && chmod +x /usr/local/bin/operator-sdk
+
 
 WORKDIR /go/casskop
 

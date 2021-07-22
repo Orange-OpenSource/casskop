@@ -16,6 +16,10 @@ spec:
       openAPIV3Schema:
         description: CassandraRestore is a Casskop Operator resource that represents
           the restoration of a backup of a Cassandra cluster
+        type: object
+        required:
+        - metadata
+        - spec
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -32,6 +36,10 @@ spec:
           spec:
             description: CassandraRestoreSpec defines the specification for a restore
               of a Cassandra backup.
+            type: object
+            required:
+            - cassandraBackup
+            - cassandraCluster
             properties:
               cassandraBackup:
                 description: Name of the CassandraBackup to restore
@@ -46,8 +54,8 @@ spec:
               concurrentConnection:
                 description: Maximum number of threads used to download files from
                   the cloud. Defaults to 10
-                format: int32
                 type: integer
+                format: int32
               datacenter:
                 description: Cassandra DC name to restore, used to find the cassandra
                   nodes in the CassandraCluster
@@ -72,9 +80,9 @@ spec:
                   been restored during CLEANUP phase. Defaults to false
                 type: boolean
               rename:
+                type: object
                 additionalProperties:
                   type: string
-                type: object
               schemaVersion:
                 description: Version of the schema to restore from. Upon backup, a
                   schema version is automatically appended to a snapshot name and
@@ -90,18 +98,20 @@ spec:
               secret:
                 description: Name of Secret to use when accessing cloud storage providers
                 type: string
-            required:
-            - cassandraBackup
-            - cassandraCluster
-            type: object
           status:
+            type: object
             properties:
               condition:
                 description: BackRestCondition describes the observed state of a Restore
                   at a certain point
+                type: object
+                required:
+                - type
                 properties:
                   failureCause:
+                    type: array
                     items:
+                      type: object
                       properties:
                         message:
                           description: message explaining the error
@@ -109,15 +119,10 @@ spec:
                         source:
                           description: hostame of a node where this error has occurred
                           type: string
-                      type: object
-                    type: array
                   lastTransitionTime:
                     type: string
                   type:
                     type: string
-                required:
-                - type
-                type: object
               coordinatorMember:
                 description: Name of the pod the restore operation is executed on
                 type: string
@@ -138,10 +143,5 @@ spec:
                 type: string
               timeStarted:
                 type: string
-            type: object
-        required:
-        - metadata
-        - spec
-        type: object
     served: true
     storage: true
