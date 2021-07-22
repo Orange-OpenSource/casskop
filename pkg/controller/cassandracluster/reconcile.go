@@ -17,7 +17,6 @@ package cassandracluster
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -187,7 +186,7 @@ func (rcc *ReconcileCassandraCluster) CheckNonAllowedChanges(cc *api.CassandraCl
 		return true
 	}
 
-	if needUpdate = rcc.CheckNonAllowedScaleDown(cc, status, &oldCRD); needUpdate {
+	if needUpdate = rcc.CheckNonAllowedScaleDown(cc, &oldCRD); needUpdate {
 		status.LastClusterAction = api.ActionCorrectCRDConfig.Name
 		ClusterActionMetric.set(api.ActionCorrectCRDConfig, cc.Name)
 		return true
@@ -340,14 +339,14 @@ func CheckTopologyChanges(rcc *ReconcileCassandraCluster, cc *api.CassandraClust
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Warningf("Removing DC %s", dcName)
 
 		//We apply this change to the Cluster status
-		return rcc.deleteDCObjects(cc, status, oldCRD)
+		return rcc.deleteDCObjects(cc, status)
 	}
 
 	return false, ""
 }
 
 func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
-	status *api.CassandraClusterStatus, oldCRD *api.CassandraCluster) (bool, string) {
+	status *api.CassandraClusterStatus) (bool, string) {
 
 	dcRackNameToDeleteList := cc.FixCassandraRackList(status)
 
@@ -383,7 +382,6 @@ func (rcc *ReconcileCassandraCluster) deleteDCObjects(cc *api.CassandraCluster,
 //CheckNonAllowedScaleDown goal is to discard the scaleDown to 0 is there is still replicated data towards the
 // corresponding DC
 func (rcc *ReconcileCassandraCluster) CheckNonAllowedScaleDown(cc *api.CassandraCluster,
-	status *api.CassandraClusterStatus,
 	oldCRD *api.CassandraCluster) bool {
 
 	if ok, dcName, dc := cc.FindDCWithNodesTo0(); ok {
@@ -610,8 +608,9 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 			dcRackName := cc.GetDCRackName(dcName, rackName)
 			dcRackStatus, exist := status.CassandraRackStatus[dcRackName]
 			if !exist {
-				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof("the DC(%s) and Rack(%s) does not exist, "+
-					"the rack status will be updated in next reconcile", dcName, rackName)
+				logrus.WithFields(logrus.Fields{"cluster": cc.Name}).Infof(
+					"the DC(%s) and Rack(%s) does not exist, the rack status will be updated in next reconcile",
+					dcName, rackName)
 				continue
 			}
 
@@ -665,12 +664,11 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 //It then sets UpdateSeedList to Ongoing to start the operation
 func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) error {
 
-	//if global status is not yet  "Configuring", we skip this one
+	//if global status is not yet Configuring, we skip this one
 	if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
 		status.LastClusterActionStatus == api.StatusConfiguring {
-		var setOperationOngoing = true
+		var setOperationToDo = true
 
-		logrus.Info("LOOP 1: start")
 		//All racks must be configuring the seed list or in initializing mode
 		for dc := 0; dc < cc.GetDCSize(); dc++ {
 			dcName := cc.GetDCName(dc)
@@ -679,30 +677,18 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 				dcRackName := cc.GetDCRackName(dcName, rackName)
 				dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-				if dcRackStatus == nil {
-					// TODO continue instead
-					logrus.WithFields(logrus.Fields{
-						"cluster": cc.Name, "dc-rack": dcRackName,
-					}).Infof("LOOP 1: Rack Status is nil, returns an error for now")
-					logrus.Infof("Topology: +%v", cc.Spec.Topology)
-					return errors.New("DC Rack Status empty")
-				}
-
 				if !(dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 					dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
 					if dcRackStatus.CassandraLastAction.Name != api.ClusterPhaseInitial.Name {
-						setOperationOngoing = false
+						setOperationToDo = false
 					}
 					break
 				}
 			}
 		}
 
-		logrus.Info("LOOP 1: done")
-		logrus.Info("LOOP 2: start")
-
 		//If all racks are in "configuring" state, we update the status to trigger the operator actions
-		if setOperationOngoing {
+		if setOperationToDo {
 			for dc := 0; dc < cc.GetDCSize(); dc++ {
 				dcName := cc.GetDCName(dc)
 				for rack := 0; rack < cc.GetRackSize(dc); rack++ {
@@ -710,13 +696,8 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 					dcRackName := cc.GetDCRackName(dcName, rackName)
 					dcRackStatus := status.CassandraRackStatus[dcRackName]
 
-					if dcRackStatus == nil {
-						// TODO continue instead
-						logrus.WithFields(logrus.Fields{
-							"cluster": cc.Name, "dc-rack": dcRackName,
-						}).Infof("LOOP 2: Rack Status is nil, returns an error for now")
-						logrus.Infof("Topology: +%v", cc.Spec.Topology)
-						//return errors.New("DC Rack Status empty")
+					if dcRackStatus.Phase == api.ClusterPhaseInitial.Name {
+						continue
 					}
 
 					logrus.WithFields(logrus.Fields{
@@ -728,7 +709,6 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 				}
 			}
 		}
-		logrus.Info("LOOP 2: done")
 	}
 	return nil
 }

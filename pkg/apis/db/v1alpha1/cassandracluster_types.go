@@ -319,7 +319,7 @@ func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStat
 
 func (cc *CassandraCluster) setInitRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var rackStatus CassandraRackStatus = CassandraRackStatus{
+	rackStatus := CassandraRackStatus{
 		Phase: ClusterPhaseInitial.Name,
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
@@ -327,7 +327,6 @@ func (cc *CassandraCluster) setInitRackStatus(status *CassandraClusterStatus, dc
 		},
 	}
 
-	//The key of each CassandraRackStatus is the name of "<dcName>-<rackName>"
 	status.CassandraRackStatus[dcRackName] = &rackStatus
 }
 
