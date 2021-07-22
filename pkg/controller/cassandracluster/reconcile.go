@@ -618,10 +618,6 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 			if dcRackStatus.CassandraLastAction.Status != api.StatusDone {
 				status.LastClusterActionStatus = dcRackStatus.CassandraLastAction.Status
 				status.LastClusterAction = dcRackStatus.CassandraLastAction.Name
-				logrus.WithFields(logrus.Fields{
-					"cluster": cc.Name, "dc-rack": dcRackName, "LastClusterAction": status.LastClusterAction,
-					"LastClusterActionStatus": status.LastClusterActionStatus,
-				}).Info("CYRIL SET")
 				setLastClusterActionStatus = true
 			}
 

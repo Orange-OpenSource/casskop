@@ -191,7 +191,7 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	if !rcc.hasNoPodDisruption() {
 		if rcc.cc.Spec.UnlockNextOperation {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
-				"Cluster has a disruption but we have unlock the next operation")
+				"Cluster has a disruption but we are authorized to unlock the next operation")
 		} else {
 			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
 				"Cluster has a disruption, waiting before applying any potential changes to statefulset")
@@ -219,10 +219,6 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
 	//and change the status to Finalizing (it starts a RollingUpdate)
-	logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName,
-		"CassandraLastAction.Name": dcRackStatus.CassandraLastAction.Name,
-		"CassandraLastAction.Status": dcRackStatus.CassandraLastAction.Status}).Info("DEBUG CYRIL")
-
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
 			dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
@@ -236,9 +232,9 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		oldBootstrapContainer := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
 		for i, env := range bootstrapContainer.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
-				for _, oldenv := range oldBootstrapContainer.Env {
-					if oldenv.Name == "CASSANDRA_SEEDS" && env.Value != oldenv.Value {
-						bootstrapContainer.Env[i].Value = oldenv.Value
+				for _, oldEnv := range oldBootstrapContainer.Env {
+					if oldEnv.Name == "CASSANDRA_SEEDS" && env.Value != oldEnv.Value {
+						bootstrapContainer.Env[i].Value = oldEnv.Value
 					}
 				}
 			}
