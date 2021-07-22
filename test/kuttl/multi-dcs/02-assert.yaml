@@ -3,4 +3,4 @@ kind: TestAssert
 timeout: 5
 commands:
   - script: |
-      kubectl describe pod -l app=cassandra-operator|awk '/Restart/ {if($NF!=1){exit -1}}'
+      kubectl describe pod -l app=cassandra-operator|awk '/Restart/ {if($NF){exit -1}}'
