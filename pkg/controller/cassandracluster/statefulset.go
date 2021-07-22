@@ -219,22 +219,25 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
 	//and change the status to Finalizing (it starts a RollingUpdate)
+	logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName,
+		"CassandraLastAction.Name": dcRackStatus.CassandraLastAction.Name,
+		"CassandraLastAction.Status": dcRackStatus.CassandraLastAction.Status}).Info("DEBUG CYRIL")
+
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
 		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
 		dcRackStatus.CassandraLastAction.StartTime = &now
 	} else {
-
 		//We need to keep the SeedList from the stored statefulset
 		//we retrieve it in the Env CASSANDRA_SEEDS of the bootstrap container
-		ic := getBootstrapContainerFromStatefulset(statefulSet)
-		oldIc := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
-		for i, env := range ic.Env {
+		bootstrapContainer := getBootstrapContainerFromStatefulset(statefulSet)
+		oldBootstrapContainer := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
+		for i, env := range bootstrapContainer.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
-				for _, oldenv := range oldIc.Env {
+				for _, oldenv := range oldBootstrapContainer.Env {
 					if oldenv.Name == "CASSANDRA_SEEDS" && env.Value != oldenv.Value {
-						ic.Env[i].Value = oldenv.Value
+						bootstrapContainer.Env[i].Value = oldenv.Value
 					}
 				}
 			}
