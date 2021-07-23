@@ -314,10 +314,6 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 // because except for init the cc can always work with a separate status which updates the cc
 // in a defer statement in Reconcile method
 func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
-	cc.setInitRackStatus(status, dcName, rackName)
-}
-
-func (cc *CassandraCluster) setInitRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
 	rackStatus := CassandraRackStatus{
 		Phase: ClusterPhaseInitial.Name,
