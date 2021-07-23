@@ -658,7 +658,7 @@ func UpdateCassandraClusterStatusPhase(cc *api.CassandraCluster, status *api.Cas
 
 //FlipCassandraClusterUpdateSeedListStatus checks if all racks has the status UpdateSeedList=To-do
 //It then sets UpdateSeedList to Ongoing to start the operation
-func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) error {
+func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *api.CassandraClusterStatus) {
 
 	//if global status is not yet Configuring, we skip this one
 	if status.LastClusterAction == api.ActionUpdateSeedList.Name &&
@@ -706,7 +706,6 @@ func FlipCassandraClusterUpdateSeedListStatus(cc *api.CassandraCluster, status *
 			}
 		}
 	}
-	return nil
 }
 
 func (rcc *ReconcileCassandraCluster) CheckPodsState(cc *api.CassandraCluster,

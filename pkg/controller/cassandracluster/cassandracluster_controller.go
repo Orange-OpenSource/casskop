@@ -147,9 +147,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	}
 
 	//Do we need to UpdateSeedList
-	if err = FlipCassandraClusterUpdateSeedListStatus(cc, status); err != nil {
-		return requeue5, err
-	}
+	FlipCassandraClusterUpdateSeedListStatus(cc, status)
 
 	UpdateCassandraClusterStatusPhase(cc, status)
 
