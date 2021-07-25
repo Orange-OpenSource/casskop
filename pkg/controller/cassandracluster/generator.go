@@ -366,7 +366,7 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 					InitContainers: []v1.Container{
 						createBaseConfigBuilderContainer(cc),
 						createInitConfigContainer(cc, status, dcRackName),
-						createCassandraBootstrapContainer(cc, status, dcRackName),
+						createCassandraBootstrapContainer(cc, status),
 					},
 
 					Containers:                    containers,
@@ -800,8 +800,7 @@ func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
 
 // createCassandraBootstrapContainer will copy jar from bootstrap image to /extra-lib/ directory.
 // configure /etc/cassandra with Env var and with userConfigMap (if enabled) by running the run.sh script
-func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
-	dcRackName string) v1.Container {
+func createCassandraBootstrapContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus) v1.Container {
 	volumeMounts := generateContainerVolumeMount(cc, bootstrapContainer)
 
 	return v1.Container{

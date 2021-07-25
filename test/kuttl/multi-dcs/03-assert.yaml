@@ -9,15 +9,24 @@ status:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  name: cassandra-e2e-dc1-rack2
+status:
+  currentReplicas: 1
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
   name: cassandra-e2e-dc2-rack1
 status:
-  replicas: 0
+  currentReplicas: 1
+  replicas: 1
 ---
 apiVersion: db.orange.com/v1alpha1
 kind: CassandraCluster
 metadata:
   name: cassandra-e2e
 status:
-  lastClusterAction: ScaleDown
+  lastClusterAction: CorrectCRDConfig
   lastClusterActionStatus: Done
   phase: Running

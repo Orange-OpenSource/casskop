@@ -9,7 +9,7 @@ spec:
   template:
     spec:
       containers:
-        - image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11
+        - image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11.9
           imagePullPolicy: Always
           name: cassandra
           ports:
@@ -51,7 +51,7 @@ spec:
             - sh
             - -c
             - cp -vr /etc/cassandra/* /bootstrap
-          image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11
+          image: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image:3.11.9
           imagePullPolicy: Always
           name: init-config
           resources:
@@ -73,7 +73,7 @@ spec:
             - name: CASSANDRA_MAX_HEAP
               value: 1024M
             - name: CASSANDRA_SEEDS
-              value: cassandra-demo-dc1-rack1-0.cassandra-demo.ns cassandra-demo-dc1-rack2-0.cassandra-demo.ns cassandra-demo-dc2-rack1-0.cassandra-demo.ns cassandra-demo-dc2-rack1-1.cassandra-demo.ns
+              value: cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc2-rack1-0.cassandra-demo.ns
             - name: CASSANDRA_CLUSTER_NAME
               value: cassandra-demo
             - name: POD_IP

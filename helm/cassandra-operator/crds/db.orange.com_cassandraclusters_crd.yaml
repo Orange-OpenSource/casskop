@@ -1169,7 +1169,7 @@ spec:
                       type: array
                   type: object
                 unlockNextOperation:
-                  description: Very special Flag to hack CassKop reconcile loop - use with really good Care
+                  description: Very special Flag to hack CassKop reconcile loop - use with really good care
                   type: boolean
               type: object
               x-kubernetes-preserve-unknown-fields: true

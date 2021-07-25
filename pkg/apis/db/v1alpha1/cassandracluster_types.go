@@ -270,7 +270,7 @@ func (cc *CassandraCluster) GetRackName(dc int, rack int) string {
 }
 
 // GetDCRackName compute dcName + RackName to be used in statefulsets, services..
-// it return empty if the name don't match with kubernetes domain name validation regexp
+// it returns empty if the name don't match with kubernetes domain name validation regexp
 func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string {
 	dcRackName := dcName + "-" + rackName
 	if regexDCRackName.MatchString(dcRackName) {
@@ -281,7 +281,7 @@ func (cc *CassandraCluster) GetDCRackName(dcName string, rackName string) string
 	return ""
 }
 
-//GetDCFromDCRackName send dc name from dcRackName (dc-rack)
+//GetDCNameFromDCRackName send dc name from dcRackName (dc-rack)
 func (cc *CassandraCluster) GetDCNameFromDCRackName(dcRackName string) string {
 	dc, _ := cc.GetDCNameAndRackNameFromDCRackName(dcRackName)
 	return dc
@@ -309,28 +309,13 @@ func (cc *CassandraCluster) initTopology(dcName string, rackName string) {
 	}
 }
 
-// InitCassandraRack Initialisation of a CassandraRack Structure which is appended to the CRD status
-func (cc *CassandraCluster) initCassandraRack(dcName string, rackName string) {
-	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var rackStatus = CassandraRackStatus{
-		Phase: ClusterPhaseInitial.Name,
-		CassandraLastAction: CassandraLastAction{
-			Name:   ClusterPhaseInitial.Name,
-			Status: StatusOngoing,
-		},
-	}
-
-	//The key of each CassandraRackStatus is the name of "<dcName>-<rackName>"
-	cc.Status.CassandraRackStatus[dcRackName] = &rackStatus
-}
-
-// InitCassandraRack Initialisation of a CassandraRack Structure which is appended to the CRD status
+// InitCassandraRackStatus Initializes a CassandraRack Structure
 // In this method we create it in status var instead of directly in cc object
-// This is because except for init the cc, ca always work with a separate status which updates the cc
+// because except for init the cc can always work with a separate status which updates the cc
 // in a defer statement in Reconcile method
-func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterStatus, dcName string, rackName string) {
+func (cc *CassandraCluster) InitCassandraRackStatus(status *CassandraClusterStatus, dcName string, rackName string) {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	var rackStatus CassandraRackStatus = CassandraRackStatus{
+	rackStatus := CassandraRackStatus{
 		Phase: ClusterPhaseInitial.Name,
 		CassandraLastAction: CassandraLastAction{
 			Name:   ClusterPhaseInitial.Name,
@@ -338,7 +323,6 @@ func (cc *CassandraCluster) InitCassandraRackinStatus(status *CassandraClusterSt
 		},
 	}
 
-	//The key of each CassandraRackStatus is the name of "<dcName>-<rackName>"
 	status.CassandraRackStatus[dcRackName] = &rackStatus
 }
 
@@ -360,42 +344,42 @@ func (cc *CassandraCluster) InitSeedList() []string {
 		for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 			cc.addNewSeed(&seedList, dcName, rackName, indice)
 		}
-	} else {
-		for dc := 0; dc < dcsize; dc++ {
+		return seedList
+	}
+	for dc := 0; dc < dcsize; dc++ {
 			dcName = cc.GetDCName(dc)
 			var nbSeedInDC int = 0
-
 			racksize := cc.GetRackSize(dc)
+
 			if racksize < 1 {
 				rackName = DefaultCassandraRack
 				nbRack++
 				for indice = 0; indice < cc.Spec.NodesPerRacks && indice < 3; indice++ {
 					cc.addNewSeed(&seedList, dcName, rackName, indice)
 				}
-			} else {
-				for rack := 0; rack < racksize; rack++ {
-					rackName = cc.GetRackName(dc, rack)
-					dcRackName := cc.GetDCRackName(dcName, rackName)
-					nbRack++
-					nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
+				continue
+			}
+			for rack := 0; rack < racksize; rack++ {
+				rackName = cc.GetRackName(dc, rack)
+				dcRackName := cc.GetDCRackName(dcName, rackName)
+				nbRack++
+				nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 
-					switch racksize {
-					case 1, 2:
-						for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
-							nbSeedInDC < 3; indice++ {
-							cc.addNewSeed(&seedList, dcName, rackName, indice)
-							nbSeedInDC++
-						}
-					default:
-						if nbSeedInDC < 3 {
-							cc.addNewSeed(&seedList, dcName, rackName, 0)
-							nbSeedInDC++
-						}
+				switch racksize {
+				case 1, 2:
+					for indice = 0; indice < nodesPerRacks && indice < int32(4 - racksize) &&
+						nbSeedInDC < 3; indice++ {
+						cc.addNewSeed(&seedList, dcName, rackName, indice)
+						nbSeedInDC++
+					}
+				default:
+					if nbSeedInDC < 3 {
+						cc.addNewSeed(&seedList, dcName, rackName, 0)
+						nbSeedInDC++
 					}
 				}
 			}
 		}
-	}
 	return seedList
 }
 
@@ -463,7 +447,7 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 		dcName = DefaultCassandraDC
 		rackName = DefaultCassandraRack
 		nbRack++
-		cc.initCassandraRack(dcName, rackName)
+		cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 		cc.initTopology(dcName, rackName)
 	} else {
 		for dc := 0; dc < dcsize; dc++ {
@@ -472,13 +456,13 @@ func (cc *CassandraCluster) InitCassandraRackList() int {
 			if racksize < 1 {
 				rackName = DefaultCassandraRack
 				nbRack++
-				cc.initCassandraRack(dcName, rackName)
+				cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 				cc.initTopology(dcName, rackName)
 			} else {
 				for rack := 0; rack < racksize; rack++ {
 					rackName = cc.GetRackName(dc, rack)
 					nbRack++
-					cc.initCassandraRack(dcName, rackName)
+					cc.InitCassandraRackStatus(&cc.Status, dcName, rackName)
 				}
 			}
 		}
@@ -767,7 +751,7 @@ type CassandraClusterSpec struct {
 	// no action will be performed based on restart count.
 	RestartCountBeforePodDeletion int32 `json:"restartCountBeforePodDeletion,omitempty"`
 
-	// Very special Flag to hack CassKop reconcile loop - use with really good Care
+	// Very special Flag to hack CassKop reconcile loop - use with really good care
 	UnlockNextOperation bool `json:"unlockNextOperation,omitempty"`
 
 	// Define the Capacity for Persistent Volume Claims in the local storage

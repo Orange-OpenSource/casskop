@@ -6,18 +6,17 @@ spec:
   nodesPerRacks: 1
   cassandraImage: cassandra:3.11.9
   dataCapacity: "256Mi"
-  hardAntiAffinity: false
   deletePVC: true
   autoPilot: true
-  autoUpdateSeedList: false
+  autoUpdateSeedList: true
   dataStorageClass: local-path
   resources:
-    requests: &requests
+    limits:
       memory: 512Mi
       cpu: 200m
-    limits: *requests
   topology:
     dc:
       - name: dc1
         rack:
           - name: rack1
+          - name: rack2
