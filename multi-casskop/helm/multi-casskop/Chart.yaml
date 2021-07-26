@@ -4,8 +4,8 @@ name: multi-casskop
 home: https://github.com/Orange-OpenSource/casskop/multi-casskop
 sources:
   - https://github.com/Orange-OpenSource/casskop/multi-casskop
-version: 1.1.4
-appVersion: 1.1.4-release
+version: 1.1.5
+appVersion: 1.1.5-release
 maintainers:
   - name: allamand
     email: sebastien.allamand@orange.com

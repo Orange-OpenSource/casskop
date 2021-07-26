@@ -1,6 +1,12 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v1.1.5
+
+- PR [#343](https://github.com/Orange-OpenSource/casskop/pull/343) - Revert "Fix #316 by labeling the cluster uid to each PVC (#322)"
+- PR [#339](https://github.com/Orange-OpenSource/casskop/pull/339) - Calculate MaxHeapSize from DC Resource or global
+
+
 ## v1.1.4
 
 - PR [#325](https://github.com/Orange-OpenSource/casskop/pull/325) - Add datacenter to Restore and take it into accoun
