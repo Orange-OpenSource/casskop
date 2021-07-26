@@ -1,6 +1,17 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.0.1
+
+- PR [#344](https://github.com/Orange-OpenSource/casskop/pull/344) - Revert "Fix #316 by labeling the cluster uid to each PVC (#322)"
+- PR [#343](https://github.com/Orange-OpenSource/casskop/pull/343) - Revert uid label
+- PR [#341](https://github.com/Orange-OpenSource/casskop/pull/341) - Document how to upgrade from v1 to v2
+- PR [#340](https://github.com/Orange-OpenSource/casskop/pull/340) - Fix operator & pods restart when scaling up DC with autoUpdateSeedList set to true
+- PR [#339](https://github.com/Orange-OpenSource/casskop/pull/339) - Calculate MaxHeapSize from DC Resource or global
+- PR [#337](https://github.com/Orange-OpenSource/casskop/pull/337) - Bump prismjs from 1.23.0 to 1.24.0 in /website
+- PR [#336](https://github.com/Orange-OpenSource/casskop/pull/336) - Bump postcss from 7.0.35 to 7.0.36 in /website
+- PR [#335](https://github.com/Orange-OpenSource/casskop/pull/335) - Scales up and down a DC in multi-dcs
+
 ## v2.0.0
 
 - PR [#331](https://github.com/Orange-OpenSource/casskop/pull/331) - Bump ws from 6.2.1 to 6.2.2 in /website
