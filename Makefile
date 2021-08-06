@@ -116,7 +116,7 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
+OPERATOR_SDK_VERSION=v0.19.4
 # workdir
 WORKDIR := /go/casskop
 
@@ -154,13 +154,35 @@ helm-package:
 	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
 	helm repo index $(HELM_TARGET_DIR)/
 
+controller-gen:
+ifeq (, $(shell which controller-gen))
+	@{ \
+	set -e ;\
+	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$CONTROLLER_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 ;\
+	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
+	}
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
+CONTROLLER_GEN=$(GOBIN)/controller-gen
+else
+CONTROLLER_GEN=$(shell which controller-gen)
+endif
+
 #@TODO : `opetator-sdk generate openapî` deprecated
 .PHONY: generate
 generate:
 	echo "Generate zzz-deepcopy objects"
 	operator-sdk version
 	operator-sdk generate k8s
-	operator-sdk generate crds
+	make controller-gen
+	$(CONTROLLER_GEN) crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
+	@rm deploy/crds/*s.yaml
 	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 
 # Build casskop executable file in local go env
@@ -186,8 +208,10 @@ docker-generate-crds:
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
+		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)  /bin/bash -c 'controller-gen crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds'
 	echo Update CRD - Remove protocol and set config type to object CRD
+	## Workaround: controller-gen updates existing and creates new generated CRDs, drop the ones that does not have _crd.yaml suffix
+	@rm deploy/crds/*s.yaml
 	@sed -i -e '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml

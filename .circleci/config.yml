@@ -86,7 +86,7 @@ orbs:
     executors:
       operator-build:
         docker:
-          - image: orangeopensource/casskop-build:v0.18.0-forked-pr317
+          - image: orangeopensource/casskop-build:v0.19.4
     # Define jobs list
     jobs:
       # Build job, which build operator docker image (with operator-sdk build)

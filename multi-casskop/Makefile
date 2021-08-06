@@ -103,7 +103,7 @@ MOCKS_CMD := go generate ./mocks
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
+OPERATOR_SDK_VERSION=v0.19.4
 # workdir
 WORKDIR := /go/casskop
 
