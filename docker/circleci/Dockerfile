@@ -67,14 +67,11 @@ RUN go get -u golang.org/x/lint/golint
 RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
 
 # Install kubectl cli
-RUN curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl  \
+RUN curl -o /usr/local/bin/kubectl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
     && chmod +x /usr/local/bin/kubectl
 
 # Install helm client
-RUN curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.2-linux-amd64.tar.gz -o helm.tar.gz \ 
-    && tar zxf helm.tar.gz \
-    && mv linux-amd64/helm /usr/local/bin \
-    && rm -rf helm.tar.gz linux-amd64 
+RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION

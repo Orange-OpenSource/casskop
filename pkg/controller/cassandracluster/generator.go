@@ -904,18 +904,6 @@ func createCassandraContainer(cc *api.CassandraCluster, status *api.CassandraClu
 			ProcMount:              func(s v1.ProcMountType) *v1.ProcMountType { return &s }(v1.DefaultProcMount),
 			ReadOnlyRootFilesystem: cc.Spec.ReadOnlyRootFilesystem,
 		},
-
-		Lifecycle: &v1.Lifecycle{
-			PreStop: &v1.Handler{
-				Exec: &v1.ExecAction{
-					Command: []string{
-						"/bin/bash",
-						"-c",
-						"/etc/cassandra/pre_stop.sh",
-					},
-				},
-			},
-		},
 		Env: commonBootstrapCassandraEnvVar(cc),
 		ReadinessProbe: &v1.Probe{
 			InitialDelaySeconds: *cc.Spec.ReadinessInitialDelaySeconds,
