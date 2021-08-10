@@ -43,17 +43,7 @@ RUN JQ_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linu
   && jq --version
 
 # Install Docker
-RUN set -ex \
-  && export DOCKER_VERSION=$(curl --silent --fail --retry 3 https://download.docker.com/linux/static/stable/x86_64/ | grep -o -e 'docker-[.0-9]*\.tgz' | sort -r | head -n 1) \
-  && DOCKER_URL="https://download.docker.com/linux/static/stable/x86_64/${DOCKER_VERSION}" \
-  && echo Docker URL: $DOCKER_URL \
-  && curl --silent --show-error --location --fail --retry 3 --output /tmp/docker.tgz "${DOCKER_URL}" \
-  && ls -lha /tmp/docker.tgz \
-  && tar -xz -C /tmp -f /tmp/docker.tgz \
-  && mv /tmp/docker/* /usr/bin \
-  && rm -rf /tmp/docker /tmp/docker.tgz \
-  && which docker \
-  && (docker version || true)
+RUN curl -fsSL https://get.docker.com|bash
 
 RUN groupadd --gid 3434 circleci \
   && useradd --uid 3434 --gid circleci --shell /bin/bash --create-home circleci \
@@ -61,13 +51,13 @@ RUN groupadd --gid 3434 circleci \
   && echo 'Defaults    env_keep += "DEBIAN_FRONTEND"' >> /etc/sudoers.d/env_keep
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY=/usr/local/bin sh
-RUN curl -sSL https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4/gotestsum_0.3.4_linux_amd64.tar.gz | \
+RUN curl -L https://github.com/gotestyourself/gotestsum/releases/download/v0.3.4/gotestsum_0.3.4_linux_amd64.tar.gz | \
   tar -xz -C /usr/local/bin gotestsum
 RUN go get -u golang.org/x/lint/golint
 RUN go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0
 
 # Install kubectl cli
-RUN curl -o /usr/local/bin/kubectl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+RUN curl -o /usr/local/bin/kubectl -L https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
 # Install helm client
@@ -75,9 +65,8 @@ RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 |
 
 # Install Operator SDK
 ARG OPERATOR_SDK_VERSION
-RUN curl -sSL https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu -o /usr/local/bin/operator-sdk \
+RUN curl -o /usr/local/bin/operator-sdk -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu \
     && chmod +x /usr/local/bin/operator-sdk
-
 
 WORKDIR /go/casskop
 
