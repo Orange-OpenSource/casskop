@@ -1,6 +1,6 @@
 module github.com/Orange-OpenSource/casskop/multi-casskop
 
-go 1.16
+go 1.17
 
 require (
 	admiralty.io/multicluster-controller v0.6.0
