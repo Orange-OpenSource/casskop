@@ -61,6 +61,7 @@ func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1bet
 	var err error
 
 	if uidStr, ok := rcc.cc.Annotations["PDB-UID"]; ok {
+		fmt.Println("Use PDB UID to do delete", uidStr)
 		uid := types.UID(uidStr)
 		err = rcc.Client.Delete(context.TODO(), pdb, &client.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}})
 	} else {
@@ -98,7 +99,9 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdatePodDisruptionBudget(pdb *pol
 	}
 
 	if *rcc.storedPdb.Spec.MaxUnavailable != *pdb.Spec.MaxUnavailable {
-		rcc.DeletePodDisruptionBudget(pdb)
+		if err := rcc.DeletePodDisruptionBudget(pdb); err != nil {
+			return err
+		}
 		//rcc.storedPdb = pdb
 		return rcc.CreatePodDisruptionBudget(pdb)
 	}
