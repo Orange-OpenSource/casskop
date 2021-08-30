@@ -51,7 +51,8 @@ func (rcc *ReconcileCassandraCluster) CreatePodDisruptionBudget(pdb *policyv1bet
 		}
 		return fmt.Errorf("failed to create cassandra PodDisruptionBudget: %cc", err)
 	}
-	rcc.cc.Annotations["PDB-UID"] = string(pdb.UID)
+	fmt.Println("Use PDB UID to do create", string(pdb.UID))
+	rcc.cc.Labels["PDB-UID"] = string(pdb.UID)
 	needUpdate = true
 	return nil
 }
@@ -60,7 +61,7 @@ func (rcc *ReconcileCassandraCluster) CreatePodDisruptionBudget(pdb *policyv1bet
 func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1beta1.PodDisruptionBudget) error {
 	var err error
 
-	if uidStr, ok := rcc.cc.Annotations["PDB-UID"]; ok {
+	if uidStr, ok := rcc.cc.Labels["PDB-UID"]; ok && uidStr != "" {
 		fmt.Println("Use PDB UID to do delete", uidStr)
 		uid := types.UID(uidStr)
 		err = rcc.Client.Delete(context.TODO(), pdb, &client.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}})
@@ -71,6 +72,8 @@ func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1bet
 	if err != nil {
 		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %cc", err)
 	}
+	rcc.cc.Labels["PDB-UID"] = ""
+	needUpdate = true
 	return nil
 }
 
