@@ -22,6 +22,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //GetPodDisruptionBudget return the PodDisruptionBudget name from the cluster in the namespace
@@ -50,12 +51,22 @@ func (rcc *ReconcileCassandraCluster) CreatePodDisruptionBudget(pdb *policyv1bet
 		}
 		return fmt.Errorf("failed to create cassandra PodDisruptionBudget: %cc", err)
 	}
+	rcc.cc.Annotations["PDB-UID"] = string(pdb.UID)
+	needUpdate = true
 	return nil
 }
 
 //DeletePodDisruptionBudget delete a new PodDisruptionBudget pdb
 func (rcc *ReconcileCassandraCluster) DeletePodDisruptionBudget(pdb *policyv1beta1.PodDisruptionBudget) error {
-	err := rcc.Client.Delete(context.TODO(), pdb)
+	var err error
+
+	if uidStr, ok := rcc.cc.Annotations["PDB-UID"]; ok {
+		uid := types.UID(uidStr)
+		err = rcc.Client.Delete(context.TODO(), pdb, &client.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}})
+	} else {
+		err = rcc.Client.Delete(context.TODO(), pdb)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to delete cassandra PodDisruptionBudget: %cc", err)
 	}
