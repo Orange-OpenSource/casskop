@@ -23,7 +23,7 @@ type CassandraBackupSpec struct {
 	// Name of the CassandraCluster to backup
 	CassandraCluster 	  string `json:"cassandraCluster"`
 	// Cassandra DC name to back up, used to find the cassandra nodes in the CassandraCluster
-	Datacenter 		 	  string `json:"datacenter"`
+	Datacenter 		 	  string `json:"datacenter,omitempty"`
 	// URI for the backup target location e.g. s3 bucket, filepath
 	StorageLocation  	  string `json:"storageLocation"`
 	// Specify a schedule to assigned to the backup. The schedule doesn't enforce anything so if you schedule multiple

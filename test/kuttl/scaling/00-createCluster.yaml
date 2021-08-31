@@ -1,0 +1,28 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:4.0-rc1
+  serverVersion: 4.0.0
+  config:
+    jvm-options:
+      initial_heap_size: 32M
+      max_heap_size: 256M
+  deletePVC: true
+  autoPilot: true
+  backRestSidecar:
+    resources:
+      limits:
+        memory: 128Mi
+        cpu: 100m
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1

@@ -49,6 +49,8 @@ func (r RestoreConditionType) IsCompleted() bool {
 type CassandraRestoreSpec struct {
 	// Name of the CassandraCluster the restore belongs to
 	CassandraCluster 		string `json:"cassandraCluster"`
+	// Cassandra DC name to restore, used to find the cassandra nodes in the CassandraCluster
+	Datacenter 		 	  string `json:"datacenter,omitempty"`
 	// Name of the CassandraBackup to restore
 	CassandraBackup 		string `json:"cassandraBackup"`
 	// Maximum number of threads used to download files from the cloud. Defaults to 10

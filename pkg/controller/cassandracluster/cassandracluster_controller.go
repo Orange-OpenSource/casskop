@@ -147,7 +147,7 @@ func (rcc *ReconcileCassandraCluster) Reconcile(request reconcile.Request) (reco
 	}
 
 	//Do we need to UpdateSeedList
-	FlipCassandraClusterUpdateSeedListStatus(cc, status)
+	EnsureSeedListIsUpdatedWhenRequired(cc, status)
 
 	UpdateCassandraClusterStatusPhase(cc, status)
 

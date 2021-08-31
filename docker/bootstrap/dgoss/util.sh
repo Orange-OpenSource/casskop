@@ -1,8 +1,38 @@
 #!/bin/bash
 
-CASSANDRA_IMAGE=cassandra:latest
-
+CASSANDRA_IMAGE=cassandra:3.11.6
+CASSANDRA_SEEDS=cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc1-rack3-0.cassandra-demo.ns
 CASSANDRA_UID=1000
+CASSANDRA_DC=dc1
+CASSANDRA_RACK=rack1
+
+CONFIG_FILE_DATA=$(cat <<-EOF
+    {
+      "cassandra-yaml": {
+        "max_hints_delivery_threads": 8,
+        "authenticator": "PasswordAuthenticator",
+        "authorizer": "CassandraAuthorizer"
+      },
+      "cluster-info": {
+        "name": "cassandra-e2e",
+        "seeds": "$CASSANDRA_SEEDS"
+      },
+      "datacenter-info": {
+        "name": "$CASSANDRA_DC"
+      },
+      "jvm-options": {
+        "cassandra_ring_delay_ms": 30000,
+        "initial_heap_size": "64M",
+        "jmx-connection-type": "remote-no-auth",
+        "max_heap_size": "256M",
+        "print_flss_statistics": true
+      },
+      "logback-xml": {
+        "debuglog-enabled": false
+      }
+    }
+EOF
+)
 
 BOOTSTRAP_VOLUME=dgoss-bootstrap-vol
 EXTRA_LIB_VOLUME=dgoss-extralib-vol
@@ -24,12 +54,21 @@ function deleteDgossVolumes {
 
 function createInitConfigContainer {
     echo "== createInitConfigContainer"
+    docker run --rm -u 0 \
+           -v ${BOOTSTRAP_VOLUME}:/bootstrap \
+           -e PRODUCT_NAME=$(echo $CASSANDRA_IMAGE|cut -d: -f1) \
+           -e PRODUCT_VERSION=$(echo $CASSANDRA_IMAGE|cut -d: -f2) \
+           -e CONFIG_FILE_DATA="$CONFIG_FILE_DATA" \
+           -e CONFIG_OUTPUT_DIRECTORY=/bootstrap \
+           -e RACK_NAME=$CASSANDRA_RACK \
+           datastax/cass-config-builder:1.0.3
+
     docker run --rm \
            -v ${BOOTSTRAP_VOLUME}:/bootstrap \
            -v ${EXTRA_LIB_VOLUME}:/extra-lib \
            --entrypoint=bash \
            ${CASSANDRA_IMAGE} \
-           -c "cp -vr /etc/cassandra/* /bootstrap && chown -R cassandra: /bootstrap /extra-lib"
+           -c "chown -R cassandra: /bootstrap /extra-lib"
 }
 
 function checkDgossVolumes {
@@ -47,17 +86,11 @@ function createCassandraBootstrapContainer {
     docker run \
            -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
-           -e CASSANDRA_SEEDS=cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc1-rack3-0.cassandra-demo.ns \
-           -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
+           -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
-           -e CASSANDRA_GC_STDOUT=true \
-           -e CASSANDRA_NUM_TOKENS=32 \
-           -e CASSANDRA_DC=dc1 \
-           -e CASSANDRA_RACK=rack1 \
+           -e CASSANDRA_DC=$CASSANDRA_DC \
+           -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
            -v ${CONFIGMAP_VOLUME}:/configmap \
            -v ${EXTRA_LIB_VOLUME}:/extra-lib/ \
@@ -71,19 +104,13 @@ function createCassandraBootstrapContainerNoExtraLib {
     docker run \
            -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
-           -e CASSANDRA_SEEDS=cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc1-rack3-0.cassandra-demo.ns \
-           -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
+           -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
-           -e CASSANDRA_GC_STDOUT=true \
            -e CASSANDRA_ENABLE_JOLOKIA=false \
            -e CASSANDRA_EXPORTER_AGENT=false \
-           -e CASSANDRA_NUM_TOKENS=32 \
-           -e CASSANDRA_DC=dc1 \
-           -e CASSANDRA_RACK=rack1 \
+           -e CASSANDRA_DC=$CASSANDRA_DC \
+           -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
            ${IMAGE_TO_TEST} 
 }
@@ -93,17 +120,12 @@ function createCassandraBootstrapContainerWithConfigMap {
     docker run \
           -u 999 \
            --rm -ti \
-           -e CASSANDRA_MAX_HEAP=1024M \
-           -e CASSANDRA_SEEDS=cassandra-demo-dc1-rack1-0.cassandra-demo.ns,cassandra-demo-dc1-rack2-0.cassandra-demo.ns,cassandra-demo-dc1-rack3-0.cassandra-demo.ns \
+           -e CASSANDRA_SEEDS=$CASSANDRA_SEEDS \
            -e CASSANDRA_CLUSTER_NAME=cassandra-demo \
-           -e CASSANDRA_AUTO_BOOTSTRAP=true \
            -e HOSTNAME=cassandra-seb-dc1-rack1-0 \
            -e POD_NAME=cassandra-demo-dc1-rack1-0 \
-           -e POD_NAMESPACE=ns \
-           -e CASSANDRA_GC_STDOUT=true \
-           -e CASSANDRA_NUM_TOKENS=32 \
-           -e CASSANDRA_DC=dc1 \
-           -e CASSANDRA_RACK=rack1 \
+           -e CASSANDRA_DC=$CASSANDRA_DC \
+           -e CASSANDRA_RACK=$CASSANDRA_RACK \
            -v ${BOOTSTRAP_VOLUME}:/etc/cassandra/ \
            -v ${CONFIGMAP_VOLUME}:/configmap \
            -v ${EXTRA_LIB_VOLUME}:/extra-lib/ \

@@ -1,0 +1,22 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:3.11.9
+  dataCapacity: "256Mi"
+  deletePVC: true
+  autoPilot: true
+  autoUpdateSeedList: true
+  dataStorageClass: local-path
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 200m
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+          - name: rack2

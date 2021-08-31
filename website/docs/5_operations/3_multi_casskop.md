@@ -36,7 +36,9 @@ To achieve this scaledown the following steps are required :
           dc:
             - name: dc1
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:
@@ -50,7 +52,9 @@ To achieve this scaledown the following steps are required :
           dc:
             - name: dc2
               nodesPerRacks: 0       <---- Downsize to 0
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:
@@ -64,7 +68,9 @@ To achieve this scaledown the following steps are required :
           dc:
             - name: dc3
               nodesPerRacks: 1
-              numTokens: 256
+              config:
+                cassandra-yaml:
+                  num_tokens: 256
               labels:
                 failure-domain.beta.kubernetes.io/region: europe-west1
               rack:

@@ -15,6 +15,9 @@ spec:
     schema:
       openAPIV3Schema:
         description: Defines a backup operation and its details
+        type: object
+        required:
+        - spec
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -29,6 +32,11 @@ spec:
           metadata:
             type: object
           spec:
+            type: object
+            required:
+            - cassandraCluster
+            - snapshotTag
+            - storageLocation
             properties:
               bandwidth:
                 description: Specify the bandwidth to not exceed when uploading files
@@ -41,8 +49,8 @@ spec:
               concurrentConnections:
                 description: Maximum number of threads used to download files from
                   the cloud. Defaults to 10
-                format: int32
                 type: integer
+                format: int32
               datacenter:
                 description: Cassandra DC name to back up, used to find the cassandra
                   nodes in the CassandraCluster
@@ -78,20 +86,20 @@ spec:
               storageLocation:
                 description: URI for the backup target location e.g. s3 bucket, filepath
                 type: string
-            required:
-            - cassandraCluster
-            - datacenter
-            - snapshotTag
-            - storageLocation
-            type: object
           status:
+            type: object
             properties:
               condition:
                 description: BackRestCondition describes the observed state of a Restore
                   at a certain point
+                type: object
+                required:
+                - type
                 properties:
                   failureCause:
+                    type: array
                     items:
+                      type: object
                       properties:
                         message:
                           description: message explaining the error
@@ -99,15 +107,10 @@ spec:
                         source:
                           description: hostame of a node where this error has occurred
                           type: string
-                      type: object
-                    type: array
                   lastTransitionTime:
                     type: string
                   type:
                     type: string
-                required:
-                - type
-                type: object
               coordinatorMember:
                 description: Name of the pod the restore operation is executed on
                 type: string
@@ -128,9 +131,5 @@ spec:
                 type: string
               timeStarted:
                 type: string
-            type: object
-        required:
-        - spec
-        type: object
     served: true
     storage: true

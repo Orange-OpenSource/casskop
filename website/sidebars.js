@@ -22,10 +22,11 @@ module.exports = {
                     "type" : "category",
                     "label": "Platform Setup",
                     "items"  : [
-                        "2_setup/2_platform_setup/1_gke",
-                        "2_setup/2_platform_setup/2_minikube",
+                        "2_setup/4_platform_setup/1_gke",
+                        "2_setup/4_platform_setup/2_minikube",
                     ]
                 },
+                "2_setup/5_upgrade_v1_to_v2",
             ],
             "Advanced Configuration": [
                 "3_configuration_deployment/1_customizable_install_with_helm",

@@ -36,17 +36,6 @@ You are now able to override this default values using the following fields in t
 - `readinessFailureThreshold`: defines failure threshold for the readiness probe of the main
 - `readinessSuccessThreshold`: defines success threshold for the readiness probe of the main
 
-## Pod lifeCycle
-
-The Kubernetes Pods allows user to define specific hooks to be executed at some times
-
-### PreStop
-
-CassKop uses the PreStop hook to execute some commands before the pod is going to be killed.
-In first iteration we were executing a `nodetool drain` and it used to make some unpredictable behavior.
-At the time of writing this document, there is no `PreStop` action executed. 
-
-
 ## Prometheus metrics export
 
 We currently use the CoreOS Prometheus Operator to export the Cassandra nodes metrics. We must create a serviceMonitor

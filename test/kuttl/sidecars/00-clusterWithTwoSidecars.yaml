@@ -1,0 +1,46 @@
+apiVersion: db.orange.com/v1alpha1
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:3.11.9
+  dataCapacity: "256Mi"
+  hardAntiAffinity: false
+  deletePVC: true
+  autoPilot: true
+  autoUpdateSeedList: false
+  dataStorageClass: local-path
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 200m
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+  storageConfigs:
+    - mountPath: /var/lib/cassandra/log
+      name: gc-logs
+      pvcSpec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 200Mi
+  sidecarConfigs:
+    - args: ["tail", "-F", "/var/log/cassandra/gc.log.0.current"]
+      image: ez123/alpine-tini
+      name: cassandra-log
+      resources:
+        limits:
+          cpu: 50m
+          memory: 50Mi
+        requests:
+          cpu: 10m
+          memory: 10Mi
+      volumeMounts:
+        - mountPath: /var/log/cassandra
+          name: gc-logs

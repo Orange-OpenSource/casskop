@@ -1,0 +1,6 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestAssert
+timeout: 5
+commands:
+  - script: |
+      kubectl describe pod -l app=cassandra-operator|awk '/Restart/ {if($NF){exit -1}}'

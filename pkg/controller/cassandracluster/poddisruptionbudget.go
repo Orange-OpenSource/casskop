@@ -103,7 +103,6 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdatePodDisruptionBudget(pdb *pol
 		if err := rcc.DeletePodDisruptionBudget(pdb); err != nil {
 			return err
 		}
-		//rcc.storedPdb = pdb
 		return rcc.CreatePodDisruptionBudget(pdb)
 	}
 	//We can't Update PorDisruptionBudget

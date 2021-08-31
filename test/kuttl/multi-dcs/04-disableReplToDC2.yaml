@@ -1,0 +1,9 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  # Replicate system_auth, system_traces and system_distributed to dc1 only
+  - script: |
+      for keyspace in system_auth system_traces system_distributed
+      do
+        kubectl exec -n $NAMESPACE cassandra-e2e-dc1-rack1-0 -- cqlsh -e "ALTER KEYSPACE $keyspace WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': '1'}"
+      done

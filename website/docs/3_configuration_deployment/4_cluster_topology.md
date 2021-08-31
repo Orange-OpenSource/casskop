@@ -367,5 +367,4 @@ Image](https://github.com/Orange-OpenSource/cassandra-image/), which has a start
 these environment variables, and configure the Cassandra `cassandra-rackdc.properties` file with the values for dc and
 rack.
 
-The Cassandra Image makes us of the `GossipingPropertyFileSnitch` Cassandra Snitch, so that both Kubernetes and
-Cassandra are aware of the chosen topology.
+The Cassandra Image makes use of the `GossipingPropertyFileSnitch` Cassandra Snitch, so that both Kubernetes and Cassandra are aware of the chosen topology.

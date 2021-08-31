@@ -44,7 +44,8 @@ resources:
 
 Limits specify the maximum resources that can be consumed by a given container. The limit is not reserved and might not
 be always available. The container can use the resources up to the limit only when they are available. The resource
-limits should be always higher than the resource requests.  
+limits should be always higher than the resource requests. If you only set limits, k8s uses the same value to set
+requests.
 
 ```yaml
 # ...
@@ -86,8 +87,8 @@ It is configured directly in the `CassandraCluster.spec.resources`:
 ```yaml
   resources:
     requests:
-      cpu: '2'
-      memory: 2Gi
+      cpu: '1'
+      memory: 1Gi
     limits:
       cpu: '2'
       memory: 2Gi

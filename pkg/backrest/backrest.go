@@ -54,6 +54,7 @@ func (c *Client) PerformRestore(restore *api.CassandraRestore,
 	backup *api.CassandraBackup) (*api.BackRestStatus, error) {
 	restoreOperationRequest := &icarus.RestoreOperationRequest {
 		Type_: "restore",
+		Dc: restore.Spec.Datacenter,
 		StorageLocation: backup.Spec.StorageLocation,
 		SnapshotTag: backup.Spec.SnapshotTag,
 		NoDeleteTruncates: restore.Spec.NoDeleteTruncates,

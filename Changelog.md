@@ -1,6 +1,38 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.0.1
+
+- PR [#344](https://github.com/Orange-OpenSource/casskop/pull/344) - Revert "Fix #316 by labeling the cluster uid to each PVC (#322)"
+- PR [#343](https://github.com/Orange-OpenSource/casskop/pull/343) - Revert uid label
+- PR [#341](https://github.com/Orange-OpenSource/casskop/pull/341) - Document how to upgrade from v1 to v2
+- PR [#340](https://github.com/Orange-OpenSource/casskop/pull/340) - Fix operator & pods restart when scaling up DC with autoUpdateSeedList set to true
+- PR [#337](https://github.com/Orange-OpenSource/casskop/pull/337) - Bump prismjs from 1.23.0 to 1.24.0 in /website
+- PR [#336](https://github.com/Orange-OpenSource/casskop/pull/336) - Bump postcss from 7.0.35 to 7.0.36 in /website
+- PR [#335](https://github.com/Orange-OpenSource/casskop/pull/335) - Scales up and down a DC in multi-dcs
+
+## v2.0.0
+
+- PR [#331](https://github.com/Orange-OpenSource/casskop/pull/331) - Bump ws from 6.2.1 to 6.2.2 in /website
+- PR [#330](https://github.com/Orange-OpenSource/casskop/pull/330) - Do not crash if backup is created with non existing
+  Datacenter
+- PR [#246](https://github.com/Orange-OpenSource/casskop/pull/246) - Support of Cassandra 4.0
+- PR [#329](https://github.com/Orange-OpenSource/casskop/pull/329) - Bump dns-packet from 1.3.1 to 1.3.4 in /website
+- PR [#328](https://github.com/Orange-OpenSource/casskop/pull/328) - e2e tests use kuttl only
+
+## v1.1.4
+
+- PR [#325](https://github.com/Orange-OpenSource/casskop/pull/325) - Add datacenter to Restore and take it into accoun
+  during backup/restore operations
+- PR [#322](https://github.com/Orange-OpenSource/casskop/pull/322) - Label each PVC with the cluster uid
+- PR [#319](https://github.com/Orange-OpenSource/casskop/pull/319) - Fix the way FSGroup and RunAsUser are used
+- PR [#314](https://github.com/Orange-OpenSource/casskop/pull/314) - Added `fsGroup` to `CassandraCluster.Spec`
+- PR [#313](https://github.com/Orange-OpenSource/casskop/pull/313) - Add allow annotations to be passed from
+  Multicasskop
+- PR [#307](https://github.com/Orange-OpenSource/casskop/pull/307) - Patch kuttl test to work with releases
+- PR [#305](https://github.com/Orange-OpenSource/casskop/pull/305) - Bump prismjs from 1.22.0 to 1.23.0 in /website
+
+
 ## v1.1.3
 
 - PR [#302](https://github.com/Orange-OpenSource/casskop/pull/302) - Fix Bootstrap issue

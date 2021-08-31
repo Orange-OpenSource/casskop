@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	state             = "PENDING"
 	stateGetById      = "RUNNING"
 	operationID       = "d3262073-8101-450f-9a11-c851760abd57"
 	k8sSecretName     = "cloud-backup-secrets"
