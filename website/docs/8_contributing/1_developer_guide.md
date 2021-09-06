@@ -94,19 +94,19 @@ $ GO111MODULE="on" go get sigs.k8s.io/kind@v0.5.1
 The following actions should be run only to create a new kubernetes cluster.
 
 ```sh
-$ samples/kind/create-kind-cluster.sh
+$ config/samples/kind/create-kind-cluster.sh
 ```
 
 or if you want to enable network policies
 
 ```sh
-$ samples/kind/create-kind-cluster-network-policies.sh
+$ config/samples/kind/create-kind-cluster-network-policies.sh
 ```
 
 It creates namespace cassandra-e2e by default. If a different namespace is needed it can be specified on the setup-requirements call
 
 ```sh
-$ samples/kind/setup-requirements.sh other-namespace
+$ config/samples/kind/setup-requirements.sh other-namespace
 ```
 
 To interact with the cluster you then need to use the generated kubeconfig file :
@@ -198,7 +198,7 @@ $ export OPERATOR_NAME=cassandra-operator
 Deploy the CRD
 
 ```
-$ kubectl apply -f deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+$ kubectl apply -f config/crd/bases/db.orange.com_cassandraclusters_crd.yaml
 ```
 
 ```
@@ -370,7 +370,7 @@ Successfully tagged orangeopensource/multi-casskop:0.5.6-my-pr
 ```
 k3d cluster create multi-casskop-qa
 cd $(git rev-parse --show-toplevel)
-kubectl  apply -f deploy/crds/
+kubectl  apply -f config/crd/bases/
 kubectl  create namespace cluster1
 kubectl  create namespace cluster2
 helm install casskop -n cluster1 orange-incubator/cassandra-operator --set debug.enabled=true

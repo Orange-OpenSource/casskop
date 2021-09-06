@@ -89,12 +89,12 @@ SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
 .PHONY: update-crds
 update-crds:
 	echo Update CRD - Remove protocol and set config type to object CRD
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@sed -i '/\- protocol/d' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
 	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
-	for crd in deploy/crds/*.yaml; do \
+	for crd in config/crd/bases/crds/*.yaml; do \
 		crdname=$$(basename $$crd); \
 		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
 		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
@@ -102,8 +102,8 @@ update-crds:
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
-	cp -v deploy/crds/* helm/*/crds/
-	cp -v deploy/crds/* */helm/*/crds/
+	cp -v config/crd/bases/crds/* helm/*/crds/
+	cp -v config/crd/bases/crds/* */helm/*/crds/
 
 include shared.mk
 include kube.mk

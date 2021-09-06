@@ -49,7 +49,7 @@ $ export MANAGED_ZONE=tracking-pdb                                # -> change wi
 ### Setup base infrastructure 
 
 ```sh
-$ cd ${CASSKOP_WORKSPACE}/multi-casskop/samples/gke/terraform
+$ cd ${CASSKOP_WORKSPACE}/multi-casskop/config/samples/gke/terraform
 $ terraform init
 ```
 
@@ -209,7 +209,7 @@ Add MultiCasskop crd on the `slave` cluster :
 ```sh
 $ kubectx # Switch context on slave cluster
 Switched to context "gke_<Project name>_europe-west1-c_cassandra-europe-west1-c-slave".
-$ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/multi-casskop/deploy/crds/multicluster_v2_cassandramulticluster_crd.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/multi-casskop/config/crd/bases/multicluster_v2_cassandramulticluster_crd.yaml
 ```
 
 Deployment with Helm : 
@@ -227,10 +227,10 @@ $ helm install --name multi-casskop orange-incubator/multi-casskop --set k8s.loc
 ### Create the MultiCasskop CRD
 
 Now we are ready to deploy a MultiCassKop CRD instance.
-We will use the example in `multi-casskop/samples/gke/multi-casskop-gke.yaml` :
+We will use the example in `multi-casskop/config/samples/gke/multi-casskop-gke.yaml` :
 
 ```sh
-$ kubectl apply -f multi-casskop/samples/gke/multi-casskop-gke.yaml
+$ kubectl apply -f multi-casskop/config/samples/gke/multi-casskop-gke.yaml
 ```
 
 ### Check multi cluster installation
@@ -296,7 +296,7 @@ $ helm del --purge multi-casskop
 ### Cleaning slave cluster
 
 ```sh
-$ cd ${CASSKOP_WORKSPACE}/multi-casskop/samples/gke/terraform
+$ cd ${CASSKOP_WORKSPACE}/multi-casskop/config/samples/gke/terraform
 $ terraform workspace select slave
 $ terraform destroy \
     -var-file="env/slave.tfvars" \

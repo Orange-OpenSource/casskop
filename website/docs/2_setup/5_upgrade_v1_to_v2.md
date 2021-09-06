@@ -31,7 +31,7 @@ helm delete casskop
 helm does not version CRDs, so you'll need to manually update them (You can get the
 new CRDs from our git repo).
 ```shell
-kubectl apply -f deploy/crds
+kubectl apply -f config/crd/bases
 ```
 
 ## Edit your CassandraCluster object

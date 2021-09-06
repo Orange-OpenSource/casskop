@@ -40,5 +40,5 @@ The default provisioner in GKE does not have the `volumeBindingMode: "WaitForFir
 a bad
 scheduling behaviour.
 We use one of the following files to create a storage class:
-- samples/gke-storage-standard-wait.yaml
-- samples/gke-storage-ssd-wait.yaml (if you have ssd disks)
+- config/samples/gke-storage-standard-wait.yaml
+- config/samples/gke-storage-ssd-wait.yaml (if you have ssd disks)

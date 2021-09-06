@@ -67,8 +67,8 @@ export PURE:="on"
 BUILD_FOLDER = multi-casskop
 GENERATE_CMD = CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health \
 				 ../tools/health/main.go
-CRD_V1 = deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
-CRD = deploy/crds/db.orange.com_multicasskops.yaml
+CRD_V1 = config/crd/bases/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
+CRD = config/crd/bases/crds/db.orange.com_multicasskops.yaml
 FIRST_VERSION = .spec.versions[0]
 
 .PHONY: update-crds
@@ -79,17 +79,17 @@ update-crds:
 	sed -e '1,/versions/d' $(CRD) >> /tmp/$$(basename $(CRD))
 	cp /tmp/$$(basename $(CRD)) $(CRD)
 	yq -i e '$(FIRST_VERSION).storage = false' $(CRD)
-	cp -v deploy/crds/* helm/*/crds/
+	cp -v config/crd/bases/crds/* helm/*/crds/
 
 include ../shared.mk
 include ../kube.mk
 
 docker-generate-files:
 	cd ../ && make docker-generate-files
-	cp -v ../deploy/crds/* helm/*/crds/
+	cp -v ../config/crd/bases/crds/* helm/*/crds/
 	$(MAKE) docker-generate-k8s
 	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER); $(GENERATE_CMD)'
-	cp deploy/crds/* helm/*/crds/
+	cp config/crd/bases/crds/* helm/*/crds/
 
 # Build the Operator and its Docker Image
 docker-build: docker-generate-files docker-build-operator
@@ -98,10 +98,10 @@ docker-build: docker-generate-files docker-build-operator
 .PHONY: generate
 generate:
 	cd .. && make generate
-	cp -v ../deploy/crds/* helm/*/crds/
+	cp -v ../config/crd/bases/crds/* helm/*/crds/
 	operator-sdk generate k8s
 	$(GENERATE_CMD)
-	cp deploy/crds/* helm/*/crds/
+	cp config/crd/bases/crds/* helm/*/crds/
 
 # Build CassKop executable file in local go env
 .PHONY: build

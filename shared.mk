@@ -18,7 +18,7 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
-CONTROLLER_GEN_OPTIONS=crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
+CONTROLLER_GEN_OPTIONS=crd paths=./pkg/apis/... output:dir=./config/crd/bases/crds schemapatch:manifests=./config/crd/bases/crds
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -138,7 +138,7 @@ docker-generate-k8s:
 
 docker-generate-crds: docker-generate-k8s
 	echo "Generate CRDs"
-	@rm -f deploy/crds/*.yaml
+	@rm -f config/crd/bases/crds/*.yaml
 	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && controller-gen $(CONTROLLER_GEN_OPTIONS)'
 	$(MAKE) update-crds
 

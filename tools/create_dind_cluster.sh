@@ -25,7 +25,7 @@ kubectl create namespace cassandra-demo
 kubectl config set-context $(kubectl config current-context) --namespace=cassandra-demo
 
 echo "Create CRD"
-kubectl apply -f deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+kubectl apply -f config/crd/bases/db.orange.com_cassandraclusters_crd.yaml
 
 echo "configure helm"
 helm init

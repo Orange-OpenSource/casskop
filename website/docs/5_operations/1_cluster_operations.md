@@ -321,7 +321,7 @@ spec:
 First we need to create the configmap exemple:
 
 ```bash
-kubectl apply -f samples/cassandra-configmap-v1.yaml
+kubectl apply -f config/samples/cassandra-configmap-v1.yaml
 ```
 
 Then we apply the changes in the `CassandraCluster`.
