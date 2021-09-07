@@ -38,7 +38,6 @@ const (
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
-	InitContainerCmd          = "cp -vr /etc/cassandra/* /bootstrap"
 	defaultMaxPodUnavailable  = 1
 	defaultImagePullPolicy    = v1.PullAlways
 
