@@ -36,6 +36,8 @@ const (
 
 	defaultCassandraImage     = "cassandra:3.11.10"
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
+	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
+
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
 	defaultMaxPodUnavailable  = 1
@@ -119,8 +121,13 @@ func (cc *CassandraCluster) CheckDefaults() {
 	if len(ccs.ImagePullPolicy) == 0 {
 		ccs.ImagePullPolicy = defaultImagePullPolicy
 	}
+
 	if len(ccs.BootstrapImage) == 0 {
 		ccs.BootstrapImage = defaultBootstrapImage
+	}
+
+	if len(ccs.ConfigBuilderImage) == 0 {
+		ccs.ConfigBuilderImage = defaultConfigBuilderImage
 	}
 
 	if len(ccs.ServiceAccountName) == 0 {
@@ -683,8 +690,11 @@ type CassandraClusterSpec struct {
 	//ImagePullPolicy define the pull policy for C* docker image
 	ImagePullPolicy v1.PullPolicy `json:"imagepullpolicy,omitempty"`
 
-	// Image used for bootstrapping cluster (use the form base:version)
+	// Image used for bootstrapping cluster (use format base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
+
+	// Image used for configBuilder (use format base:version)
+	ConfigBuilderImage string `json:"configBuilderImage,omitempty"`
 
 	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1

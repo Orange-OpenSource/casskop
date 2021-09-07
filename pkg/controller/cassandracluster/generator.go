@@ -49,7 +49,6 @@ const (
 	bootstrapContainerName = "bootstrap"
 	cassConfigBuilderName = "config-builder"
 	cassBaseConfigBuilderName = "base-config-builder"
-	cassConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
 	defaultJvmMaxHeap      = "2048M"
 	defaultJvmInitHeap      = "512M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
@@ -777,7 +776,7 @@ func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraCl
 
 	return v1.Container{
 		Name:            cassConfigBuilderName,
-		Image:           cassConfigBuilderImage,
+		Image:           cc.Spec.ConfigBuilderImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             initContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
 		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
