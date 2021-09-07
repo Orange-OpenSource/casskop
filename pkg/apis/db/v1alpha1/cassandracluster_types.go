@@ -36,7 +36,7 @@ const (
 
 	defaultCassandraImage     = "cassandra:3.11.10"
 	defaultBootstrapImage     = "orangeopensource/cassandra-bootstrap:0.1.9"
-	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
+	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.4"
 
 	DefaultBackRestImage      = "gcr.io/cassandra-operator/instaclustr-icarus:1.1.0"
 	defaultServiceAccountName = "cassandra-cluster-node"
