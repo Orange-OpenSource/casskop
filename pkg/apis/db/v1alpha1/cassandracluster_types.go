@@ -128,14 +128,6 @@ func (cc *CassandraCluster) CheckDefaults() {
 		ccs.ServiceAccountName = defaultServiceAccountName
 	}
 
-	//Init-Container 1 : init-config
-	if len(ccs.InitContainerImage) == 0 {
-		ccs.InitContainerImage = ccs.CassandraImage
-	}
-	if len(ccs.InitContainerCmd) == 0 {
-		ccs.InitContainerCmd = InitContainerCmd
-	}
-
 	if ccs.ReadOnlyRootFilesystem == nil {
 		ccs.ReadOnlyRootFilesystem = func(b bool) *bool { return &b }(true)
 	}
@@ -694,12 +686,6 @@ type CassandraClusterSpec struct {
 
 	// Image used for bootstrapping cluster (use the form base:version)
 	BootstrapImage string `json:"bootstrapImage,omitempty"`
-
-	// Image used in the initContainer (use the form base:version)
-	InitContainerImage string `json:"initContainerImage,omitempty"`
-
-	// Command to execute in the initContainer in the targeted image
-	InitContainerCmd string `json:"initContainerCmd,omitempty"`
 
 	// RunAsUser define the id of the user to run in the Cassandra image
 	// +kubebuilder:validation:Minimum=1

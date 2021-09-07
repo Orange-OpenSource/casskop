@@ -467,8 +467,6 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(defaultImagePullPolicy, cluster.Spec.ImagePullPolicy)
 
 	assert.Equal(defaultBootstrapImage, cluster.Spec.BootstrapImage)
-	assert.Equal(cluster.Spec.CassandraImage, cluster.Spec.InitContainerImage)
-	assert.Equal(InitContainerCmd, cluster.Spec.InitContainerCmd)
 
 	assert.Equal(resource.MustParse("500m"), *cluster.Spec.Resources.Limits.Cpu())
 	assert.Equal(resource.MustParse("1Gi"), *cluster.Spec.Resources.Limits.Memory())
