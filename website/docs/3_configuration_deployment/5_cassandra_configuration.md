@@ -20,15 +20,12 @@ The init container is responsible for the following actions :
 
 Configuration:
 
-- The init-config container is by default the baseImage Cassandra image that can be changed using
-`Spec.initContainerImage`.
+- The init-config container is by default the baseImage Cassandra image
 - The default command executed by the init-container is:
 
 ```bash
 cp -vr /etc/cassandra/* /bootstrap
 ```
-
-- This command can be changed using  `Spec.initContainerCmd`
 
 ### Initcontainer 2 : config-builder
 
