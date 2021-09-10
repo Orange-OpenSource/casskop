@@ -49,7 +49,6 @@ const (
 	bootstrapContainerName = "bootstrap"
 	cassConfigBuilderName = "config-builder"
 	cassBaseConfigBuilderName = "base-config-builder"
-	cassConfigBuilderImage = "datastax/cass-config-builder:1.0.3"
 	defaultJvmMaxHeap      = "2048M"
 	defaultJvmInitHeap      = "512M"
 	hostnameTopologyKey    = "kubernetes.io/hostname"
@@ -774,15 +773,14 @@ func commonBootstrapCassandraEnvVar(cc *api.CassandraCluster) []v1.EnvVar {
 // where it will be surcharged by casskop needs, and by user's configmap changes
 func createInitConfigContainer(cc *api.CassandraCluster, status *api.CassandraClusterStatus,
 	dcRackName string) v1.Container {
-	resources := initContainerResources()
 
 	return v1.Container{
 		Name:            cassConfigBuilderName,
-		Image:           cassConfigBuilderImage,
+		Image:           cc.Spec.ConfigBuilderImage,
 		ImagePullPolicy: cc.Spec.ImagePullPolicy,
 		Env:             initContainerEnvVar(cc, status, cc.Spec.Resources, dcRackName),
 		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
-		Resources:       resources,
+		Resources:       initContainerResources(),
 	}
 }
 
@@ -795,6 +793,7 @@ func createBaseConfigBuilderContainer(cc *api.CassandraCluster) v1.Container {
 		Command: 		 []string{"/bin/sh"},
 		Args: 			 []string{"-c", "cp -r /etc/cassandra/* /bootstrap/"},
 		VolumeMounts:    generateContainerVolumeMount(cc, initContainer),
+		Resources:       initContainerResources(),
 	}
 }
 

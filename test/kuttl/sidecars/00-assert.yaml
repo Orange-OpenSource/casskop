@@ -41,6 +41,13 @@ spec:
   serviceName: cassandra-e2e
   template:
     spec:
+      initContainers:
+        - name: base-config-builder
+          image: cassandra:3.11.9
+        - name: config-builder
+          image: datastax/cass-config-builder:1.0.3
+        - name: bootstrap
+          image: orangeopensource/cassandra-bootstrap:0.1.9
       containers:
       - args:
         - tail

@@ -70,7 +70,7 @@ spec:
                               - type: string
                             x-kubernetes-int-or-string: true
                 bootstrapImage:
-                  description: Image used for bootstrapping cluster (use the form base:version)
+                  description: Image used for bootstrapping cluster (use format base:version)
                   type: string
                 cassandraImage:
                   description: Image + version to use for Cassandra
@@ -79,6 +79,9 @@ spec:
                   description: Config for the Cassandra nodes
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
+                configBuilderImage:
+                  description: Image used for configBuilder (use format base:version)
+                  type: string
                 configMapName:
                   description: Name of the ConfigMap for Cassandra configuration (cassandra.yaml) If this is empty, operator will uses default cassandra.yaml from the baseImage If this is not empty, operator will uses the cassandra.yaml from the Configmap instead
                   type: string
@@ -120,12 +123,6 @@ spec:
                       type: string
                 imagepullpolicy:
                   description: ImagePullPolicy define the pull policy for C* docker image
-                  type: string
-                initContainerCmd:
-                  description: Command to execute in the initContainer in the targeted image
-                  type: string
-                initContainerImage:
-                  description: Image used in the initContainer (use the form base:version)
                   type: string
                 livenessFailureThreshold:
                   description: 'LivenessFailureThreshold defines failure threshold for the liveness probe of the main cassandra container : https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes'
