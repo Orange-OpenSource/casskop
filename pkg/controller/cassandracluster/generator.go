@@ -210,13 +210,18 @@ func generateContainerVolumeMount(cc *api.CassandraCluster, ct containerType) []
 		return vm
 	}
 
-	// current container is Cassandra container
 	if cc.Spec.DataCapacity != "" {
 		vm = append(vm, v1.VolumeMount{Name: "data", MountPath: "/var/lib/cassandra"})
 	}
 
+	vm = append(vm, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
+
+	if ct == backrestContainer {
+		return vm
+	}
+
 	return append(vm,
-		v1.VolumeMount{Name: "log", MountPath: "/var/log/cassandra"}, v1.VolumeMount{Name: "tmp", MountPath: "/tmp"})
+		v1.VolumeMount{Name: "log", MountPath: "/var/log/cassandra"})
 }
 
 func generateStorageConfigVolumesMount(cc *api.CassandraCluster) []v1.VolumeMount {
@@ -307,6 +312,8 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 	}
 	containers := generateContainers(cc, status, dcRackName)
 
+	volumes = RemoveDuplicateVolumesAndVolumeMounts(containers, volumeClaimTemplate, volumes)
+
 	for _, pvc := range volumeClaimTemplate {
 		k8s.AddOwnerRefToObject(&pvc, k8s.AsOwner(cc))
 	}
@@ -361,13 +368,11 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 						RunAsNonRoot: func(b bool) *bool { return &b }(true),
 						FSGroup:      func(i int64) *int64 { return &i }(cc.Spec.FSGroup),
 					},
-
 					InitContainers: []v1.Container{
 						createBaseConfigBuilderContainer(cc),
 						createInitConfigContainer(cc, status, dcRackName),
 						createCassandraBootstrapContainer(cc, status),
 					},
-
 					Containers:                    containers,
 					Volumes:                       volumes,
 					RestartPolicy:                 v1.RestartPolicyAlways,
@@ -399,6 +404,82 @@ func generateCassandraStatefulSet(cc *api.CassandraCluster, status *api.Cassandr
 		logrus.Warnf("[%s]: error while applying LastApplied Annotation on Statefulset", cc.Name)
 	}
 	return ss, nil
+}
+
+func RemoveDuplicateVolumesAndVolumeMounts(containers []v1.Container, volumeClaimTemplate []v1.PersistentVolumeClaim,
+	volumes []v1.Volume) []v1.Volume {
+	volumeClaimMapNameMountPath := volumeClaimMapNameMountPath(containers, volumeClaimTemplate)
+	volumeToRemove := removeDuplicateVolumeMountsFromContainers(containers, volumeClaimMapNameMountPath)
+	return volumesWoDupes(volumes, volumeToRemove)
+}
+
+func volumesWoDupes(volumes []v1.Volume, volumeToRemove map[string]bool) []v1.Volume {
+	var newVolumes []v1.Volume
+	for _, vol := range volumes {
+		if _, found := volumeToRemove[vol.Name]; !found {
+			newVolumes = append(newVolumes, vol)
+		}
+	}
+	if len(newVolumes) != len(volumes) {
+		volumes = newVolumes
+	}
+	return volumes
+}
+
+func removeDuplicateVolumeMountsFromContainers(containers []v1.Container,
+	volumeClaimMapNameMountPath map[string]string) map[string]bool {
+	volumeToRemove := map[string]bool{}
+	for idx, container := range containers {
+		volumeMounts := container.VolumeMounts
+		var newVolumesMounts []v1.VolumeMount
+		for _, vm := range container.VolumeMounts {
+			_, found := volumeClaimMapNameMountPath[vm.Name]
+			if found {
+				newVolumesMounts = append(newVolumesMounts, vm)
+				continue
+			}
+
+			// Do a lookup by path, if cassandra container remove it, otherwise replace it
+			for key, value := range volumeClaimMapNameMountPath {
+				if value == vm.MountPath {
+					found = true
+					volumeToRemove[vm.Name] = true
+					if container.Name != cassandraContainerName {
+						vm.Name = key
+						newVolumesMounts = append(newVolumesMounts, vm)
+					}
+					break
+				}
+			}
+			if !found {
+				newVolumesMounts = append(newVolumesMounts, vm)
+			}
+		}
+		if len(newVolumesMounts) != len(volumeMounts) {
+			containers[idx].VolumeMounts = newVolumesMounts
+		}
+	}
+	return volumeToRemove
+}
+
+func volumeClaimMapNameMountPath(containers []v1.Container,
+	volumeClaimTemplate []v1.PersistentVolumeClaim) map[string]string {
+	var cassandraContainerVolumeMounts []v1.VolumeMount
+	for _, container := range containers{
+		if container.Name == cassandraContainerName {
+			cassandraContainerVolumeMounts = container.VolumeMounts
+		}
+	}
+	volumeClaimMapNameMountPath := map[string]string{}
+	for _, volumeClaim := range volumeClaimTemplate {
+		for _, volumeMount := range cassandraContainerVolumeMounts {
+			volumeClaimName := volumeClaim.Name
+			if volumeClaimName == volumeMount.Name {
+				volumeClaimMapNameMountPath[volumeClaimName] = volumeMount.MountPath
+			}
+		}
+	}
+	return volumeClaimMapNameMountPath
 }
 
 func addBootstrapContainerEnvVarsToSidecars(bootstrapContainer v1.Container, ss *appsv1.StatefulSet) {

@@ -52,10 +52,7 @@ func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *
 	}
 	//Create Fake client
 	//Objects to track in the Fake client
-	objs := []runtime.Object{
-		&cc,
-		//&ccList,
-	}
+	objs := []runtime.Object{&cc}
 	// Register operator types with the runtime scheme.
 	fakeClientScheme := scheme.Scheme
 	fakeClientScheme.AddKnownTypes(api.SchemeGroupVersion, &cc)
@@ -415,6 +412,27 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert.Equal(ccDefault.Spec.BackRestSidecar.Image, api.DefaultBackRestImage)
 }
 
+func TestCassandraStatefulSetHasNoDuplicateVolumes(t *testing.T) {
+	dcName := "dc1"
+	dcRackName := fmt.Sprintf("%s-rack1", dcName)
+
+	_, cc := HelperInitCluster(t, "cassandracluster-2DC.yaml")
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+
+	assert := assert.New(t)
+	cassandraContainer := sts.Spec.Template.Spec.Containers[2]
+	assert.Equal(cassandraContainer.Name, "cassandra")
+	cassandraLogVolumeMounts := 0
+	for _, vol := range cassandraContainer.VolumeMounts {
+		if vol.MountPath == "/var/log/cassandra" {
+			cassandraLogVolumeMounts++
+		}
+	}
+	assert.Equal(cassandraLogVolumeMounts, 1, "Duplicate volume mount found in Cassandra container")
+	assert.Equal(len(sts.Spec.Template.Spec.Volumes), 4, "Volume defined when it is a VolumeClaim")
+}
+
 func checkResourcesConfiguration(t *testing.T, containers []v1.Container, cpu string, memory string) {
 	for _, c := range containers {
 		if c.Name == "cassandra" {
@@ -578,13 +596,13 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 	for _, container := range containers {
 		switch container.Name {
 		case "cassandra":
-			assert.Equal(t, len(container.VolumeMounts), 7)
+			assert.Equal(t, 6, len(container.VolumeMounts))
 		case "gc-logs":
-			assert.Equal(t, len(container.VolumeMounts), 1)
+			assert.Equal(t, 1, len(container.VolumeMounts))
 		case "cassandra-logs":
-			assert.Equal(t, len(container.VolumeMounts), 1)
+			assert.Equal(t, 1, len(container.VolumeMounts))
 		case "backrest-sidecar":
-			assert.Equal(t, 5, len(container.VolumeMounts))
+			assert.Equal(t, 4, len(container.VolumeMounts))
 		default:
 			t.Errorf("unexpected container: %s.", container.Name)
 		}
@@ -596,9 +614,7 @@ func checkVolumeMount(t *testing.T, containers []v1.Container) {
 			case "cassandra":
 				assert.True(t, volumesContains(append(generateContainerVolumeMount(cc, cassandraContainer),
 					generateCassandraStorageConfigVolumeMounts()...), volumeMount))
-			case "gc-logs":
-				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "gc-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
-			case "cassandra-logs":
+			case "gc-logs", "cassandra-logs":
 				assert.True(t, volumesContains([]v1.VolumeMount{{Name: "cassandra-logs", MountPath: "/var/log/cassandra"}}, volumeMount))
 			case "backrest-sidecar":
 				assert.True(t, volumesContains(generateContainerVolumeMount(cc, backrestContainer), volumeMount))
