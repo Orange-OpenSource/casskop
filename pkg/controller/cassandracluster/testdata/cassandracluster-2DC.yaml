@@ -73,14 +73,14 @@ spec:
       volumeMounts:
         - mountPath: /var/log/cassandra
           name: cassandra-logs
-    - args: ["tail", "-F", "/var/log/cassandra/gc.log.0.current"]
+    - args: ["tail", "-F", "/var/log/cassandra/gc.log"]
       image: alpine
       imagePullPolicy: Always
       name: gc-logs
       <<: *sidecar_resources
       volumeMounts:
         - mountPath: /var/log/cassandra
-          name: gc-logs
+          name: cassandra-logs
   autoPilot: true
   resources:
     limits: &limits
