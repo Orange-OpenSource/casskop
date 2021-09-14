@@ -47,8 +47,7 @@ module.exports = {
                 "5_operations/3_multi_casskop",
                 "5_operations/3_5_backup_restore",
                 "5_operations/4_upgrade_operator",
-                "5_operations/5_upgrade_bootstrap_image",
-                "5_operations/6_uninstall_casskop",
+                "5_operations/5_uninstall_casskop",
             ],
             "Reference": [
                 "6_references/1_cassandra_cluster",
