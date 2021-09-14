@@ -1,5 +1,5 @@
 ---
-id: 6_uninstall_casskop
+id: 5_uninstall_casskop
 title: Uninstall Casskop
 sidebar_label: Uninstall Casskop
 ---
