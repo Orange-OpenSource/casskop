@@ -18,6 +18,12 @@ resources:
     cpu: 1
     memory: 512Mi
 
+readinessProbe:
+  timeouts:
+    initialDelaySeconds: 4
+    periodSeconds: 10
+    failureThreshold: 1
+
 ## If true, create & deploy the CRD
 ##
 createCustomResource: true
