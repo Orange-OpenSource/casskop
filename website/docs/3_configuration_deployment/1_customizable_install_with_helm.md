@@ -113,8 +113,7 @@ kubectl delete crd cassandrarestores.db.orange.com
 ```
 
 :::warning
-If you delete the CRDs then :
-It will delete **ALL** Clusters that has been created using these CRDs!!!
+If you delete the CRDs then it will delete **ALL** Clusters that has been created using these CRDs!!!
 Please never delete CRDs without very very good care
 :::
 
