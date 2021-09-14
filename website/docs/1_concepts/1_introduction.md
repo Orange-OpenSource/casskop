@@ -20,10 +20,7 @@ Some of the high-level capabilities and objectives of Apache Cassandra include, 
 - Manage operations on pods through CassKop plugin (cleanup, rebuild, upgradesstable, removenode..)
 - Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
 - Multi-site management through [Multi-Casskop operator](https://github.com/Orange-OpenSource/casskop/tree/master/multi-casskop)
-
-Some of the roadmap features :
-
-- Live Backup/Restore
+- Live Backup/Restore of Cassandra's datas
 
 The Cassandra operator is based on the CoreOS
 [operator-sdk](https://github.com/operator-framework/operator-sdk) tools and APIs.
