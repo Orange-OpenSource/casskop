@@ -10,9 +10,7 @@ module.exports = {
         {
             "Concepts": [
                 "1_concepts/1_introduction",
-                "1_concepts/2_features",
-                "1_concepts/3_design_principes",
-                "1_concepts/4_roadmap",
+                "1_concepts/2_design_principes",
             ],
             "Setup": [
                 "2_setup/1_getting_started",
