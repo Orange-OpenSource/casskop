@@ -422,7 +422,7 @@ func TestCassandraStatefulSetHasNoDuplicateVolumes(t *testing.T) {
 
 	assert := assert.New(t)
 	cassandraContainer := sts.Spec.Template.Spec.Containers[2]
-	assert.Equal(cassandraContainer.Name, "cassandra")
+	assert.Equal(cassandraContainer.Name, cassandraContainerName)
 	cassandraLogVolumeMounts := 0
 	for _, vol := range cassandraContainer.VolumeMounts {
 		if vol.MountPath == "/var/log/cassandra" {
