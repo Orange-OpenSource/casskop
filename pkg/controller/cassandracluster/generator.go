@@ -421,7 +421,7 @@ func volumesWoDupes(volumes []v1.Volume, volumeToRemove map[string]bool) []v1.Vo
 		}
 	}
 	if len(newVolumes) != len(volumes) {
-		volumes = newVolumes
+		return newVolumes
 	}
 	return volumes
 }
