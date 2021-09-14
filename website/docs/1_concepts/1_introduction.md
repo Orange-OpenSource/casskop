@@ -48,7 +48,7 @@ At [Orange](https://opensource.orange.com/fr/accueil/) we are building some [Kub
 
 There are already some approaches to operating C* on Kubernetes, however, we did not find them appropriate for use in a highly dynamic environment, nor capable of meeting our needs.
 
-- [Datastax K8ssandra Cass-Operator](https://github.com/k8ssandra/cass-operator) (see also [K8ssandra project](https://k8ssandra.io)
+- [Datastax K8ssandra Cass-Operator](https://github.com/k8ssandra/cass-operator) (see also [K8ssandra project](https://k8ssandra.io))
 - [Instaclustr Operator](https://github.com/instaclustr/cassandra-operator)
 - [Sky-Uk Operator](https://github.com/sky-uk/cassandra-operator)
 
