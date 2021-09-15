@@ -26,6 +26,9 @@ The following tables lists the configurable parameters of the Cassandra Operator
 | `image.imagePullSecrets.name`    | Name of the secret to connect to docker registry | -                                         |
 | `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
 | `resources`                      | Pod resource requests & limits                   | `{}`                                      |
+| `readinessProbe.timeouts.initialDelaySeconds` | Specifies timeout before first probe attempt | `4`				  |
+| `readinessProbe.timeouts.periodSeconds` | Specifies probe interval                  | `10`                                      |
+| `readinessProbe.timeouts.failureThreshold` | When a probe fails, after time specified in this field Pod will be marked as `Undready`  | `1`                              |
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
 | `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)                         | `false`                                   |
 

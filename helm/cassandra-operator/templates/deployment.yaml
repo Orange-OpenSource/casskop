@@ -43,9 +43,9 @@ spec:
           exec:
             command:
               - /health
-          initialDelaySeconds: 4
-          periodSeconds: 10
-          failureThreshold: 1
+          initialDelaySeconds: {{ .Values.readinessProbe.timeouts.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.timeouts.periodSeconds }}
+          failureThreshold: {{ .Values.readinessProbe.timeouts.failureThreshold }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         env:
