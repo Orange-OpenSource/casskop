@@ -117,22 +117,6 @@ If you delete the CRDs then it will delete **ALL** Clusters that has been create
 Please never delete CRDs without very very good care
 :::
 
-Helm always keeps records of what releases were installed. Need to see the deleted releases? `helm list --deleted`
-shows those, and `helm list --all` shows all of the releases (deleted and currently deployed, as well as releases that
-failed)
-
-Because Helm keeps records of deleted releases, a release name cannot be re-used. (If you really need to re-use a
-release name, you can use the `--replace` flag, but it will simply re-use the existing release and replace its
-resources.)
-
-Note that because releases are preserved in this way, you can rollback a deleted resource, and have it re-activate.
-
-To purge a release
-
-```console
-helm delete --purge casskop
-```
-
 ## Troubleshooting
 
 ### Install of the CRD
