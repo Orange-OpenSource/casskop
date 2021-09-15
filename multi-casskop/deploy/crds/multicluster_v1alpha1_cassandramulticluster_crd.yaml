@@ -12,8 +12,8 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
-  version: v1alpha1
+  version: v2
   versions:
-  - name: v1alpha1
+  - name: v2
     served: true
     storage: true

@@ -21,8 +21,8 @@ import (
 	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop/models"
 
 	"admiralty.io/multicluster-controller/pkg/controller"
-	cmcv1 "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/apis/db/v1alpha1"
-	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	cmcv1 "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/apis/db/v2"
+	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"

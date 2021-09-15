@@ -1,9 +1,9 @@
-package v1alpha1
+package v2
 
 import (
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"

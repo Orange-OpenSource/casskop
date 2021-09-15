@@ -7,7 +7,7 @@ sidebar_label: Cassandra restore
 `CassandraRestoreSpec` defines the specification for a restore of a Cassandra backup.
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraRestore
 metadata:
   name: restore-demo

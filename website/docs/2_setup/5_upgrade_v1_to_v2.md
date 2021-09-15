@@ -43,7 +43,7 @@ kubectl edit cassandraclusters.db.orange.com your-object
 
 Here is an example of what you could have after you've edited it:
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraCluster
 metadata:
   name: your-object

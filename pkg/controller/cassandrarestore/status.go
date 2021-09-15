@@ -3,7 +3,7 @@ package cassandrarestore
 import (
 	"context"
 	"emperror.dev/errors"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

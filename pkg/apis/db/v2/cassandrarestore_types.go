@@ -1,4 +1,4 @@
-package v1alpha1
+package v2
 
 import (
 	"github.com/Orange-OpenSource/casskop/pkg/util"

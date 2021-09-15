@@ -25,7 +25,7 @@ import (
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"

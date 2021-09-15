@@ -5,7 +5,7 @@ sidebar_label: Cassandra backup
 ---
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraBackup
 metadata:
   name: backup-demo-scheduled

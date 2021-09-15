@@ -29,7 +29,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/Orange-OpenSource/casskop/pkg/apis"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/controller"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/cassandracluster"
 	"github.com/Orange-OpenSource/casskop/version"

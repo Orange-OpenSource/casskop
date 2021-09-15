@@ -12,7 +12,7 @@
 // 	See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v2
 
 import (
 	"io/ioutil"
@@ -431,7 +431,7 @@ func TestComputeLastAppliedConfiguration(t *testing.T) {
 	cc := helperInitCluster(t, "cassandracluster-2DC.yaml")
 
 	lastAppliedConfiguration, _ := cc.ComputeLastAppliedConfiguration()
-	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v1alpha1","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:3.11.6","resources":{"limits":{"cpu":"1","memory":"2Gi"},"requests":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"dataCapacity":"3Gi","dataStorageClass":"local-storage","serverVersion":"3.11.7","config":{"jvm-options":{"log_gc":"true"}},"imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"config":{"cassandra-yaml":{"num_tokens":200}},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"resources":{}},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"config":{"cassandra-yaml":{"num_tokens":32}},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"resources":{}}]}},"status":{}}`
+	result := `{"kind":"CassandraCluster","apiVersion":"db.orange.com/v2","metadata":{"name":"cassandra-demo","namespace":"ns","creationTimestamp":null,"labels":{"cluster":"k8s.pic"}},"spec":{"nodesPerRacks":6,"cassandraImage":"cassandra:3.11.6","resources":{"limits":{"cpu":"1","memory":"2Gi"},"requests":{"cpu":"1","memory":"2Gi"}},"deletePVC":true,"autoPilot":true,"dataCapacity":"3Gi","dataStorageClass":"local-storage","serverVersion":"3.11.7","config":{"jvm-options":{"log_gc":"true"}},"imagePullSecret":{},"imageJolokiaSecret":{},"topology":{"dc":[{"name":"online","labels":{"location.dfy.orange.com/site":"mts"},"config":{"cassandra-yaml":{"num_tokens":200}},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street1"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street2"}}],"resources":{}},{"name":"stats","labels":{"location.dfy.orange.com/site":"mts"},"config":{"cassandra-yaml":{"num_tokens":32}},"rack":[{"name":"rack1","labels":{"location.dfy.orange.com/street":"street3"}},{"name":"rack2","labels":{"location.dfy.orange.com/street":"street4"}}],"nodesPerRacks":2,"resources":{}}]}},"status":{}}`
 
 	//add info in status
 	assert.Equal(result, string(lastAppliedConfiguration))
@@ -443,7 +443,7 @@ func TestSetDefaults(t *testing.T) {
 	cluster := CassandraCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CassandraCluster",
-			APIVersion: "db.orange.com/v1alpha1",
+			APIVersion: "db.orange.com/v2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "defaults-test",

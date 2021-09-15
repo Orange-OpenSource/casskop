@@ -20,7 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"

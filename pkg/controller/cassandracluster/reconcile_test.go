@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/jarcoal/httpmock"
 	"github.com/r3labs/diff"

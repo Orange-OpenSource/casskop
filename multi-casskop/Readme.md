@@ -153,7 +153,7 @@ You can find an example in the `multi-casskop/samples/multi-casskop.yaml` file:
 this is the structure of the file:
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: MultiCasskop
 metadata:
   name: multi-casskop-e2e

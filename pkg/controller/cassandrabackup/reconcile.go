@@ -7,7 +7,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"

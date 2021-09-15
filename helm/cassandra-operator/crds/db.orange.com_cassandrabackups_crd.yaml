@@ -11,9 +11,11 @@ spec:
     singular: cassandrabackup
   scope: Namespaced
   versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
+  - name: v2
+    served: true
+    storage: true
+    "schema":
+      "openAPIV3Schema":
         description: Defines a backup operation and its details
         type: object
         required:
@@ -131,5 +133,3 @@ spec:
                 type: string
               timeStarted:
                 type: string
-    served: true
-    storage: true

@@ -14,9 +14,11 @@ spec:
     singular: cassandracluster
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
+    - name: v2
+      served: true
+      storage: true
+      "schema":
+        "openAPIV3Schema":
           description: CassandraCluster is the Schema for the cassandraclusters API
           type: object
           properties:
@@ -1269,5 +1271,3 @@ spec:
                   type: array
                   items:
                     type: string
-      served: true
-      storage: true

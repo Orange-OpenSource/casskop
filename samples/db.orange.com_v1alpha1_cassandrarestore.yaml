@@ -1,4 +1,4 @@
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraRestore
 metadata:
   name: gcp-restore-1

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1/common"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"

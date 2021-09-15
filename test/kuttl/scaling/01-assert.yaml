@@ -6,7 +6,7 @@ status:
   currentReplicas: 2
   replicas: 2
 ---
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraCluster
 metadata:
   name: cassandra-e2e

@@ -1,4 +1,4 @@
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -6,7 +6,7 @@ metadata:
     cluster: k8s.pic
   namespace: ns
 spec:
-  nodesPerRacks: 8
+  nodesPerRacks: 1
   cassandraImage: cassandra:3.11.6
   serverVersion: 3.11.7
   rollingPartition: 0
@@ -25,3 +25,12 @@ spec:
   topology:
     dc:
     - name: online
+      labels:
+        location.dfy.orange.com/site : mts
+      rack:
+      - name: rack1
+        labels:
+          location.dfy.orange.com/street : street1
+      - name: rack2
+        labels:
+          location.dfy.orange.com/street : street2
