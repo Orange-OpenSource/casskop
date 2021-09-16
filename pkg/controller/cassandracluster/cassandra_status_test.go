@@ -394,7 +394,7 @@ func TestUpdateStatusIfconfigMapHasChangedWithConfigMap(t *testing.T) {
 		}
 	}
 
-	//Whant to remove the configmap
+	//Remove ConfigMap
 	rcc.cc.Spec.ConfigMapName = ""
 	//Test on each statefulset
 	for _, dc := range rcc.cc.Spec.Topology.DC {

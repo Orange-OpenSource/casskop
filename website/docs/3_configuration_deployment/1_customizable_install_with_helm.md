@@ -26,6 +26,9 @@ The following tables lists the configurable parameters of the Cassandra Operator
 | `image.imagePullSecrets.name`    | Name of the secret to connect to docker registry | -                                         |
 | `createCustomResource`           | If true, create & deploy the CRD                 | `true`
 | `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
+| `readinessProbe.timeouts.initialDelaySeconds` | Specifies timeout before first probe attempt | `4`				  |
+| `readinessProbe.timeouts.periodSeconds` | Specifies probe interval                  | `10`                                      |
+| `readinessProbe.timeouts.failureThreshold` | When a probe fails, after time specified in this field Pod will be marked as `Undready`  | `1`                              |
 | `resources`                      | Pod resource requests & limits                   | `{requests: {cpu: 10m, memory: 50Mi}, limits: {cpu: 1,memory: 512Mi}`               |
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
 | `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)              | `false`                                   |
@@ -35,7 +38,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-helm install --name casskop incubator/cassandra-operator -f values.yaml
+helm install casskop incubator/cassandra-operator -f values.yaml
 ```
 
 ### Installing the Chart
