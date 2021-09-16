@@ -375,12 +375,12 @@ workflows:
             - build-casskop
           <<: *ignore_fork_pr_filter
 
-      - k3d/e2e-orb:
-          name: kuttl-test scaling
-          test_name: scaling
-          requires:
-            - build-casskop
-          <<: *ignore_fork_pr_filter
+#       - k3d/e2e-orb:
+#           name: kuttl-test scaling
+#           test_name: scaling
+#           requires:
+#             - build-casskop
+#           <<: *ignore_fork_pr_filter
 
       - operator/publish-helm:
           name: publish-helm-orange-incubator-casskop
