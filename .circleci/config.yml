@@ -105,10 +105,10 @@ orbs:
           # Build steps
           - run:
               name: Download dependencies
-              command: if [ ! -d vendor ]; then go mod download; fi
+              command: go mod download
           - run:
               name: Vendor dependencies
-              command: if [ ! -d vendor ]; then go mod vendor; fi
+              command: go mod vendor
           - run:
               name: Generate k8s
               command: |
