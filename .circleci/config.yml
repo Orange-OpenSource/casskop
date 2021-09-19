@@ -174,7 +174,7 @@ orbs:
               at: /home/circleci
           - run:
               name: List files
-              command: find . type f
+              command: find . -type f
           # Unit tests steps
           - run:
               name: Unit Tests
