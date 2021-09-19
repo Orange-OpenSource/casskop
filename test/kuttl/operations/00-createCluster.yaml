@@ -17,7 +17,7 @@ spec:
   autoPilot: true
   resources:
     limits:
-      cpu: 100m
+      cpu: 300m
       memory: 512Mi
   topology:
     dc:
