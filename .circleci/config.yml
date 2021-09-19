@@ -172,6 +172,9 @@ orbs:
               path: /home/circleci/casskop
           - attach_workspace: # Attach artifact from workdir
               at: /home/circleci
+          - run:
+              name: List files
+              command: find . type f
           # Unit tests steps
           - run:
               name: Unit Tests
