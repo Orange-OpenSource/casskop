@@ -53,7 +53,7 @@ We could also have Initializing status if we decided later to add some DC to our
 For demo we will create this CassandraCluster without topology section
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -152,7 +152,7 @@ UN  172.18.120.12  65.86 KiB  32           100.0%            509ca725-fbf9-422f-
 In this example, I added a topology defining 2 Cassandra DC and 3 racks in total
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -297,7 +297,7 @@ If we add/change/remove the `CassandraCluster.spec.configMapName` then CassKop w
 CassandraNodes in each Racks, starting from the first Rack defined in the `topology`.
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo

@@ -6,7 +6,7 @@ data:
   pre_run.sh: |-
     echo example1
 ---
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraCluster
 metadata:
   name: cassandra-e2e
@@ -17,7 +17,7 @@ spec:
   autoPilot: true
   resources:
     limits:
-      cpu: 100m
+      cpu: 300m
       memory: 512Mi
   topology:
     dc:

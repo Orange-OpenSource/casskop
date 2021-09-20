@@ -7,14 +7,14 @@ sidebar_label: MultiCasskop
 `MultiCasskop` describes the desired state of the Cassandra cluster in a multi-site mode we want to setup through the operator.
  
  ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: MultiCasskop
 metadata:
   name: multi-casskop-demo
 spec:
   deleteCassandraCluster: true
   base: #<-- Specify the base of our CassandraCluster
-    apiVersion: "db.orange.com/v1alpha1"
+    apiVersion: "db.orange.com/v2"
     kind: "CassandraCluster"
     metadata:
       name: cassandra-demo

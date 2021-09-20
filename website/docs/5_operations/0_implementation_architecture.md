@@ -30,7 +30,7 @@ When declaring a new `CassandraCluster`, we need to specify its Name, and all it
 Here is an excerpt of a CassandraCluster CRD definition:
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo

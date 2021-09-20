@@ -35,7 +35,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,7 +44,7 @@ var clusterName = "cassandra-demo"
 var namespace   = "ns"
 
 var cc2Dcs = `
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo

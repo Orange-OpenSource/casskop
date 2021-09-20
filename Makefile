@@ -146,7 +146,7 @@ get-version:
 
 clean:
 	@rm -rf $(OUT_BIN) || true
-	@rm -f apis/cassandracluster/v1alpha1/zz_generated.deepcopy.go || true
+	@rm -f apis/cassandracluster/v2/zz_generated.deepcopy.go || true
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)

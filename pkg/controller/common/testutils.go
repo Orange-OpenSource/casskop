@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -29,8 +29,8 @@ func HelperGetStatefulset(t *testing.T, dcRackName string) *v12.StatefulSet {
 	return &sts
 }
 
-func HelperInitCassandraBackup(cassandraBackupYaml string) v1alpha1.CassandraBackup {
-	var cassandraBackup v1alpha1.CassandraBackup
+func HelperInitCassandraBackup(cassandraBackupYaml string) v2.CassandraBackup {
+	var cassandraBackup v2.CassandraBackup
 	if err := yaml.Unmarshal([]byte(cassandraBackupYaml), &cassandraBackup); err != nil {
 		logrus.Error(err)
 		os.Exit(-1)

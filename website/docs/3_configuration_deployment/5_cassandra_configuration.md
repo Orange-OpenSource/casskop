@@ -93,7 +93,7 @@ levels. Here is an example showing how to update some Java and Cassdnra paramete
 datacenter and rack level:
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraCluster
 metadata:
   name: cassandra-demo

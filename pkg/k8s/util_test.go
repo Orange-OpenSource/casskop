@@ -22,7 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +45,7 @@ func TestDCRackLabelsAndNodeSelectorForStatefulSet_WithTopology(t *testing.T) {
 	assert := assert.New(t)
 
 	var data = `
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -117,7 +117,7 @@ func TestDCRackLabelsAndNodeSelectorForStatefulSet_WithoutTopology(t *testing.T)
 	assert := assert.New(t)
 
 	var data = `
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-street10

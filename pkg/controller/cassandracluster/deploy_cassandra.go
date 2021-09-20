@@ -17,7 +17,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"

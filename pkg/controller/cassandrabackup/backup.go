@@ -4,7 +4,7 @@ import (
 	"context"
 	"emperror.dev/errors"
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"

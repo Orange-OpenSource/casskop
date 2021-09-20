@@ -11,9 +11,11 @@ spec:
     singular: cassandrarestore
   scope: Namespaced
   versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
+  - name: v2
+    served: true
+    storage: true
+    "schema":
+      "openAPIV3Schema":
         description: CassandraRestore is a Casskop Operator resource that represents
           the restoration of a backup of a Cassandra cluster
         type: object
@@ -143,5 +145,3 @@ spec:
                 type: string
               timeStarted:
                 type: string
-    served: true
-    storage: true

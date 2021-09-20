@@ -3,7 +3,7 @@ package backrest
 import (
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/cassandrabackup"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/stretchr/testify/assert"
@@ -20,8 +20,8 @@ func TestPerformRestore(t *testing.T) {
 
 	var concurrentConnection int32 = 15
 
-	cr := &v1alpha1.CassandraRestore{
-		Spec:       v1alpha1.CassandraRestoreSpec{
+	cr := &v2.CassandraRestore{
+		Spec:       v2.CassandraRestoreSpec{
 			ConcurrentConnection:    &concurrentConnection,
 			NoDeleteTruncates:       true,
 			CassandraCluster:        "cassandra-bgl",
@@ -29,8 +29,8 @@ func TestPerformRestore(t *testing.T) {
 		},
 	}
 
-	cb := &v1alpha1.CassandraBackup{
-		Spec:       v1alpha1.CassandraBackupSpec{
+	cb := &v2.CassandraBackup{
+		Spec:       v2.CassandraBackupSpec{
 			CassandraCluster: "cassandra-bgl",
 			StorageLocation:  "gcp://backup-casskop-aguitton/cassandra-bgl/dc1/cassandra-bgl-dc1-rack1-0",
 			SnapshotTag:      "SnapshotTag1",
@@ -43,12 +43,12 @@ func TestPerformRestore(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.BackRestStatus{
+	assert.Equal(&v2.BackRestStatus{
 		TimeCreated:   "2020-06-10T04:53:05.976Z",
 		TimeStarted:   "2020-06-10T05:53:05.976Z",
 		TimeCompleted: "2020-06-10T06:53:05.976Z",
-		Condition:     &v1alpha1.BackRestCondition{
-			Type: string(v1alpha1.RestorePending),
+		Condition:     &v2.BackRestCondition{
+			Type: string(v2.RestorePending),
 			LastTransitionTime: cs.Condition.LastTransitionTime,
 		},
 		Progress:      "10%",
@@ -78,12 +78,12 @@ func TestGetRestorebyId(t *testing.T) {
 
 	assert.Nil(err)
 	assert.NotNil(cs)
-	assert.Equal(&v1alpha1.BackRestStatus{
+	assert.Equal(&v2.BackRestStatus{
 		TimeCreated:   "2020-06-10T04:53:05.976Z",
 		TimeStarted:   "2020-06-10T05:53:05.976Z",
 		TimeCompleted: "2020-06-10T06:53:05.976Z",
-		Condition:     &v1alpha1.BackRestCondition{
-			Type: string(v1alpha1.RestoreRunning),
+		Condition:     &v2.BackRestCondition{
+			Type: string(v2.RestoreRunning),
 			LastTransitionTime: cs.Condition.LastTransitionTime,
 		},
 		Progress:      "10%",

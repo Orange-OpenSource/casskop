@@ -416,7 +416,7 @@ We used the SDK to create the repository layout. This command is for memory ;) (
 
 ```
 #old version
- operator-sdk new casskop --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+ operator-sdk new casskop --api-version=db.orange.com/v2 --kind=CassandraCluster
 #new version
 operator-sdk new casskop --dep-manager=modules --repo=github.com.Orange-OpenSource/casskop --type=go
 ```
@@ -424,10 +424,10 @@ Then you want to add managers:
 
 ```
 # Add a new API for the custom resource CassandraCluster
-$ operator-sdk add api --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+$ operator-sdk add api --api-version=db.orange.com/v2 --kind=CassandraCluster
 
 # Add a new controller that watches for CassandraCluster
-$ operator-sdk add controller --api-version=db.orange.com/v1alpha1 --kind=CassandraCluster
+$ operator-sdk add controller --api-version=db.orange.com/v2 --kind=CassandraCluster
 ```
 
 ### Useful Infos for developers
