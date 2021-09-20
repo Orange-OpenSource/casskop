@@ -1,6 +1,21 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.0.2
+
+- PR [363](https://github.com/Orange-OpenSource/casskop/pull/363) - Bump CRDs version from v1aplha1 to v2
+- PR [362](https://github.com/Orange-OpenSource/casskop/pull/362) - Added a possibility to configure readinessProbe timeouts for operator deployment
+- PR [361](https://github.com/Orange-OpenSource/casskop/pull/361) - Update Documentation
+- PR [359](https://github.com/Orange-OpenSource/casskop/pull/359) - Do not mount multiple times the same path
+- PR [358](https://github.com/Orange-OpenSource/casskop/pull/358) - Limit ConfigBuilder resources and add ability to specify its image
+- PR [356](https://github.com/Orange-OpenSource/casskop/pull/356) - Bump tar from 6.1.4 to 6.1.11 in /website
+- PR [354](https://github.com/Orange-OpenSource/casskop/pull/354) - Bump url-parse from 1.5.1 to 1.5.3 in /website 
+- PR [353](https://github.com/Orange-OpenSource/casskop/pull/353) - Upgrade to Go 1.17
+- PR [352](https://github.com/Orange-OpenSource/casskop/pull/352) - Bump path-parse from 1.0.6 to 1.0.7 in /website 
+- PR [350](https://github.com/Orange-OpenSource/casskop/pull/350) - Remove pre_stop.sh and update build image
+- PR [349](https://github.com/Orange-OpenSource/casskop/pull/349) - Bump tar from 6.0.5 to 6.1.4 in /website 
+
+
 ## v2.0.1
 
 - PR [#344](https://github.com/Orange-OpenSource/casskop/pull/344) - Revert "Fix #316 by labeling the cluster uid to each PVC (#322)"
