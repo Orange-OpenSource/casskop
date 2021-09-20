@@ -19,36 +19,30 @@ The following tables lists the configurable parameters of the Cassandra Operator
 
 | Parameter                        | Description                                      | Default                                   |
 |----------------------------------|--------------------------------------------------|-------------------------------------------|
-| `image.repository`               | Image                                            | `orangeopensource/casskop` |
-| `image.tag`                      | Image tag                                        | `0.5.1-master`                            |
+| `image.repository`               | Image                                            | `orangeopensource/casskop`                |
+| `image.tag`                      | Image tag                                        | `v2.0.1-release`                          |
 | `image.pullPolicy`               | Image pull policy                                | `Always`                                  |
 | `image.imagePullSecrets.enabled` | Enable the use of secret for docker image        | `false`                                   |
 | `image.imagePullSecrets.name`    | Name of the secret to connect to docker registry | -                                         |
+| `createCustomResource`           | If true, create & deploy the CRD                 | `true`
 | `rbacEnable`                     | If true, create & use RBAC resources             | `true`                                    |
-| `resources`                      | Pod resource requests & limits                   | `{}`                                      |
 | `readinessProbe.timeouts.initialDelaySeconds` | Specifies timeout before first probe attempt | `4`				  |
 | `readinessProbe.timeouts.periodSeconds` | Specifies probe interval                  | `10`                                      |
 | `readinessProbe.timeouts.failureThreshold` | When a probe fails, after time specified in this field Pod will be marked as `Undready`  | `1`                              |
+| `resources`                      | Pod resource requests & limits                   | `{requests: {cpu: 10m, memory: 50Mi}, limits: {cpu: 1,memory: 512Mi}`               |
 | `metricService`                  | deploy service for metrics                       | `false`                                   |
-| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)                         | `false`                                   |
+| `debug.enabled`                  | activate DEBUG log level  and enable shareProcessNamespace (allowing ephemeral container usage)              | `false`                                   |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-helm install --name casskop incubator/cassandra-operator -f values.yaml
+helm install casskop incubator/cassandra-operator -f values.yaml
 ```
 
 ### Installing the Chart
 
-:::important Helm 3 users
-You need to manually install the crds beforehand
-
-```console
-kubectl apply -f https://github.com/Orange-OpenSource/casskop/blob/master/deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-```
-:::
 
 <Tabs
   defaultValue="dryrun"
@@ -70,7 +64,7 @@ helm install --dry-run \
 <TabItem value="rn">
 
 ```bash
-helm install --name casskop orange-incubator/casskop
+helm install casskop orange-incubator/casskop
 ```
 
 </TabItem>
@@ -106,55 +100,34 @@ where x.y.z is the version you want.
 If you want to delete the operator from your Kubernetes cluster, the operator deployment should be deleted.
 
 ```bash
-helm delete casskop
+helm uninstall casskop
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the helm release.
 
-> The CRD created by the chart are not removed by default and should be manually cleaned up (if required)
+> The CRDs created by the chart are not removed by default and should be manually cleaned up (if required)
 
-Manually delete the CRD:
+Manually delete the CRDs:
 
 ```bash
-kubectl delete crd cassandraclusters.dfy.orange.com
+kubectl delete crd cassandraclusters.db.orange.com
+kubectl delete crd cassandrabackups.db.orange.com
+kubectl delete crd cassandrarestores.db.orange.com
 ```
 
 :::warning
-If you delete the CRD then :
-It will delete **ALL** Clusters that has been created using this CRD!!!
-Please never delete a CRD without very very good care
+If you delete the CRDs then it will delete **ALL** Clusters that has been created using these CRDs!!!
+Please never delete CRDs without very very good care
 :::
-
-Helm always keeps records of what releases were installed. Need to see the deleted releases? `helm list --deleted`
-shows those, and `helm list --all` shows all of the releases (deleted and currently deployed, as well as releases that
-failed)
-
-Because Helm keeps records of deleted releases, a release name cannot be re-used. (If you really need to re-use a
-release name, you can use the `--replace` flag, but it will simply re-use the existing release and replace its
-resources.)
-
-Note that because releases are preserved in this way, you can rollback a deleted resource, and have it re-activate.
-
-To purge a release
-
-```console
-helm delete --purge casskop
-```
 
 ## Troubleshooting
 
 ### Install of the CRD
 
-By default, the chart will install the Casskop CRD via a helm hook but this installation is global for the whole
-cluster.You may then deploy a chart with an existing CRD already deployed. In that case you can get an error like :
+By default, the chart will install the Casskop CRDs if there are not yet installed. If you want to upgrade or downgrade to another charts version you will need
+to delete the CRDs BEFORE installing the new chart. If you don't want to install CRDs with the chart using Helm, you can skip this step by adding `--skip-crds` as described
+in [Helm 3 official documentation](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/).
 
 ```bash
-$ helm install --name casskop ./helm/cassandra-operator
-Error: customresourcedefinitions.apiextensions.k8s.io "cassandraclusters.db.orange.com" already exists
-```
-
-In this case there si a parameter to say not to use the hook to install the CRD :
-
-```bash
-helm install --name casskop ./helm/cassandra-operator --no-hooks
+helm install casskop orange-incubator/cassandra-operator --skip-crds
 ```

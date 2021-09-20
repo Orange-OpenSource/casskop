@@ -20,19 +20,10 @@ Some of the high-level capabilities and objectives of Apache Cassandra include, 
 - Manage operations on pods through CassKop plugin (cleanup, rebuild, upgradesstable, removenode..)
 - Performing live Cassandra repairs through the use of [Cassandra reaper](http://cassandra-reaper.io/)
 - Multi-site management through [Multi-Casskop operator](https://github.com/Orange-OpenSource/casskop/tree/master/multi-casskop)
-
-Some of the roadmap features :
-
-- Live Backup/Restore
+- Live Backup/Restore of Cassandra's datas
 
 The Cassandra operator is based on the CoreOS
 [operator-sdk](https://github.com/operator-framework/operator-sdk) tools and APIs.
-
-:::important
-**NOTE**: This is an alpha-status project. We do regular tests on the code and functionality, but we can not assure a
-production-ready stability at this time.
-Our goal is to make it run in production as quickly as possible.
-:::
 
 
 CassKop creates/configures/manages Cassandra clusters atop Kubernetes and is by default **space-scoped** which means
@@ -57,8 +48,8 @@ At [Orange](https://opensource.orange.com/fr/accueil/) we are building some [Kub
 
 There are already some approaches to operating C* on Kubernetes, however, we did not find them appropriate for use in a highly dynamic environment, nor capable of meeting our needs.
 
+- [Datastax K8ssandra Cass-Operator](https://github.com/k8ssandra/cass-operator) (see also [K8ssandra project](https://k8ssandra.io))
 - [Instaclustr Operator](https://github.com/instaclustr/cassandra-operator)
 - [Sky-Uk Operator](https://github.com/sky-uk/cassandra-operator)
-- [Datastax Operator](https://github.com/datastax/cass-operator)
 
 Finally, our motivation is to build an open source solution and a community which drives the innovation and features of this operator.

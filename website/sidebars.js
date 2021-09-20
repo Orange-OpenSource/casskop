@@ -10,9 +10,7 @@ module.exports = {
         {
             "Concepts": [
                 "1_concepts/1_introduction",
-                "1_concepts/2_features",
-                "1_concepts/3_design_principes",
-                "1_concepts/4_roadmap",
+                "1_concepts/2_design_principes",
             ],
             "Setup": [
                 "2_setup/1_getting_started",
@@ -47,8 +45,7 @@ module.exports = {
                 "5_operations/3_multi_casskop",
                 "5_operations/3_5_backup_restore",
                 "5_operations/4_upgrade_operator",
-                "5_operations/5_upgrade_bootstrap_image",
-                "5_operations/6_uninstall_casskop",
+                "5_operations/5_uninstall_casskop",
             ],
             "Reference": [
                 "6_references/1_cassandra_cluster",
