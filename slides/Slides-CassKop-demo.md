@@ -106,7 +106,7 @@ The available commands are:
 # CassandraCluster CRD Manifest
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
