@@ -183,9 +183,15 @@ generate:
 	make controller-gen
 	$(CONTROLLER_GEN) crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
 	@rm deploy/crds/*s.yaml
+	echo Update CRD - Remove protocol and set config type to object CRD
 	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	cp -v deploy/crds/* helm/*/crds/
+	cp -v deploy/crds/* */helm/*/crds/
 
-# Build casskop executable file in local go env
+# Build CassKop executable file in local go env
 .PHONY: build
 build: generate
 	echo "Build Cassandra Operator"
@@ -209,9 +215,8 @@ docker-generate-crds:
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)  /bin/bash -c 'controller-gen crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds'
-	echo Update CRD - Remove protocol and set config type to object CRD
-	## Workaround: controller-gen updates existing and creates new generated CRDs, drop the ones that does not have _crd.yaml suffix
 	@rm deploy/crds/*s.yaml
+	echo Update CRD - Remove protocol and set config type to object CRD
 	@sed -i -e '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
