@@ -174,6 +174,26 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
+FIRST_VERSION = .spec.versions[0]
+SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
+
+.PHONY: update-crds
+update-crds:
+	echo Update CRD - Remove protocol and set config type to object CRD
+	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
+	@for crd in deploy/crds/*_crd.yaml; do\
+		git show v1.1.5-release:$crd > /tmp/$(basename $crd);\
+        sed -e '1,/versions/d' -e 's/^..//' $crd >> /tmp/$(basename $crd);\
+        yq -i e '$(FIRST_VERSION).storage = false|$(FIRST_VERSION).deprecated = true' /tmp/$(basename $crd);\
+		cp /tmp/$(basename $crd) $crd
+	done
+	cp -v deploy/crds/* helm/*/crds/
+	cp -v deploy/crds/* */helm/*/crds/
+
 #@TODO : `opetator-sdk generate openapî` deprecated
 .PHONY: generate
 generate:
@@ -183,13 +203,7 @@ generate:
 	make controller-gen
 	$(CONTROLLER_GEN) crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
 	@rm deploy/crds/*s.yaml
-	echo Update CRD - Remove protocol and set config type to object CRD
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	cp -v deploy/crds/* helm/*/crds/
-	cp -v deploy/crds/* */helm/*/crds/
+	$(MAKE) update-crds
 
 # Build CassKop executable file in local go env
 .PHONY: build
@@ -207,8 +221,6 @@ docker-generate-k8s:
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
 
-SPEC_PROPS = .spec.versions[0].schema.openAPIV3Schema.properties.spec.properties
-
 docker-generate-crds:
 	echo "Generate crds"
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
@@ -216,13 +228,7 @@ docker-generate-crds:
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)  /bin/bash -c 'controller-gen crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds'
 	@rm deploy/crds/*s.yaml
-	echo Update CRD - Remove protocol and set config type to object CRD
-	@sed -i -e '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	cp -v deploy/crds/* helm/*/crds/
-	cp -v deploy/crds/* */helm/*/crds/
+	$(MAKE) update-crds
 
 docker-build-operator:
 	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
