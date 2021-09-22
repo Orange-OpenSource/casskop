@@ -110,7 +110,7 @@ orbs:
               name: Vendor dependencies
               command: go mod vendor
           - run:
-              name: Generate k8s
+              name: Generate k8s & crds
               command: |
                 GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
                 make generate
