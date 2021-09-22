@@ -142,7 +142,9 @@ orbs:
               at: /home/circleci
           - run:
               name: Build Operator
-              command: make build
+              command: |
+                GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
+                make build
           - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
