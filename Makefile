@@ -185,11 +185,11 @@ update-crds:
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
 	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
-	@for crd in deploy/crds/*_crd.yaml; do\
-		git show v1.1.5-release:$crd > /tmp/$(basename $crd);\
-        sed -e '1,/versions/d' -e 's/^..//' $crd >> /tmp/$(basename $crd);\
-        yq -i e '$(FIRST_VERSION).storage = false|$(FIRST_VERSION).deprecated = true' /tmp/$(basename $crd);\
-		cp /tmp/$(basename $crd) $crd
+	@for crd in deploy/crds/*_crd.yaml; do \
+		git show v1.1.5-release:$crd > /tmp/$(basename $crd); \
+        sed -e '1,/versions/d' -e 's/^..//' $crd >> /tmp/$(basename $crd); \
+        yq -i e '$(FIRST_VERSION).storage = false' /tmp/$(basename $crd); \
+		cp /tmp/$(basename $crd) $crd; \
 	done
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
