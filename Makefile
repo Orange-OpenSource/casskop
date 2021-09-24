@@ -180,16 +180,21 @@ SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
 .PHONY: update-crds
 update-crds:
 	echo Update CRD - Remove protocol and set config type to object CRD
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
 	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
-	@for crd in deploy/crds/*_crd.yaml; do \
-		git show v1.1.5-release:$crd > /tmp/$(basename $crd); \
-        sed -e '1,/versions/d' -e 's/^..//' $crd >> /tmp/$(basename $crd); \
-        yq -i e '$(FIRST_VERSION).storage = false' /tmp/$(basename $crd); \
-		cp /tmp/$(basename $crd) $crd; \
+	@for crd in deploy/crds/*.yaml; do \
+		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$(basename $$crd); \
+		if [ $$(basename $$crd) == "db.orange.com_cassandraclusters.yaml" ]; then \
+			sed -e '1,/versions/d' -e 's/^..//' $$crd >> /tmp/$$(basename $$crd); \
+		else \
+			sed -e '1,/versions/d' $$crd >> /tmp/$$(basename $$crd); \
+		fi; \
+		cp /tmp/$$(basename $$crd) $$crd; \
+		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
+		mv $$crd $$(echo $$crd|sed 's/.yaml/_crd.yaml/'); \
 	done
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
@@ -201,8 +206,8 @@ generate:
 	operator-sdk version
 	operator-sdk generate k8s
 	make controller-gen
+	@rm -f deploy/crds/*.yaml
 	$(CONTROLLER_GEN) crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
-	@rm deploy/crds/*s.yaml
 	$(MAKE) update-crds
 
 # Build CassKop executable file in local go env
@@ -223,11 +228,11 @@ docker-generate-k8s:
 
 docker-generate-crds:
 	echo "Generate crds"
+	@rm -f deploy/crds/*.yaml
 	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
 		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
 		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
 		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)  /bin/bash -c 'controller-gen crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds'
-	@rm deploy/crds/*s.yaml
 	$(MAKE) update-crds
 
 docker-build-operator:
