@@ -117,7 +117,7 @@ generate:
 	operator-sdk version
 	operator-sdk generate k8s
 	make controller-gen
-	@rm -f deploy/crds/*.yaml
+	@rm -f */crds/*
 	$(CONTROLLER_GEN) $(CONTROLLER_GEN_OPTIONS)
 	$(MAKE) update-crds
 

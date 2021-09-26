@@ -103,7 +103,6 @@ update-crds:
 		fi; \
 		cp /tmp/$$(basename $$crd) $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
-		mv $$crd $$(echo $$crd|sed 's/.yaml/_crd.yaml/'); \
 	done
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/

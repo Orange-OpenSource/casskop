@@ -79,7 +79,6 @@ update-crds:
 	sed -e '1,/versions/d' $(CRD) >> /tmp/$$(basename $(CRD))
 	cp /tmp/$$(basename $(CRD)) $(CRD)
 	yq -i e '$(FIRST_VERSION).storage = false' $(CRD)
-	mv $(CRD) $$(echo $(CRD)|sed 's/.yaml/_crd.yaml/')
 	cp -v deploy/crds/* helm/*/crds/
 
 include ../shared.mk
