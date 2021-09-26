@@ -114,7 +114,7 @@ orbs:
               command: |
                 GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
                 make generate
-                [ "$(git ls-files -m |grep -cE 'zz_generated|_crd.yaml')" -eq 0 ]
+                [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
           - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
