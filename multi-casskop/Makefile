@@ -82,7 +82,7 @@ update-crds:
 	mv $(CRD) $$(echo $(CRD)|sed 's/.yaml/_crd.yaml/')
 	cp -v deploy/crds/* helm/*/crds/
 
-include ../share.mk
+include ../shared.mk
 include ../kube.mk
 
 docker-generate-files:

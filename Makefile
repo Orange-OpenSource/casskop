@@ -108,7 +108,7 @@ update-crds:
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
 
-include share.mk
+include shared.mk
 include kube.mk
 
 docker-generate-files: docker-generate-k8s docker-generate-crds
