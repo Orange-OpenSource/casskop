@@ -43,6 +43,15 @@ UID := $(shell id -u)
 # Commit hash from git
 COMMIT=$(shell git rev-parse HEAD)
 
+# Docker image name for this project
+IMAGE_NAME := $(SERVICE_NAME)
+
+DOCKER_REPO_BASE ?= orangeopensource
+#we could want to separate registry for branches
+DOCKER_REPO_BASE_TEST ?= orangeopensource
+
+BUILD_IMAGE ?= orangeopensource/casskop-build
+
 # Repository url for this project
 #in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
 ifdef CI_REGISTRY_IMAGE
@@ -73,15 +82,6 @@ VERSION := ${BRANCH}
 ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
 endif
-
-DOCKER_REPO_BASE ?= orangeopensource
-#we could want to separate registry for branches
-DOCKER_REPO_BASE_TEST ?= orangeopensource
-
-# Docker image name for this project
-IMAGE_NAME := $(SERVICE_NAME)
-
-BUILD_IMAGE ?= orangeopensource/casskop-build
 
 BUILD_CMD = operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args \
 				"--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
