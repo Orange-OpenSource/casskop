@@ -88,7 +88,11 @@ docker-generate-files:
 	cd ../ && make docker-generate-k8s
 	cp -v ../deploy/crds/* helm/*/crds/
 	$(MAKE) docker-generate-k8s
-	$(MAKE) docker-generate-crds
+	echo "Generate CRDs"
+	@rm -f deploy/crds/*.yaml
+	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && $(GENERATE_K8S)'
+	$(MAKE) update-crds
+	#$(MAKE) docker-generate-crds
 
 # Build the Operator and its Docker Image
 docker-build: docker-generate-k8s docker-build-operator
