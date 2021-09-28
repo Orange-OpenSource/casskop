@@ -211,9 +211,9 @@ spec:
                   type: string
       served: true
       storage: true
-atus:
-acceptedNames:
-  kind: ""
-  plural: ""
-conditions: []
-storedVersions: []
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
