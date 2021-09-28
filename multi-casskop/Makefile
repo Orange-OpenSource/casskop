@@ -96,10 +96,11 @@ docker-build: docker-generate-files docker-build-operator
 # Override generate as controller-gen crashes
 .PHONY: generate
 generate:
-	cd ../ && make generate
+	cd .. && make generate
 	cp -v ../deploy/crds/* helm/*/crds/
 	operator-sdk generate k8s
 	@rm -f */crds/*
+	find .
 	cp deploy/crds/* helm/*/crds/
 
 # Build CassKop executable file in local go env
