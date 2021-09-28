@@ -94,13 +94,9 @@ update-crds:
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
 	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
 	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
-	@for crd in deploy/crds/*.yaml; do \
+	for crd in deploy/crds/*.yaml; do \
 		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$(basename $$crd); \
-		if [ $$(basename $$crd) == "db.orange.com_cassandraclusters.yaml" ]; then \
-			sed -e '1,/versions/d' -e 's/^..//' $$crd >> /tmp/$$(basename $$crd); \
-		else \
-			sed -e '1,/versions/d' $$crd >> /tmp/$$(basename $$crd); \
-		fi; \
+		sed -e '1,/versions/d' -e 's/^..//' $$crd >> /tmp/$$(basename $$crd); \
 		cp /tmp/$$(basename $$crd) $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done

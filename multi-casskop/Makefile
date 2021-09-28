@@ -85,17 +85,10 @@ include ../shared.mk
 include ../kube.mk
 
 docker-generate-files:
-	cd ../ && make docker-generate-k8s
+	cd ../ && make docker-generate-files
 	cp -v ../deploy/crds/* helm/*/crds/
 	$(MAKE) docker-generate-k8s
-	echo "Generate CRDs"
-	@rm -f deploy/crds/*.yaml
-	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && $(GENERATE_K8S)'
-	$(MAKE) update-crds
-	#$(MAKE) docker-generate-crds
-
-# Build the Operator and its Docker Image
-docker-build: docker-generate-k8s docker-build-operator
+	cp deploy/crds/* helm/*/crds/
 
 # Build the Operator and its Docker Image
 docker-build: docker-generate-files docker-build-operator

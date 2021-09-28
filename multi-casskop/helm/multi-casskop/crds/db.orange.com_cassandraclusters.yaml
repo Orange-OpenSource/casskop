@@ -1307,6 +1307,7 @@ spec:
                 config:
                   description: Config for the Cassandra nodes
                   type: object
+                  format: byte
                   x-kubernetes-preserve-unknown-fields: true
                 configBuilderImage:
                   description: Image used for configBuilder (use format base:version)
@@ -1876,6 +1877,7 @@ spec:
                             protocol:
                               description: Protocol for port. Must be UDP, TCP, or SCTP. Defaults to "TCP".
                               type: string
+                              default: TCP
                         x-kubernetes-list-map-keys:
                           - containerPort
                         x-kubernetes-list-type: map
@@ -2335,6 +2337,7 @@ spec:
                           config:
                             description: Config for the Cassandra nodes
                             type: object
+                            format: byte
                             x-kubernetes-preserve-unknown-fields: true
                           dataCapacity:
                             description: Define the Capacity for Persistent Volume Claims in the local storage
@@ -2366,6 +2369,7 @@ spec:
                                 config:
                                   description: Config for the Cassandra nodes
                                   type: object
+                                  format: byte
                                   x-kubernetes-preserve-unknown-fields: true
                                 labels:
                                   description: Labels used to target Kubernetes nodes
