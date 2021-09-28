@@ -114,9 +114,7 @@ WORKDIR := /go/casskop
 .PHONY: generate
 generate:
 	echo "Generate zzz-deepcopy objects"
-	operator-sdk version
 	operator-sdk generate k8s
-	controller-gen --version
 	make controller-gen
 	@rm -f */crds/*
 	$(CONTROLLER_GEN) $(CONTROLLER_GEN_OPTIONS)
