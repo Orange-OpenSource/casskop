@@ -1,6 +1,11 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.0.3
+
+- PR [368](https://github.com/Orange-OpenSource/casskop/pull/368) - Add missing changes of crd
+- PR [367](https://github.com/Orange-OpenSource/casskop/pull/367) - Bump prismjs from 1.24.0 to 1.25.0 in /website
+
 ## v2.0.2
 
 - PR [363](https://github.com/Orange-OpenSource/casskop/pull/363) - Bump CRDs version from v1aplha1 to v2
