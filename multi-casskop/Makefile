@@ -18,14 +18,8 @@
 # Name of this service/application
 SERVICE_NAME := multi-casskop
 
-DOCKER_REPO_BASE ?= orangeopensource
-#we could want to separate registry for branches
-DOCKER_REPO_BASE_TEST ?= orangeopensource
-
-# Docker image name for this project
-IMAGE_NAME := $(SERVICE_NAME)
-
-BUILD_IMAGE ?= orangeopensource/casskop-build
+BUILD_FOLDER = multi-casskop
+MOUNTDIR = $(PWD)/..
 
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
@@ -35,38 +29,8 @@ KUBECONFIG ?= ~/.kube/config
 MINIKUBE_CONFIG ?= ~/.minikube
 MINIKUBE_CONFIG_MOUNT ?= /home/circleci/.minikube
 
-# Repository url for this project
-#in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
-ifdef CI_REGISTRY_IMAGE
-	REPOSITORY := $(CI_REGISTRY_IMAGE)
-else
-	REPOSITORY := $(DOCKER_REPO_BASE)/$(IMAGE_NAME)
-endif
-
-# Branch is used for the docker image version
-ifdef CIRCLE_BRANCH
-	#removing / for fork which lead to docker error
-	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
-else
-  ifdef CIRCLE_TAG
-		BRANCH := $(CIRCLE_TAG)
-	else
-		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-	endif
-endif
-
-#Operator version is managed in go file
-#BaseVersion is for dev docker image tag
-BASEVERSION := $(shell cat version/version.go | awk -F\" '/Version =/ { print $$2}')
-#Version is for binary, docker image and helm
-
-VERSION := ${BRANCH}
 HELM_VERSION    := $(shell cat helm/multi-casskop/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= ../docs/helm
-#si branche master, on pousse le tag latest
-ifeq ($(CIRCLE_BRANCH),master)
-	PUSHLATEST := true
-endif
 
 params:
 	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
@@ -74,49 +38,9 @@ params:
 	@echo "Version = '$(VERSION)'"
 	@echo "Image= '$(REPOSITORY):$(VERSION)'"
 
-
-# Shell to use for running scripts
-SHELL := $(shell which bash)
-
-# Get docker path or an empty string
-DOCKER := $(shell command -v docker)
-
-# Get the main unix group for the user running make (to be used by docker-compose later)
-GID := $(shell id -g)
-
-# Get the unix user id for the user running make (to be used by docker-compose later)
-UID := $(shell id -u)
-
-# Commit hash from git
-COMMIT=$(shell git rev-parse HEAD)
-
-
 # CMDs
-UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out
-UNIT_TEST_CMD_WITH_VENDOR := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test -mod=vendor --cover --coverprofile=coverage.out `go list -mod=vendor ./... | grep -v e2e` > test-report.out 
-UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
-GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
-GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 MOCKS_CMD := go generate ./mocks
 
-# environment dirs
-DEV_DIR := docker/circleci
-APP_DIR := build/Dockerfile
-
-OPERATOR_SDK_VERSION=v0.19.4
-# workdir
-WORKDIR := /go/casskop
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	GOOS = linux
-endif
-ifeq ($(UNAME_S),Darwin)
-	GOOS = darwin
-endif
-
-# Some other usefule make file for interracting with kubernetes 
-include kube.mk
 
 #
 #
@@ -140,51 +64,52 @@ helm-package:
 export CGO_ENABLED:=0
 export PURE:="on"
 
-DOCKER_BUILD = docker run --rm -v $(PWD)/..:$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
-               		-v /var/run/docker.sock:/var/run/docker.sock \
-               		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
-               		--env CGO_ENABLED=$(CGO_ENABLED) --env GOOS=linux --env GOARCH=amd64 \
-               		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-               		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c
-
-MULTI_CASSKOP = cd multi-casskop
+BUILD_FOLDER = multi-casskop
 GENERATE_CMD = CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health \
 				 ../tools/health/main.go
-GENERATE_K8S = operator-sdk generate k8s
-BUILD_CMD = operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args \
-				"--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+CRD_V1 = deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
+CRD = deploy/crds/db.orange.com_multicasskops.yaml
+FIRST_VERSION = .spec.versions[0]
 
-docker-generate-k8s:
-	echo "Generate zzz-deepcopy objects"
-	cd ../ && make docker-generate-k8s
-	cp -v ../deploy/crds/* helm/*/crds/
-	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_CMD)'
-	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(GENERATE_K8S)'
+.PHONY: update-crds
+update-crds:
+	echo Update CRD - Remove protocol and set config type to object CRD
+# 	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
+	git show v1.1.5-release:./$(CRD_V1) > /tmp/$$(basename $(CRD))
+	sed -e '1,/versions/d' $(CRD) >> /tmp/$$(basename $(CRD))
+	cp /tmp/$$(basename $(CRD)) $(CRD)
+	yq -i e '$(FIRST_VERSION).storage = false' $(CRD)
 	cp -v deploy/crds/* helm/*/crds/
 
-docker-build-operator:
-	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
-	$(DOCKER_BUILD) '$(MULTI_CASSKOP); $(BUILD_CMD)'
+include ../shared.mk
+include ../kube.mk
+
+docker-generate-files:
+	cd ../ && make docker-generate-files
+	cp -v ../deploy/crds/* helm/*/crds/
+	$(MAKE) docker-generate-k8s
+	cp deploy/crds/* helm/*/crds/
 
 # Build the Operator and its Docker Image
-docker-build: docker-generate-k8s docker-build-operator
+docker-build: docker-generate-files docker-build-operator
 
+# Override generate as controller-gen crashes
 .PHONY: generate
 generate:
-	@echo "Generate zzz-deepcopy objects"
-	$(GENERATE_CMD)
-	echo "Generate zzz-deepcopy objects"
-	operator-sdk version
-	$(GENERATE_K8S)
+	cd .. && make generate
+	cp -v ../deploy/crds/* helm/*/crds/
+	operator-sdk generate k8s
+	cp deploy/crds/* helm/*/crds/
 
+# Build CassKop executable file in local go env
 .PHONY: build
 build: generate
-	@echo "Build Cassandra Operator"
-	$(BUILD_CMD)
+	echo "Build Cassandra Operator"
+	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
-#
+
 
 build-local: generate
 	@echo "Build Cassandra Operator for $(GOOS)"
@@ -199,13 +124,10 @@ debug-telepresence:
 	sudo ln -s /tmp/known/var/run/secrets/admiralty.io/serviceaccountimports /var/run/secrets/admiralty.io/ ; \
 	tdep=$(shell kubectl get deployment -l app=multi-casskop -o jsonpath='{.items[0].metadata.name}') ; \
 	telepresence --swap-deployment $$tdep --mount=/tmp/known --env-file multi-casskop.env 
-#	--also-proxy 10.40.0.0/16
-#	--also-proxy 172.18.0.0/16
-
 
 ifneq (,$(filter $(firstword $(MAKECMDGOALS)),run run-local run-docker))
-  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(RUN_ARGS):;@:)
+	RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+	$(eval $(RUN_ARGS):;@:)
 endif
 
 

@@ -16,10 +16,9 @@
 
 # Name of this service/application
 SERVICE_NAME := casskop
-DOCKER_REPO_BASE ?= orangeopensource
-DOCKER_REPO_BASE_TEST ?= orangeopensource
-IMAGE_NAME := $(SERVICE_NAME)
-BUILD_IMAGE ?= orangeopensource/casskop-build
+
+BUILD_FOLDER = .
+MOUNTDIR = $(PWD)
 
 BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.9
 TELEPRESENCE_REGISTRY ?= datawire
@@ -27,40 +26,10 @@ KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-# Repository url for this project
-#in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
-ifdef CI_REGISTRY_IMAGE
-	REPOSITORY := $(CI_REGISTRY_IMAGE)
-else
-	REPOSITORY := $(DOCKER_REPO_BASE)/$(IMAGE_NAME)
-endif
 
-# Branch is used for the docker image version
-ifdef CIRCLE_BRANCH
-	#removing / for fork which lead to docker error
-	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
-else
-  ifdef CIRCLE_TAG
-		BRANCH := $(CIRCLE_TAG)
-	else
-		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-	endif
-endif
-
-# Operator version is managed in go file
-# BaseVersion is for dev docker image tag
-BASEVERSION := $(shell awk -F\" '/Version =/ { print $$2}' version/version.go)
-# Version is for binary, docker image and helm
-
-VERSION := ${BRANCH}
 
 HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= docs/helm
-
-#si branche master, on pousse le tag latest
-ifeq ($(CIRCLE_BRANCH),master)
-	PUSHLATEST := true
-endif
 
 # Compute image to use during tests
 ifdef CIRCLE_BRANCH
@@ -90,46 +59,6 @@ params:
 	@echo "Version = '$(VERSION)'"
 	@echo "E2EIMAGE = '$(E2EIMAGE)'"
 
-# Shell to use for running scripts
-SHELL := $(shell which bash)
-
-# Get docker path or an empty string
-DOCKER := $(shell command -v docker)
-
-# Get the main unix group for the user running make (to be used by docker-compose later)
-GID := $(shell id -g)
-
-# Get the unix user id for the user running make (to be used by docker-compose later)
-UID := $(shell id -u)
-
-# Commit hash from git
-COMMIT=$(shell git rev-parse HEAD)
-
-# CMDs
-UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out
-UNIT_TEST_CMD_WITH_VENDOR := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test -mod=vendor --cover --coverprofile=coverage.out `go list -mod=vendor ./... | grep -v e2e` > test-report.out 
-UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
-GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
-GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-
-# environment dirs
-DEV_DIR := docker/circleci
-APP_DIR := build/Dockerfile
-
-OPERATOR_SDK_VERSION=v0.19.4
-# workdir
-WORKDIR := /go/casskop
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	GOOS = linux
-endif
-ifeq ($(UNAME_S),Darwin)
-	GOOS = darwin
-endif
-
-# Some other useful make file for interacting with kubernetes
-include kube.mk
 
 # The default action of this Makefile is to build the development docker image
 default: build
@@ -154,81 +83,35 @@ helm-package:
 	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
 	helm repo index $(HELM_TARGET_DIR)/
 
-controller-gen:
-ifeq (, $(shell which controller-gen))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.0 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	}
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-CONTROLLER_GEN=$(GOBIN)/controller-gen
-else
-CONTROLLER_GEN=$(shell which controller-gen)
-endif
+FIRST_VERSION = .spec.versions[0]
+SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
 
-#@TODO : `opetator-sdk generate openapî` deprecated
-.PHONY: generate
-generate:
-	echo "Generate zzz-deepcopy objects"
-	operator-sdk version
-	operator-sdk generate k8s
-	make controller-gen
-	$(CONTROLLER_GEN) crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds
-	@rm deploy/crds/*s.yaml
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-
-# Build casskop executable file in local go env
-.PHONY: build
-build: generate
-	echo "Build Cassandra Operator"
-	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
-ifdef PUSHLATEST
-	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
-endif
-
-docker-generate-k8s:
-	echo "Generate zzz-deepcopy objects"
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
-		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
-		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
-
-SPEC_PROPS = .spec.versions[0].schema.openAPIV3Schema.properties.spec.properties
-
-docker-generate-crds:
-	echo "Generate crds"
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
-		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
-		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)  /bin/bash -c 'controller-gen crd paths=./pkg/apis/... output:dir=./deploy/crds schemapatch:manifests=./deploy/crds'
+.PHONY: update-crds
+update-crds:
 	echo Update CRD - Remove protocol and set config type to object CRD
-	## Workaround: controller-gen updates existing and creates new generated CRDs, drop the ones that does not have _crd.yaml suffix
-	@rm deploy/crds/*s.yaml
-	@sed -i -e '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
+	for crd in deploy/crds/*.yaml; do \
+		crdname=$$(basename $$crd); \
+		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
+		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
+		sed -e '1,/versions/d' -e "1,$${end}s/^..//" $$crd >> /tmp/$$crdname; \
+		cp /tmp/$$crdname $$crd; \
+		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
+	done
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
 
-docker-build-operator:
-	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated -v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
-	--env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) \
-	--image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
+include shared.mk
+include kube.mk
+
+docker-generate-files: docker-generate-k8s docker-generate-crds
 
 # Build the Operator and its Docker Image
-docker-build: docker-generate-k8s docker-generate-crds docker-build-operator
+docker-build: docker-generate-files docker-build-operator
 
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
@@ -345,11 +228,6 @@ unit-test:
 unit-test-with-vendor:
 	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
 	cat test-report.out
-	$(UNIT_TEST_COVERAGE)
-
-unit-test-with-vendor:
-	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
 	$(UNIT_TEST_COVERAGE)
 
 define run-operator-cmd

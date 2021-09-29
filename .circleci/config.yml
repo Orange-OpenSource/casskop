@@ -110,10 +110,11 @@ orbs:
               name: Vendor dependencies
               command: go mod vendor
           - run:
-              name: Generate k8s
+              name: Generate k8s & crds
               command: |
+                GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
                 make generate
-                [ "$(git ls-files -m |grep -c zz_generated)" -eq 0 ]
+                [ "$(git ls-files -m | grep -cE 'zz_generated|crds')" -eq 0 ]
           - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
@@ -141,7 +142,9 @@ orbs:
               at: /home/circleci
           - run:
               name: Build Operator
-              command: make build
+              command: |
+                GO111MODULE=on go install github.com/mikefarah/yq/v4@latest
+                make build
           - persist_to_workspace: # Create artifacts
               root: /home/circleci
               paths:
