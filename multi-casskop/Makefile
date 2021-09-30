@@ -88,6 +88,7 @@ docker-generate-files:
 	cd ../ && make docker-generate-files
 	cp -v ../deploy/crds/* helm/*/crds/
 	$(MAKE) docker-generate-k8s
+	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER); $(GENERATE_CMD)'
 	cp deploy/crds/* helm/*/crds/
 
 # Build the Operator and its Docker Image
@@ -99,6 +100,7 @@ generate:
 	cd .. && make generate
 	cp -v ../deploy/crds/* helm/*/crds/
 	operator-sdk generate k8s
+	$(GENERATE_CMD)
 	cp deploy/crds/* helm/*/crds/
 
 # Build CassKop executable file in local go env
