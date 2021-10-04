@@ -89,21 +89,20 @@ SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
 .PHONY: update-crds
 update-crds:
 	echo Update CRD - Remove protocol and set config type to object CRD
-	@sed -i '/\- protocol/d' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
-	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' config/crd/bases/crds/db.orange.com_cassandraclusters.yaml
-	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
-	for crd in config/crd/bases/crds/*.yaml; do \
+	@sed -i '/\- protocol/d' config/crd/bases/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' config/crd/bases/db.orange.com_cassandraclusters.yaml
+	for crd in config/crd/bases/*.yaml; do \
 		crdname=$$(basename $$crd); \
 		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
-		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
+		git show v1.1.5-release:$$(echo deploy/crds/$$crdname |sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
 		sed -e '1,/versions/d' -e "1,$${end}s/^..//" $$crd >> /tmp/$$crdname; \
 		cp /tmp/$$crdname $$crd; \
 		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
 	done
-	cp -v config/crd/bases/crds/* helm/*/crds/
-	cp -v config/crd/bases/crds/* */helm/*/crds/
+	cp -v config/crd/bases/* helm/*/crds/
+	cp -v config/crd/bases/* */helm/*/crds/
 
 include shared.mk
 include kube.mk
@@ -192,7 +191,7 @@ debug-kubesquash:
 # Run the development environment (in local go env) in the background using local ~/.kube/config
 run:
 	export POD_NAME=casskop; \
-	operator-sdk up local
+	go run ./main.go
 
 push:
 	docker push $(REPOSITORY):$(VERSION)

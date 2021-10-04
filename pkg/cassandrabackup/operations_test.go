@@ -5,13 +5,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2/common"
+	"github.com/Orange-OpenSource/casskop/api/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
-
-
 
 func TestPerformRestoreOperation(t *testing.T) {
 	assert := assert.New(t)
@@ -38,27 +36,26 @@ func TestGetRestoreOperation(t *testing.T) {
 	assert.Nil(restore)
 }
 
-
 func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 	client := newBuildedMockClient()
 	defer httpmock.DeactivateAndReset()
 
-	sourceDir         := "/var/lib/cassandra/downloadedsstables"
+	sourceDir := "/var/lib/cassandra/downloadedsstables"
 
-	restoreOperationRequest := icarus.RestoreOperationRequest {
-		Type_: "restore",
-		StorageLocation: storageLocation,
-		SnapshotTag: snapshotTag,
-		NoDeleteDownloads: noDeleteDownloads,
-		SchemaVersion: schemaVersion,
+	restoreOperationRequest := icarus.RestoreOperationRequest{
+		Type_:              "restore",
+		StorageLocation:    storageLocation,
+		SnapshotTag:        snapshotTag,
+		NoDeleteDownloads:  noDeleteDownloads,
+		SchemaVersion:      schemaVersion,
 		ExactSchemaVersion: false,
-		RestorationPhase: "DOWNLOAD",
-		GlobalRequest: true,
+		RestorationPhase:   "DOWNLOAD",
+		GlobalRequest:      true,
 		Import_: &icarus.AllOfRestoreOperationRequestImport_{
-			Type_: "import",
+			Type_:     "import",
 			SourceDir: sourceDir,
 		},
-		K8sSecretName: k8sSecretName,
+		K8sSecretName:         k8sSecretName,
 		ConcurrentConnections: concurrentConnections,
 	}
 
@@ -79,7 +76,6 @@ func performRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error
 					"INIT",
 					restoreOperationRequest.SchemaVersion))
 		})
-
 
 	return client.PerformRestoreOperation(restoreOperationRequest)
 }
@@ -108,4 +104,3 @@ func getRestoreMock(codeStatus int) (*icarus.RestoreOperationResponse, error) {
 
 	return client.RestoreOperationByID(operationID)
 }
-

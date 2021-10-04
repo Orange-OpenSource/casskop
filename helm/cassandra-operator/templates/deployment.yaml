@@ -39,10 +39,17 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         command:
         - casskop
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: {{ .Values.livenessProbe.timeouts.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.timeouts.periodSeconds }}
+          failureThreshold: {{ .Values.livenessProbe.timeouts.failureThreshold }}
         readinessProbe:
-          exec:
-            command:
-              - /health
+          httpGet:
+            path: /readyz
+            port: 8081
           initialDelaySeconds: {{ .Values.readinessProbe.timeouts.initialDelaySeconds }}
           periodSeconds: {{ .Values.readinessProbe.timeouts.periodSeconds }}
           failureThreshold: {{ .Values.readinessProbe.timeouts.failureThreshold }}

@@ -1,0 +1,20 @@
+# permissions for end users to view multicasskops.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: multicasskop-viewer-role
+rules:
+- apiGroups:
+  - multicasskops.db.orange.com.multicasskops.db.orange.com
+  resources:
+  - multicasskops
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - multicasskops.db.orange.com.multicasskops.db.orange.com
+  resources:
+  - multicasskops/status
+  verbs:
+  - get

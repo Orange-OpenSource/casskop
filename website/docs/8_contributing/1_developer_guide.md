@@ -198,7 +198,7 @@ $ export OPERATOR_NAME=cassandra-operator
 Deploy the CRD
 
 ```
-$ kubectl apply -f config/crd/bases/db.orange.com_cassandraclusters_crd.yaml
+$ kubectl apply -f config/crd/bases/db.orange.com_cassandraclusters.yaml
 ```
 
 ```

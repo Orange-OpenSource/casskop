@@ -29,7 +29,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -38,6 +37,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 )
+
+const (
+	KubeConfigEnvVar = "KUBECONFIG"
+)
+
 
 //var clientset *kubernetes.Clientset
 var clientset kubernetes.Interface
@@ -56,7 +60,7 @@ func InitClient() {
 func MustNewKubeClientAndConfig() (kubernetes.Interface, *rest.Config) {
 	//var cfg *rest.Config
 	var err error
-	if os.Getenv(k8sutil.KubeConfigEnvVar) != "" {
+	if os.Getenv(KubeConfigEnvVar) != "" {
 		cfg, err = outOfClusterConfig()
 	} else {
 		cfg, err = inClusterConfig()
@@ -85,7 +89,7 @@ func inClusterConfig() (*rest.Config, error) {
 }
 
 func outOfClusterConfig() (*rest.Config, error) {
-	kubeconfig := os.Getenv(k8sutil.KubeConfigEnvVar)
+	kubeconfig := os.Getenv(KubeConfigEnvVar)
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	return config, err
 }

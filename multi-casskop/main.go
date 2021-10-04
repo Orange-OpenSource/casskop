@@ -17,7 +17,11 @@ limitations under the License.
 package main
 
 import (
-	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop/models"
+	"fmt"
+	"github.com/Orange-OpenSource/casskop/multi-casskop/controllers"
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/sample-controller/pkg/signals"
+
 	//	"flag"
 	"github.com/jessevdk/go-flags"
 	"log"
@@ -29,17 +33,18 @@ import (
 	"admiralty.io/multicluster-controller/pkg/cluster"
 	"admiralty.io/multicluster-controller/pkg/manager"
 	"admiralty.io/multicluster-service-account/pkg/config"
-	mc "github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/ready"
 	"github.com/sirupsen/logrus"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/sample-controller/pkg/signals"
 	kconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 const (
 	logLevelEnvVar = "LOG_LEVEL"
+)
+
+// Change below variables to serve metrics on different host or port.
+var (
+	scheme = apimachineryruntime.NewScheme()
 )
 
 func getLogLevel() logrus.Level {
@@ -91,11 +96,12 @@ func main() {
 		}
 	}
 
-	var clusters models.Clusters
+	var clusters controllers.Clusters
 
-	namespace, err := k8sutil.GetWatchNamespace()
+	namespace, err := getWatchNamespace()
 	if err != nil {
-		logrus.Fatalf("failed to get watch namespace: %v", err)
+		logrus.Error(err, "unable to get WatchNamespace, "+
+			"the manager will watch and manage resources in all namespaces")
 	}
 
 	// Configuring Local cluster
@@ -108,7 +114,7 @@ func main() {
 		os.Exit(1)
 	}
 	// Set up local cluster
-	clusters.Local = &models.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
+	clusters.Local = &controllers.Cluster{Name: opts.Local, Cluster: cluster.New(opts.Local, cfg,
 		cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})}
 
 	// Configuring Remotes clusters
@@ -126,12 +132,12 @@ func main() {
 
 		// Set up Remotes clusters
 		clusters.Remotes = append(clusters.Remotes,
-			&models.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
+			&controllers.Cluster{Name: remote, Cluster: cluster.New(remote, cfg,
 				cluster.Options{CacheOptions: cluster.CacheOptions{Namespace: namespace}})})
 	}
 
 	logrus.Info("Creating Controller")
-	co, err := mc.NewController(clusters, namespace)
+	co, err := controllers.NewController(clusters, namespace)
 	if err != nil {
 		log.Fatalf("creating Cassandra Multi Cluster controller: %v", err)
 	}
@@ -139,20 +145,22 @@ func main() {
 	m := manager.New()
 	m.AddController(co)
 
-	// NewFileReady returns a Ready that uses the presence of a file on disk to
-	// communicate whether the operator is ready. The operator's Pod definition
-	// "stat /tmp/operator-sdk-ready".
-	logrus.Info("Writing ready file.")
-	r := ready.NewFileReady()
-	err = r.Set()
-	if err != nil {
-		logrus.Error(err)
-		os.Exit(1)
-	}
-	defer r.Unset()
-
 	logrus.Info("Starting Manager.")
 	if err := m.Start(signals.SetupSignalHandler()); err != nil {
 		log.Fatalf("while or after starting manager: %v", err)
 	}
+}
+
+// getWatchNamespace returns the Namespace the operator should be watching for changes
+func getWatchNamespace() (string, error) {
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
+
+	ns, found := os.LookupEnv(watchNamespaceEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+	}
+	return ns, nil
 }

@@ -18,7 +18,22 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
-CONTROLLER_GEN_OPTIONS=crd paths=./pkg/apis/... output:dir=./config/crd/bases/crds schemapatch:manifests=./config/crd/bases/crds
+kustomize:
+ifeq (, $(shell which kustomize))
+	@{ \
+	set -e ;\
+	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
+	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
+	}
+KUSTOMIZE=$(GOBIN)/kustomize
+else
+KUSTOMIZE=$(shell which kustomize)
+endif
+
+CONTROLLER_GEN_OPTIONS=crd paths=./api/... output:dir=./config/crd/bases schemapatch:manifests=./config/crd/bases
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -83,8 +98,7 @@ ifeq ($(CIRCLE_BRANCH),master)
 	PUSHLATEST := true
 endif
 
-BUILD_CMD = operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args \
-				"--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+BUILD_CMD = docker build . -t $(REPOSITORY):$(VERSION) --build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy
 
 DOCKER_BUILD = docker run --rm -v $(MOUNTDIR):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
                		-v /var/run/docker.sock:/var/run/docker.sock \
@@ -93,7 +107,9 @@ DOCKER_BUILD = docker run --rm -v $(MOUNTDIR):$(WORKDIR) -v $(GOPATH)/pkg/mod:/g
                		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
                		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c
 
-GENERATE_K8S = operator-sdk generate k8s
+# Generate code
+generate-k8s:
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # CMDS
 UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out
@@ -107,15 +123,15 @@ GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
 DEV_DIR := docker/circleci
 APP_DIR := build/Dockerfile
 
-OPERATOR_SDK_VERSION=v0.19.4
+OPERATOR_SDK_VERSION=v1.13.0
 # workdir
 WORKDIR := /go/casskop
 
 .PHONY: generate
 generate:
 	echo "Generate zzz-deepcopy objects"
-	operator-sdk generate k8s
-	make controller-gen
+	$(MAKE) controller-gen
+	$(MAKE) generate-k8s
 	@rm -f */crds/*
 	$(CONTROLLER_GEN) $(CONTROLLER_GEN_OPTIONS)
 	$(MAKE) update-crds
@@ -134,11 +150,11 @@ docker-build-operator:
 
 docker-generate-k8s:
 	echo "Generate zzz-deepcopy objects"
-	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && $(GENERATE_K8S)'
+	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."'
 
 docker-generate-crds: docker-generate-k8s
 	echo "Generate CRDs"
-	@rm -f config/crd/bases/crds/*.yaml
+	@rm -f config/crd/bases/*.yaml
 	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER) && controller-gen $(CONTROLLER_GEN_OPTIONS)'
 	$(MAKE) update-crds
 

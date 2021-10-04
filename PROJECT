@@ -1,5 +1,16 @@
+domain: db.orange.com
+layout: go.kubebuilder.io/v2
+repo: github.com/Orange-OpenSource/casskop
 resources:
 - group: db.orange.com
   kind: CassandraBackup
-  version: v1alpha1
-version: "2"
+  version: v2
+- group: db.orange.com
+  kind: CassandraCluster
+  version: v2
+- group: db.orange.com
+  kind: CassandraRestore
+  version: v2
+version: 3-alpha
+plugins:
+  go.operator-sdk.io/v2-alpha: {}

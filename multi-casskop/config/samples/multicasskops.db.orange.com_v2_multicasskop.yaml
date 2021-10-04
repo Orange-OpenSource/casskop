@@ -1,0 +1,7 @@
+apiVersion: multicasskops.db.orange.com.multicasskops.db.orange.com/v2
+kind: MultiCasskop
+metadata:
+  name: multicasskop-sample
+spec:
+  # Add fields here
+  foo: bar

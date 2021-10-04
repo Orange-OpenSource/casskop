@@ -25,12 +25,17 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
           readinessProbe:
-            exec:
-              command:
-                - /health
-            failureThreshold: 1
-            initialDelaySeconds: 4
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
             periodSeconds: 10
           command:
           - casskop
