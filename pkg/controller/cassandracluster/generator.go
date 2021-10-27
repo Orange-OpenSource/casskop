@@ -631,8 +631,8 @@ func initContainerEnvVar(cc *api.CassandraCluster, status *api.CassandraClusterS
 	image := strings.Split(cc.Spec.CassandraImage, ":")
 	serverVersion := cc.Spec.ServerVersion
 	if serverVersion == "" {
-		if len(image) == 2 {
-			version := strings.Split(image[1], "-")
+		if len(image) >= 2 {
+			version := strings.Split(image[len(image)-1], "-")
 			serverVersion = version[0]
 			if len(version) != 1 {
 				serverVersion += ".0"
