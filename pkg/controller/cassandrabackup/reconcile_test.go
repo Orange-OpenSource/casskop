@@ -39,6 +39,24 @@ spec:
   secret: cloud-backup-secrets
 `
 
+var cbyamlfile = `
+apiVersion: db.orange.com/v2
+kind: CassandraBackup
+metadata:
+  name: test-cassandra-backup
+  namespace: default
+  labels:
+    app: cassandra
+  annotations:
+    a1: v1
+spec:
+  cassandracluster: test-cluster-dc1
+  cluster: test-cluster
+  datacenter: dc1
+  storageLocation: file:///data/test
+  snapshotTag: SnapshotTag2
+`
+
 func HelperInitCassandraBackupController(cassandraBackupYaml string) (*ReconcileCassandraBackup,
 	*api.CassandraBackup, *record.FakeRecorder) {
 	cassandraBackup := common.HelperInitCassandraBackup(cassandraBackupYaml)
@@ -118,6 +136,25 @@ func TestCassandraBackupSecretNotFound(t *testing.T) {
 	assert.Equal(reconcile.Result{}, res)
 	assert.Nil(err)
 	common.AssertEvent(t, recorder.Events, fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
+}
+
+func TestCassandraBackupFile(t *testing.T) {
+	assert := assert.New(t)
+	reconcileCassandraBackup, cassandraBackup, recorder := HelperInitCassandraBackupController(cbyamlfile)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      cassandraBackup.Name,
+			Namespace: cassandraBackup.Namespace,
+		},
+	}
+
+	res, err := reconcileCassandraBackup.Reconcile(req)
+
+	assert.Equal(reconcile.Result{}, res)
+	assert.Nil(err)
+	events := <- recorder.Events
+	assert.NotContains(events, fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
 }
 
 func TestCassandraBackupIncorrectAwsCreds(t *testing.T) {

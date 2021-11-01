@@ -154,3 +154,7 @@ func (backupSpec *CassandraBackup) IsAzureBackup() bool {
 func (backupSpec *CassandraBackup) IsGcpBackup() bool {
 	return strings.HasPrefix(backupSpec.Spec.StorageLocation, "gcp://")
 }
+
+func (backupSpec *CassandraBackup) IsFileBackup() bool {
+	return strings.HasPrefix(backupSpec.Spec.StorageLocation, "file://")
+}

@@ -135,26 +135,29 @@ func (r *ReconcileCassandraBackup) Reconcile(request reconcile.Request) (reconci
 		return common.Reconciled()
 	}
 
-	// fetch secret and make sure it exists
-	secret := &corev1.Secret{}
-	if err := r.client.Get(context.TODO(),
-		types.NamespacedName{Name: cassandraBackup.Spec.Secret, Namespace: cassandraBackup.Namespace}, secret); err != nil {
-		if k8sErrors.IsNotFound(err) {
-			r.recorder.Event(
-				cassandraBackup,
-				corev1.EventTypeWarning,
-				"BackupFailedSecretNotFound",
-				fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
-			return common.Reconciled()
+	// file protocol does not need any authentication
+	if !cassandraBackup.IsFileBackup() {
+		// fetch secret and make sure it exists
+		secret := &corev1.Secret{}
+		if err := r.client.Get(context.TODO(),
+			types.NamespacedName{Name: cassandraBackup.Spec.Secret, Namespace: cassandraBackup.Namespace}, secret); err != nil {
+			if k8sErrors.IsNotFound(err) {
+				r.recorder.Event(
+					cassandraBackup,
+					corev1.EventTypeWarning,
+					"BackupFailedSecretNotFound",
+					fmt.Sprintf("Secret %s used for backups was not found", cassandraBackup.Spec.Secret))
+				return common.Reconciled()
+			}
+			return reconcile.Result{}, err
 		}
-		return reconcile.Result{}, err
-	}
 
-	// Based on storage location, be sure that respective secret entry is there so we error out asap
-	if err := validateBackupSecret(secret, cassandraBackup, reqLogger); err != nil {
-		logrus.WithFields(logrus.Fields{"backup": request.NamespacedName,
-			"err": err}).Error(secretError)
-		return reconcile.Result{}, err
+		// Based on storage location, be sure that respective secret entry is there so we error out asap
+		if err := validateBackupSecret(secret, cassandraBackup, reqLogger); err != nil {
+			logrus.WithFields(logrus.Fields{"backup": request.NamespacedName,
+				"err": err}).Error(secretError)
+			return reconcile.Result{}, err
+		}
 	}
 
 	// Validate the duration if it's set
