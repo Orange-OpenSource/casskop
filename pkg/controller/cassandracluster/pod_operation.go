@@ -403,6 +403,9 @@ func (rcc *ReconcileCassandraCluster) ensureDecommission(cc *api.CassandraCluste
 				"cluster": cc.Name, "rack": dcRackName, "lastPod": lastPod.Name, "operationMode": operationMode,
 			}).Infof("Node has left the ring, waiting for statefulset Scaledown")
 			podLastOperation.Status = api.StatusFinalizing
+			if err := rcc.updateCassandraStatus(cc, status); err != nil {
+				return continueResyncLoop, err
+			}
 			return continueResyncLoop, nil
 		}
 
