@@ -340,27 +340,25 @@ func TestInitContainerConfigFileData(t *testing.T) {
 }
 
 func TestInitContainerServerVersionDetect(t *testing.T) {
+	// Check of Cassandra version detection in case of different image formats
 	dcName := "dc1"
 	rackName := "rack1"
 	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
 
 	_, cc := helperInitCluster(t, "cassandracluster-1DC.yaml")
-	// Cassandra image contains tag with cassandra version
 	imageTag := "1.0.0"
-	cc.Spec.CassandraImage = fmt.Sprintf("artifactory-name/repo/cassandra:%s", imageTag)
-	cassieResources := cc.Spec.Resources
-
+	images := []string{
+		fmt.Sprintf("artifactory-name/repo/cassandra:%s", imageTag),
+		fmt.Sprintf("artifactory-name:44301/repo/cassandra:%s", imageTag),
+	}
 	assert := assert.New(t)
-	initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	prodVer := GetEnvVarByName(initEnvVar, "PRODUCT_VERSION")
-	assert.Equal(imageTag, prodVer.Value)
-
-	// Cassandra image contains custom port for artifactory and cassandra version
-	imageTag = "1.0.1"
-	cc.Spec.CassandraImage = fmt.Sprintf("artifactory-name:44301/repo/cassandra:%s", imageTag)
-	initEnvVar = initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
-	prodVer = GetEnvVarByName(initEnvVar, "PRODUCT_VERSION")
-	assert.Equal(imageTag, prodVer.Value)
+	for _, image := range images {
+		cc.Spec.CassandraImage = image
+		cassieResources := cc.Spec.Resources
+		initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+		prodVer := GetEnvVarByName(initEnvVar, "PRODUCT_VERSION")
+		assert.Equal(imageTag, prodVer.Value)
+	}
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
