@@ -22,7 +22,7 @@ That is why we added to the **CassandraCluster** the possibility to define conta
 
 ## Dynamics sidecars configurations
 
-To keep the [container’s best practices](https://cloud.google.com/blog/products/gcp/7-best-practices-for-building-containers) and address our OPS needs, we added the ability to define a dynamic list of containers into a **CassandraCluster.Spec** resource definition: [cassandracluster_types.go#L803](https://github.com/Orange-OpenSource/casskop/blob/master/pkg/apis/db/v1alpha1/cassandracluster_types.go#L803).
+To keep the [container’s best practices](https://cloud.google.com/blog/products/gcp/7-best-practices-for-building-containers) and address our OPS needs, we added the ability to define a dynamic list of containers into a **CassandraCluster.Spec** resource definition: [cassandracluster_types.go#L803](https://github.com/Orange-OpenSource/casskop/blob/master/pkg/apis/db/v2/cassandracluster_types.go#L803).
 
 ```yaml 
 spec:
@@ -70,11 +70,8 @@ with this feature you can do everything you want, and obviously some bad things.
 
 All sidecars added with this configuration will have, at the container init, some of the environment variables from **cassandra container** merged with those defined into the sidecar container
 
-- CASSANDRA_MAX_HEAP
-- CASSANDRA_SEEDS
 - CASSANDRA_CLUSTER_NAME
-- CASSANDRA_GC_STDOUT
-- CASSANDRA_NUM_TOKENS
+- CASSANDRA_SEEDS
 - CASSANDRA_DC
 - CASSANDRA_RACK
 

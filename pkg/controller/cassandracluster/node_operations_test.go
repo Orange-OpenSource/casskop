@@ -409,7 +409,7 @@ func TestNodeDecommission(t *testing.T) {
 					  	   "timestamp": 1528848808,
 						   "status": 200}`))
 	jolokiaClient, _ := NewJolokiaClient(host, jolokiaPort, nil, v1.LocalObjectReference{}, "ns")
-	err := jolokiaClient.NodeDecommission()
+	err := jolokiaClient.NodeDecommission(false)
 	if err != nil {
 		t.Errorf("NodeDecommision failed with : %v", err)
 	}

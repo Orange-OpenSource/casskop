@@ -7,7 +7,7 @@ data:
   password: TTBucDQ1NXcwcmQ=
   username: am9sb2tpYS11c2Vy
 ---
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -24,7 +24,9 @@ spec:
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   maxPodUnavailable: 1
   runAsUser: 1000
@@ -39,7 +41,9 @@ spec:
     dc:
       - name: dc1
         nodesPerRacks: 1
-        numTokens: 256
+        config:
+          cassandra-yaml:
+            num_tokens: 256
         labels: 
           failure-domain.beta.kubernetes.io/region: europe-west1
         rack:
@@ -55,8 +59,10 @@ spec:
 #UNCOMMENT FOR DEMO
 #      - name: dc2
 #        nodesPerRacks: 1
-#        numTokens: 256
-#        labels: 
+#        config:
+#          cassandra-yaml:
+#            num_tokens: 256
+#        labels:
 #          failure-domain.beta.kubernetes.io/region: europe-west1
 #        rack:
 #          - name: rack1

@@ -5,7 +5,7 @@ sidebar_label: Cassandra backup
 ---
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraBackup
 metadata:
   name: backup-demo-scheduled
@@ -35,7 +35,7 @@ spec:
 |bandwidth|string|Specify the bandwidth to not exceed when uploading files to the cloud. Format supported is \d+[KMG] case insensitive. You can use values like 10M (meaning 10MB), 1024, 1024K, 2G, etc...|no|-|
 |cassandraCluster|string|Name of the CassandraCluster to backup|Yes|-|
 |concurrentConnections|int32|Maximum number of threads used to download files from the cloud. Defaults to 10|No|-|
-|datacenter|string|Cassandra DC name to back up, used to find the cassandra nodes in the CassandraCluster|Yes|-|
+|datacenter|string|Cassandra DC name to back up, used to find the cassandra nodes in the CassandraCluster|No|-|
 |duration|string|Specify a duration the backup should try to last. See https://golang.org/pkg/time/#ParseDuration for an exhaustive list of the supported units. You can use values like .25h, 15m, 900s all meaning 15 minutes|No|-|
 |entities|string|Database entities to backup, it might be either only keyspaces or only tables prefixed by their respective keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will backup all keyspaces|No|-|
 |schedule|string|Specify a schedule to assigned to the backup. The schedule doesn't enforce anything so if you schedule multiple backups around the same time they would conflict. See https://godoc.org/github.com/robfig/cron for more information regarding the supported formats|No|-|

@@ -13,10 +13,6 @@ The operator allows to easily create and manage racks and data centers aware Cas
 CassKop is based on CoreOS
 [operator-sdk](https://github.com/operator-framework/operator-sdk) tools and APIs.
 
-> **NOTE**: This is an alpha-status project. We do regular tests on the code and functionality, but we can not assure a
-> production-ready stability at this time.
-> Our goal is to make it run in production as quickly as possible.
-
 
 CassKop creates/configures/manages Cassandra clusters atop Kubernetes and is by default **space-scoped** which means
 that :

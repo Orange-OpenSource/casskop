@@ -17,11 +17,12 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
+	"github.com/r3labs/diff"
 	"reflect"
 	"strconv"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -63,8 +64,8 @@ func (rcc *ReconcileCassandraCluster) updateCassandraStatus(cc *api.CassandraClu
 
 // getNextCassandraClusterStatus goal is to detect some changes in the status between cassandracluster and its statefulset
 // We follow only one change at a Time : so this function will return on the first change found
-func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc,
-	rack int, dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
+func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.CassandraCluster, dc, rack int,
+	dcName, rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) error {
 
 	//UpdateStatusIfUpdateResources(cc, dcRackName, storedStatefulSet, status)
 	dcRackName := cc.GetDCRackName(dcName, rackName)
@@ -125,16 +126,15 @@ func (rcc *ReconcileCassandraCluster) getNextCassandraClusterStatus(cc *api.Cass
 		}
 
 		// Update Status if Topology for SeedList has changed
-		//if lastAction.Status != api.StatusFinalizing {
 		if UpdateStatusIfSeedListHasChanged(cc, dcRackName, storedStatefulSet, status) {
 			return nil
 		}
 
-		if UpdateStatusIfRollingRestart(cc, dc, rack, dcRackName, storedStatefulSet, status) {
+		if UpdateStatusIfRollingRestart(cc, dc, rack, dcRackName, status) {
 			return nil
 		}
 
-		if UpdateStatusIfStatefulSetChanged(cc, dcRackName, storedStatefulSet, status) {
+		if UpdateStatusIfStatefulSetChanged(dcRackName, storedStatefulSet, status) {
 			return nil
 		}
 	} else {
@@ -246,7 +246,7 @@ func UpdateStatusIfDockerImageHasChanged(cc *api.CassandraCluster, dcRackName st
 }
 
 func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
-	rack int, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+	rack int, dcRackName string, status *api.CassandraClusterStatus) bool {
 
 	if cc.Spec.Topology.DC[dc].Rack[rack].RollingRestart {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name,
@@ -263,27 +263,19 @@ func UpdateStatusIfRollingRestart(cc *api.CassandraCluster, dc,
 	return false
 }
 
-//UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detect a changes
-func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+//UpdateStatusIfSeedListHasChanged updates CassandraCluster Action Status if it detects a change
+func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName string,
+	storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 
-	storedSeedListTab := getStoredSeedListTab(storedStatefulSet)
+	storedSeedList := getStoredSeedList(storedStatefulSet)
 
 	//If Automatic Update of SeedList is enabled in the CRD
 	if cc.Spec.AutoUpdateSeedList {
-		//We compute what would be the best SeedList according to CRD Topology
-		newSeedListTab := cc.InitSeedList()
-		//We check if some nodes of the newSeedList are missing from Actual one
-		if !k8s.ContainSlice(storedSeedListTab, newSeedListTab) {
-			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Add Nodes): %v -> %v", cc.Name,
-				dcRackName, storedSeedListTab, status.SeedList)
-		}
-
-		//We Check if some nodes disapears from new SeedList (that should be a scale down, ore simply add nodes in another rack ??
-		if !k8s.ContainSlice(newSeedListTab, storedSeedListTab) {
-			status.SeedList = k8s.MergeSlice(storedSeedListTab, newSeedListTab)
-			logrus.Infof("[%s][%s]: We may need to update the seedlist (Remove Nodes): %v -> %v", cc.Name,
-				dcRackName, storedSeedListTab, status.SeedList)
+		seedList := cc.InitSeedList()
+		if changes, err := diff.Diff(storedSeedList, seedList); err == nil && len(changes) != 0 {
+			status.SeedList = k8s.MergeSlice(storedSeedList, seedList)
+			logrus.Infof("[%s][%s]: We need to update the seed list: %v -> %v",
+				cc.Name, dcRackName, storedSeedList, status.SeedList)
 		}
 	}
 
@@ -292,7 +284,7 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 	// Once all racks will be enabled with UpdateSeedList=Configuring,
 	// then we update to ongoing and start the rollUpgrade
 	// This is to ensure that we won't do 2 different kind of operations in different racks at the same time (ex:scaling + updateseedlist)
-	if !reflect.DeepEqual(status.SeedList, storedSeedListTab) {
+	if !reflect.DeepEqual(status.SeedList, storedSeedList) {
 		logrus.Infof("[%s][%s]: We ask to Change the Cassandra SeedList", cc.Name, dcRackName)
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 		lastAction.Status = api.StatusConfiguring
@@ -309,7 +301,8 @@ func UpdateStatusIfSeedListHasChanged(cc *api.CassandraCluster, dcRackName strin
 //UpdateStatusIfScaling will detect any change of replicas
 //To Scale Down the operator will need to first decommission the last node from Cassandra before removing it from kubernetes.
 //To Scale Up some PodOperations may be scheduled if Auto-pilot is activeted.
-func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
+func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet,
+	status *api.CassandraClusterStatus) bool {
 	nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
 	if nodesPerRacks != *storedStatefulSet.Spec.Replicas {
 		lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
@@ -332,14 +325,14 @@ func UpdateStatusIfScaling(cc *api.CassandraCluster, dcRackName string, storedSt
 }
 
 // UpdateStatusIfStatefulSetChanged detects if there is a change in the statefulset which was not already caught
-// If we detect a Statefulset change with this method, then the operator won't catch it before the statefulset tells the operator
-// that a change is ongoing.
-// That mean that all statefulsets may do their rolling upgrade in parallel, so there will be <nbRacks> node down in // in the cluster.
-func UpdateStatusIfStatefulSetChanged(cc *api.CassandraCluster, dcRackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
-	// If We come Here, We have not detected any change with out specific tests
+// If we detect a Statefulset change with this method, then the operator won't catch it before the statefulset tells
+// the operator that a change is ongoing. That means that all statefulsets may do their rolling upgrade in parallel, so
+// there will be <nbRacks> node down in // in the cluster.
+func UpdateStatusIfStatefulSetChanged(dcRackName string, storedStatefulSet *appsv1.StatefulSet,
+	status *api.CassandraClusterStatus) bool {
+	// We have not detected any change with out specific tests
 	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	if storedStatefulSet.Status.CurrentRevision != storedStatefulSet.Status.UpdateRevision {
-
 		lastAction.Name = api.ActionUpdateStatefulSet.Name
 		lastAction.Status = api.StatusOngoing
 		now := metav1.Now()
@@ -354,14 +347,14 @@ func UpdateStatusIfStatefulSetChanged(cc *api.CassandraCluster, dcRackName strin
 func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.CassandraCluster, dcName string,
 	rackName string, storedStatefulSet *appsv1.StatefulSet, status *api.CassandraClusterStatus) bool {
 	dcRackName := cc.GetDCRackName(dcName, rackName)
-	lastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
+	rackLastAction := &status.CassandraRackStatus[dcRackName].CassandraLastAction
 	now := metav1.Now()
 
-	if lastAction.Status == api.StatusOngoing ||
-		lastAction.Status == api.StatusContinue {
+	if rackLastAction.Status == api.StatusOngoing ||
+		rackLastAction.Status == api.StatusContinue {
 
 		nodesPerRacks := cc.GetNodesPerRacks(dcRackName)
-		switch lastAction.Name {
+		switch rackLastAction.Name {
 
 		case api.ActionScaleUp.Name:
 
@@ -377,8 +370,8 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				//We need lastPod to be running to consider ScaleUp ended
 				if cassandraPodIsReady(&pod) {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleUp is Done")
-					lastAction.Status = api.StatusDone
-					lastAction.EndTime = &now
+					rackLastAction.Status = api.StatusDone
+					rackLastAction.EndTime = &now
 
 					labels := map[string]string{"operation-name": api.OperationCleanup}
 					if cc.Spec.AutoPilot {
@@ -399,8 +392,8 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 				if cc.Status.CassandraRackStatus[dcRackName].PodLastOperation.Name == api.OperationDecommission &&
 					cc.Status.CassandraRackStatus[dcRackName].PodLastOperation.Status == api.StatusDone {
 					logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleDown is Done")
-					lastAction.Status = api.StatusDone
-					lastAction.EndTime = &now
+					rackLastAction.Status = api.StatusDone
+					rackLastAction.EndTime = &now
 					return true
 				}
 				logrus.WithFields(logrus.Fields{"cluster": cc.Name, "rack": dcRackName}).Info("ScaleDown not yet Completed: Waiting for Pod operation to be Done")
@@ -414,10 +407,10 @@ func (rcc *ReconcileCassandraCluster) UpdateStatusIfActionEnded(cc *api.Cassandr
 		default:
 			// Do the update has finished on all pods ?
 			if storedStatefulSet.Status.CurrentRevision == storedStatefulSet.Status.UpdateRevision {
-				logrus.Infof("[%s][%s]: Update %s is Done", cc.Name, dcRackName, lastAction.Name)
-				lastAction.Status = api.StatusDone
+				logrus.Infof("[%s][%s]: Update %s is Done", cc.Name, dcRackName, rackLastAction.Name)
+				rackLastAction.Status = api.StatusDone
 				now := metav1.Now()
-				lastAction.EndTime = &now
+				rackLastAction.EndTime = &now
 				return true
 			}
 
@@ -451,7 +444,6 @@ func (rcc *ReconcileCassandraCluster) UpdateCassandraRackStatusPhase(cc *api.Cas
 
 		ClusterPhaseMetric.set(api.ClusterPhaseInitial, cc.Name)
 
-		//Do we have reach requested number of replicas ?
 		if isStatefulSetNotReady(storedStatefulSet) {
 			logrus.WithFields(logrusFields).Infof("Initializing StatefulSet: Replicas count is not okay")
 			return

@@ -19,7 +19,7 @@ else
 	PROJECT:=$(CI_REGISTRY_IMAGE)
 endif
 
-VERSION:=0.1.8
+VERSION:=0.1.9
 TAG?=${VERSION}
 ifeq ($(CIRCLE_BRANCH),master)
 	BRANCH:=latest

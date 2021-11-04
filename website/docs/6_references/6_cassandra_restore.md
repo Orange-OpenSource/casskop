@@ -7,7 +7,7 @@ sidebar_label: Cassandra restore
 `CassandraRestoreSpec` defines the specification for a restore of a Cassandra backup.
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraRestore
 metadata:
   name: restore-demo
@@ -32,6 +32,7 @@ spec:
 |cassandraBackup|string|Name of the [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup) to restore|Yes|-|
 |cassandraCluster|string|Name of the CassandraCluster the restore belongs to|Yes|-|
 |cassandraDirectory|string|Directory of Cassandra where data folder resides. Defaults to /var/lib/cassandra|No|-|
+|datacenter|string|Cassandra DC name to restore to, a restore will truncate tables but restore only to this datacenter if specified|No|-|
 |concurrentConnection|int32|Maximum number of threads used to download files from the cloud. Defaults to 10|No|-|
 |entities|string|Database entities to restore, it might be either only keyspaces or only tables prefixed by their respective keyspace, e.g. 'k1,k2' if one wants to backup whole keyspaces or 'ks1.t1,ks2.t2' if one wants to restore specific tables. These formats are mutually exclusive so 'k1,k2.t2' is invalid. An empty field will restore all keyspaces|No|-|
 |exactSchemaVersion|boolean|When set a running node's schema version must match the snapshot's schema version. There might be cases when we want to restore a table for which its CQL schema has not changed but it has changed for other table / keyspace but a schema for that node has changed by doing that. Defaults to False|No|false|

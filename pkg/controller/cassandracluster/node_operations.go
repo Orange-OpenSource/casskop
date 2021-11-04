@@ -236,9 +236,13 @@ func (jolokiaClient *JolokiaClient) NodeRebuild(dc string) error {
 }
 
 /*NodeDecommission decommissions a node using a jolokia client and returns any error*/
-func (jolokiaClient *JolokiaClient) NodeDecommission() error {
+func (jolokiaClient *JolokiaClient) NodeDecommission(v4 bool) error {
+	args:=[]interface{}{}
+	if v4 {
+		args = append(args, true)
+	}
 	_, err := checkJolokiaErrors(jolokiaClient.executeOperation("org.apache.cassandra.db:type=StorageService",
-		"decommission", []interface{}{}, ""))
+		"decommission", args, ""))
 	if err != nil {
 		return fmt.Errorf("Cannot decommission: %v", err.Error())
 	}

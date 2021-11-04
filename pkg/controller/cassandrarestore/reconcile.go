@@ -4,7 +4,7 @@ import (
 	"context"
 	"emperror.dev/errors"
 	"fmt"
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"github.com/Orange-OpenSource/casskop/pkg/errorfactory"
@@ -27,7 +27,7 @@ import (
 type ReconcileCassandraRestore struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	cc       *v1alpha1.CassandraCluster
+	cc       *v2.CassandraCluster
 	recorder record.EventRecorder
 	client   client.Client
 	scheme   *runtime.Scheme
@@ -41,7 +41,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	ctx := context.TODO()
 
 	// Fetch the CassandraRestore cassandraRestore
-	cassandraRestore := &v1alpha1.CassandraRestore{}
+	cassandraRestore := &v2.CassandraRestore{}
 
 	err := r.client.Get(ctx, request.NamespacedName, cassandraRestore)
 
@@ -57,7 +57,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Check the referenced Cluster exists.
-	cassandraCluster := &v1alpha1.CassandraCluster{}
+	cassandraCluster := &v2.CassandraCluster{}
 	if cassandraCluster, err = k8s.LookupCassandraCluster(r.client, cassandraRestore.Spec.CassandraCluster,
 		cassandraRestore.Namespace); err != nil {
 		// This shouldn't trigger anymore, but leaving it here as a safety belt
@@ -74,7 +74,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Check the referenced Backup exists.
-	cassandraBackup := &v1alpha1.CassandraBackup{}
+	cassandraBackup := &v2.CassandraBackup{}
 	if cassandraBackup, err = k8s.LookupCassandraBackup(r.client, cassandraRestore.Spec.CassandraBackup,
 		cassandraRestore.Namespace); err != nil {
 		r.recorder.Event(
@@ -101,11 +101,11 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreRequired",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup,  cassandraRestore.Spec.Datacenter,""))
 		return common.Reconciled()
 	}
 
-	restoreConditionType := v1alpha1.RestoreConditionType(cassandraRestore.Status.Condition.Type)
+	restoreConditionType := v2.RestoreConditionType(cassandraRestore.Status.Condition.Type)
 
 	if restoreConditionType.IsRequired() {
 		err = r.handleRequiredRestore(cassandraRestore, cassandraCluster, cassandraBackup, reqLogger)
@@ -116,7 +116,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 					cassandraRestore,
 					v1.EventTypeWarning,
 					"PerformRestoreOperationFailed",
-					r.restoreEventMessage(cassandraBackup, " failed to run, will retry"))
+					r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, " failed to run, will retry"))
 				return controllerruntime.Result{
 					RequeueAfter: time.Duration(15) * time.Second,
 				}, nil
@@ -127,7 +127,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreInitiated",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, ""))
 
 		return common.Reconciled()
 	}
@@ -148,7 +148,7 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 				r.recorder.Event(cassandraRestore,
 					v1.EventTypeNormal,
 					"RestoreFailed",
-					r.restoreEventMessage(cassandraBackup, err.Error()))
+					r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, err.Error()))
 				return common.Reconciled()
 			default:
 				return common.RequeueWithError(reqLogger, err.Error(), err)
@@ -157,22 +157,22 @@ func (r ReconcileCassandraRestore) Reconcile(request reconcile.Request) (reconci
 		r.recorder.Event(cassandraRestore,
 			v1.EventTypeNormal,
 			"RestoreCompleted",
-			r.restoreEventMessage(cassandraBackup, ""))
+			r.restoreEventMessage(cassandraBackup, cassandraRestore.Spec.Datacenter, ""))
 	}
 	return common.Reconciled()
 }
 
-func (r ReconcileCassandraRestore) restoreEventMessage(cassandraBackup *v1alpha1.CassandraBackup,
-	message string) string {
+func (r ReconcileCassandraRestore) restoreEventMessage(cassandraBackup *v2.CassandraBackup,
+	datacenter string, message string) string {
 	return fmt.Sprintf("Restore of backup %s of datacenter %s of cluster %s to %s " +
 		"under snapshot %s. %s", cassandraBackup.Name,
-		cassandraBackup.Spec.Datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation,
+		datacenter, cassandraBackup.Spec.CassandraCluster, cassandraBackup.Spec.StorageLocation,
 		cassandraBackup.Spec.SnapshotTag, message)
 }
 
 // requiredRestore select restore coordinator on a specific member of a Cluster
-func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraRestore, cc *v1alpha1.CassandraCluster,
-	backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
+func (r *ReconcileCassandraRestore) requiredRestore(restore *v2.CassandraRestore, cc *v2.CassandraCluster,
+	backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
 	ns := restore.Namespace
 
 	pods, err := r.listPods(ns, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
@@ -184,9 +184,9 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 
 	if numberOfPods > 0 {
 		if err := UpdateRestoreStatus(r.client, restore,
-			v1alpha1.BackRestStatus{
-					Condition: &v1alpha1.BackRestCondition{
-						Type:               string(v1alpha1.RestoreRequired),
+			v2.BackRestStatus{
+					Condition: &v2.BackRestCondition{
+						Type:               string(v2.RestoreRequired),
 						LastTransitionTime: v12.Now().Format(util.TimeStampLayout),
 					},
 					CoordinatorMember: pods.Items[random.Intn(numberOfPods)].Name,
@@ -200,8 +200,8 @@ func (r *ReconcileCassandraRestore) requiredRestore(restore *v1alpha1.CassandraR
 	return errors.New("No pods found.")
 }
 
-func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v1alpha1.CassandraRestore,
-	cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
+func (r *ReconcileCassandraRestore) handleRequiredRestore(restore *v2.CassandraRestore,
+	cc *v2.CassandraCluster, backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
 	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
 		return errorfactory.New(errorfactory.ResourceNotReady{}, err, "no pods founds for this dc")
@@ -231,8 +231,8 @@ func sidecarError(reqLogger *logrus.Entry, err error) error {
 		"cassandra sidecar communication error")
 }
 
-func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1.CassandraRestore,
-	cc *v1alpha1.CassandraCluster, backup *v1alpha1.CassandraBackup, reqLogger *logrus.Entry) error {
+func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v2.CassandraRestore,
+	cc *v2.CassandraCluster, backup *v2.CassandraBackup, reqLogger *logrus.Entry) error {
 
 	pods, err := r.listPods(restore.Namespace, k8s.LabelsForCassandraDC(cc, backup.Spec.Datacenter))
 	if err != nil {
@@ -268,7 +268,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 			"restore", restore)
 	}
 
-	restoreConditionType := v1alpha1.RestoreConditionType(restore.Status.Condition.Type)
+	restoreConditionType := v2.RestoreConditionType(restore.Status.Condition.Type)
 
 	// Restore operation failed or canceled,
 	if restoreConditionType.IsInError() {
@@ -293,7 +293,7 @@ func (r *ReconcileCassandraRestore) checkRestoreOperationState(restore *v1alpha1
 }
 
 func (r *ReconcileCassandraRestore) updateAndFetchLatest(ctx context.Context,
-	restore *v1alpha1.CassandraRestore) (*v1alpha1.CassandraRestore, error) {
+	restore *v2.CassandraRestore) (*v2.CassandraRestore, error) {
 	typeMeta := restore.TypeMeta
 	err := r.client.Update(ctx, restore)
 	if err != nil {

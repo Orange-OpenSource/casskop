@@ -12,7 +12,7 @@ container when the pod is started.
 There is a specific bootstrap image that is build from the docker directory and contains all required files or scripts
 to work with CassKop.
 
-### Initcontainer 1 : init-config
+### Initcontainer 1 : base-config-builder
 
 The init container is responsible for the following actions :
 
@@ -20,28 +20,33 @@ The init container is responsible for the following actions :
 
 Configuration:
 
-- The init-config container is by default the baseImage Cassandra image that can be changed using
-`Spec.initContainerImage`.
+- The init-config container is by default the baseImage Cassandra image
 - The default command executed by the init-container is:
 
 ```bash
 cp -vr /etc/cassandra/* /bootstrap
 ```
 
-- This command can be changed using  `Spec.initContainerCmd`
+### Initcontainer 2 : config-builder
 
-### Initcontainer 2 : bootstrap
+This container is responsible for the following actions :
+
+- Generate all the cassandra configuration (cassandra.yaml, java. etc..) from the different config entries in the
+  CassandraCluster object level (spec, datacenters and racks)
+
+It uses [cass-config-builder](https://github.com/datastax/cass-config-builder) which is a tool developed by Datastax.
+
+### Initcontainer 3 : bootstrap
 
 The bootstrap Container :
 
-- applying files and additional jar from the bootstrap image to the default configuration
-- applying the user's configmap custom configuration (if any) on top of the default configuration
-- modifying the configuration to be suitable to run with Casskop:
-  - update cluster name
-  - configure dc/rack properties
-  - applying seedlist
-  - add cassandra exporter and jolokia agent
-  - ..
+- Adding files and additional jar from the bootstrap image to the default configuration
+- Applying a configmap on top of the default configuration
+- Modifying the configuration to be suitable to run with CassKop:
+  * Updating the cluster name
+  * Setting the seedlist
+  * Adding a Cassandra exporter and Jolokia agent
+  * ..
 
 We provide the bootstrap image, but you can change it using `Spec.bootstrapImage` but you need to comply with the
 required actions, see [Bootstrap](https://github.com/Orange-OpenSource/casskop/tree/master/docker/bootstrap).
@@ -80,6 +85,65 @@ example to scale up the nodesPerRacks in DC2 :
 If we changes on of these properties then CassKop will trigger either a [ScaleUp](/casskop/docs/5_operations/1_cluster_operations#scaleup)
 or a [ScaleDown](/casskop/docs/5_operations/1_cluster_operations#scaledown) operation.
 
+
+## Configuration embedded in CassandraCluster
+
+The configuration of the different components of Cassandra can be changed in the object and be overriden at different
+levels. Here is an example showing how to update some Java and Cassdnra parameters as well and overwrite them at the
+datacenter and rack level:
+
+```yaml
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-demo
+spec:
+  nodesPerRacks: 1
+  cassandraImage: cassandra:3.11.7
+  restartCountBeforePodDeletion: 3
+  dataStorageClass: local-storage
+  hardAntiAffinity: false
+  deletePVC: true
+  autoPilot: true
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+  config:
+    cassandra-yaml:
+      num_tokens: 64
+  topology:
+    dc:
+      - name: dc1
+        config:
+          cassandra-yaml:
+            num_tokens: 32
+        resources:
+          limits:
+            cpu: 3
+            memory: 3Gi
+        labels:
+          location.dfy.orange.com/site : mts
+        rack:
+          - name: rack1
+            labels:
+              location.dfy.orange.com/street : street1
+          - name: rack2
+            labels:
+              location.dfy.orange.com/street : street2
+            config:
+              cassandra-yaml:
+                num_tokens: 16
+      - name: dc2
+        nodesPerRacks: 1
+        labels:
+          location.dfy.orange.com/site : mts
+        rack:
+          - name: rack1
+            labels:
+              location.dfy.orange.com/street : street3
+```
+
 ## Configuration override using configMap
 
 CassKop allows you to customize the configuration of Apache Cassandra nodes by specifying a dedicated `ConfigMap`
@@ -93,9 +157,7 @@ We have a specific Cassandra Docker image startup script that will overwrite eac
 
 Typical overwriting files may be :
 
-- cassandra.yaml
-- jvm.options
-- specifying a pre_run.sh script
+- specifying a pre_run.sh and/or post_run.sh script
 
 See the example below:
 
@@ -187,15 +249,7 @@ The default value used for `-Xmx` depends on whether there is a memory request c
 
 - set the memory request and the memory limit to the same value, so that the pod is in guarantee mode
 
-> CassKop will automatically compute the env var CASSANDRA_MAX_HEAP which is used to define `-Xms` and `-Xmx` in the
-> `/run.sh` docker image script, from 1/4 of container Memory Limit.
-
-### GarbageCollector output
-
-We have a specific parameter in the CRD `spec.gcStdout: true/false` which specify if we want to send the JVM garbage collector logs
-in the stdout of the container or inside a specific file in the container.
-
-Default value is true, so it sends GC logs in stdout along with cassandra's logs.
+> CassKop will automatically compute the initial and max heap size from 1/4 of the available defined resources.
 
 ## Authentication and authorizations
 

@@ -1,0 +1,12 @@
+apiVersion: db.orange.com/v2
+kind: CassandraCluster
+metadata:
+  name: cassandra-e2e
+spec:
+  nodesPerRacks: 2
+  topology:
+    dc:
+      - name: dc1
+        rack:
+          - name: rack1
+            rollingRestart: true

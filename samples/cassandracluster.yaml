@@ -1,4 +1,4 @@
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -14,7 +14,9 @@ spec:
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   maxPodUnavailable: 1
   runAsUser: 999

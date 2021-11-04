@@ -10,7 +10,7 @@ We have a designated controller called controller_cassandrabackup that is in cha
 In order to backup, you create an object of type CassandraBackup
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraBackup
 metadata:
   name: test-cassandra-backup

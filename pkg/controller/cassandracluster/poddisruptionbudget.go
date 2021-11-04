@@ -88,7 +88,6 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdatePodDisruptionBudget(pdb *pol
 
 	if *rcc.storedPdb.Spec.MaxUnavailable != *pdb.Spec.MaxUnavailable {
 		rcc.DeletePodDisruptionBudget(pdb)
-		//rcc.storedPdb = pdb
 		return rcc.CreatePodDisruptionBudget(pdb)
 	}
 	//We can't Update PorDisruptionBudget

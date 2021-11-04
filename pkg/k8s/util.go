@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,7 +52,10 @@ func LabelsForCassandraDC(cc *api.CassandraCluster, dcName string) map[string]st
 	m := map[string]string{
 		"app":                                "cassandracluster",
 		"cassandracluster":                   cc.GetName(),
-		"cassandraclusters.db.orange.com.dc": dcName,
+	}
+
+	if len(dcName) > 0{
+		m["cassandraclusters.db.orange.com.dc"] = dcName
 	}
 	return MergeLabels(cc.GetLabels(), m)
 }

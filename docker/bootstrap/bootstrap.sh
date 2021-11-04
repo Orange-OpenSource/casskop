@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-# Copies any default config files from CassKop bootstrapper image to the /etc/cassandra volume which will replace the one used in cassandra image
+# Copies any default config files from CassKop bootstrapper image to /etc/cassandra volume which will replace the one used in cassandra image
 cp -rLv /${BOOTSTRAP_CONF}/* /etc/cassandra/
-
-# If User has submited a configMap, we uses them to deplace default ones
-# (overwriting the above)
-if [[ -d ${CONFIGMAP} && ! -z `ls -A ${CONFIGMAP}` ]] ; then
-    echo "We have a ConfigMap, we surcharge default configuration files"
-    cp -rLv ${CONFIGMAP}/* /etc/cassandra/
-fi
 
 # Copies any extra libraries from this bootstrapper image to the extra-lib empty-dir
 if [[ -d /${BOOTSTRAP_LIBS} && ! -z `ls -A /${BOOTSTRAP_LIBS}` ]] ; then
     echo "We have additional libraries, we copy them over"
     cp -v ${BOOTSTRAP_LIBS}/* $CASSANDRA_LIBS/
-   fi
+fi
 
 cp -v /${BOOTSTRAP_TOOLS}/* $CASSANDRA_TOOLS/
 
@@ -33,4 +26,4 @@ if [ -f ${CONFIGMAP}/post_run.sh ]; then
     ${CONFIGMAP}/post_run.sh
 fi
 
-echo '== bootstrap ended :-)'
+echo '**** bootstrap ended ****'

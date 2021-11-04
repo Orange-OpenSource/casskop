@@ -14,9 +14,6 @@ helm repo update
 helm install --name casskop casskop/cassandra-operator
 ```
 
-It's also possible to decide to temporarily install a developement release by specifying the image tag to use :
+## Upgrading from v1 to v2
 
-```
-helm install --name casskop casskop/cassandra-operator --set debug.enabled=true --no-hooks \
---set image.tag=v0.5.0b-branch1
-```
+Please refer to [the specific v1 to v2 section](/casskop/docs/2_setup/5_upgrade_v1_to_v2) for the step by step protocol.

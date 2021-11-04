@@ -13,7 +13,7 @@ It is possible to backup keyspaces or tables from a cluster managed by Casskop. 
 create an object of type [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup):
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraBackup
 metadata:
   name: nightly-cassandra-backup
@@ -64,7 +64,7 @@ Following the same logic, a [CassandraRestore](/casskop/docs/6_references/6_cass
 existing [CassandraBackup](/casskop/docs/6_references/5_cassandra_backup) object in K8S:
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraRestore
 metadata:
   name: nightly-cassandra-backup
@@ -80,7 +80,7 @@ spec:
 It's possible to restore the content of tables into other existing tables. Here is an example
 
 ```yaml
-apiVersion: db.orange.com/v1alpha1
+apiVersion: db.orange.com/v2
 kind: CassandraRestore
 metadata:
   name: nightly-cassandra-backup
@@ -99,3 +99,10 @@ With the object above, table k1.t1 will be restored under k1.t2 using the backup
 
 In the restore phase, you can specify a subset of the entities specified in the backup. For instance, you can backup 2
 tables and only restore one.
+
+### Datacenter
+
+It can be specified in a backup or a restore and declares where data must be backed up or restored. If not specified it 
+will run everywhere and entities must exist if they're specified. Specifying it in a restore will declare where data 
+will be restored but as icarus truncates entities it restores, it won't prevent the truncate from cleaning data in non 
+chosen datacenters.

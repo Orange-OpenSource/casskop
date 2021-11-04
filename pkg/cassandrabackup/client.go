@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	corev1 "k8s.io/api/core/v1"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"

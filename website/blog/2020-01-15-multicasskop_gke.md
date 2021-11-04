@@ -209,7 +209,7 @@ Add MultiCasskop crd on the `slave` cluster :
 ```sh
 $ kubectx # Switch context on slave cluster
 Switched to context "gke_<Project name>_europe-west1-c_cassandra-europe-west1-c-slave".
-$ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/multi-casskop/deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/Orange-OpenSource/casskop/master/multi-casskop/deploy/crds/multicluster_v2_cassandramulticluster_crd.yaml
 ```
 
 Deployment with Helm : 

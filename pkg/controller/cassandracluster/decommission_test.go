@@ -3,7 +3,7 @@ package cassandracluster
 import (
 	"context"
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"strconv"
 	"testing"
 

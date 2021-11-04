@@ -7,7 +7,7 @@ sidebar_label: Cassandra cluster
 `CassandraCluster` describes the desired state of the Cassandra cluster we want to setup through the operator.
 
 ```yaml
-apiVersion: "db.orange.com/v1alpha1"
+apiVersion: "db.orange.com/v2"
 kind: "CassandraCluster"
 metadata:
   name: cassandra-demo
@@ -23,15 +23,14 @@ spec:
   hardAntiAffinity: false           # Do we ensure only 1 cassandra on each node ?
   deletePVC: true
   autoPilot: false
-  gcStdout: true
+  config:
+    jvm-options:
+      log_gc: "true"
   autoUpdateSeedList: false
   maxPodUnavailable: 1
   runAsUser: 999
   shareProcessNamespace: true
   resources:         
-    requests:
-      cpu: '1'
-      memory: 2Gi
     limits:
       cpu: '1'
       memory: 2Gi
@@ -58,12 +57,13 @@ spec:
 |Field|Type|Description|Required|Default|
 |-----|----|-----------|--------|--------|
 |nodesPerRacks|int32|Number of nodes to deploy for a Cassandra deployment in each Racks. If NodesPerRacks = 2 and there is 3 racks, the cluster will have 6 Cassandra Nodes|Yes|1|
-|cassandraImage|string|Image + version to use for Cassandra|Yes|cassandra:latest|
+|cassandraImage|string|Image + version to use for Cassandra|Yes|cassandra:3.11.6|
+|configBuilderImage|string|Image + version to use for configBuilder|No|datastax/cass-config-builder:1.0.4|
 |imagepullpolicy|[PullPolicy](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|Define the pull policy for C* docker image|Yes|[PullAlways](https://godoc.org/k8s.io/api/core/v1#PullPolicy)|
 |bootstrapImage|string|Image used for bootstrapping cluster (use the form : base:version)|Yes|orangeopensource/cassandra-bootstrap:0.1.4|
-|initContainerImage|string|Image used in the initContainer (use the form : base:version)|Yes|cassandra:latest|
-|initContainerCmd|string|Command to execute in the initContainer in the targeted image|Yes|cp -vr /etc/cassandra/* /bootstrap|
 |runAsUser|int64|Define the id of the user to run in the Cassandra image|Yes|999|
+|fsGroup|int64|FSGroup defines the GID owning volumes in the Cassandra image|No|1|
+|config|map|Configuration used by the config builder to generated cassandra.yaml and other configuration files|No||
 |readOnlyRootFilesystem|Make the pod as Readonly|bool|Yes|true|
 |resources|[Resources](#https://godoc.org/k8s.io/api/core/v1#ResourceRequirements)|Define the Requests & Limits resources spec of the "cassandra" container|Yes|-|
 |hardAntiAffinity|bool|HardAntiAffinity defines if the PodAntiAffinity of the statefulset has to be hard (it's soft by default)|Yes|false|
@@ -74,7 +74,6 @@ spec:
 |shareProcessNamespace|bool|When process namespace sharing is enabled, processes in a container are visible to all other containers in that pod. [Check documentation for more informations](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)|Yes|false|
 |autoPilot|bool|Defines if the Operator can fly alone or if we need human action to trigger actions on specific Cassandra nodes. [Check documentation for more informations](/casskop/docs/5_operations/2_pods_operations)|Yes|false|
 |noCheckStsAreEqual|bool||Yes|false|
-|gcStdout|bool|Set the parameter CASSANDRA_GC_STDOUT which configure the JVM -Xloggc: true by default|Yes|true|
 |autoUpdateSeedList|bool| Defines if the Operator automatically update the SeedList according to new cluster CRD topology|Yes|false|
 |maxPodUnavailable|int32|Number of MaxPodUnavailable used in the [PodDisruptionBudget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)|Yes|1|
 |restartCountBeforePodDeletion|int32|defines the number of restart allowed for a cassandra container allowed before deleting the pod  to force its restart from scratch. if set to 0 or omit, no action will be performed based on restart count. [Check documentation for more informations](/casskop/docs/3_configuration_deployment/9_advanced_configuration#ip-cross-situation-detection)|Yes|0|

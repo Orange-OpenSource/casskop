@@ -25,7 +25,7 @@ import (
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/allamand/godebug/pretty"
 	"github.com/sirupsen/logrus"
@@ -34,7 +34,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	//patch "github.com/banzaicloud/k8s-objectmatcher/patch"
 )
 
 var (
@@ -184,9 +183,22 @@ func statefulSetsAreEqual(sts1, sts2 *appsv1.StatefulSet) bool {
 	return true
 }
 
-//CreateOrUpdateStatefulSet Create statefulset if not existing, or update it if existing.
+//CreateOrUpdateStatefulSet Create statefulset if not found, or update it
 func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *appsv1.StatefulSet,
 	status *api.CassandraClusterStatus, dcRackName string) (bool, error) {
+	// if there is an existing pod disruptions
+	// Or if we are not scaling Down the current statefulset
+	if !rcc.hasNoPodDisruption() {
+		if rcc.cc.Spec.UnlockNextOperation {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
+				"Cluster has a disruption but we are authorized to unlock the next operation")
+		} else {
+			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
+				"Cluster has a disruption, waiting before applying any potential changes to statefulset")
+			return api.ContinueResyncLoop, nil
+		}
+	}
+
 	dcRackStatus := status.CassandraRackStatus[dcRackName]
 	var err error
 	now := metav1.Now()
@@ -200,43 +212,29 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 		return api.ContinueResyncLoop, err
 	}
 
-	//We will not Update the Statefulset
-	// if there is existing disruptions on Pods
-	// Or if we are not scaling Down the current statefulset
-	if !rcc.hasNoPodDisruption() {
-		if rcc.cc.Spec.UnlockNextOperation {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Warn(
-				"Cluster has a disruption but we have unlock the next operation")
-		} else {
-			logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info(
-				"Cluster has a disruption, waiting before applying any changes to statefulset")
-			return api.ContinueResyncLoop, nil
-		}
-	}
-
 	// Already exists, need to Update.
 	statefulSet.ResourceVersion = rcc.storedStatefulSet.ResourceVersion
 	// We grab the existing labels and add them back to the generated StatefulSet
 	statefulSet.Spec.Template.SetLabels(rcc.storedStatefulSet.Spec.Template.GetLabels())
 
 	//If UpdateSeedList=Ongoing, we allow the new SeedList to be propagated into the Statefulset
-	//and change the status to Finalizing (it start a RollingUpdate)
+	//and change the status to Finalizing (it starts a RollingUpdate)
 	if dcRackStatus.CassandraLastAction.Name == api.ActionUpdateSeedList.Name &&
-		dcRackStatus.CassandraLastAction.Status == api.StatusToDo {
+		(dcRackStatus.CassandraLastAction.Status == api.StatusToDo ||
+			dcRackStatus.CassandraLastAction.Status == api.StatusConfiguring) {
 		logrus.WithFields(logrus.Fields{"cluster": rcc.cc.Name, "dc-rack": dcRackName}).Info("Update SeedList on Rack")
 		dcRackStatus.CassandraLastAction.Status = api.StatusOngoing
 		dcRackStatus.CassandraLastAction.StartTime = &now
 	} else {
-
 		//We need to keep the SeedList from the stored statefulset
 		//we retrieve it in the Env CASSANDRA_SEEDS of the bootstrap container
-		ic := getBootstrapContainerFromStatefulset(statefulSet)
-		oldIc := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
-		for i, env := range ic.Env {
+		bootstrapContainer := getBootstrapContainerFromStatefulset(statefulSet)
+		oldBootstrapContainer := getBootstrapContainerFromStatefulset(rcc.storedStatefulSet)
+		for i, env := range bootstrapContainer.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
-				for _, oldenv := range oldIc.Env {
-					if oldenv.Name == "CASSANDRA_SEEDS" && env.Value != oldenv.Value {
-						ic.Env[i].Value = oldenv.Value
+				for _, oldEnv := range oldBootstrapContainer.Env {
+					if oldEnv.Name == "CASSANDRA_SEEDS" && env.Value != oldEnv.Value {
+						bootstrapContainer.Env[i].Value = oldEnv.Value
 					}
 				}
 			}
@@ -293,23 +291,21 @@ func (rcc *ReconcileCassandraCluster) CreateOrUpdateStatefulSet(statefulSet *app
 	}
 
 	return api.BreakResyncLoop, rcc.UpdateStatefulSet(statefulSet)
-
 }
 
 func getBootstrapContainerFromStatefulset(sts *appsv1.StatefulSet) *v1.Container {
-	for _, ic := range sts.Spec.Template.Spec.InitContainers {
-		if ic.Name == "bootstrap" {
-			return &ic
+	for _, container := range sts.Spec.Template.Spec.InitContainers {
+		if container.Name == "bootstrap" {
+			return &container
 		}
 	}
 	return nil
 }
 
-func getStoredSeedListTab(storedStatefulSet *appsv1.StatefulSet) []string {
-	ic := getBootstrapContainerFromStatefulset(storedStatefulSet)
-	//TODO: check if this test is necessary
-	if ic != nil {
-		for _, env := range ic.Env {
+func getStoredSeedList(storedStatefulSet *appsv1.StatefulSet) []string {
+	container := getBootstrapContainerFromStatefulset(storedStatefulSet)
+	if container != nil {
+		for _, env := range container.Env {
 			if env.Name == "CASSANDRA_SEEDS" {
 				return strings.Split(env.Value, ",")
 			}

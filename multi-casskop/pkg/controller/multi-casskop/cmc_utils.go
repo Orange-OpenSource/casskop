@@ -5,7 +5,7 @@ import (
 
 	"github.com/Orange-OpenSource/casskop/multi-casskop/pkg/controller/multi-casskop/models"
 
-	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	ccv1 "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/sirupsen/logrus"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -42,6 +42,18 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 
 	UnsetRollingRestart(storedCC)
 
+	if cc.Spec.RunAsUser == 0 && cc.Spec.RunAsUser != storedCC.Spec.RunAsUser {
+		cc.Spec.RunAsUser = storedCC.Spec.RunAsUser
+	}
+
+	if cc.Spec.FSGroup == 0  && cc.Spec.FSGroup != storedCC.Spec.FSGroup {
+		cc.Spec.FSGroup = storedCC.Spec.FSGroup
+	}
+
+	if cc.Spec.ServerType == ""  && cc.Spec.ServerType != storedCC.Spec.ServerType {
+		cc.Spec.ServerType = storedCC.Spec.ServerType
+	}
+
 	//TODO: need new way to detect changes
 	if !apiequality.Semantic.DeepEqual(storedCC.Spec, cc.Spec) {
 		logrus.WithFields(logrus.Fields{"cluster": cc.Name, "namespace": cc.Namespace, "kubernetes": client.Name}).
@@ -50,7 +62,7 @@ func (r *reconciler) CreateOrUpdateCassandraCluster(client *models.Client,
 		needUpdate = true
 	}
 
-	//Multi-CassKop manages the Seedlist, we ensure that managed Casskop won't deal themselves with the seedlist
+	//Multi-CassKop manages the Seedlist, we ensure that managed Casskop won't deal with it
 	cc.Spec.AutoUpdateSeedList = false
 
 	if cc.Status.SeedList != nil &&

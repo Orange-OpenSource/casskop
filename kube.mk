@@ -227,8 +227,8 @@ os:
 	echo $(GOOS)
 
 check-env:
-	echo "working on OS type $(GOOS)"
-	echo " Working with docker repository $(REPOSITORY)"
+	echo "Working on OS type $(GOOS)"
+	echo "Working with docker repository $(REPOSITORY)"
 
 #list all resources in current namespace
 list-all:

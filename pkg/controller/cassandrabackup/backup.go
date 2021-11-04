@@ -4,7 +4,7 @@ import (
 	"context"
 	"emperror.dev/errors"
 	"fmt"
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +29,7 @@ func backup(
 	if err != nil {
 		logging.Error(err, fmt.Sprintf("Error while starting backup operation"))
 		recorder.Event(backupClient.backup,
-			corev1.EventTypeNormal,
+			corev1.EventTypeWarning,
 			"BackupNotInitiated",
 			fmt.Sprintf("Backup of datacenter %s of cluster %s to %s under snapshot %s failed.",
 				backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,

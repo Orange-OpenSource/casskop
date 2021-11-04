@@ -36,10 +36,6 @@ file:
       - "!jolokia-agent.jar"
       - "!javaagent:/extra-lib/cassandra-exporter-agent.jar=@/etc/cassandra/exporter.conf"
 
-  # pre_run.sh is created through configmap which is not used in this test
-  /etc/cassandra/pre_run.sh:
-    exists: false
-
   /etc/cassandra/liveness-probe.sh:
     exists: true
 

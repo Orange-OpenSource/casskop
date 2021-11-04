@@ -16,57 +16,22 @@
 
 # Name of this service/application
 SERVICE_NAME := casskop
-DOCKER_REPO_BASE ?= orangeopensource
-DOCKER_REPO_BASE_TEST ?= orangeopensource
-IMAGE_NAME := $(SERVICE_NAME)
-BUILD_IMAGE ?= orangeopensource/casskop-build
 
-BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.7
+BUILD_FOLDER = .
+MOUNTDIR = $(PWD)
+
+BOOTSTRAP_IMAGE ?= orangeopensource/cassandra-bootstrap:0.1.9
 TELEPRESENCE_REGISTRY ?= datawire
 KUBESQUASH_REGISTRY:=
 
 KUBECONFIG ?= ~/.kube/config
 
-# Repository url for this project
-#in gitlab CI_REGISTRY_IMAGE=repo/path/name:tag
-ifdef CI_REGISTRY_IMAGE
-	REPOSITORY := $(CI_REGISTRY_IMAGE)
-else
-	REPOSITORY := $(DOCKER_REPO_BASE)/$(IMAGE_NAME)
-endif
 
-# Branch is used for the docker image version
-ifdef CIRCLE_BRANCH
-	#removing / for fork which lead to docker error
-	BRANCH := $(subst /,-,$(CIRCLE_BRANCH))
-else
-  ifdef CIRCLE_TAG
-		BRANCH := $(CIRCLE_TAG)
-	else
-		BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-	endif
-endif
-
-# Operator version is managed in go file
-# BaseVersion is for dev docker image tag
-BASEVERSION := $(shell awk -F\" '/Version =/ { print $$2}' version/version.go)
-# Version is for binary, docker image and helm
-
-ifdef CIRCLE_TAG
-	VERSION := ${BRANCH}
-else
-	VERSION := $(BASEVERSION)-${BRANCH}
-endif
 
 HELM_VERSION    := $(shell cat helm/cassandra-operator/Chart.yaml| grep version | awk -F"version: " '{print $$2}')
 HELM_TARGET_DIR ?= docs/helm
 
-#si branche master, on pousse le tag latest
-ifeq ($(CIRCLE_BRANCH),master)
-	PUSHLATEST := true
-endif
-
-# Compute image to uses for e2e tests
+# Compute image to use during tests
 ifdef CIRCLE_BRANCH
   ifeq ($(CIRCLE_BRANCH),master)
 	  E2EIMAGE := $(DOCKER_REPO_BASE)/$(IMAGE_NAME):$(VERSION)
@@ -88,55 +53,12 @@ endif
 build-image:
 	@echo $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION)
 
-e2eimage:
-	@echo $(E2EIMAGE)
-
 params:
 	@echo "CIRCLE_BRANCH = '$(CIRCLE_BRANCH)'"
 	@echo "CIRCLE_TAG = '$(CIRCLE_TAG)'"
 	@echo "Version = '$(VERSION)'"
 	@echo "E2EIMAGE = '$(E2EIMAGE)'"
 
-# Shell to use for running scripts
-SHELL := $(shell which bash)
-
-# Get docker path or an empty string
-DOCKER := $(shell command -v docker)
-
-# Get the main unix group for the user running make (to be used by docker-compose later)
-GID := $(shell id -g)
-
-# Get the unix user id for the user running make (to be used by docker-compose later)
-UID := $(shell id -u)
-
-# Commit hash from git
-COMMIT=$(shell git rev-parse HEAD)
-
-# CMDs
-UNIT_TEST_CMD := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test --cover --coverprofile=coverage.out `go list ./... | grep -v e2e` > test-report.out
-UNIT_TEST_CMD_WITH_VENDOR := KUBERNETES_CONFIG=`pwd`/config/test-kube-config.yaml POD_NAME=test go test -mod=vendor --cover --coverprofile=coverage.out `go list -mod=vendor ./... | grep -v e2e` > test-report.out 
-UNIT_TEST_COVERAGE := go tool cover -html=coverage.out -o coverage.html
-GO_GENERATE_CMD := go generate `go list ./... | grep -v /vendor/`
-GO_LINT_CMD := golint `go list ./... | grep -v /vendor/`
-
-# environment dirs
-DEV_DIR := docker/circleci
-APP_DIR := build/Dockerfile
-
-OPERATOR_SDK_VERSION=v0.18.0-forked-pr317
-# workdir
-WORKDIR := /go/casskop
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	GOOS = linux
-endif
-ifeq ($(UNAME_S),Darwin)
-	GOOS = darwin
-endif
-
-# Some other useful make file for interacting with kubernetes
-include kube.mk
 
 # The default action of this Makefile is to build the development docker image
 default: build
@@ -153,7 +75,7 @@ get-version:
 
 clean:
 	@rm -rf $(OUT_BIN) || true
-	@rm -f apis/cassandracluster/v1alpha1/zz_generated.deepcopy.go || true
+	@rm -f apis/cassandracluster/v2/zz_generated.deepcopy.go || true
 
 helm-package:
 	@echo Packaging $(HELM_VERSION)
@@ -161,51 +83,35 @@ helm-package:
 	mv cassandra-operator-$(HELM_VERSION).tgz $(HELM_TARGET_DIR)
 	helm repo index $(HELM_TARGET_DIR)/
 
-#@TODO : `opetator-sdk generate openapî` deprecated
-.PHONY: generate
-generate:
-	echo "Generate zzz-deepcopy objects"
-	operator-sdk version
-	operator-sdk generate k8s
-	operator-sdk generate crds
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+FIRST_VERSION = .spec.versions[0]
+SPEC_PROPS = $(FIRST_VERSION).schema.openAPIV3Schema.properties.spec.properties
 
-# Build casskop executable file in local go env
-.PHONY: build
-build: generate
-	echo "Build Cassandra Operator"
-	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
-ifdef PUSHLATEST
-	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
-endif
-
-docker-generate-k8s:
-	echo "Generate zzz-deepcopy objects"
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
-		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
-		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate k8s'
-
-docker-generate-crds:
-	echo "Generate crds"
-	docker run --rm -v $(PWD):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
-		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated --env GO111MODULE=on \
-		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk generate crds'
-	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters_crd.yaml
+.PHONY: update-crds
+update-crds:
+	echo Update CRD - Remove protocol and set config type to object CRD
+	@sed -i '/\- protocol/d' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	@yq -i e '$(SPEC_PROPS).topology.properties.dc.items.properties.rack.items.properties.config.type = "object"' deploy/crds/db.orange.com_cassandraclusters.yaml
+	# We checkout v1alpha1 CRD and add it to v2 CRD as it must be known to do an upgrade
+	for crd in deploy/crds/*.yaml; do \
+		crdname=$$(basename $$crd); \
+		end=$$(expr $$(grep -n ^status $$crd|cut -f1 -d:) - 1); \
+		git show v1.1.5-release:$$(echo $$crd|sed 's/.yaml/_crd.yaml/') $$crd > /tmp/$$crdname; \
+		sed -e '1,/versions/d' -e "1,$${end}s/^..//" $$crd >> /tmp/$$crdname; \
+		cp /tmp/$$crdname $$crd; \
+		yq -i e '$(FIRST_VERSION).storage = false' $$crd; \
+	done
 	cp -v deploy/crds/* helm/*/crds/
 	cp -v deploy/crds/* */helm/*/crds/
 
-docker-build-operator:
-	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):$(WORKDIR) \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated -v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
-	--env GO111MODULE=on --env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
-	$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk build $(REPOSITORY):$(VERSION) \
-	--image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"'
+include shared.mk
+include kube.mk
+
+docker-generate-files: docker-generate-k8s docker-generate-crds
 
 # Build the Operator and its Docker Image
-docker-build: docker-generate-k8s docker-generate-crds docker-build-operator
+docker-build: docker-generate-files docker-build-operator
 
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
@@ -324,11 +230,6 @@ unit-test-with-vendor:
 	cat test-report.out
 	$(UNIT_TEST_COVERAGE)
 
-unit-test-with-vendor:
-	$(UNIT_TEST_CMD_WITH_VENDOR) && echo "success!" || { echo "failure!"; cat test-report.out; exit 1; }
-	cat test-report.out 
-	$(UNIT_TEST_COVERAGE)
-
 define run-operator-cmd
 	docker run  --env GO111MODULE=on -ti --rm -v $(PWD):$(WORKDIR) -u $(UID):$(GID) --name $(SERVICE_NAME) $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/sh -c $1
 endef
@@ -367,68 +268,17 @@ image:
 
 export CGO_ENABLED:=0
 
-e2e:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-docker-e2e:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m"' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-
-define scale-test
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^TestCassandraCluster$$/^group$$/^$1$$" || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-endef
-
-e2e-scaleup:
-	$(call scale-test,ClusterScaleUp)
-
-e2e-scaledown:
-	$(call scale-test,ClusterScaleDown)
-
-e2e-empty:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 40m -run ^empty$$"
-
-e2e-test-fix:
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-ifeq (e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(E2E_ARGS):;@:)
-endif
-
-e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)
-	@echo "args are: RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
-endif
-	operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
-#docker-e2e-test-fix and docker-e2e-test-fix-args need vendor rep to be filled (go mod vendor)
-docker-e2e-test-fix:
-	docker run --env GO111MODULE=on --rm -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -mod=vendor -timeout 60m" --operator-namespace cassandra-e2e'
-
-#execute Test filters based on given Regex
-ifeq (docker-e2e-test-fix-arg,$(firstword $(MAKECMDGOALS)))
-  E2E_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(E2E_ARGS):;@:)
-endif
 ifeq (kuttl-test-fix-arg,$(firstword $(MAKECMDGOALS)))
   KUTTL_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(KUTTL_ARGS):;@:)
 endif
 
-docker-e2e-test-fix-arg:
-ifeq ($(E2E_ARGS),)
-	@echo "args are: ExecuteCleanup; RollingRestart ; ClusterScaleDown ; ClusterScaleUp ; ClusterScaleDownSimple" && exit 1
-endif
-	docker run --rm --network host --env GO111MODULE=on -v $(PWD):$(WORKDIR) -v $(KUBECONFIG):/root/.kube/config $(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c 'operator-sdk test local ./test/e2e --debug --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^$(E2E_ARGS)$$" --operator-namespace cassandra-e2e' || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
-
 kuttl-test-fix-arg:
 ifeq ($(KUTTL_ARGS),)
-	@echo "args are: ScaleUpAndDown" && exit 1
+	@echo "A test folder is required" && exit 1
 endif
-	kuttl test --config ./test/e2e/kuttl/kuttl-test.yaml ./test/e2e/kuttl --test $(KUTTL_ARGS)
-
-e2e-test-fix-scale-down:
-	operator-sdk test local ./test/e2e --image $(E2EIMAGE) --go-test-flags "-v -timeout 60m -run ^TestCassandraCluster$$/^group$$/^ClusterScaleDown$$" --operator-namespace cassandra-e2e || { kubectl get events --all-namespaces --sort-by .metadata.creationTimestamp ; exit 1; }
+	helm install casskop helm/cassandra-operator --set image.tag=$(BRANCH)
+	cd test/kuttl; kuttl test --test $(KUTTL_ARGS) --namespace default
 
 dgoss-bootstrap:
 	 IMAGE_TO_TEST=$(BOOTSTRAP_IMAGE) ./docker/bootstrap/dgoss/runChecks.sh
@@ -437,7 +287,6 @@ configure-psp:
 	kubectl get clusterrole psp:cassie -o yaml
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml
 	kubectl -n cassandra get rolebindings.rbac.authorization.k8s.io psp:sa:cassie -o yaml | grep -vE '(annotations|creationTimestamp|resourceVersion|uid|selfLink|last-applied-configuration)' | sed 's/cassandra/cassandra-e2e/' | kubectl apply -f -
-
 
 # Usage example:
 # REPLICATION_FACTOR=3 make cassandra-stress small

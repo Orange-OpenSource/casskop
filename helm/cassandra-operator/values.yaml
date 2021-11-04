@@ -2,7 +2,7 @@
 ##
 image:
   repository: orangeopensource/casskop
-  tag: v1.1.3-release
+  tag: v2.0.3-release
   pullPolicy: Always
   imagePullSecrets:
     enabled: false
@@ -17,6 +17,12 @@ resources:
   limits:
     cpu: 1
     memory: 512Mi
+
+readinessProbe:
+  timeouts:
+    initialDelaySeconds: 4
+    periodSeconds: 10
+    failureThreshold: 1
 
 ## If true, create & deploy the CRD
 ##

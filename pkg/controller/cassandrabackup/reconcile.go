@@ -7,7 +7,7 @@ import (
 	"github.com/Orange-OpenSource/casskop/pkg/controller/common"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/backrest"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	"github.com/sirupsen/logrus"
@@ -243,10 +243,22 @@ func (r *ReconcileCassandraBackup) backupData(cassandraBackup *api.CassandraBack
 		return fmt.Errorf("unable to list pods")
 	}
 
-	pod := pods.Items[random.Intn(len(pods.Items))]
-	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 	backupClient := &backupClient{backup: cassandraBackup, client: r.client}
 	backupClient.updateStatus(api.BackRestStatus{},reqLogger)
+
+	if len(pods.Items) == 0 {
+		reqLogger.Error(err, fmt.Sprintf("Error while starting backup operation, no pods found"))
+		r.recorder.Event(backupClient.backup,
+			corev1.EventTypeWarning,
+			"BackupNotInitiated",
+			fmt.Sprintf("No pods found in datacenter %s of cluster %s, snapshot %s failed.",
+				backupClient.backup.Spec.Datacenter, backupClient.backup.Spec.CassandraCluster,
+				backupClient.backup.Spec.SnapshotTag))
+		return nil
+	}
+
+	pod := pods.Items[random.Intn(len(pods.Items))]
+	cassandraBackup.Status = api.BackRestStatus{CoordinatorMember: pod.Name}
 
 	backrestClient, _ := backrest.NewClient(r.client, cc, &pod)
 

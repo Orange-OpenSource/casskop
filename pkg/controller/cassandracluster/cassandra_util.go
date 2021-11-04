@@ -15,7 +15,7 @@
 package cassandracluster
 
 import (
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v1alpha1"
+	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
@@ -24,8 +24,7 @@ import (
 
 //hasNoPodDisruption return true if there is no Disruption in the Pods of the cassandra Cluster
 func (rcc *ReconcileCassandraCluster) hasNoPodDisruption() bool {
-	status := rcc.storedPdb.Status
-	return status.DesiredHealthy-status.CurrentHealthy <= rcc.storedPdb.Spec.MaxUnavailable.IntVal
+	return  rcc.storedPdb.Status.DisruptionsAllowed > 0 || rcc.storedPdb.Status.ExpectedPods == 0
 }
 
 //weAreScalingDown return true if we are Scaling Down the provided dc-rack

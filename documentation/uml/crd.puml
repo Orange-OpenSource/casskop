@@ -21,9 +21,8 @@ CassandraClusterSpec : nodesPerRacks
 CassandraClusterSpec : baseImage
 CassandraClusterSpec : version
 CassandraClusterSpec : runAsUser
+CassandraClusterSpec : fsGroup
 CassandraClusterSpec : readOnlyRootFileSystem
-CassandraClusterSpec : initContainerImage
-CassandraClusterSpec : initContainerCmd
 CassandraClusterSpec : bootstrapImage
 CassandraClusterSpec : resources
 CassandraClusterSpec : hardAntiAffinity
