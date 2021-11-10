@@ -65,6 +65,15 @@ func helperInitCluster(t *testing.T, name string) (*ReconcileCassandraCluster, *
 	return &rcc, &cc
 }
 
+func GetEnvVarByName(envVars []v1.EnvVar, name string) *v1.EnvVar {
+	for _, envVar := range envVars {
+		if envVar.Name == name {
+			return &envVar
+		}
+	}
+	return nil
+}
+
 func TestCreateNodeAffinity(t *testing.T) {
 	assert := assert.New(t)
 
@@ -328,6 +337,28 @@ func TestInitContainerConfigFileData(t *testing.T) {
 	configFileData.SetP(64, "cassandra-yaml.num_tokens")
 	configFileData.SetP("dc2", "datacenter-info.name")
 	assert.Equal(configFileData.String(), initEnvVar[0].Value)
+}
+
+func TestInitContainerServerVersionDetect(t *testing.T) {
+	// Check of Cassandra version detection in case of different image formats
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := helperInitCluster(t, "cassandracluster-1DC.yaml")
+	imageTag := "1.0.0"
+	images := []string{
+		fmt.Sprintf("artifactory-name/repo/cassandra:%s", imageTag),
+		fmt.Sprintf("artifactory-name:44301/repo/cassandra:%s", imageTag),
+	}
+	assert := assert.New(t)
+	for _, image := range images {
+		cc.Spec.CassandraImage = image
+		cassieResources := cc.Spec.Resources
+		initEnvVar := initContainerEnvVar(cc, &cc.Status, cassieResources, dcRackName)
+		prodVer := GetEnvVarByName(initEnvVar, "PRODUCT_VERSION")
+		assert.Equal(imageTag, prodVer.Value)
+	}
 }
 
 func TestGenerateCassandraStatefulSet(t *testing.T) {
