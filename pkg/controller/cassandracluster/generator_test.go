@@ -443,6 +443,26 @@ func TestGenerateCassandraStatefulSet(t *testing.T) {
 	assert.Equal(ccDefault.Spec.BackRestSidecar.Image, api.DefaultBackRestImage)
 }
 
+func TestGenerateCassandraStatefulSetBackrestVolumes(t *testing.T) {
+	assert := assert.New(t)
+	dcName := "dc1"
+	rackName := "rack1"
+	dcRackName := fmt.Sprintf("%s-%s", dcName, rackName)
+
+	_, cc := HelperInitCluster(t, "cassandracluster-backrest-vol.yaml")
+	cc.CheckDefaults()
+	extraVol := v1.VolumeMount{Name: "data", MountPath: "/data/backups"}
+	labels, nodeSelector := k8s.DCRackLabelsAndNodeSelectorForStatefulSet(cc, 0, 0)
+	sts, _ := generateCassandraStatefulSet(cc, &cc.Status, dcName, dcRackName, labels, nodeSelector, nil)
+	for _, c := range sts.Spec.Template.Spec.Containers {
+		if c.Name == "backrest-sidecar" {
+			assert.Equal(5, len(c.VolumeMounts))
+			assert.Contains(c.VolumeMounts, extraVol)
+		}
+	}
+
+}
+
 func TestCassandraStatefulSetHasNoDuplicateVolumes(t *testing.T) {
 	dcName := "dc1"
 	dcRackName := fmt.Sprintf("%s-rack1", dcName)
