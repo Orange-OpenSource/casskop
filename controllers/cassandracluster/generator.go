@@ -1049,13 +1049,14 @@ func backrestSidecarContainer(cc *api.CassandraCluster) v1.Container {
 			Limits:   resources,
 			Requests: resources,
 		},
+		VolumeMounts: cc.Spec.BackRestSidecar.VolumeMounts,
 	}
 
 	if cc.Spec.BackRestSidecar.Resources != nil {
 		container.Resources = *cc.Spec.BackRestSidecar.Resources
 	}
 
-	container.VolumeMounts = generateContainerVolumeMount(cc, backrestContainer)
+	container.VolumeMounts = append(container.VolumeMounts, generateContainerVolumeMount(cc, backrestContainer)...)
 
 	return container
 }

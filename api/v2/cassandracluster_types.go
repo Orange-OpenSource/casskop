@@ -913,6 +913,7 @@ type BackRestSidecar struct {
 	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Kubernetes object : https://godoc.org/k8s.io/api/core/v1#ResourceRequirements
 	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
+	VolumeMounts []v1.VolumeMount `json:"volumeMount,omitempty"`
 }
 
 //CassandraRackStatus defines states of Cassandra for 1 rack (1 statefulset)
