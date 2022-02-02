@@ -1,7 +1,7 @@
 package cassandrabackup
 
 import (
-	"github.com/Orange-OpenSource/casskop/pkg/apis/db/v2/common"
+	"github.com/Orange-OpenSource/casskop/api/v2/common"
 	icarus "github.com/instaclustr/instaclustr-icarus-go-client/pkg/instaclustr_icarus"
 	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/mapstructure"
@@ -12,24 +12,24 @@ var (
 )
 
 const (
-	state             = "PENDING"
-	stateGetById      = "RUNNING"
-	operationID       = "d3262073-8101-450f-9a11-c851760abd57"
-	k8sSecretName     = "cloud-backup-secrets"
-	snapshotTag       = "SnapshotTag1"
-	storageLocation   = "gcp://bucket/clustername/dcname/nodename"
-	noDeleteDownloads = false
-	schemaVersion     = "test"
+	state                       = "PENDING"
+	stateGetById                = "RUNNING"
+	operationID                 = "d3262073-8101-450f-9a11-c851760abd57"
+	k8sSecretName               = "cloud-backup-secrets"
+	snapshotTag                 = "SnapshotTag1"
+	storageLocation             = "gcp://bucket/clustername/dcname/nodename"
+	noDeleteDownloads           = false
+	schemaVersion               = "test"
 	concurrentConnections int32 = 15
 )
 
 type mockCassandraBackupClient struct {
 	Client
-	opts *Config
+	opts      *Config
 	podClient *icarus.APIClient
 
 	newClient func(*icarus.Configuration) *icarus.APIClient
-	failOpts bool
+	failOpts  bool
 }
 
 func newMockOpts() *Config {
@@ -53,18 +53,16 @@ func newMockClient() *client {
 	}
 }
 
-
 func newBuildedMockClient() *client {
 	client := newMockClient()
 	client.Build()
 	return client
 }
 
-
 func NewMockCassandraBackupClient() *mockCassandraBackupClient {
 	return &mockCassandraBackupClient{
-		opts:       newMockOpts(),
-		newClient:  newMockHttpClient,
+		opts:      newMockOpts(),
+		newClient: newMockHttpClient,
 	}
 }
 
@@ -116,4 +114,3 @@ func (m *mockCassandraBackupClient) RestoreOperationByID(operationId string) (*i
 		schemaVersion), &restoreOperation)
 	return &restoreOperation, nil
 }
-

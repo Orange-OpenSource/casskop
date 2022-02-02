@@ -86,7 +86,7 @@ orbs:
     executors:
       operator-build:
         docker:
-          - image: orangeopensource/casskop-build:v0.19.4
+          - image: orangeopensource/casskop-build:v1.13.0
     # Define jobs list
     jobs:
       # Build job, which build operator docker image (with operator-sdk build)
@@ -323,6 +323,11 @@ jobs:
   operatorDir: casskop/multi-casskop
   operatorName: MultiCassKop
 
+## Parameters anchors
+.params_multicasskop_build: &params_multicasskop_build
+  operatorDir: casskop
+  operatorName: MultiCassKop
+
 # Workflow definition
 workflows:
   version: 2
@@ -412,7 +417,7 @@ workflows:
 
       - operator/build:
           name: build-multicasskop
-          <<: *params_multicasskop
+          <<: *params_multicasskop_build
           requires:
             - generate-multicasskop
           <<: *everytime_filter

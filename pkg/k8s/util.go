@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
+	api "github.com/Orange-OpenSource/casskop/api/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -133,7 +133,7 @@ func MergeLabels(allLabels ...map[string]string) map[string]string {
 func AsOwner(cc *api.CassandraCluster) metav1.OwnerReference {
 	trueVar := true
 	return metav1.OwnerReference{
-		APIVersion: api.SchemeGroupVersion.String(),
+		APIVersion: api.GroupVersion.String(),
 		Kind:       "CassandraCluster",
 		Name:       cc.Name,
 		UID:        cc.UID,

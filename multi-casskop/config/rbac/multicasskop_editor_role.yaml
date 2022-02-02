@@ -1,0 +1,24 @@
+# permissions for end users to edit multicasskops.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: multicasskop-editor-role
+rules:
+- apiGroups:
+  - multicasskops.db.orange.com.multicasskops.db.orange.com
+  resources:
+  - multicasskops
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - multicasskops.db.orange.com.multicasskops.db.orange.com
+  resources:
+  - multicasskops/status
+  verbs:
+  - get

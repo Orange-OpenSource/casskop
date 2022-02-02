@@ -191,7 +191,7 @@ configmap "cassandra-configmap-v1" created
 ```
 
 Now you can add the `configMapName: cassandra-configmap-v1` to the Spec section of your CassandraCluster definition
-[example](https://github.com/Orange-OpenSource/casskop/tree/master/samples/cassandracluster.yaml)
+[example](https://github.com/Orange-OpenSource/casskop/tree/master/config/samples/cassandracluster.yaml)
 
 If you edit the ConfigMap it won't be detected neither by CassKop nor by the statefulsets/pods (unless you reboot the
 pods).

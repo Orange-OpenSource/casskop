@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	api "github.com/Orange-OpenSource/casskop/pkg/apis/db/v2"
+	api "github.com/Orange-OpenSource/casskop/api/v2"
 	"github.com/Orange-OpenSource/casskop/pkg/k8s"
 	corev1 "k8s.io/api/core/v1"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"

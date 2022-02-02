@@ -68,7 +68,7 @@ BUILD_FOLDER = multi-casskop
 GENERATE_CMD = CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build -o build/_output/bin/health \
 				 ../tools/health/main.go
 CRD_V1 = deploy/crds/multicluster_v1alpha1_cassandramulticluster_crd.yaml
-CRD = deploy/crds/db.orange.com_multicasskops.yaml
+CRD = config/crd/bases/db.orange.com_multicasskops.yaml
 FIRST_VERSION = .spec.versions[0]
 
 .PHONY: update-crds
@@ -79,17 +79,30 @@ update-crds:
 	sed -e '1,/versions/d' $(CRD) >> /tmp/$$(basename $(CRD))
 	cp /tmp/$$(basename $(CRD)) $(CRD)
 	yq -i e '$(FIRST_VERSION).storage = false' $(CRD)
-	cp -v deploy/crds/* helm/*/crds/
+	cp -v config/crd/bases/* helm/*/crds/
 
 include ../shared.mk
 include ../kube.mk
 
+BUILD_CMD = docker build -f multi-casskop/Dockerfile . -t $(REPOSITORY):$(VERSION) --build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy
+
+DOCKER_BUILD = docker run --rm -v $(MOUNTDIR):$(WORKDIR) -v $(GOPATH)/pkg/mod:/go/pkg/mod:delegated \
+               		-v /var/run/docker.sock:/var/run/docker.sock \
+               		-v $(shell go env GOCACHE):/root/.cache/go-build:delegated \
+               		--env CGO_ENABLED=$(CGO_ENABLED) --env GOOS=linux --env GOARCH=amd64 \
+               		--env https_proxy=$(https_proxy) --env http_proxy=$(http_proxy) \
+               		$(BUILD_IMAGE):$(OPERATOR_SDK_VERSION) /bin/bash -c
+
 docker-generate-files:
 	cd ../ && make docker-generate-files
-	cp -v ../deploy/crds/* helm/*/crds/
+	cp -v ../config/crd/bases/* helm/*/crds/
 	$(MAKE) docker-generate-k8s
 	$(DOCKER_BUILD) 'cd $(BUILD_FOLDER); $(GENERATE_CMD)'
-	cp deploy/crds/* helm/*/crds/
+	cp config/crd/bases/* helm/*/crds/
+
+docker-build-operator:
+	echo "Build Cassandra Operator. Using cache from "$(shell go env GOCACHE)
+	$(DOCKER_BUILD) '$(BUILD_CMD)'
 
 # Build the Operator and its Docker Image
 docker-build: docker-generate-files docker-build-operator
@@ -98,16 +111,16 @@ docker-build: docker-generate-files docker-build-operator
 .PHONY: generate
 generate:
 	cd .. && make generate
-	cp -v ../deploy/crds/* helm/*/crds/
-	operator-sdk generate k8s
+	cp -v ../config/crd/bases/* helm/*/crds/
+	$(MAKE) generate-k8s
 	$(GENERATE_CMD)
-	cp deploy/crds/* helm/*/crds/
+	cp config/crd/bases/* helm/*/crds/
 
 # Build CassKop executable file in local go env
 .PHONY: build
 build: generate
 	echo "Build Cassandra Operator"
-	operator-sdk build $(REPOSITORY):$(VERSION) --image-build-args "--build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy"
+	docker build docker build -f multi-casskop/Dockerfile . -t $(REPOSITORY):$(VERSION) --build-arg https_proxy=$$https_proxy --build-arg http_proxy=$$http_proxy
 ifdef PUSHLATEST
 	docker tag $(REPOSITORY):$(VERSION) $(REPOSITORY):latest
 endif
@@ -140,7 +153,7 @@ run:
 	export POD_NAME=multi-caaskop; \
 	export WATCH_NAMESPACE=$(NAMESPACE); \
 	export LOG_LEVEL=Debug; \
-	operator-sdk up local --namespace cassandra-demo  --operator-flags "$(RUN_ARGS)"
+	go run ./main.go
 
 run-local:
 	export POD_NAME=multi-caaskop; \
@@ -173,3 +186,28 @@ release: tag image publish
 
 unit-test-with-vendor:
 	echo TODO
+
+kustomize:
+ifeq (, $(shell which kustomize))
+	@{ \
+	set -e ;\
+	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
+	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
+	}
+KUSTOMIZE=$(GOBIN)/kustomize
+else
+KUSTOMIZE=$(shell which kustomize)
+endif
+
+# Generate bundle manifests and metadata, then validate generated files.
+bundle: manifests
+	operator-sdk generate kustomize manifests -q
+	kustomize build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+
+# Build the bundle image.
+bundle-build:
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .

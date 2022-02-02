@@ -62,7 +62,7 @@ spec:
               location.myorg.com/street : street3
 ```
 
-A complete example can be found [here](https://github.com/Orange-OpenSource/casskop/samples/cassandracluster-pic.yaml)
+A complete example can be found [here](https://github.com/Orange-OpenSource/casskop/config/samples/cassandracluster-pic.yaml)
 
 Kubernetes objects created by CassKop are named according to :
 

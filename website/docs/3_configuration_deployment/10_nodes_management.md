@@ -43,7 +43,7 @@ object in the prometheus namespaces, pointing to the exporter-prometheus-service
 
 
 ```yaml
-$ cat samples/prometheus-cassandra-service-monitor.yaml
+$ cat config/samples/prometheus-cassandra-service-monitor.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

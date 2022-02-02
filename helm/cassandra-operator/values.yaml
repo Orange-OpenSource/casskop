@@ -23,6 +23,11 @@ readinessProbe:
     initialDelaySeconds: 4
     periodSeconds: 10
     failureThreshold: 1
+livenessProbe:
+  timeouts:
+    initialDelaySeconds: 4
+    periodSeconds: 10
+    failureThreshold: 1
 
 ## If true, create & deploy the CRD
 ##

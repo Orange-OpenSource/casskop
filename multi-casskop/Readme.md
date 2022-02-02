@@ -148,7 +148,7 @@ Then it do nothing, it is waiting for MultiCassKop objects.
 
 You can deploy a MultiCassKop CRD instance.
 
-You can find an example in the `multi-casskop/samples/multi-casskop.yaml` file:
+You can find an example in the `multi-casskop/config/samples/multi-casskop.yaml` file:
 
 this is the structure of the file:
 
@@ -193,7 +193,7 @@ spec:
 You can create the Cluster with :
 
 ```
-k apply -f multi-casskop/samples/multi-casskop.yaml
+k apply -f multi-casskop/config/samples/multi-casskop.yaml
 ```
 
 Then you can see the MultiCassKop logs:
