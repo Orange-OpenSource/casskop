@@ -59,7 +59,7 @@ CASSANDRA_SEED_PROVIDER="${CASSANDRA_SEED_PROVIDER:-org.apache.cassandra.locator
 # Enable cassandra exporter
 CASSANDRA_EXPORTER_AGENT="${CASSANDRA_EXPORTER_AGENT:-true}"
 
-# Activate basic authentication. Expects JMX_USER and JMX_PASSWORD to be set
+# Activate basic authentication. Expects JOLOKIA_USER and JOLOKIA_PASSWORD to be set
 CASSANDRA_AUTH_JOLOKIA="${CASSANDRA_AUTH_JOLOKIA:-false}"
 
 # Used during tests only
@@ -80,7 +80,7 @@ if [[ $CASSANDRA_ENABLE_JOLOKIA == 'true' ]]
 then
   JAVA_AGENT="-javaagent:/extra-lib/jolokia-agent.jar=host=0.0.0.0,executor=fixed"
 
-  if [[ $JOLOKIA_USER == 'true' ]]
+  if [[ $CASSANDRA_AUTH_JOLOKIA == 'true' ]]
   then
       JAVA_AGENT="${JAVA_AGENT},authMode=basic,user=$JOLOKIA_USER,password=$JOLOKIA_PASSWORD"
   fi
