@@ -1,6 +1,16 @@
 
 # CassKop Cassandra Kubernetes Operator Changelog
 
+## v2.1.0
+
+- PR [397](https://github.com/Orange-OpenSource/casskop/pull/397) - Fix activation of Jolokia Auth
+- PR [396](https://github.com/Orange-OpenSource/casskop/pull/368) - Allow to configure VolumeMount for backrest-sidecar container
+- PR [380](https://github.com/Orange-OpenSource/casskop/pull/380) - Fix k3d version
+- PR [379](https://github.com/Orange-OpenSource/casskop/pull/379) - Do not validate Secret for file protocol in Backup
+- PR [377](https://github.com/Orange-OpenSource/casskop/pull/377) - Fix: update cc status if StatusFinalizing
+- PR [376](https://github.com/Orange-OpenSource/casskop/pull/376) - Bump operator sdk v1.13.0
+- PR [375](https://github.com/Orange-OpenSource/casskop/pull/375) - Fix issue #374 with determining the cassandra version from image
+
 ## v2.0.3
 
 - PR [368](https://github.com/Orange-OpenSource/casskop/pull/368) - Add missing changes of crd

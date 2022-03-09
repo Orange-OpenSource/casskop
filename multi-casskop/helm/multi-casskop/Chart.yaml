@@ -4,21 +4,13 @@ name: multi-casskop
 home: https://github.com/Orange-OpenSource/casskop/multi-casskop
 sources:
   - https://github.com/Orange-OpenSource/casskop/multi-casskop
-version: 2.0.3
-appVersion: 2.0.3-release
+version: 2.1.0
+appVersion: 2.1.0-release
 maintainers:
-  - name: allamand
-    email: sebastien.allamand@orange.com
   - name: cscetbon
     email: cscetbon@gmail.com
-  - name: jal06
-    email: jeanarmel.luce@orange.com
-  - name: erdrix
-    email: aguitton.ext@orange.com
   - name: fdehay
     email: franck.dehay@orange.com
-  - name: PERES-Richard
-    email: richardperes.info@gmail.com
 keywords:
 - operator
 - cassandra
